@@ -1,10 +1,10 @@
-"""D5.8 — daily operations command center (read-only aggregation)."""
+"""D5.8 / D5.9 — daily operations command center (read-only aggregation)."""
 
 from __future__ import annotations
 
+import re
 from datetime import date
 from typing import Any
-from uuid import UUID
 
 from sqlalchemy.orm import Session
 
@@ -15,11 +15,15 @@ from app.services.a_domain.lead_completeness_board import (
     build_lead_completeness_rows,
     summarize_completeness,
 )
+from app.services.a_domain.lead_timeline import _is_contact_research, _is_manual_send
+
+EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
 
 QUICK_ACTIONS: list[dict[str, str]] = [
     {"label": "Import Leads", "path": "/lead-intake"},
     {"label": "Review Completeness", "path": "/lead-intelligence?filter=needs_contact_research"},
     {"label": "Follow Up Due", "path": "/lead-intelligence?filter=due_today"},
+    {"label": "Overdue Follow-up", "path": "/lead-intelligence?filter=overdue"},
     {"label": "Generate Drafts", "path": "/lead-intelligence"},
     {"label": "System Health", "path": "/system-health"},
     {"label": "Portal Mock", "path": "/portal-consumer-mock"},
@@ -30,6 +34,100 @@ SAFETY = {
     "linkedin_automation_enabled": False,
     "outlook_integration_enabled": False,
 }
+
+
+def _mask_summary(text: str | None) -> str | None:
+    if not text:
+        return None
+    masked = EMAIL_RE.sub("[email]", text.strip())
+    if len(masked) > 200:
+        return masked[:197] + "..."
+    return masked
+
+
+def _activity_badge(ix: Interaction) -> tuple[str, bool, bool]:
+    if _is_manual_send(ix.summary, ix.subject):
+        return "Manual sent", True, False
+    if _is_contact_research(ix.interaction_type, ix.channel, ix.summary):
+        return "Contact research", False, True
+    summary_lower = (ix.summary or "").lower()
+    if ix.interaction_type == "follow_up_scheduled" or "manually_scheduled=true" in summary_lower:
+        return "Follow-up scheduled", False, False
+    return "Activity", False, False
+
+
+def _build_lead_context(
+    db: Session,
+    lead_ids: set[Any],
+) -> dict[str, tuple[Lead | None, Company | None]]:
+    if not lead_ids:
+        return {}
+    leads = db.query(Lead).filter(Lead.id.in_(list(lead_ids))).all()
+    company_ids = {l.company_id for l in leads if l.company_id}
+    companies: dict[Any, Company] = {}
+    if company_ids:
+        companies = {
+            c.id: c for c in db.query(Company).filter(Company.id.in_(list(company_ids))).all()
+        }
+    return {str(l.id): (l, companies.get(l.company_id)) for l in leads}
+
+
+def _interaction_to_activity(
+    ix: Interaction,
+    ctx: dict[str, tuple[Lead | None, Company | None]],
+) -> dict[str, Any]:
+    lead_id = str(ix.related_object_id)
+    lead, company = ctx.get(lead_id, (None, None))
+    company_name = company.company_name if company else "—"
+    badge, is_manual, is_research = _activity_badge(ix)
+    return {
+        "lead_id": lead_id,
+        "company_name": company_name,
+        "type": ix.interaction_type or "touchpoint",
+        "interaction_type": ix.interaction_type or "touchpoint",
+        "channel": ix.channel or "—",
+        "summary": _mask_summary(ix.summary or ix.content),
+        "timestamp": ix.interaction_date.isoformat() if ix.interaction_date else None,
+        "badge": badge,
+        "is_manual_send": is_manual,
+        "is_contact_research": is_research,
+        "next_action": lead.next_action if lead else None,
+    }
+
+
+def _fetch_recent_lead_interactions(db: Session, limit: int = 40) -> list[Interaction]:
+    return (
+        db.query(Interaction)
+        .filter(Interaction.related_object_type == "lead")
+        .order_by(Interaction.interaction_date.desc())
+        .limit(limit)
+        .all()
+    )
+
+
+def _build_recent_activity(db: Session, limit: int = 10) -> dict[str, list[dict[str, Any]]]:
+    rows = _fetch_recent_lead_interactions(db, limit=40)
+    lead_ids = {ix.related_object_id for ix in rows}
+    ctx = _build_lead_context(db, lead_ids)
+
+    combined: list[dict[str, Any]] = []
+    manual: list[dict[str, Any]] = []
+    research: list[dict[str, Any]] = []
+
+    for ix in rows:
+        item = _interaction_to_activity(ix, ctx)
+        combined.append(item)
+        if item["is_manual_send"]:
+            manual.append(item)
+        if item["is_contact_research"]:
+            research.append(item)
+
+    return {
+        "recent_activity": combined[:limit],
+        "recent_manual_outreach": manual[:5],
+        "recent_contact_research": research[:5],
+        "recent_outreach": manual[:5],
+    }
 
 
 def _focus_priority_and_reason(
@@ -97,40 +195,6 @@ def _build_today_focus(
     return [c[1] for c in candidates[:limit]]
 
 
-def _recent_manual_outreach(db: Session, limit: int = 5) -> list[dict[str, Any]]:
-    rows = (
-        db.query(Interaction)
-        .filter(
-            Interaction.related_object_type == "lead",
-            Interaction.summary.ilike("%manually_sent=true%"),
-        )
-        .order_by(Interaction.interaction_date.desc())
-        .limit(limit)
-        .all()
-    )
-    out: list[dict[str, Any]] = []
-    for ix in rows:
-        company_name = "—"
-        next_action = None
-        lead = db.query(Lead).filter(Lead.id == ix.related_object_id).first()
-        if lead:
-            next_action = lead.next_action
-            company = db.query(Company).filter(Company.id == lead.company_id).first()
-            if company:
-                company_name = company.company_name
-        out.append(
-            {
-                "lead_id": str(ix.related_object_id),
-                "company_name": company_name,
-                "interaction_type": ix.interaction_type,
-                "channel": ix.channel,
-                "timestamp": ix.interaction_date.isoformat() if ix.interaction_date else None,
-                "next_action": next_action,
-            }
-        )
-    return out
-
-
 def build_daily_ops_summary(db: Session, today: date | None = None) -> dict[str, Any]:
     fu_rows = build_follow_up_queue_rows(db, today=today)
     fu_summary = summarize_follow_up_queue(fu_rows)
@@ -158,10 +222,12 @@ def build_daily_ops_summary(db: Session, today: date | None = None) -> dict[str,
         "needs_enrichment": needs_enrichment,
     }
 
+    activity = _build_recent_activity(db)
+
     return {
         "summary": summary,
         "today_focus": _build_today_focus(fu_rows, comp_by_lead),
-        "recent_outreach": _recent_manual_outreach(db),
+        **activity,
         "quick_actions": QUICK_ACTIONS,
         "safety": SAFETY,
         "warnings": [],
@@ -184,6 +250,9 @@ def build_daily_ops_summary_degraded(warning: str) -> dict[str, Any]:
     return {
         "summary": zero,
         "today_focus": [],
+        "recent_activity": [],
+        "recent_manual_outreach": [],
+        "recent_contact_research": [],
         "recent_outreach": [],
         "quick_actions": QUICK_ACTIONS,
         "safety": SAFETY,

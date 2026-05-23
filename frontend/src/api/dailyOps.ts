@@ -34,19 +34,29 @@ export type DailyOpsSafety = {
   outlook_integration_enabled: boolean
 }
 
-export type DailyOpsRecentOutreach = {
+export type DailyOpsRecentActivity = {
   lead_id: string
   company_name: string
-  interaction_type: string
+  type: string
   channel: string
+  summary: string | null
   timestamp: string | null
-  next_action: string | null
+  badge: string
+  is_manual_send: boolean
+  is_contact_research: boolean
+  next_action?: string | null
+  interaction_type?: string | null
 }
+
+export type DailyOpsRecentOutreach = DailyOpsRecentActivity
 
 export type DailyOpsSummary = {
   summary: DailyOpsSummaryCounts
   today_focus: DailyOpsFocusItem[]
-  recent_outreach: DailyOpsRecentOutreach[]
+  recent_activity?: DailyOpsRecentActivity[]
+  recent_manual_outreach?: DailyOpsRecentActivity[]
+  recent_contact_research?: DailyOpsRecentActivity[]
+  recent_outreach?: DailyOpsRecentOutreach[]
   quick_actions: DailyOpsQuickAction[]
   safety: DailyOpsSafety
   warnings: string[]
@@ -55,5 +65,11 @@ export type DailyOpsSummary = {
 
 export async function fetchDailyOpsSummary(): Promise<DailyOpsSummary> {
   const { data } = await http.get<DailyOpsSummary>('/a-domain/daily-ops-summary')
-  return data
+  return {
+    ...data,
+    recent_activity: data.recent_activity ?? [],
+    recent_manual_outreach: data.recent_manual_outreach ?? [],
+    recent_contact_research: data.recent_contact_research ?? [],
+    recent_outreach: data.recent_outreach ?? data.recent_manual_outreach ?? [],
+  }
 }

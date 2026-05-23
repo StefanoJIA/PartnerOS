@@ -37,6 +37,7 @@ from app.schemas.a_domain import (
     DailyOpsQuickActionOut,
     DailyOpsSafetyOut,
     DailyOpsRecentOutreachOut,
+    DailyOpsRecentActivityOut,
     LeadIntelligenceWorkflowOut,
     OutreachDraftOut,
     TouchpointCreate,

@@ -281,15 +281,36 @@ class DailyOpsSafetyOut(BaseModel):
 class DailyOpsRecentOutreachOut(BaseModel):
     lead_id: str
     company_name: str
-    interaction_type: str
+    interaction_type: str | None = None
     channel: str
     timestamp: str | None = None
+    next_action: str | None = None
+    type: str | None = None
+    summary: str | None = None
+    badge: str | None = None
+    is_manual_send: bool = False
+    is_contact_research: bool = False
+
+
+class DailyOpsRecentActivityOut(BaseModel):
+    lead_id: str
+    company_name: str
+    type: str
+    channel: str
+    summary: str | None = None
+    timestamp: str | None = None
+    badge: str
+    is_manual_send: bool = False
+    is_contact_research: bool = False
     next_action: str | None = None
 
 
 class DailyOpsSummaryResponse(BaseModel):
     summary: DailyOpsSummaryCountsOut
     today_focus: list[DailyOpsFocusItemOut]
+    recent_activity: list[DailyOpsRecentActivityOut] = Field(default_factory=list)
+    recent_manual_outreach: list[DailyOpsRecentActivityOut] = Field(default_factory=list)
+    recent_contact_research: list[DailyOpsRecentActivityOut] = Field(default_factory=list)
     recent_outreach: list[DailyOpsRecentOutreachOut] = Field(default_factory=list)
     quick_actions: list[DailyOpsQuickActionOut]
     safety: DailyOpsSafetyOut

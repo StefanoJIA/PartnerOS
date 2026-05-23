@@ -50,7 +50,7 @@ python scripts/check_backend_runtime.py
 
 ## Daily Workflow
 
-0. 登录后打开 **Dashboard `/`** → 查看 **Daily Operations Command Center**（D5.8）：Overdue / Due Today / Today Focus / Quick Actions
+0. 登录后打开 **Dashboard `/`** → **Daily Operations Command Center**（D5.8 / D5.9）：summary cards、Today Focus、Recent Manual Outreach、Recent Contact Research、Quick Actions
 1. 登录 `/login`（seed 凭据见 README，**勿在记录中写密码**）
 2. **（新 lead）** 打开 `/lead-intake` → 粘贴或上传 CSV → **Preview** → 检查 missing / duplicate / segment → **Confirm Import**
 3. 打开 `/lead-intelligence` → 查看 **Lead Completeness** → 筛选 **Needs Contact Research** → 点击 **Research / Edit** 在 drawer 中补资料（D5.5）

@@ -56,6 +56,33 @@ def client(monkeypatch):
                     "lead_score": 80,
                 }
             ],
+            "recent_activity": [
+                {
+                    "lead_id": str(lead_id),
+                    "company_name": "Demo Co",
+                    "type": "email_intro",
+                    "channel": "email",
+                    "summary": "Marked sent",
+                    "timestamp": "2026-05-22T10:00:00+00:00",
+                    "badge": "Manual sent",
+                    "is_manual_send": True,
+                    "is_contact_research": False,
+                }
+            ],
+            "recent_manual_outreach": [
+                {
+                    "lead_id": str(lead_id),
+                    "company_name": "Demo Co",
+                    "type": "email_intro",
+                    "channel": "email",
+                    "summary": "Marked sent",
+                    "timestamp": "2026-05-22T10:00:00+00:00",
+                    "badge": "Manual sent",
+                    "is_manual_send": True,
+                    "is_contact_research": False,
+                }
+            ],
+            "recent_contact_research": [],
             "recent_outreach": [],
             "quick_actions": [{"label": "Import Leads", "path": "/lead-intake"}],
             "safety": {
@@ -80,6 +107,8 @@ def test_daily_ops_summary_endpoint(client):
     assert body["summary"]["overdue"] == 1
     assert body["today_focus"][0]["reason"] == "Overdue follow-up"
     assert body["safety"]["automatic_sending_enabled"] is False
+    assert isinstance(body.get("recent_activity"), list)
+    assert body["recent_manual_outreach"][0]["badge"] == "Manual sent"
     assert "secret" not in r.text.lower()
     assert "password" not in r.text.lower()
 

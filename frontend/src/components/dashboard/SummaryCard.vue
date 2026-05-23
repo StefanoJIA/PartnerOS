@@ -1,21 +1,32 @@
 <template>
   <div
-    class="rounded border border-slate-100 bg-slate-50 px-3 py-2"
-    :class="toneClass"
+    class="rounded border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-slate-200"
+    :class="[toneClass, { 'cursor-pointer hover:shadow-sm': !!to }]"
+    @click="onClick"
   >
     <div class="text-xs text-slate-500">{{ label }}</div>
-    <div class="text-xl font-semibold" :class="valueClass">{{ value }}</div>
+    <div class="text-xl font-semibold" :class="valueClass">{{ displayValue }}</div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 
 const props = defineProps<{
   label: string
-  value: number
+  value: number | undefined | null
   tone?: 'danger' | 'warning' | 'info' | 'primary'
+  to?: string
 }>()
+
+const router = useRouter()
+
+const displayValue = computed(() => {
+  const n = props.value
+  if (n === undefined || n === null || Number.isNaN(n)) return 0
+  return n
+})
 
 const toneClass = computed(() => {
   if (props.tone === 'danger') return 'border-rose-100 bg-rose-50'
@@ -32,4 +43,8 @@ const valueClass = computed(() => {
   if (props.tone === 'primary') return 'text-indigo-700'
   return 'text-slate-800'
 })
+
+function onClick() {
+  if (props.to) router.push(props.to)
+}
 </script>

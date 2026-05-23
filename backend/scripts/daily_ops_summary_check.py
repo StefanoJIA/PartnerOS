@@ -55,7 +55,8 @@ def main() -> int:
     c_focus = Check("today_focus array")
     c_safety = Check("safety flags disabled")
     c_actions = Check("quick_actions present")
-    checks.extend([c_route, c_summary, c_focus, c_safety, c_actions])
+    c_activity = Check("recent_activity array")
+    checks.extend([c_route, c_summary, c_focus, c_safety, c_actions, c_activity])
 
     try:
         with httpx.Client(timeout=30.0) as client:
@@ -106,6 +107,11 @@ def main() -> int:
                         c_actions.pass_(f"count={len(actions)}")
                     else:
                         c_actions.fail(f"count={len(actions)}")
+
+                    if isinstance(body.get("recent_activity"), list):
+                        c_activity.pass_(f"count={len(body['recent_activity'])}")
+                    else:
+                        c_activity.fail("recent_activity not a list")
     except httpx.ConnectError:
         c_route.fail("backend not reachable")
 

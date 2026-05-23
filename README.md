@@ -64,14 +64,14 @@ First-time setup: `python scripts/init_local_env.py` → edit `backend/.env` →
 
 | Workflow | Entry |
 |----------|-------|
-| **Daily operations command center** | **`/`** (Dashboard) · summary cards + Today Focus (D5.8) |
+| **Daily operations command center** | **`/`** (Dashboard) · summary + Today Focus + Recent Activity (D5.8–D5.9) |
 | Daily outreach | `/lead-intelligence` · [operator_guide.md](docs/operator_guide.md) |
 | **Lead intake (CSV)** | **`/lead-intake`** · template: `docs/templates/lead_import_template.csv` |
 | **Lead completeness** | **`/lead-intelligence`** · Lead Completeness section (D5.4) |
 | **Contact research (in-place edit)** | **`/lead-intelligence`** · Research / Edit drawer (D5.5) |
 | **Outreach history timeline** | **`/lead-intelligence`** · Outreach History panel (D5.6) |
 | **Follow-up scheduling / due queue** | **`/lead-intelligence`** · Follow-up Scheduler + Due filters (D5.7) |
-| **Daily ops dashboard** | **`/`** · Daily Operations section (D5.8) |
+| **Daily ops dashboard** | **`/`** · Daily Operations + Recent Activity (D5.8–D5.9) |
 | Lead import preview (CLI) | `backend/scripts/lead_import_preview.py` |
 | Outreach draft | Generate Draft in Lead Intelligence |
 | Portal readiness | `/system-health` · `portal_readiness_check.py` |
