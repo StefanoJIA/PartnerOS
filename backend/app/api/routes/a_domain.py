@@ -31,6 +31,12 @@ from app.schemas.a_domain import (
     FollowUpQueueResponse,
     FollowUpQueueRowOut,
     FollowUpQueueSummaryOut,
+    DailyOpsSummaryResponse,
+    DailyOpsSummaryCountsOut,
+    DailyOpsFocusItemOut,
+    DailyOpsQuickActionOut,
+    DailyOpsSafetyOut,
+    DailyOpsRecentOutreachOut,
     LeadIntelligenceWorkflowOut,
     OutreachDraftOut,
     TouchpointCreate,
@@ -54,6 +60,10 @@ from app.services.a_domain.follow_up_queue import (
     apply_follow_up_schedule,
     build_follow_up_queue_rows,
     summarize_follow_up_queue,
+)
+from app.services.a_domain.daily_ops_summary import (
+    build_daily_ops_summary,
+    build_daily_ops_summary_degraded,
 )
 
 router = APIRouter(prefix="/a-domain", tags=["a-domain-intelligence"])
@@ -438,3 +448,18 @@ def get_follow_up_queue(
         summary=FollowUpQueueSummaryOut(**summary),
         rows=rows,
     )
+
+
+@router.get("/daily-ops-summary", response_model=DailyOpsSummaryResponse)
+def get_daily_ops_summary(
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> DailyOpsSummaryResponse:
+    """Read-only daily operations command center aggregation (D5.8)."""
+    try:
+        raw = build_daily_ops_summary(db)
+    except Exception:
+        raw = build_daily_ops_summary_degraded(
+            "Daily operations unavailable. Check backend and database status."
+        )
+    return DailyOpsSummaryResponse(**raw)

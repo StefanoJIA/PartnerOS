@@ -50,6 +50,7 @@ python scripts/check_backend_runtime.py
 
 ## Daily Workflow
 
+0. 登录后打开 **Dashboard `/`** → 查看 **Daily Operations Command Center**（D5.8）：Overdue / Due Today / Today Focus / Quick Actions
 1. 登录 `/login`（seed 凭据见 README，**勿在记录中写密码**）
 2. **（新 lead）** 打开 `/lead-intake` → 粘贴或上传 CSV → **Preview** → 检查 missing / duplicate / segment → **Confirm Import**
 3. 打开 `/lead-intelligence` → 查看 **Lead Completeness** → 筛选 **Needs Contact Research** → 点击 **Research / Edit** 在 drawer 中补资料（D5.5）
@@ -79,6 +80,7 @@ python scripts/daily_follow_up_summary.py
 
 | URL | Purpose |
 |-----|---------|
+| `/` | Dashboard · Daily Operations Command Center（D5.8） |
 | `/login` | 登录 |
 | `/lead-intake` | CSV lead 导入与批量预检（D5.3） |
 | `/lead-intelligence` | 每日跟进工作台 |
@@ -99,6 +101,8 @@ python scripts/daily_follow_up_summary.py
 | `outreach_queue_check.py` | 外联队列 |
 | `real_lead_batch_check.py` | 真实批次 pilot |
 | `daily_outreach_summary.py` | 每日只读摘要 |
+| `daily_follow_up_summary.py` | 每日 follow-up 摘要（D5.7） |
+| `daily_ops_summary_check.py` | Daily Operations API smoke（D5.8） |
 | `portal_readiness_check.py` | Portal v1 端点 |
 | `portal_consumer_check.py` | 外部 Portal 契约 |
 

@@ -8,6 +8,8 @@
       今日应联系谁、处理哪些 RFQ、跟进哪些样品与订单——集中在一页。规则生成的建议可点击跳转。
     </p>
 
+    <DailyOperationsPanel />
+
     <SystemStatusPanel />
 
     <el-card shadow="never">
@@ -164,6 +166,7 @@ import ActionLeadList from './dashboard/ActionLeadList.vue'
 import RfqMini from './dashboard/RfqMini.vue'
 import SampleMini from './dashboard/SampleMini.vue'
 import SystemStatusPanel from '@/components/system/SystemStatusPanel.vue'
+import DailyOperationsPanel from '@/components/dashboard/DailyOperationsPanel.vue'
 
 const router = useRouter()
 const loading = ref(false)

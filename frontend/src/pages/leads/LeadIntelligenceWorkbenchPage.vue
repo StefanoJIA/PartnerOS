@@ -840,6 +840,39 @@ watch(
   },
 )
 
+watch(
+  () => route.query.filter,
+  (f) => {
+    if (typeof f !== 'string' || !f) return
+    const dueKeys: DueQueueFilterKey[] = [
+      'overdue',
+      'due_today',
+      'due_soon',
+      'no_follow_up_date',
+      'scheduled',
+      'waiting_reply',
+    ]
+    if (dueKeys.includes(f as DueQueueFilterKey)) {
+      dueQueueFilter.value = f as DueQueueFilterKey
+      return
+    }
+    const compKeys: CompletenessFilterKey[] = [
+      'complete',
+      'ready_for_outreach',
+      'needs_contact_research',
+      'incomplete',
+      'missing_website',
+      'missing_email_linkedin',
+      'missing_next_action',
+      'missing_enrichment',
+    ]
+    if (compKeys.includes(f as CompletenessFilterKey)) {
+      completenessFilter.value = f as CompletenessFilterKey
+    }
+  },
+  { immediate: true },
+)
+
 watch(selectedLeadId, (id) => {
   if (id) {
     router.replace({ query: { ...route.query, leadId: id } })

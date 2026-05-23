@@ -242,3 +242,56 @@ class FollowUpQueueSummaryOut(BaseModel):
 class FollowUpQueueResponse(BaseModel):
     summary: FollowUpQueueSummaryOut
     rows: list[FollowUpQueueRowOut]
+
+
+class DailyOpsSummaryCountsOut(BaseModel):
+    total_leads: int = 0
+    overdue: int = 0
+    due_today: int = 0
+    due_soon: int = 0
+    high_priority: int = 0
+    needs_contact_research: int = 0
+    ready_for_outreach: int = 0
+    waiting_reply: int = 0
+    needs_enrichment: int = 0
+
+
+class DailyOpsFocusItemOut(BaseModel):
+    lead_id: str
+    company_name: str
+    reason: str
+    segments: list[str] = Field(default_factory=list)
+    due_status: str
+    next_action: str | None = None
+    priority: str = "normal"
+    lead_score: int = 0
+
+
+class DailyOpsQuickActionOut(BaseModel):
+    label: str
+    path: str
+
+
+class DailyOpsSafetyOut(BaseModel):
+    automatic_sending_enabled: bool = False
+    linkedin_automation_enabled: bool = False
+    outlook_integration_enabled: bool = False
+
+
+class DailyOpsRecentOutreachOut(BaseModel):
+    lead_id: str
+    company_name: str
+    interaction_type: str
+    channel: str
+    timestamp: str | None = None
+    next_action: str | None = None
+
+
+class DailyOpsSummaryResponse(BaseModel):
+    summary: DailyOpsSummaryCountsOut
+    today_focus: list[DailyOpsFocusItemOut]
+    recent_outreach: list[DailyOpsRecentOutreachOut] = Field(default_factory=list)
+    quick_actions: list[DailyOpsQuickActionOut]
+    safety: DailyOpsSafetyOut
+    warnings: list[str] = Field(default_factory=list)
+    degraded: bool = False
