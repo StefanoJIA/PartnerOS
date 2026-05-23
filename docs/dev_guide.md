@@ -142,6 +142,17 @@ npm run dev
 |------|------|------|
 | `BACKEND_BASE_URL` | 后端 smoke / pilot / import 等脚本 | `http://127.0.0.1:8000` |
 | `VITE_API_PROXY_TARGET` | Vite dev 将 `/api`、`/health` 代理到此地址 | `http://127.0.0.1:8000` |
+| `PUBLIC_BASE_URL` | v1 manifest / portal URL 对外拼接 | 未设置时默认 `http://127.0.0.1:8000` |
+
+**D5.2.10 配置一致性**：`BACKEND_BASE_URL`、`VITE_API_PROXY_TARGET`、`PUBLIC_BASE_URL` 应指向同一 backend。部署前运行：
+
+```powershell
+cd backend
+python scripts/config_readiness_check.py
+python scripts/portal_consumer_check.py
+```
+
+前端 mock：`/portal-consumer-mock`（模拟未来统一 Portal 只读消费）。
 
    **Windows 常见启动错误**
 

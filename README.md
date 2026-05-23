@@ -26,6 +26,7 @@
 - **健康检查**：默认 `http://127.0.0.1:8000/health` · 备用本地端口 **8010** · 前端只读页 `/system-health`
 - **Backend URL**：脚本 `BACKEND_BASE_URL` · 前端 Vite proxy `VITE_API_PROXY_TARGET`（见 [docs/dev_guide.md](docs/dev_guide.md) § Changing backend port）
 - **Smoke**：`cd backend && python scripts/smoke_demo_ready.py`（需 backend 运行；可先 `python scripts/check_backend_runtime.py`）
+- **Portal 只读集成（D5.2.9–D5.2.10）**：v1 endpoints `/api/v1/portal/*` · UI `/system-health` · mock `/portal-consumer-mock` · 脚本 `portal_readiness_check.py` / `portal_consumer_check.py` / `config_readiness_check.py` · 记录 [docs/records/d5_2_10_portal_consumer_deployment_readiness_20260523.md](docs/records/d5_2_10_portal_consumer_deployment_readiness_20260523.md)
 - **演示脚本**：[docs/records/demo_script_20260523.md](docs/records/demo_script_20260523.md) · **D5.2.2 记录**：[docs/records/d5_2_2_internal_mvp_20260523.md](docs/records/d5_2_2_internal_mvp_20260523.md)
 
 以下内容 **仅供开发者、测试与 CI**，**不代表**最终用户流程：

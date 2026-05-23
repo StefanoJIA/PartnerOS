@@ -28,7 +28,22 @@ pytest -q
 
 **人工验收主入口（A 域 + D5.2）**：见 **[manual_a_domain_test_plan.md](manual_a_domain_test_plan.md)**（含 `/health`、工作台、Enrichment、桌面 smoke 步骤及记录模板链接）。
 
-**集成化后端（v1 系统接口）**：见 **[integrated_backend_standards.md](integrated_backend_standards.md)**；契约测试 [`test_api_v1_system.py`](../backend/tests/test_api_v1_system.py)（readiness / doctor / manifest envelope；legacy `/health` 字段不变）。
+**集成化后端（v1 系统接口）**：见 **[integrated_backend_standards.md](integrated_backend_standards.md)**；契约测试 [`test_api_v1_system.py`](../backend/tests/test_api_v1_system.py)（readiness / doctor / manifest / portal summary / a-domain status envelope；legacy `/health` 字段不变）。
+
+### D5.2.9–D5.2.10 portal read-only integration
+
+```powershell
+cd backend
+python scripts/portal_readiness_check.py
+python scripts/portal_consumer_check.py
+python scripts/config_readiness_check.py
+```
+
+8010 示例：`$env:BACKEND_BASE_URL="http://127.0.0.1:8010"` 后再运行上述脚本。
+
+前端：`/system-health`（Portal Readiness）· `/portal-consumer-mock`（External Portal Consumer Mock）。
+
+见 [records/d5_2_9_portal_readonly_integration_20260523.md](records/d5_2_9_portal_readonly_integration_20260523.md) · [records/d5_2_10_portal_consumer_deployment_readiness_20260523.md](records/d5_2_10_portal_consumer_deployment_readiness_20260523.md)。
 
 ### D5.2.2 smoke test（内部 MVP）
 

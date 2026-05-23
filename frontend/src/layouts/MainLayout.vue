@@ -11,6 +11,7 @@
       >
         <el-menu-item index="/">Dashboard</el-menu-item>
         <el-menu-item index="/system-health">System health</el-menu-item>
+        <el-menu-item index="/portal-consumer-mock">Portal consumer mock</el-menu-item>
         <el-menu-item index="/lead-intelligence">A 域 · Lead Intelligence</el-menu-item>
         <el-menu-item index="/companies">Companies</el-menu-item>
         <el-menu-item index="/contacts">Contacts</el-menu-item>

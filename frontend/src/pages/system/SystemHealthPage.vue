@@ -21,6 +21,12 @@
       description="No automatic sending. Human-reviewed outreach only. intelliOffice does not scrape LinkedIn or automate platform actions."
     />
 
+    <div class="flex flex-wrap gap-2">
+      <router-link to="/portal-consumer-mock">
+        <el-button size="small" type="primary" plain>External Portal Consumer Mock</el-button>
+      </router-link>
+    </div>
+
     <SystemStatusPanel :compact="false" :show-detail-link="false" />
 
     <el-card v-loading="portalLoading" shadow="never">
