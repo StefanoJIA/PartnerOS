@@ -41,3 +41,19 @@ class TouchpointCreate(BaseModel):
     next_action_due_date: date | None = None
     interaction_next_action: str | None = None
     interaction_next_action_due_date: date | None = None
+
+
+class OutreachDraftOut(BaseModel):
+    """Human-reviewed outreach draft (D5.2.4 — display/copy only, not sent)."""
+
+    channel: str
+    language: str
+    tone: str
+    product_focus: str
+    company_name: str
+    segments: list[str]
+    linkedin_connect_note: str | None = None
+    email_subject: str | None = None
+    email_body: str | None = None
+    suggested_next_action: str
+    suggested_touchpoint_type: str

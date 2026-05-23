@@ -50,6 +50,16 @@ python scripts/pilot_workflow_check.py
 
 验证 education segment、enrichment 审阅、touchpoint 等 pilot 台账能力。见 [records/d5_2_3_internal_pilot_workflow_20260523.md](records/d5_2_3_internal_pilot_workflow_20260523.md)。
 
+### D5.2.4 lead intake & outreach drafts
+
+```powershell
+cd backend
+python scripts/lead_import_preview.py ../docs/templates/lead_import_template.csv
+python scripts/generate_outreach_draft.py --company "Ergo Sit Stand Workspace" --channel linkedin_connect --product-focus hosun_lifting
+```
+
+见 [records/d5_2_4_lead_intake_outreach_kit_20260523.md](records/d5_2_4_lead_intake_outreach_kit_20260523.md)。
+
 ### 前端组件测试
 
 ```powershell

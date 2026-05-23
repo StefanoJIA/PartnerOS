@@ -194,7 +194,7 @@
               <p v-else class="mt-3 text-xs text-slate-500">No suggestions available yet.</p>
             </el-card>
 
-            <el-card shadow="never">
+            <el-card shadow="never" class="mb-4">
               <template #header>记录触达并更新 Next Action</template>
               <el-alert
                 v-if="!wf.lead.next_action?.trim()"
@@ -252,9 +252,14 @@
                 <el-form-item label="下次跟进日">
                   <el-date-picker v-model="touchDue" type="date" value-format="YYYY-MM-DD" class="w-full" />
                 </el-form-item>
-                <el-button type="primary" :loading="saving" @click="submitTouchpoint">保存互动与下一步</el-button>
-              </el-form>
+              <el-button type="primary" :loading="saving" @click="submitTouchpoint">保存互动与下一步</el-button>
+            </el-form>
             </el-card>
+
+            <OutreachDraftPanel
+              :company-id="wf.company.id"
+              @use-next-action="(v) => (touch.next_action = v)"
+            />
           </el-col>
         </el-row>
       </template>
@@ -283,6 +288,7 @@ import {
   NEXT_ACTION_SUGGESTIONS,
   TOUCHPOINT_TYPE_PRESETS,
 } from '@/constants/touchpointPresets'
+import OutreachDraftPanel from '@/components/outreach/OutreachDraftPanel.vue'
 
 type ReviewRow = {
   leadId: string

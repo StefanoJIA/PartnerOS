@@ -4,16 +4,17 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models import Company, Contact, Interaction, Lead, MarketIntelligenceItem, User
-from app.schemas.a_domain import LeadIntelligenceWorkflowOut, TouchpointCreate
+from app.schemas.a_domain import LeadIntelligenceWorkflowOut, OutreachDraftOut, TouchpointCreate
 from app.schemas.crm import CompanyDetailOut, ContactOut, LeadOut
 from app.services.activity import log_activity
 from app.services.a_domain.intelligence_score import IntelligenceScoreInput, compute_intelligence_score
+from app.services.a_domain.outreach_templates import generate_outreach_draft
 
 router = APIRouter(prefix="/a-domain", tags=["a-domain-intelligence"])
 
@@ -117,3 +118,80 @@ def post_lead_touchpoint(
         "next_action": lead.next_action,
         "next_action_due_date": lead.next_action_due_date.isoformat() if lead.next_action_due_date else None,
     }
+
+
+@router.get("/outreach-draft", response_model=OutreachDraftOut)
+def get_outreach_draft(
+    company_id: UUID = Query(...),
+    channel: str = Query("linkedin_connect"),
+    language: str = Query("en"),
+    tone: str = Query("concise"),
+    product_focus: str = Query("general"),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> OutreachDraftOut:
+    """Generate copy-only outreach draft from company + live workflow segments (D5.2.4)."""
+    company = db.query(Company).filter(Company.id == company_id, Company.is_active.is_(True)).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    contact = None
+    lead = (
+        db.query(Lead)
+        .filter(Lead.company_id == company_id, Lead.is_active.is_(True))
+        .order_by(Lead.created_at.desc())
+        .first()
+    )
+    segments: list[str] = []
+    if lead:
+        if lead.primary_contact_id:
+            contact = db.query(Contact).filter(Contact.id == lead.primary_contact_id).first()
+        mi_count = (
+            db.query(MarketIntelligenceItem)
+            .filter(MarketIntelligenceItem.related_company_id == company.id)
+            .count()
+        )
+        intel = compute_intelligence_score(
+            IntelligenceScoreInput(
+                has_primary_contact=contact is not None,
+                market_intel_count=mi_count,
+                product_interest_tags=company.product_interest_tags,
+                business_description=company.business_description,
+                lead_product_interest=lead.product_interest if lead else None,
+                lead_priority=lead.priority if lead else None,
+                company_strategic_level=company.strategic_level,
+            )
+        )
+        segments = intel.market_fit_segments
+
+    contact_name = None
+    if contact:
+        contact_name = f"{contact.first_name} {contact.last_name}".strip()
+
+    try:
+        draft = generate_outreach_draft(
+            company_name=company.company_name,
+            segments=segments,
+            contact_name=contact_name,
+            channel=channel,
+            language=language,
+            tone=tone,
+            product_focus=product_focus,
+            notes=company.notes,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+    return OutreachDraftOut(
+        channel=draft.channel,
+        language=draft.language,
+        tone=draft.tone,
+        product_focus=draft.product_focus,
+        company_name=draft.company_name,
+        segments=draft.segments,
+        linkedin_connect_note=draft.linkedin_connect_note,
+        email_subject=draft.email_subject,
+        email_body=draft.email_body,
+        suggested_next_action=draft.suggested_next_action,
+        suggested_touchpoint_type=draft.suggested_touchpoint_type,
+    )
