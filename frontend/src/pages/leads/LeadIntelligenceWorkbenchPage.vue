@@ -428,6 +428,8 @@
 
             <QuoteHandoffCard :lead-id="selectedLeadId" />
 
+            <QuoteInputContractCard :lead-id="selectedLeadId" />
+
             <ProductAwareDraftPanel :lead-id="selectedLeadId" />
 
             <el-card shadow="never" class="mb-4">
@@ -575,6 +577,7 @@ import FollowUpScheduler from '@/components/leads/FollowUpScheduler.vue'
 import ProductFitCard from '@/components/leads/ProductFitCard.vue'
 import PreQuotePrepCard from '@/components/leads/PreQuotePrepCard.vue'
 import QuoteHandoffCard from '@/components/leads/QuoteHandoffCard.vue'
+import QuoteInputContractCard from '@/components/leads/QuoteInputContractCard.vue'
 import ProductAwareDraftPanel from '@/components/leads/ProductAwareDraftPanel.vue'
 import ProductOpportunityBoard from '@/components/leads/ProductOpportunityBoard.vue'
 import type { ProductOpportunityFilterKey } from '@/constants/productOpportunity'

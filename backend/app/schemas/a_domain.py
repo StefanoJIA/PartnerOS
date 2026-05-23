@@ -570,3 +570,82 @@ class QuoteHandoffBoardResponse(BaseModel):
     safety: PreQuoteSafetyOut = Field(default_factory=PreQuoteSafetyOut)
     warnings: list[str] = Field(default_factory=list)
     degraded: bool = False
+
+
+class QuoteInputCustomerOut(BaseModel):
+    company_name: str
+    contact_name: str | None = None
+    contact_method_available: bool = False
+
+
+class QuoteInputProductIntentOut(BaseModel):
+    product_focus: list[str] = Field(default_factory=list)
+    project_type: str = "unknown"
+    sample_readiness: str = "not_ready"
+    quote_readiness: str = "not_ready"
+
+
+class QuoteInputKnownRequirementsOut(BaseModel):
+    quantity_or_volume: str | None = None
+    product_type: str | None = None
+    frame_size_or_desktop_size: str | None = None
+    load_capacity_requirement: str | None = None
+    color_or_finish: str | None = None
+    delivery_location: str | None = None
+    project_timeline: str | None = None
+    certification_requirement: str | None = None
+    sample_quantity: str | None = None
+    oem_customization_requirement: str | None = None
+    component_category: str | None = None
+
+
+class QuoteInputFieldsOut(BaseModel):
+    customer: QuoteInputCustomerOut
+    product_intent: QuoteInputProductIntentOut
+    known_requirements: QuoteInputKnownRequirementsOut
+    missing_requirements: list[str] = Field(default_factory=list)
+    recommended_questions: list[str] = Field(default_factory=list)
+    supplier_preparation_notes: list[str] = Field(default_factory=list)
+
+
+class QuoteInputContractOut(BaseModel):
+    """D5.19 — quote input contract for Phase 2 handoff (read-only, no quote creation)."""
+
+    lead_id: str
+    company_name: str
+    handoff_status: str
+    quote_module_readiness: str
+    recommended_partner_route: list[str] = Field(default_factory=list)
+    recommended_product_scope: list[str] = Field(default_factory=list)
+    quote_input_fields: QuoteInputFieldsOut
+    copyable_json: str
+    copyable_handoff_summary: str
+    safety: PreQuoteSafetyOut = Field(default_factory=PreQuoteSafetyOut)
+    warnings: list[str] = Field(default_factory=list)
+
+
+class QuoteInputContractBoardRowOut(BaseModel):
+    lead_id: str
+    company_name: str
+    handoff_status: str
+    quote_module_readiness: str
+    recommended_partner_route: list[str] = Field(default_factory=list)
+    missing_requirements_count: int = 0
+
+
+class QuoteInputContractBoardSummaryOut(BaseModel):
+    total: int = 0
+    ready_for_phase2_quote_draft: int = 0
+    needs_more_customer_info: int = 0
+    not_quote_ready: int = 0
+    lifting_system_route: int = 0
+    jooboo_route: int = 0
+    project_supply_route: int = 0
+    oem_odm_route: int = 0
+
+
+class QuoteInputContractBoardResponse(BaseModel):
+    summary: QuoteInputContractBoardSummaryOut
+    rows: list[QuoteInputContractBoardRowOut]
+    warnings: list[str] = Field(default_factory=list)
+    degraded: bool = False

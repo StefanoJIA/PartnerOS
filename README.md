@@ -51,6 +51,7 @@ python scripts/smoke_all_d5.py
 python scripts/d5_16_real_lead_uat_check.py   # D5.16 real lead UAT (read-only)
 python scripts/d5_17_rule_tuning_check.py     # D5.17 product rule tuning
 python scripts/quote_handoff_check.py         # D5.18 soft quote handoff
+python scripts/d5_19_quote_input_contract_check.py  # D5.19 quote input contract UAT
 ```
 
 ### Port 8000 (legacy)
@@ -88,6 +89,7 @@ First-time setup: `python scripts/init_local_env.py` → edit `backend/.env` →
 | **Pre-quote & sample prep** | **`/lead-intelligence`** · Pre-Quote Prep Card (D5.14) |
 | **Product-aware discovery draft** | **`/lead-intelligence`** · Product-Aware Draft panel (D5.15) |
 | **Soft quote handoff** | **`/lead-intelligence`** · Soft Quote Handoff panel (D5.18) |
+| **Quote input contract** | **`/lead-intelligence`** · Quote Input Contract panel (D5.19) |
 | **Daily ops dashboard** | **`/`** · Daily Operations + Recent Activity + End-of-Day Summary (D5.8–D5.10) |
 | Lead import preview (CLI) | `backend/scripts/lead_import_preview.py` |
 | Outreach draft | Generate Draft in Lead Intelligence |

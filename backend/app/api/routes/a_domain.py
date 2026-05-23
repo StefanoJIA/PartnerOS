@@ -60,6 +60,10 @@ from app.schemas.a_domain import (
     QuoteHandoffBoardResponse,
     QuoteHandoffBoardRowOut,
     QuoteHandoffBoardSummaryOut,
+    QuoteInputContractOut,
+    QuoteInputContractBoardResponse,
+    QuoteInputContractBoardRowOut,
+    QuoteInputContractBoardSummaryOut,
     LeadIntelligenceWorkflowOut,
     OutreachDraftOut,
     TouchpointCreate,
@@ -108,6 +112,10 @@ from app.services.a_domain.product_fit_board import (
 from app.services.a_domain.quote_handoff_board import (
     build_quote_handoff_board,
     build_quote_handoff_for_lead,
+)
+from app.services.a_domain.quote_input_contract_board import (
+    build_quote_input_contract_board,
+    build_quote_input_contract_for_lead,
 )
 
 router = APIRouter(prefix="/a-domain", tags=["a-domain-intelligence"])
@@ -589,6 +597,42 @@ def get_lead_quote_handoff_brief(
     if not raw:
         raise HTTPException(status_code=404, detail="Lead not found")
     return QuoteHandoffBriefOut(**raw)
+
+
+@router.get("/leads/{lead_id}/quote-input-contract", response_model=QuoteInputContractOut)
+def get_lead_quote_input_contract(
+    lead_id: UUID,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> QuoteInputContractOut:
+    """Read-only quote input contract for Phase 2 handoff boundary (D5.19)."""
+    raw = build_quote_input_contract_for_lead(db, lead_id)
+    if not raw:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    return QuoteInputContractOut(**raw)
+
+
+@router.get("/quote-input-contract-board", response_model=QuoteInputContractBoardResponse)
+def get_quote_input_contract_board(
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> QuoteInputContractBoardResponse:
+    """Read-only quote input contract board for all active leads (D5.19)."""
+    try:
+        raw = build_quote_input_contract_board(db)
+        return QuoteInputContractBoardResponse(
+            summary=QuoteInputContractBoardSummaryOut(**raw["summary"]),
+            rows=[QuoteInputContractBoardRowOut(**r) for r in raw["rows"]],
+            warnings=raw.get("warnings") or [],
+            degraded=False,
+        )
+    except Exception:
+        return QuoteInputContractBoardResponse(
+            summary=QuoteInputContractBoardSummaryOut(),
+            rows=[],
+            warnings=["Quote input contract board unavailable. Check backend and database status."],
+            degraded=True,
+        )
 
 
 @router.get("/quote-handoff-board", response_model=QuoteHandoffBoardResponse)
