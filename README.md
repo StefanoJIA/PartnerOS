@@ -68,6 +68,7 @@ First-time setup: `python scripts/init_local_env.py` → edit `backend/.env` →
 | **Lead intake (CSV)** | **`/lead-intake`** · template: `docs/templates/lead_import_template.csv` |
 | **Lead completeness** | **`/lead-intelligence`** · Lead Completeness section (D5.4) |
 | **Contact research (in-place edit)** | **`/lead-intelligence`** · Research / Edit drawer (D5.5) |
+| **Outreach history timeline** | **`/lead-intelligence`** · Outreach History panel (D5.6) |
 | Lead import preview (CLI) | `backend/scripts/lead_import_preview.py` |
 | Outreach draft | Generate Draft in Lead Intelligence |
 | Portal readiness | `/system-health` · `portal_readiness_check.py` |

@@ -128,3 +128,34 @@ export async function postContactResearch(leadId: string, body: ContactResearchP
   }>(`/a-domain/leads/${leadId}/contact-research`, body)
   return data
 }
+
+export type LeadTimelineItem = {
+  id: string
+  timestamp: string | null
+  type: string
+  channel: string
+  title: string
+  summary?: string | null
+  is_manual_send: boolean
+  is_contact_research: boolean
+}
+
+export type LeadTimeline = {
+  lead_id: string
+  company_name: string
+  next_action?: string | null
+  last_touchpoint_at?: string | null
+  follow_up_hint: string
+  items: LeadTimelineItem[]
+  stats: {
+    total_touchpoints: number
+    manual_sent_count: number
+    contact_research_count: number
+    last_channel?: string | null
+  }
+}
+
+export async function fetchLeadTimeline(leadId: string) {
+  const { data } = await http.get<LeadTimeline>(`/a-domain/leads/${leadId}/timeline`)
+  return data
+}

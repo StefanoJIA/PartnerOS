@@ -444,6 +444,8 @@
               @draft-status="onDraftStatus"
               @marked-sent="onMarkedSent"
             />
+
+            <OutreachHistoryTimeline ref="timelineRef" :lead-id="selectedLeadId" />
           </el-col>
         </el-row>
       </template>
@@ -501,6 +503,7 @@ import {
 } from '@/constants/touchpointPresets'
 import OutreachDraftPanel from '@/components/outreach/OutreachDraftPanel.vue'
 import ContactResearchDrawer from '@/components/leads/ContactResearchDrawer.vue'
+import OutreachHistoryTimeline from '@/components/leads/OutreachHistoryTimeline.vue'
 import { formatApiError } from '@/api/errors'
 
 type ContactResearchInitial = {
@@ -574,6 +577,11 @@ const draftStatusByLead = ref<Record<string, DraftStatus>>({})
 const recentInteractions = ref<InteractionBrief[]>([])
 const contactResearchVisible = ref(false)
 const contactResearchRow = ref<CompletenessRow | null>(null)
+const timelineRef = ref<{ reload: () => Promise<void> } | null>(null)
+
+async function refreshTimeline() {
+  await timelineRef.value?.reload()
+}
 
 const SEGMENT_AND_LEGACY_FILTER_OPTIONS = [...SEGMENT_FILTER_OPTIONS, ...LEGACY_QUEUE_FILTER_OPTIONS]
 
@@ -717,6 +725,7 @@ async function onContactResearchSaved() {
     selectedLeadId.value = id
     await loadWorkflow(id)
   }
+  await refreshTimeline()
 }
 
 function applyContactResearchTouchPreset() {
@@ -943,6 +952,7 @@ async function onMarkedSent() {
   draftStatusByLead.value[selectedLeadId.value] = 'sent'
   await loadWorkflow(selectedLeadId.value)
   await loadReviewBoard()
+  await refreshTimeline()
 }
 
 async function submitTouchpoint() {
@@ -956,6 +966,7 @@ async function submitTouchpoint() {
     ElMessage.success('Touchpoint saved — next action updated.')
     await loadWorkflow(selectedLeadId.value)
     await loadReviewBoard()
+    await refreshTimeline()
   } catch (e: unknown) {
     ElMessage.error('保存失败')
     console.error(e)

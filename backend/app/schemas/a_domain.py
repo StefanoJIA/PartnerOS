@@ -166,3 +166,31 @@ class ContactResearchResponse(BaseModel):
     lead_id: str
     interaction_id: str
     completeness: LeadCompletenessRowOut
+
+
+class LeadTimelineItemOut(BaseModel):
+    id: str
+    timestamp: str | None
+    type: str
+    channel: str
+    title: str
+    summary: str | None = None
+    is_manual_send: bool = False
+    is_contact_research: bool = False
+
+
+class LeadTimelineStatsOut(BaseModel):
+    total_touchpoints: int
+    manual_sent_count: int
+    contact_research_count: int
+    last_channel: str | None = None
+
+
+class LeadTimelineOut(BaseModel):
+    lead_id: str
+    company_name: str
+    next_action: str | None = None
+    last_touchpoint_at: str | None = None
+    follow_up_hint: str
+    items: list[LeadTimelineItemOut]
+    stats: LeadTimelineStatsOut

@@ -23,6 +23,9 @@ from app.schemas.a_domain import (
     LeadCompletenessSummaryOut,
     ContactResearchRequest,
     ContactResearchResponse,
+    LeadTimelineOut,
+    LeadTimelineItemOut,
+    LeadTimelineStatsOut,
     LeadIntelligenceWorkflowOut,
     OutreachDraftOut,
     TouchpointCreate,
@@ -41,6 +44,7 @@ from app.services.a_domain.lead_completeness_board import (
     summarize_completeness,
 )
 from app.services.a_domain.contact_research_service import apply_contact_research
+from app.services.a_domain.lead_timeline import build_lead_timeline
 
 router = APIRouter(prefix="/a-domain", tags=["a-domain-intelligence"])
 
@@ -360,4 +364,26 @@ def post_lead_contact_research(
         lead_id=result["lead_id"],
         interaction_id=result["interaction_id"],
         completeness=_completeness_row_out(comp),
+    )
+
+
+@router.get("/leads/{lead_id}/timeline", response_model=LeadTimelineOut)
+def get_lead_timeline(
+    lead_id: UUID,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> LeadTimelineOut:
+    """Read-only outreach history timeline (D5.6 — manual actions only)."""
+    try:
+        raw = build_lead_timeline(db, lead_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    return LeadTimelineOut(
+        lead_id=raw["lead_id"],
+        company_name=raw["company_name"],
+        next_action=raw.get("next_action"),
+        last_touchpoint_at=raw.get("last_touchpoint_at"),
+        follow_up_hint=raw["follow_up_hint"],
+        items=[LeadTimelineItemOut(**i) for i in raw["items"]],
+        stats=LeadTimelineStatsOut(**raw["stats"]),
     )
