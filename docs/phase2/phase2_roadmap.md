@@ -21,8 +21,8 @@ Phase 2 builds the formal **Customer Quote** system for intelliOffice. It does *
 
 | Stage | Name | Deliverables | Implementation |
 |---|---|---|---|
-| **D6.1** | Quote Schema & API Design Review | Schema proposal, API surface, safety rules, D5 gate | **Design only** ✅ |
-| **D6.2** | Product Catalog & Pricing Foundation | SKU, price tiers, exchange rates, partner price lists | DB + API + seed |
+| **D6.1** | Quote Schema & API Design Review | Excel pricing extraction, full schema, API, PDF, permissions | **Design only** ✅ |
+| **D6.2** | Product Catalog & Pricing Foundation | catalog, tiers, FX, cost models, margin strategy, pricing service tests | DB + API |
 | **D6.3** | Quote Builder MVP | Create from lead, multi-partner lines, pricing validation | UI + `/api/v1/quotes/*` |
 | **D6.4** | Quote PDF Export | Customer PDF template, internal vs external views | PDF service |
 | **D6.5** | Quote Versioning & Send Tracking | Revisions, send events, acceptance | Workflow + audit |
