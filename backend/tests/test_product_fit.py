@@ -57,8 +57,8 @@ def test_project_segment_ranks_before_education_when_both():
     )
     focus = result["recommended_product_focus"]
     assert "project_supply" in focus
-    assert "jooboo_education_furniture" in focus
-    assert focus.index("project_supply") < focus.index("jooboo_education_furniture")
+    assert focus[0] == "project_supply"
+    assert "jooboo_education_furniture" not in focus
 
 
 def test_medical_vertical_returns_medical_workspace():
@@ -137,6 +137,7 @@ def test_missing_quote_info_sensible_keys():
         "contact_email_or_linkedin",
         "product_type",
         "quantity_or_volume",
+        "frame_size_or_desktop_size",
         "desktop/frame size",
         "load_capacity_requirement",
         "color_or_finish",
@@ -146,9 +147,20 @@ def test_missing_quote_info_sensible_keys():
         "sample_quantity",
         "target_price_or_budget",
         "decision_maker_role",
+        "component_type",
+        "control_system_requirement",
+        "installation_or_packaging_need",
+        "classroom_or_campus_use_case",
+        "rfp_or_procurement_timeline",
+        "volume_estimate",
+        "workstation_use_case",
+        "stability_or_load_requirement",
+        "component_category",
+        "customization_requirement",
     }
     for key in result["missing_quote_info"]:
         assert key in allowed
+    assert len(result["missing_quote_info"]) <= 6
 
 
 def test_no_price_stock_certification_promises():

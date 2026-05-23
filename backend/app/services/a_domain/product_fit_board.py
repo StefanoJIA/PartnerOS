@@ -51,6 +51,10 @@ def build_product_fit_for_lead(db: Session, lead_id: UUID) -> dict[str, Any] | N
             lead_product_interest=lead.product_interest,
             lead_priority=lead.priority,
             company_strategic_level=company.strategic_level,
+            company_notes=company.notes,
+            lead_notes=lead.notes,
+            company_type=company.company_type,
+            industry=company.industry,
         )
     )
 

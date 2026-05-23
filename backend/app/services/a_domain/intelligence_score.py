@@ -115,6 +115,36 @@ EDUCATION_SIGNALS: frozenset[str] = frozenset(
     }
 )
 
+EDUCATION_STRONG_SIGNALS: frozenset[str] = frozenset(
+    {
+        "school furniture",
+        "classroom",
+        "campus furniture",
+        "student desk",
+        "training room",
+        "university procurement",
+        "school district",
+        "learning space",
+        "classroom project",
+        "education procurement",
+        "campus procurement",
+        "education rfp",
+        "rfp for education",
+    }
+)
+
+EDUCATION_WEAK_SIGNALS: frozenset[str] = frozenset(
+    {
+        "jooboo",
+        "jooboo education",
+        "education option",
+        "school furniture line",
+        "education catalog",
+        "also provide school",
+        "education line also",
+    }
+)
+
 # Dealer/reseller context: weak "adjustable desk frame" alone → general office, not lift (D5.2.6 pilot)
 DEALER_SUPPLY_SIGNALS: frozenset[str] = frozenset(
     {
@@ -163,6 +193,10 @@ class IntelligenceScoreInput:
     lead_product_interest: str | None
     lead_priority: str | None
     company_strategic_level: str | None
+    company_notes: str | None = None
+    lead_notes: str | None = None
+    company_type: str | None = None
+    industry: str | None = None
 
 
 @dataclass(frozen=True)
@@ -180,6 +214,10 @@ def _text_blob(inp: IntelligenceScoreInput) -> str:
         inp.product_interest_tags or "",
         inp.business_description or "",
         inp.lead_product_interest or "",
+        inp.company_notes or "",
+        inp.lead_notes or "",
+        inp.company_type or "",
+        inp.industry or "",
     ]
     return " \n ".join(parts).lower()
 
@@ -228,6 +266,27 @@ def _dealer_general_over_weak_lift(blob: str) -> bool:
     return not _any_signal(blob, LIFT_STRONG_PHRASES)
 
 
+def _education_vertical_present(blob: str) -> bool:
+    """Primary education only — weak JOOBOO cross-sell must not tag education_vertical (D5.17)."""
+    if _any_signal(blob, EDUCATION_STRONG_SIGNALS):
+        return True
+    has_project = _any_signal(blob, PROJECT_BASED_FURNITURE_SIGNALS) or (
+        "project" in blob and ("furniture" in blob or "ff&e" in blob or "ffe" in blob)
+    )
+    has_lift = _lift_system_signal_present(blob)
+    if _any_signal(blob, EDUCATION_WEAK_SIGNALS):
+        return False
+    if "education furniture" in blob or "school furniture" in blob:
+        if has_project or has_lift:
+            return False
+        return True
+    if _any_signal(blob, EDUCATION_SIGNALS):
+        if has_project and not _any_signal(blob, EDUCATION_STRONG_SIGNALS):
+            return False
+        return True
+    return False
+
+
 def infer_market_fit_segments(blob: str) -> list[str]:
     """
     Explainable segment tags (API-stable slugs). Overlapping is allowed — except
@@ -240,7 +299,7 @@ def infer_market_fit_segments(blob: str) -> list[str]:
         segments.append("oem_odm_fit")
     if _any_signal(blob, MEDICAL_SIGNALS):
         segments.append("medical_vertical")
-    if _any_signal(blob, EDUCATION_SIGNALS):
+    if _education_vertical_present(blob):
         segments.append("education_vertical")
     if _any_signal(blob, HEAVY_DUTY_SIGNALS):
         segments.append("heavy_duty_fit")
@@ -251,7 +310,7 @@ def infer_market_fit_segments(blob: str) -> list[str]:
     has_stronger_vertical = (
         _oem_odm_fit_present(blob)
         or _any_signal(blob, MEDICAL_SIGNALS)
-        or _any_signal(blob, EDUCATION_SIGNALS)
+        or _education_vertical_present(blob)
         or _any_signal(blob, HEAVY_DUTY_SIGNALS)
         or _any_signal(blob, PROJECT_BASED_FURNITURE_SIGNALS)
     )
@@ -267,7 +326,7 @@ def infer_market_fit_segments(blob: str) -> list[str]:
         has_stronger_vertical = (
             _oem_odm_fit_present(blob)
             or _any_signal(blob, MEDICAL_SIGNALS)
-            or _any_signal(blob, EDUCATION_SIGNALS)
+            or _education_vertical_present(blob)
             or _any_signal(blob, HEAVY_DUTY_SIGNALS)
             or _any_signal(blob, PROJECT_BASED_FURNITURE_SIGNALS)
         )

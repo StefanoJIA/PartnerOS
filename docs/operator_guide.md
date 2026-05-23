@@ -148,6 +148,7 @@ python scripts/daily_work_summary.py
 | `pre_quote_brief_check.py` | Pre-quote brief smoke（D5.14） |
 | `product_aware_draft_check.py` | Product-aware draft smoke（D5.15） |
 | `d5_16_real_lead_uat_check.py` | Real lead UAT API coverage（D5.16） |
+| `d5_17_rule_tuning_check.py` | Lifting / product rule tuning regression（D5.17） |
 | `portal_readiness_check.py` | Portal v1 端点 |
 | `portal_consumer_check.py` | 外部 Portal 契约 |
 

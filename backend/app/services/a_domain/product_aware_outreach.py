@@ -178,19 +178,20 @@ def _questions_for(inp: ProductAwareDraftInput, ctx: str) -> list[str]:
                 q = missing_labels.get(key)
                 if q and q not in base:
                     base.append(q)
-        return base[:5]
+        return base[:4]
     base: list[str] = []
-    if ctx in ("hosun_lifting_systems", "adjustable_desk_frames", "lifting_columns"):
+    if ctx in ("hosun_lifting_systems", "adjustable_desk_frames", "lifting_columns", "desk_legs"):
         base = [
-            "Are you looking for complete adjustable desk frames, desk legs, or lifting components?",
+            "Are you looking for complete adjustable desk frames, desk legs, lifting columns, or component-level systems?",
             "Is this for dealer supply, a specific project, or OEM/ODM development?",
-            "Do you have target load capacity, frame size, or color requirements?",
+            "What quantity range and timeline should we consider?",
+            "Are there load capacity, frame size, color, or finish requirements?",
         ]
     elif ctx == "project_supply":
         base = [
-            "Is this tied to a specific office buildout or FF&E project?",
-            "What quantity range and project timeline should we consider?",
-            "Would a sample or technical spec sheet help the next discussion?",
+            "Is this tied to a specific FF&E or office buildout project?",
+            "What quantity range and timeline should we consider?",
+            "Would a catalog, spec sheet, or sample discussion help the next step?",
         ]
     elif ctx == "jooboo_education_furniture":
         base = [
@@ -201,6 +202,7 @@ def _questions_for(inp: ProductAwareDraftInput, ctx: str) -> list[str]:
         base = [
             "Are you looking for private label, component sourcing, or custom development?",
             "Which components are most relevant: lifting columns, desk legs, frames, or control systems?",
+            "What volume range and customization requirements should we consider?",
         ]
     elif ctx == "medical_workspace":
         base = [
@@ -220,13 +222,13 @@ def _questions_for(inp: ProductAwareDraftInput, ctx: str) -> list[str]:
             "load_capacity_requirement": "Are there load capacity requirements we should note?",
             "product_type": "Which product type is most relevant: frames, columns, legs, or components?",
         }
-        for key in inp.missing_quote_info[:3]:
+        for key in inp.missing_quote_info[:2]:
             q = missing_labels.get(key)
             if q and q not in base:
                 base.append(q)
-    if inp.draft_purpose == "sample_discussion":
-        base = _ensure_sample_questions(base)
-    return base[:5]
+    base = _ensure_sample_questions(base)
+    max_q = 2 if inp.channel.startswith("linkedin") else 4
+    return base[:max_q]
 
 
 def _intro_line(tone: str) -> str:
