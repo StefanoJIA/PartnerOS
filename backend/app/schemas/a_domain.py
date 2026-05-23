@@ -57,3 +57,51 @@ class OutreachDraftOut(BaseModel):
     email_body: str | None = None
     suggested_next_action: str
     suggested_touchpoint_type: str
+
+
+class LeadIntakePreviewRequest(BaseModel):
+    csv_text: str = Field(..., min_length=1)
+
+
+class LeadIntakePreviewRowOut(BaseModel):
+    row_number: int
+    company_name: str
+    contact_name: str
+    website: str
+    company_type: str
+    source: str
+    likely_segments: list[str]
+    priority_hint: str
+    missing_fields: list[str]
+    duplicate_status: str
+    recommended_next_action: str
+    status: str
+    warnings: list[str] = Field(default_factory=list)
+
+
+class LeadIntakePreviewSummaryOut(BaseModel):
+    total: int
+    ok: int
+    warnings: int
+    errors: int
+    duplicates: int
+    ready_to_import: int
+
+
+class LeadIntakePreviewResponse(BaseModel):
+    rows: list[LeadIntakePreviewRowOut]
+    summary: LeadIntakePreviewSummaryOut
+    header_warnings: list[str] = Field(default_factory=list)
+
+
+class LeadIntakeApplyRequest(BaseModel):
+    csv_text: str = Field(..., min_length=1)
+    confirm: bool = False
+
+
+class LeadIntakeApplyResponse(BaseModel):
+    created_companies: int
+    skipped_duplicates: int
+    created_contacts: int
+    linked_leads: int
+    warnings: list[str] = Field(default_factory=list)

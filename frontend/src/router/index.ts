@@ -20,6 +20,7 @@ const router = createRouter({
         { path: 'system-health', name: 'system-health', component: () => import('@/pages/system/SystemHealthPage.vue') },
         { path: 'portal-consumer-mock', name: 'portal-consumer-mock', component: () => import('@/pages/system/PortalConsumerMockPage.vue') },
         { path: 'lead-intelligence', name: 'lead-intelligence', component: () => import('@/pages/leads/LeadIntelligenceWorkbenchPage.vue') },
+        { path: 'lead-intake', name: 'lead-intake', component: () => import('@/pages/leads/LeadIntakePage.vue') },
         { path: 'companies', name: 'companies', component: () => import('@/pages/companies/CompaniesPage.vue') },
         { path: 'companies/:companyId', name: 'company-detail', component: () => import('@/pages/companies/CompanyDetailPage.vue') },
         { path: 'contacts', name: 'contacts', component: () => import('@/pages/contacts/ContactsPage.vue') },

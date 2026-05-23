@@ -5,16 +5,32 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models import Company, Contact, Interaction, Lead, MarketIntelligenceItem, User
-from app.schemas.a_domain import LeadIntelligenceWorkflowOut, OutreachDraftOut, TouchpointCreate
+from app.schemas.a_domain import (
+    LeadIntakeApplyRequest,
+    LeadIntakeApplyResponse,
+    LeadIntakePreviewRequest,
+    LeadIntakePreviewResponse,
+    LeadIntakePreviewRowOut,
+    LeadIntakePreviewSummaryOut,
+    LeadIntelligenceWorkflowOut,
+    OutreachDraftOut,
+    TouchpointCreate,
+)
 from app.schemas.crm import CompanyDetailOut, ContactOut, LeadOut
 from app.services.activity import log_activity
 from app.services.a_domain.intelligence_score import IntelligenceScoreInput, compute_intelligence_score
 from app.services.a_domain.outreach_templates import generate_outreach_draft
+from app.services.a_domain.lead_import_service import (
+    apply_lead_csv_text,
+    get_template_csv,
+    preview_lead_csv_text,
+)
 
 router = APIRouter(prefix="/a-domain", tags=["a-domain-intelligence"])
 
@@ -194,4 +210,82 @@ def get_outreach_draft(
         email_body=draft.email_body,
         suggested_next_action=draft.suggested_next_action,
         suggested_touchpoint_type=draft.suggested_touchpoint_type,
+    )
+
+
+def _preview_to_response(result) -> LeadIntakePreviewResponse:
+    return LeadIntakePreviewResponse(
+        rows=[
+            LeadIntakePreviewRowOut(
+                row_number=r.row_number,
+                company_name=r.company_name,
+                contact_name=r.contact_name,
+                website=r.website,
+                company_type=r.company_type,
+                source=r.source,
+                likely_segments=r.likely_segments,
+                priority_hint=r.priority_hint,
+                missing_fields=r.missing_fields,
+                duplicate_status=r.duplicate_status,
+                recommended_next_action=r.recommended_next_action,
+                status=r.status,
+                warnings=r.warnings,
+            )
+            for r in result.rows
+        ],
+        summary=LeadIntakePreviewSummaryOut(
+            total=result.summary.total,
+            ok=result.summary.ok,
+            warnings=result.summary.warnings,
+            errors=result.summary.errors,
+            duplicates=result.summary.duplicates,
+            ready_to_import=result.summary.ready_to_import,
+        ),
+        header_warnings=result.header_warnings,
+    )
+
+
+@router.get("/lead-intake/template", response_class=PlainTextResponse)
+def get_lead_intake_template(_: User = Depends(get_current_user)) -> PlainTextResponse:
+    """Download CSV template (fictional examples only)."""
+    return PlainTextResponse(
+        content=get_template_csv(),
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="lead_import_template.csv"'},
+    )
+
+
+@router.post("/lead-intake/preview", response_model=LeadIntakePreviewResponse)
+def post_lead_intake_preview(
+    body: LeadIntakePreviewRequest,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> LeadIntakePreviewResponse:
+    """Preview CSV rows — read-only, no DB writes (D5.3)."""
+    try:
+        result = preview_lead_csv_text(db, body.csv_text)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    return _preview_to_response(result)
+
+
+@router.post("/lead-intake/apply", response_model=LeadIntakeApplyResponse)
+def post_lead_intake_apply(
+    body: LeadIntakeApplyRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> LeadIntakeApplyResponse:
+    """Confirm import — human-reviewed only, no automatic outreach (D5.3)."""
+    if not body.confirm:
+        raise HTTPException(status_code=400, detail="confirm must be true to import leads")
+    try:
+        result = apply_lead_csv_text(db, user, body.csv_text, confirm=body.confirm)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    return LeadIntakeApplyResponse(
+        created_companies=result.created_companies,
+        skipped_duplicates=result.skipped_duplicates,
+        created_contacts=result.created_contacts,
+        linked_leads=result.linked_leads,
+        warnings=result.warnings,
     )

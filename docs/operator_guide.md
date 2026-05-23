@@ -51,16 +51,17 @@ python scripts/check_backend_runtime.py
 ## Daily Workflow
 
 1. 登录 `/login`（seed 凭据见 README，**勿在记录中写密码**）
-2. 打开 `/lead-intelligence`
-3. 查看 **Daily Summary** cards
-4. 筛选 **High Priority** → 优先处理
-5. 筛选 **Needs First Outreach** → 首次外联
-6. 筛选 **Waiting for Reply** → 跟进已发送未回复
-7. 选择 lead → **Generate Draft**
-8. **Copy Draft** → 在 LinkedIn / Email **系统外**粘贴发送
-9. 回到系统 → **Mark as Sent**（仅记录，不自动发送）
-10. 确认 **next action** 已更新
-11. 每日结束（可选 CLI）：
+2. **（新 lead）** 打开 `/lead-intake` → 粘贴或上传 CSV → **Preview** → 检查 missing / duplicate / segment → **Confirm Import**
+3. 打开 `/lead-intelligence`
+4. 查看 **Daily Summary** cards
+5. 筛选 **High Priority** → 优先处理
+6. 筛选 **Needs First Outreach** → 首次外联
+7. 筛选 **Waiting for Reply** → 跟进已发送未回复
+8. 选择 lead → **Generate Draft**
+9. **Copy Draft** → 在 LinkedIn / Email **系统外**粘贴发送
+10. 回到系统 → **Mark as Sent**（仅记录，不自动发送）
+11. 确认 **next action** 已更新
+12. 每日结束（可选 CLI）：
 
 ```powershell
 cd backend
@@ -73,6 +74,7 @@ python scripts/daily_outreach_summary.py
 | URL | Purpose |
 |-----|---------|
 | `/login` | 登录 |
+| `/lead-intake` | CSV lead 导入与批量预检（D5.3） |
 | `/lead-intelligence` | 每日跟进工作台 |
 | `/system-health` | 系统与 Portal readiness |
 | `/portal-consumer-mock` | 模拟外部 Portal 只读消费 |

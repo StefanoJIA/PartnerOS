@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import io
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -41,18 +42,25 @@ class LeadRowPreview:
     raw: dict[str, str] = field(default_factory=dict)
 
 
+def parse_csv_text(csv_text: str) -> tuple[list[str], list[dict[str, str]]]:
+    """Parse CSV from in-memory text (UTF-8 with optional BOM)."""
+    if not (csv_text or "").strip():
+        raise ValueError("CSV text is empty")
+    f = io.StringIO(csv_text.lstrip("\ufeff"))
+    reader = csv.DictReader(f)
+    if not reader.fieldnames:
+        raise ValueError("CSV has no header row")
+    headers = [h.strip() for h in reader.fieldnames if h]
+    rows: list[dict[str, str]] = []
+    for row in reader:
+        cleaned = {k.strip(): (v or "").strip() for k, v in row.items() if k}
+        if any(cleaned.values()):
+            rows.append(cleaned)
+    return headers, rows
+
+
 def read_csv_rows(path: Path) -> tuple[list[str], list[dict[str, str]]]:
-    with path.open(newline="", encoding="utf-8-sig") as f:
-        reader = csv.DictReader(f)
-        if not reader.fieldnames:
-            raise ValueError("CSV has no header row")
-        headers = [h.strip() for h in reader.fieldnames if h]
-        rows: list[dict[str, str]] = []
-        for row in reader:
-            cleaned = {k.strip(): (v or "").strip() for k, v in row.items() if k}
-            if any(cleaned.values()):
-                rows.append(cleaned)
-        return headers, rows
+    return parse_csv_text(path.read_text(encoding="utf-8-sig"))
 
 
 def validate_headers(headers: list[str]) -> list[str]:
