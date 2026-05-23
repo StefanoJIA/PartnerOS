@@ -1,7 +1,7 @@
 # intelliOffice Operator Guide
 
 **Audience:** 内部运营 / 客户开发 / 演示人员  
-**Release:** D5.2 Internal MVP · **Not Phase 2**
+**Release:** D5 Final MVP (closed) · **Not Phase 2**
 
 ## Daily Startup
 
@@ -79,6 +79,27 @@ Stop-Process -Id <PID> -Force
 ```
 
 Fallback：`$env:BACKEND_BASE_URL="http://127.0.0.1:8013"` 与相同 `VITE_API_PROXY_TARGET`。
+
+## D5 Final Daily Workflow
+
+D5 is closed — use this as the standard daily operator path:
+
+1. **Import leads** — `/lead-intake` → Preview → Confirm Import
+2. **Check completeness** — `/lead-intelligence` → Lead Completeness filters
+3. **Research contacts** — Needs Contact Research → Research / Edit drawer
+4. **Review product fit** — Product Fit card per lead
+5. **Review product opportunity** — Product Opportunity Board filters
+6. **Generate pre-quote questions** — Pre-Quote & Sample Prep → Copy brief / questions
+7. **Generate product-aware draft** — Product-Aware Draft panel
+8. **Send manually outside intelliOffice** — Copy draft → LinkedIn / Email client
+9. **Mark as sent** — Record touchpoint in Lead Intelligence
+10. **Set follow-up** — Follow-up Scheduler + queue filters
+11. **Review timeline** — Outreach History timeline
+12. **Quote handoff when ready** — Soft Quote Handoff → Copy brief / supplier notes
+13. **Quote input contract when ready** — Quote Input Contract → Copy summary / JSON (Phase 2 handoff only; no quote created)
+14. **End-of-day summary** — Dashboard → Copy Summary
+
+**Safety:** All outreach is human-reviewed. Quote handoff and input contract are advisory only — no pricing, inventory, certification, or lead-time commitments.
 
 ## Daily Workflow
 
@@ -176,6 +197,10 @@ python scripts/daily_work_summary.py
 
 ## Further Reading
 
+- [D5 Final MVP Release](releases/d5_final_mvp_release_20260523.md)
+- [D5 Final Closure Record](records/d5_final_closure_20260523.md)
+- [D5 Capability Map](architecture/d5_capability_map.md)
+- [Phase 2 Quote Readiness Brief](phase2/quote_module_readiness_brief.md)
 - [D5.2 Release Note](releases/d5_2_internal_mvp_release_20260523.md)
 - [Deployment Readiness Checklist](deployment_readiness_checklist.md)
 - [D5.2.12 Screenshot Demo Proof](records/d5_2_12_browser_screenshots_demo_proof_20260523.md)

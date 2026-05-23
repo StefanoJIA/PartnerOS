@@ -12,11 +12,28 @@
 
 **当前代码仓库** 使用 Vue + FastAPI + PostgreSQL（pgvector）实现业务逻辑 — 这是 **实现技术栈**；**不是** 最终用户的手动部署形态。更完整的愿景与六域划分见 **[docs/product_vision.md](docs/product_vision.md)**；桌面目标架构见 **[docs/architecture_desktop_target.md](docs/architecture_desktop_target.md)**；阶段路线 **D0–D6** 见 **[docs/roadmap_desktop_transition.md](docs/roadmap_desktop_transition.md)**；路线调整总结与 **中英文总述（可作 Cursor 上下文）** 见 **[docs/project_reorientation_summary.md](docs/project_reorientation_summary.md)**。
 
-**其他文档**：运行模式 [docs/runtime_modes.md](docs/runtime_modes.md) · 数据库生命周期 [docs/database_lifecycle.md](docs/database_lifecycle.md) · **运营指南** [docs/operator_guide.md](docs/operator_guide.md) · **D5.2 Release** [docs/releases/d5_2_internal_mvp_release_20260523.md](docs/releases/d5_2_internal_mvp_release_20260523.md) · **部署检查** [docs/deployment_readiness_checklist.md](docs/deployment_readiness_checklist.md) · **测试基线** [docs/testing_summary_d5_2.md](docs/testing_summary_d5_2.md) · 打包策略 [docs/packaging_strategy.md](docs/packaging_strategy.md) · Web→桌面迁移说明 [docs/migration_from_web_to_desktop.md](docs/migration_from_web_to_desktop.md) · 开放问题 [docs/open_questions_desktop.md](docs/open_questions_desktop.md) · **A 域人工测试与录入** [docs/manual_a_domain_test_plan.md](docs/manual_a_domain_test_plan.md) · **集成化后端标准（双轨 API / v1）** [docs/integrated_backend_standards.md](docs/integrated_backend_standards.md)。
+**其他文档**：运行模式 [docs/runtime_modes.md](docs/runtime_modes.md) · 数据库生命周期 [docs/database_lifecycle.md](docs/database_lifecycle.md) · **运营指南** [docs/operator_guide.md](docs/operator_guide.md) · **D5 Final Release** [docs/releases/d5_final_mvp_release_20260523.md](docs/releases/d5_final_mvp_release_20260523.md) · **D5 Capability Map** [docs/architecture/d5_capability_map.md](docs/architecture/d5_capability_map.md) · **Phase 2 Readiness** [docs/phase2/quote_module_readiness_brief.md](docs/phase2/quote_module_readiness_brief.md) · **D5.2 Release** [docs/releases/d5_2_internal_mvp_release_20260523.md](docs/releases/d5_2_internal_mvp_release_20260523.md) · **部署检查** [docs/deployment_readiness_checklist.md](docs/deployment_readiness_checklist.md) · **测试基线** [docs/testing_summary_d5_2.md](docs/testing_summary_d5_2.md) · 打包策略 [docs/packaging_strategy.md](docs/packaging_strategy.md) · Web→桌面迁移说明 [docs/migration_from_web_to_desktop.md](docs/migration_from_web_to_desktop.md) · 开放问题 [docs/open_questions_desktop.md](docs/open_questions_desktop.md) · **A 域人工测试与录入** [docs/manual_a_domain_test_plan.md](docs/manual_a_domain_test_plan.md) · **集成化后端标准（双轨 API / v1）** [docs/integrated_backend_standards.md](docs/integrated_backend_standards.md)。
 
 ---
 
-## Current MVP Status（D5.2 Internal MVP）
+## D5 Final MVP Status
+
+**D5 is closed** as an internal MVP for lead intelligence, product opportunity planning, manual outreach, and quote-preparation handoff.
+
+- Full pre-quote workflow: Lead Intake → Completeness → Contact Research → Product Fit → Pre-Quote → Manual Outreach → Follow-up → Soft Quote Handoff → **Quote Input Contract**
+- **Manual outreach only** — no automatic sending
+- **No formal quotes** — Quote Input Contract is the Phase 2 boundary object
+- **No Phase 2 implementation** — see [D5 Final Release](docs/releases/d5_final_mvp_release_20260523.md) · [Closure Record](docs/records/d5_final_closure_20260523.md)
+
+## Next Major Stage
+
+**Phase 2** is Quote / Order / Production / Shipment.
+
+Phase 2 should **not** start until quote schema and product catalog design are reviewed. Recommended entry: **D6.1 Quote Schema & API Design Review** — see [Phase 2 Quote Readiness Brief](docs/phase2/quote_module_readiness_brief.md).
+
+---
+
+## Current MVP Status（D5.2 Internal MVP — superseded by D5 Final）
 
 - **D5.2 Internal MVP ready** — Lead Intelligence、Manual Outreach Queue、Daily Follow-up、Portal 只读集成
 - **Manual outreach only** — Generate Draft → Copy → 系统外发送 → Mark as Sent
@@ -52,6 +69,7 @@ python scripts/d5_16_real_lead_uat_check.py   # D5.16 real lead UAT (read-only)
 python scripts/d5_17_rule_tuning_check.py     # D5.17 product rule tuning
 python scripts/quote_handoff_check.py         # D5.18 soft quote handoff
 python scripts/d5_19_quote_input_contract_check.py  # D5.19 quote input contract UAT
+python scripts/smoke_all_d5.py                  # D5 full smoke (closure regression)
 ```
 
 ### Port 8000 (legacy)
