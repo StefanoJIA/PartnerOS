@@ -41,11 +41,14 @@ def test_education_focus_jooboo():
     assert "JOOBOO" in d.email_body or "education" in d.email_body.lower()
 
 
-def test_no_auto_send_fields_only_text():
+def test_draft_avoids_false_promise_phrases():
     d = generate_outreach_draft(
         company_name="Example Co",
-        segments=["general_office_furniture_only"],
-        channel="linkedin_connect",
+        segments=["lift_system_signal"],
+        channel="email_intro",
+        product_focus="hosun_lifting",
     )
-    assert d.linkedin_connect_note
-    assert d.email_subject is None
+    blob = (d.email_body or "").lower()
+    assert "guaranteed delivery" not in blob
+    assert "guaranteed lowest price" not in blob
+    assert "no stock or lead-time promises" in blob or "no pricing" in blob

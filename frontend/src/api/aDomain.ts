@@ -17,6 +17,8 @@ export type LeadIntelligenceWorkflow = {
     id: string
     company_name: string
     company_type?: string
+    website?: string | null
+    linkedin_url?: string | null
     product_interest_tags?: string | null
     business_description?: string | null
     strategic_level?: string | null

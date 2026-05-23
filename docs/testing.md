@@ -60,6 +60,15 @@ python scripts/generate_outreach_draft.py --company "Ergo Sit Stand Workspace" -
 
 见 [records/d5_2_4_lead_intake_outreach_kit_20260523.md](records/d5_2_4_lead_intake_outreach_kit_20260523.md)。
 
+### D5.2.5 manual outreach queue check
+
+```powershell
+cd backend
+python scripts/outreach_queue_check.py
+```
+
+见 [records/d5_2_5_manual_outreach_queue_20260523.md](records/d5_2_5_manual_outreach_queue_20260523.md)。
+
 ### 前端组件测试
 
 ```powershell

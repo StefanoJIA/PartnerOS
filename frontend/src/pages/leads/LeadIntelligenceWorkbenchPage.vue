@@ -4,17 +4,19 @@
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 class="text-lg font-semibold text-slate-800">Lead Review — 内部跟进台账</h2>
+            <h2 class="text-lg font-semibold text-slate-800">Manual Outreach Queue</h2>
             <p class="mt-1 text-xs text-slate-500">
-              按情报分排序 · 快速识别值得推进的客户（D5.2.3 pilot）
+              Daily lead development — score, segment, draft, and manual send tracking (D5.2.5)
             </p>
           </div>
           <el-button size="small" @click="loadReviewBoard">Refresh</el-button>
         </div>
       </template>
 
-      <el-radio-group v-model="segmentFilter" size="small" class="mb-3 flex flex-wrap gap-1">
-        <el-radio-button v-for="opt in SEGMENT_FILTER_OPTIONS" :key="opt.key" :value="opt.key">
+      <el-alert type="info" :closable="false" show-icon class="mb-3" :title="OUTREACH_SAFETY_NOTICE" />
+
+      <el-radio-group v-model="queueFilter" size="small" class="mb-3 flex flex-wrap gap-1">
+        <el-radio-button v-for="opt in QUEUE_FILTER_OPTIONS" :key="opt.key" :value="opt.key">
           {{ opt.label }}
         </el-radio-button>
       </el-radio-group>
@@ -24,21 +26,21 @@
         size="small"
         stripe
         highlight-current-row
-        empty-text="No leads loaded — create leads or click Refresh."
+        empty-text="No leads in queue — refresh or import leads."
         @row-click="onReviewRowClick"
       >
-        <el-table-column prop="companyName" label="Company" min-width="160" show-overflow-tooltip />
-        <el-table-column prop="companyType" label="Type" width="140" show-overflow-tooltip />
-        <el-table-column label="Score" width="72" sortable :sort-method="sortByScore">
+        <el-table-column prop="companyName" label="Company" min-width="140" show-overflow-tooltip />
+        <el-table-column prop="contactName" label="Contact" width="120" show-overflow-tooltip />
+        <el-table-column label="Score" width="64" sortable :sort-method="sortByScore">
           <template #default="{ row }">
             <span class="font-semibold">{{ row.score }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="Segments" min-width="180">
+        <el-table-column label="Segment" min-width="150">
           <template #default="{ row }">
             <div v-if="row.segments.length" class="flex flex-wrap gap-1">
               <el-tag
-                v-for="seg in row.segments"
+                v-for="seg in row.segments.slice(0, 2)"
                 :key="seg"
                 size="small"
                 :type="segmentTagType(seg)"
@@ -47,13 +49,19 @@
                 {{ segmentLabel(seg) }}
               </el-tag>
             </div>
-            <span v-else class="text-xs text-slate-400">No segment assigned yet.</span>
+            <span v-else class="text-xs text-slate-400">No segment</span>
           </template>
         </el-table-column>
-        <el-table-column prop="lastTouch" label="Last touch" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="nextAction" label="Next action" min-width="140" show-overflow-tooltip />
-        <el-table-column prop="enrichmentStatus" label="Enrichment" width="110" show-overflow-tooltip />
-        <el-table-column prop="priorityHint" label="Hint" min-width="130" show-overflow-tooltip />
+        <el-table-column prop="priority" label="Priority" width="72" show-overflow-tooltip />
+        <el-table-column prop="lastTouch" label="Last touch" min-width="100" show-overflow-tooltip />
+        <el-table-column prop="nextAction" label="Next action" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="recommendedChannel" label="Channel" width="130" show-overflow-tooltip />
+        <el-table-column label="Draft" width="100">
+          <template #default="{ row }">
+            <el-tag size="small" effect="plain">{{ draftStatusLabel(draftStatusByLead[row.leadId] || 'none') }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="enrichmentStatus" label="Enrichment" width="100" show-overflow-tooltip />
       </el-table>
     </el-card>
 
@@ -258,7 +266,12 @@
 
             <OutreachDraftPanel
               :company-id="wf.company.id"
+              :lead-id="selectedLeadId"
+              :initial-channel="selectedChannelRec.channel"
+              :initial-product-focus="selectedChannelRec.productFocus"
               @use-next-action="(v) => (touch.next_action = v)"
+              @draft-status="onDraftStatus"
+              @marked-sent="onMarkedSent"
             />
           </el-col>
         </el-row>
@@ -276,13 +289,20 @@ import { fetchLeadIntelligenceWorkflow, postLeadIntelligenceTouchpoint } from '@
 import { listEnrichmentRuns } from '@/api/companyEnrichment'
 import { http } from '@/api/http'
 import {
-  SEGMENT_FILTER_OPTIONS,
   segmentLabel,
   segmentTagType,
   segmentTooltip,
   priorityHint,
-  type SegmentFilterKey,
 } from '@/constants/leadSegments'
+import {
+  draftStatusLabel,
+  filterQueueRows,
+  OUTREACH_SAFETY_NOTICE,
+  QUEUE_FILTER_OPTIONS,
+  recommendChannel,
+  type DraftStatus,
+  type QueueFilterKey,
+} from '@/constants/outreachQueue'
 import {
   CHANNEL_PRESETS,
   NEXT_ACTION_SUGGESTIONS,
@@ -295,13 +315,20 @@ type ReviewRow = {
   leadName: string
   companyName: string
   companyType: string
+  contactName: string
+  contactEmail: string | null
+  linkedinUrl: string | null
   score: number
   segments: string[]
   priority: string | null
   nextAction: string
   lastTouch: string
+  touchCount: number
   enrichmentStatus: string
   priorityHint: string
+  recommendedChannel: string
+  recommendedChannelKey: string
+  recommendedProductFocus: string
 }
 
 type InteractionBrief = {
@@ -324,8 +351,28 @@ const wf = ref<LeadIntelligenceWorkflow | null>(null)
 const leadOptions = ref<{ id: string; lead_name: string }[]>([])
 const selectedLeadId = ref<string | null>((route.query.leadId as string) || null)
 const reviewRows = ref<ReviewRow[]>([])
-const segmentFilter = ref<SegmentFilterKey>('all')
+const queueFilter = ref<QueueFilterKey>('all')
+const draftStatusByLead = ref<Record<string, DraftStatus>>({})
 const recentInteractions = ref<InteractionBrief[]>([])
+
+const selectedChannelRec = computed(() => {
+  const row = reviewRows.value.find((r) => r.leadId === selectedLeadId.value)
+  if (row) {
+    return {
+      channel: row.recommendedChannelKey,
+      productFocus: row.recommendedProductFocus,
+    }
+  }
+  if (wf.value) {
+    const rec = recommendChannel(
+      wf.value.market_fit_segments || [],
+      wf.value.primary_contact?.email,
+      wf.value.company.linkedin_url,
+    )
+    return { channel: rec.channel || 'linkedin_connect', productFocus: rec.productFocus }
+  }
+  return { channel: 'linkedin_connect', productFocus: 'general' }
+})
 
 const touch = ref<TouchpointBody>({
   interaction_type: 'follow_up',
@@ -342,11 +389,7 @@ const scoreRows = computed(() => {
   return Object.entries(wf.value.score_breakdown).map(([k, v]) => ({ k, v }))
 })
 
-const filteredReviewRows = computed(() => {
-  const rows = [...reviewRows.value].sort((a, b) => b.score - a.score)
-  if (segmentFilter.value === 'all') return rows
-  return rows.filter((r) => r.segments.includes(segmentFilter.value))
-})
+const filteredReviewRows = computed(() => filterQueueRows(reviewRows.value, queueFilter.value))
 
 function sortByScore(a: ReviewRow, b: ReviewRow) {
   return a.score - b.score
@@ -458,11 +501,13 @@ async function loadReviewBoard() {
         try {
           const w = await fetchLeadIntelligenceWorkflow(lead.id)
           let lastTouch = '—'
+          let touchCount = 0
           try {
             const { data: ix } = await http.get<{ items: InteractionBrief[]; total: number }>(
               `/objects/lead/${lead.id}/interactions`,
               { params: { limit: 1 } },
             )
+            touchCount = ix.total || 0
             if (ix.items?.[0]) {
               const t = ix.items[0]
               lastTouch = t.summary || t.subject || t.interaction_type || '—'
@@ -470,6 +515,13 @@ async function loadReviewBoard() {
           } catch {
             /* optional */
           }
+
+          const contactName = w.primary_contact
+            ? `${w.primary_contact.first_name} ${w.primary_contact.last_name}`.trim()
+            : '—'
+          const contactEmail = w.primary_contact?.email ?? null
+          const linkedinUrl = w.company.linkedin_url ?? null
+          const rec = recommendChannel(w.market_fit_segments || [], contactEmail, linkedinUrl)
 
           const cid = w.company.id
           if (!enrichCache.has(cid)) {
@@ -491,13 +543,20 @@ async function loadReviewBoard() {
             leadName: lead.lead_name,
             companyName: w.company.company_name,
             companyType: w.company.company_type || '—',
+            contactName,
+            contactEmail,
+            linkedinUrl,
             score: w.intelligence_score,
             segments: w.market_fit_segments || [],
-            priority: lead.priority ?? w.lead.priority ?? null,
+            priority: lead.priority ?? w.lead.priority ?? '—',
             nextAction: (lead.next_action || w.lead.next_action || '').trim() || 'No next action set.',
             lastTouch,
+            touchCount,
             enrichmentStatus: enrichCache.get(cid) || '—',
             priorityHint: priorityHint(w.intelligence_score, lead.priority ?? w.lead.priority),
+            recommendedChannel: rec.label,
+            recommendedChannelKey: rec.channel || 'email_intro',
+            recommendedProductFocus: rec.productFocus,
           }
         } catch {
           return null
@@ -511,6 +570,18 @@ async function loadReviewBoard() {
   } finally {
     reviewLoading.value = false
   }
+}
+
+function onDraftStatus(s: DraftStatus) {
+  if (!selectedLeadId.value) return
+  draftStatusByLead.value = { ...draftStatusByLead.value, [selectedLeadId.value]: s }
+}
+
+async function onMarkedSent() {
+  if (!selectedLeadId.value) return
+  draftStatusByLead.value[selectedLeadId.value] = 'sent'
+  await loadWorkflow(selectedLeadId.value)
+  await loadReviewBoard()
 }
 
 async function submitTouchpoint() {
