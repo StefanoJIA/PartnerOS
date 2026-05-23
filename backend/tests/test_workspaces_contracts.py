@@ -51,6 +51,8 @@ def test_no_hardcoded_partner_priority_in_core_tree():
         "product_fit_board.py",
         "pre_quote_prep.py",
         "product_aware_outreach.py",
+        "quote_handoff.py",
+        "quote_handoff_board.py",
     }
     bad: list[str] = []
     for path in root.rglob("*.py"):

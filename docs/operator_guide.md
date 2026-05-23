@@ -89,7 +89,8 @@ Fallback：`$env:BACKEND_BASE_URL="http://127.0.0.1:8013"` 与相同 `VITE_API_P
 4. 选择 lead → 查看 **Product Fit & Project Opportunity** card（D5.12）：产品方向、quote readiness、discovery questions
 5. 查看 **Product Opportunity Board**（D5.13）→ 筛选 High Opportunity / Quote Ready / Lifting Systems
 6. 查看 **Pre-Quote & Sample Prep**（D5.14）→ Copy brief / customer questions
-7. 使用 **Product-Aware Draft**（D5.15）→ 按 product focus 生成 discovery 草稿
+8. 查看 **Soft Quote Handoff**（D5.18）→ Copy brief / supplier notes / customer questions
+9. 使用 **Product-Aware Draft**（D5.15）→ 按 product focus 生成 discovery 草稿
 8. 选择 lead → 查看 **Outreach History** timeline 与 follow-up hint（D5.6）
 7. 打开 `/lead-intelligence` → Manual Outreach Queue
 8. 查看 **Daily Summary** cards
@@ -149,6 +150,7 @@ python scripts/daily_work_summary.py
 | `product_aware_draft_check.py` | Product-aware draft smoke（D5.15） |
 | `d5_16_real_lead_uat_check.py` | Real lead UAT API coverage（D5.16） |
 | `d5_17_rule_tuning_check.py` | Lifting / product rule tuning regression（D5.17） |
+| `quote_handoff_check.py` | Soft quote handoff smoke（D5.18） |
 | `portal_readiness_check.py` | Portal v1 端点 |
 | `portal_consumer_check.py` | 外部 Portal 契约 |
 

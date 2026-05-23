@@ -56,6 +56,10 @@ from app.schemas.a_domain import (
     ProductAwareDraftRequest,
     ProductAwareDraftResponse,
     ProductAwareDraftSourceContextOut,
+    QuoteHandoffBriefOut,
+    QuoteHandoffBoardResponse,
+    QuoteHandoffBoardRowOut,
+    QuoteHandoffBoardSummaryOut,
     LeadIntelligenceWorkflowOut,
     OutreachDraftOut,
     TouchpointCreate,
@@ -100,6 +104,10 @@ from app.services.a_domain.product_fit_board import (
     build_product_fit_for_lead,
     build_product_opportunity_board,
     build_product_opportunity_board_degraded,
+)
+from app.services.a_domain.quote_handoff_board import (
+    build_quote_handoff_board,
+    build_quote_handoff_for_lead,
 )
 
 router = APIRouter(prefix="/a-domain", tags=["a-domain-intelligence"])
@@ -568,6 +576,44 @@ def get_lead_pre_quote_brief(
     if not raw:
         raise HTTPException(status_code=404, detail="Lead not found")
     return PreQuoteBriefOut(**raw)
+
+
+@router.get("/leads/{lead_id}/quote-handoff-brief", response_model=QuoteHandoffBriefOut)
+def get_lead_quote_handoff_brief(
+    lead_id: UUID,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> QuoteHandoffBriefOut:
+    """Read-only soft quote handoff brief (D5.18 — no quote creation)."""
+    raw = build_quote_handoff_for_lead(db, lead_id)
+    if not raw:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    return QuoteHandoffBriefOut(**raw)
+
+
+@router.get("/quote-handoff-board", response_model=QuoteHandoffBoardResponse)
+def get_quote_handoff_board(
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> QuoteHandoffBoardResponse:
+    """Read-only quote handoff board for all active leads (D5.18)."""
+    try:
+        raw = build_quote_handoff_board(db)
+        return QuoteHandoffBoardResponse(
+            summary=QuoteHandoffBoardSummaryOut(**raw["summary"]),
+            rows=[QuoteHandoffBoardRowOut(**r) for r in raw["rows"]],
+            safety=PreQuoteSafetyOut(**PRE_QUOTE_SAFETY),
+            warnings=raw.get("warnings") or [],
+            degraded=False,
+        )
+    except Exception:
+        return QuoteHandoffBoardResponse(
+            summary=QuoteHandoffBoardSummaryOut(),
+            rows=[],
+            safety=PreQuoteSafetyOut(**PRE_QUOTE_SAFETY),
+            warnings=["Quote handoff board unavailable. Check backend and database status."],
+            degraded=True,
+        )
 
 
 @router.get("/pre-quote-board", response_model=PreQuoteBoardResponse)

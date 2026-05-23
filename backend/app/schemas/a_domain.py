@@ -514,3 +514,59 @@ class ProductAwareDraftResponse(BaseModel):
     source_context: ProductAwareDraftSourceContextOut
     safety: PreQuoteSafetyOut = Field(default_factory=PreQuoteSafetyOut)
     warnings: list[str] = Field(default_factory=list)
+
+
+class QuoteHandoffBriefOut(BaseModel):
+    """D5.18 — soft quote handoff brief (read-only, no quote creation)."""
+
+    lead_id: str
+    company_name: str
+    handoff_status: str
+    handoff_priority: str
+    quote_readiness: str
+    sample_readiness: str
+    opportunity_score: int = Field(default=0, ge=0, le=100)
+    recommended_partner_route: list[str] = Field(default_factory=list)
+    recommended_product_scope: list[str] = Field(default_factory=list)
+    known_context: list[str] = Field(default_factory=list)
+    missing_customer_info: list[str] = Field(default_factory=list)
+    supplier_preparation_notes: list[str] = Field(default_factory=list)
+    customer_clarification_questions: list[str] = Field(default_factory=list)
+    recommended_next_step: str
+    quote_handoff_brief_text: str
+    supplier_notes_text: str
+    customer_questions_text: str
+    safety: PreQuoteSafetyOut = Field(default_factory=PreQuoteSafetyOut)
+    warnings: list[str] = Field(default_factory=list)
+
+
+class QuoteHandoffBoardRowOut(BaseModel):
+    lead_id: str
+    company_name: str
+    handoff_status: str
+    handoff_priority: str
+    quote_readiness: str
+    sample_readiness: str
+    recommended_partner_route: list[str] = Field(default_factory=list)
+    missing_customer_info_count: int = 0
+    opportunity_score: int = 0
+
+
+class QuoteHandoffBoardSummaryOut(BaseModel):
+    total: int = 0
+    ready_for_manual_quote_prep: int = 0
+    needs_customer_clarification: int = 0
+    not_ready: int = 0
+    high_priority: int = 0
+    lifting_system_route: int = 0
+    jooboo_route: int = 0
+    project_supply_route: int = 0
+    oem_odm_route: int = 0
+
+
+class QuoteHandoffBoardResponse(BaseModel):
+    summary: QuoteHandoffBoardSummaryOut
+    rows: list[QuoteHandoffBoardRowOut]
+    safety: PreQuoteSafetyOut = Field(default_factory=PreQuoteSafetyOut)
+    warnings: list[str] = Field(default_factory=list)
+    degraded: bool = False
