@@ -62,6 +62,37 @@ def test_build_health_development_auth_failed(monkeypatch) -> None:
     assert p["bootstrap_status"] == "error"
 
 
+def test_merge_snapshot_recovers_when_db_becomes_ready(monkeypatch) -> None:
+    from app.core.bootstrap import merge_snapshot_with_live_db
+    from app.core.database_lifecycle import LifecycleSnapshot
+
+    stale = LifecycleSnapshot(
+        phase="error",
+        database_status="unavailable",
+        errors=['connection to server at "127.0.0.1", port 5435 failed'],
+    )
+
+    def fake_check(_settings: Settings) -> tuple:
+        return ("ready", [])
+
+    def fake_inspect(_settings: Settings) -> LifecycleSnapshot:
+        return LifecycleSnapshot(
+            phase="ready",
+            database_status="ready",
+            alembic_current_revision="0005",
+            alembic_head_revision="0005",
+            migration_pending=False,
+        )
+
+    monkeypatch.setattr("app.core.bootstrap.check_database", fake_check)
+    monkeypatch.setattr("app.core.bootstrap.inspect_lifecycle_dev", fake_inspect)
+    s = Settings(APP_RUNTIME_MODE=AppRuntimeMode.development, DATABASE_URL="postgresql://x")
+    refreshed = merge_snapshot_with_live_db(s, stale)
+    assert refreshed.phase == "ready"
+    assert refreshed.database_status == "ready"
+    assert not refreshed.errors
+
+
 def test_build_health_desktop_empty_database_url() -> None:
     s = Settings(APP_RUNTIME_MODE=AppRuntimeMode.desktop, DATABASE_URL="")
     p = build_health_payload(APP_VERSION, s)

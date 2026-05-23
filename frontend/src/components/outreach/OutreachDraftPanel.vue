@@ -76,6 +76,7 @@ import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { fetchOutreachDraft, type OutreachDraft } from '@/api/outreachDraft'
 import { postLeadIntelligenceTouchpoint } from '@/api/aDomain'
+import { formatApiError } from '@/api/errors'
 import {
   buildManualSentSummary,
   draftStatusLabel,
@@ -153,7 +154,7 @@ async function generate() {
     draftStatus.value = 'generated'
     emit('use-next-action', draft.value.suggested_next_action)
   } catch (e: unknown) {
-    error.value = 'Failed to generate draft'
+    error.value = formatApiError(e, 'Failed to generate draft. Try another channel or add contact info.')
     console.error(e)
   } finally {
     loading.value = false
@@ -180,6 +181,10 @@ function draftPreviewText(): string {
 }
 
 async function markAsSent() {
+  if (draftStatus.value === 'sent') {
+    ElMessage.info('Already marked as sent for this draft')
+    return
+  }
   if (!props.leadId || !draft.value) {
     ElMessage.warning('Generate a draft first')
     return
@@ -205,7 +210,7 @@ async function markAsSent() {
     emit('marked-sent')
     ElMessage.success('Recorded — touchpoint saved (manual send outside intelliOffice)')
   } catch (e: unknown) {
-    ElMessage.error('Failed to record touchpoint')
+    ElMessage.error(formatApiError(e, 'Failed to record touchpoint'))
     console.error(e)
   } finally {
     marking.value = false

@@ -120,17 +120,12 @@ def merge_snapshot_with_live_db(
             migration_pending=dlm.migration_pending,
             detail=dlm.detail,
         )
-    if dlm.database_status != "ready":
-        return LifecycleSnapshot(
-            phase=dlm.phase,
-            database_status="ready",
-            errors=list(dlm.errors),
-            alembic_current_revision=dlm.alembic_current_revision,
-            alembic_head_revision=dlm.alembic_head_revision,
-            migration_pending=dlm.migration_pending,
-            detail=dlm.detail,
-        )
-    return dlm
+    if db_status == "ready":
+        in_progress = dlm.phase in ("checking", "initializing", "migrating")
+        stale = dlm.phase == "error" or dlm.database_status != "ready"
+        if stale and not in_progress:
+            return inspect_lifecycle_dev(settings)
+        return dlm
 
 
 def build_health_payload(

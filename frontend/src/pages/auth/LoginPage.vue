@@ -19,6 +19,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { formatApiError } from '@/api/errors'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -34,7 +35,7 @@ async function onSubmit() {
     await auth.login(email.value, password.value)
     router.push({ name: 'dashboard' })
   } catch (e: unknown) {
-    error.value = 'Login failed. Run backend + seed (see README).'
+    error.value = formatApiError(e, 'Login failed. Run backend + seed (see README).')
   } finally {
     loading.value = false
   }

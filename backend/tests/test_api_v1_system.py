@@ -163,6 +163,19 @@ def test_v1_portal_summary_envelope_and_no_secrets():
     assert meta.get("request_id")
 
 
+def test_v1_portal_summary_degraded_when_database_unavailable():
+    with patch("app.services.system.portal_integration.check_database", return_value=("unavailable", [])):
+        with TestClient(app) as c:
+            r = c.get("/api/v1/portal/summary")
+    assert r.status_code == 200
+    data, _ = _envelope(r.json())
+    assert data["health"]["status"] == "degraded"
+    assert data["health"]["database_status"] == "unavailable"
+    assert data["lead_intelligence"]["total_leads"] == 0
+    assert data["lead_intelligence"]["high_priority"] == 0
+    assert any("Database unavailable" in w for w in data["warnings"])
+
+
 def test_v1_portal_a_domain_status_read_only_flags():
     with TestClient(app) as c:
         r = c.get("/api/v1/portal/a-domain/status")
@@ -174,4 +187,4 @@ def test_v1_portal_a_domain_status_read_only_flags():
     assert data["linkedin_automation_enabled"] is False
     assert data["outlook_integration_enabled"] is False
     assert data["database_schema_changed"] is False
-    assert data["latest_stage"] == "D5.2.8"
+    assert data["latest_stage"] == "D5.2.13"

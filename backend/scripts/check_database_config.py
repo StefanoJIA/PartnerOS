@@ -80,7 +80,9 @@ def main() -> int:
         print("  Create the database, e.g. psql:")
         print("    CREATE DATABASE partneros;")
     elif db_status == "unavailable":
-        print("  Start PostgreSQL and confirm host/port in DATABASE_URL.")
+        print("  Start Docker DB: docker compose up -d db")
+        print("  If Docker Desktop is not running, start it first, then retry.")
+        print("  Confirm host/port in DATABASE_URL (default local port 5435).")
     elif db_status == "ready":
         try:
             current, head, _ = get_migration_revisions(settings)

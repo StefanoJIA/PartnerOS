@@ -136,6 +136,7 @@ import {
   fetchPortalSummary,
   fetchSystemReadiness,
 } from '@/api/system'
+import { formatApiError } from '@/api/errors'
 
 const loading = ref(false)
 const error = ref('')
@@ -183,8 +184,10 @@ async function load() {
     readiness.value = r.data as Record<string, unknown>
     loaded.value = true
   } catch (e: unknown) {
-    error.value =
-      'Failed to load portal consumer data. Ensure backend is running and v1 portal endpoints are available.'
+    error.value = formatApiError(
+      e,
+      'Failed to load portal consumer data. Ensure backend is running and v1 portal endpoints are available.',
+    )
     loaded.value = false
     console.error(e)
   } finally {

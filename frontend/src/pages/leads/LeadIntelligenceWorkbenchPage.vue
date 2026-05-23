@@ -15,6 +15,16 @@
 
       <el-alert type="info" :closable="false" show-icon class="mb-3" :title="OUTREACH_SAFETY_NOTICE" />
 
+      <el-alert
+        v-if="reviewBoardError"
+        type="warning"
+        :closable="false"
+        show-icon
+        class="mb-3"
+        title="Could not load outreach queue"
+        :description="reviewBoardError"
+      />
+
       <div class="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
         <div class="rounded border border-slate-200 bg-slate-50 px-2 py-2 text-center">
           <p class="text-lg font-semibold text-slate-800">{{ dailySummary.total }}</p>
@@ -366,6 +376,7 @@ import {
   TOUCHPOINT_TYPE_PRESETS,
 } from '@/constants/touchpointPresets'
 import OutreachDraftPanel from '@/components/outreach/OutreachDraftPanel.vue'
+import { formatApiError } from '@/api/errors'
 
 type ReviewRow = {
   leadId: string
@@ -412,6 +423,7 @@ const wf = ref<LeadIntelligenceWorkflow | null>(null)
 const leadOptions = ref<{ id: string; lead_name: string }[]>([])
 const selectedLeadId = ref<string | null>((route.query.leadId as string) || null)
 const reviewRows = ref<ReviewRow[]>([])
+const reviewBoardError = ref('')
 const queueFilter = ref<QueueFilterKey>('today_focus')
 const draftStatusByLead = ref<Record<string, DraftStatus>>({})
 const recentInteractions = ref<InteractionBrief[]>([])
@@ -553,7 +565,7 @@ async function loadWorkflow(leadId: string) {
     await loadRecentInteractions(leadId)
   } catch (e: unknown) {
     wf.value = null
-    ElMessage.error('加载工作流失败')
+    ElMessage.error(formatApiError(e, '加载工作流失败'))
     console.error(e)
   } finally {
     loading.value = false
@@ -562,6 +574,7 @@ async function loadWorkflow(leadId: string) {
 
 async function loadReviewBoard() {
   reviewLoading.value = true
+  reviewBoardError.value = ''
   try {
     const { data } = await http.get<{ items: { id: string; lead_name: string; next_action?: string | null; priority?: string | null }[] }>(
       '/leads',
@@ -661,6 +674,7 @@ async function loadReviewBoard() {
     )
     reviewRows.value = rows.filter((r): r is ReviewRow => r !== null)
   } catch (e: unknown) {
+    reviewBoardError.value = formatApiError(e, 'Failed to load Lead Review board.')
     ElMessage.error('加载 Lead Review 失败')
     console.error(e)
   } finally {

@@ -74,6 +74,13 @@ def _has_fields(data: dict, fields: tuple[str, ...]) -> bool:
     return all(k in data for k in fields)
 
 
+def _safe_json(response: httpx.Response) -> dict:
+    try:
+        return response.json()
+    except json.JSONDecodeError:
+        return {}
+
+
 def run() -> int:
     global BASE
     BASE = log_backend_base_url()
@@ -92,15 +99,17 @@ def run() -> int:
     try:
         with httpx.Client(timeout=60.0) as client:
             mr = client.get(f"{BASE}/api/v1/portal/manifest")
-            ok, mdata = _envelope_ok(mr.json()) if mr.status_code == 200 else (False, {})
+            mbody = _safe_json(mr) if mr.status_code == 200 else {}
+            ok, mdata = _envelope_ok(mbody) if mbody else (False, {})
             if ok and mdata.get("service_id") == "intellioffice" and _has_fields(mdata, MANIFEST_FIELDS):
                 checks[0].pass_(f"{len(mdata.get('modules', []))} modules")
             else:
                 checks[0].fail(f"HTTP {mr.status_code}")
-            collected.append(json.dumps(mr.json()))
+            collected.append(json.dumps(mbody if mbody else {"raw": mr.text[:200]}))
 
             sr = client.get(f"{BASE}/api/v1/portal/summary")
-            ok, sdata = _envelope_ok(sr.json()) if sr.status_code == 200 else (False, {})
+            sbody = _safe_json(sr) if sr.status_code == 200 else {}
+            ok, sdata = _envelope_ok(sbody) if sbody else (False, {})
             li = sdata.get("lead_intelligence") if ok else {}
             if (
                 ok
@@ -112,23 +121,25 @@ def run() -> int:
                 checks[1].pass_(f"total={li.get('total_leads')}")
             else:
                 checks[1].fail(f"HTTP {sr.status_code}")
-            collected.append(json.dumps(sr.json()))
+            collected.append(json.dumps(sbody if sbody else {"raw": sr.text[:200]}))
 
             ar = client.get(f"{BASE}/api/v1/portal/a-domain/status")
-            ok, adata = _envelope_ok(ar.json()) if ar.status_code == 200 else (False, {})
+            abody = _safe_json(ar) if ar.status_code == 200 else {}
+            ok, adata = _envelope_ok(abody) if abody else (False, {})
             if ok and _has_fields(adata, A_DOMAIN_FIELDS):
                 checks[2].pass_(f"stage={adata.get('latest_stage', '?')}")
             else:
                 checks[2].fail(f"HTTP {ar.status_code}")
-            collected.append(json.dumps(ar.json()))
+            collected.append(json.dumps(abody if abody else {"raw": ar.text[:200]}))
 
             rr = client.get(f"{BASE}/api/v1/system/readiness")
-            ok, rdata = _envelope_ok(rr.json()) if rr.status_code == 200 else (False, {})
+            rbody = _safe_json(rr) if rr.status_code == 200 else {}
+            ok, rdata = _envelope_ok(rbody) if rbody else (False, {})
             if ok and _has_fields(rdata, READINESS_FIELDS):
                 checks[3].pass_()
             else:
                 checks[3].fail(f"HTTP {rr.status_code}")
-            collected.append(json.dumps(rr.json()))
+            collected.append(json.dumps(rbody if rbody else {"raw": rr.text[:200]}))
 
             blob = " ".join(collected).lower()
             leaks = [m for m in SECRET_MARKERS if m.lower() in blob]

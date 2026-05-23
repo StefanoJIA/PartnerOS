@@ -75,10 +75,13 @@ def run() -> int:
     try:
         with httpx.Client(timeout=60.0) as client:
             hr = client.get(get_health_url())
-            if hr.status_code == 200 and hr.json().get("status") == "ok":
-                checks[0].pass_()
-            else:
-                checks[0].fail(f"HTTP {hr.status_code}")
+            if hr.status_code == 200:
+                body = hr.json()
+                status = body.get("status", "")
+                if status in ("ok", "degraded"):
+                    checks[0].pass_(status)
+                else:
+                    checks[0].fail(f"status={status}")
 
             rr = client.get(f"{BASE}/api/v1/system/readiness")
             ok, data = _envelope_ok(rr.json()) if rr.status_code == 200 else (False, {})

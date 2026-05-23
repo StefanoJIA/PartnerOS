@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
@@ -43,7 +44,7 @@ A_DOMAIN_STATUS = {
     "domain": "lead_intelligence",
     "status": "ready",
     "uat_status": "accepted_with_non_blocking_feedback",
-    "latest_stage": "D5.2.8",
+    "latest_stage": "D5.2.13",
     "daily_workflow_ready": True,
     "manual_outreach_ready": True,
     "automatic_sending_enabled": False,
@@ -51,8 +52,8 @@ A_DOMAIN_STATUS = {
     "outlook_integration_enabled": False,
     "database_schema_changed": False,
     "last_known_test_baseline": {
-        "backend_pytest": "93 passed, 1 skipped",
-        "frontend_vitest": "41 passed",
+        "backend_pytest": "97 passed, 1 skipped",
+        "frontend_vitest": "47 passed",
     },
     "known_limitations": [
         "manual screenshots not committed",
@@ -191,8 +192,62 @@ def _health_block(settings: Settings) -> dict[str, Any]:
     }
 
 
+def _empty_lead_intelligence() -> dict[str, int]:
+    return {
+        "total_leads": 0,
+        "high_priority": 0,
+        "needs_first_outreach": 0,
+        "waiting_for_reply": 0,
+        "follow_up_soon": 0,
+        "needs_contact_research": 0,
+        "needs_enrichment": 0,
+    }
+
+
+def _empty_segments() -> dict[str, int]:
+    return {
+        "lift_system_signal": 0,
+        "project_based_furniture": 0,
+        "medical_vertical": 0,
+        "education_vertical": 0,
+        "general_office_furniture_only": 0,
+    }
+
+
+def build_portal_summary_degraded(settings: Settings, db_status: str = "unavailable") -> dict[str, Any]:
+    """Read-only summary when database is not queryable (no 500 to Portal consumers)."""
+    warnings = list(PORTAL_WARNINGS)
+    warnings.insert(
+        0,
+        "Database unavailable. Start Docker DB or check DATABASE_URL. Lead counts are zero until DB is ready.",
+    )
+    return {
+        "service_id": SERVICE_ID,
+        "service_name": "intelliOffice",
+        "runtime_mode": settings.APP_RUNTIME_MODE.value,
+        "api_version": API_VERSION,
+        "health": {
+            "status": "degraded",
+            "database_status": db_status,
+            "migration_pending": False,
+        },
+        "lead_intelligence": _empty_lead_intelligence(),
+        "segments": _empty_segments(),
+        "capabilities": list(PORTAL_CAPABILITIES),
+        "warnings": warnings,
+    }
+
+
 def build_portal_summary_payload(settings: Settings, db: Session) -> dict[str, Any]:
-    rhythm_leads = load_rhythm_leads_from_db(db)
+    db_status, _ = check_database(settings)
+    if db_status != "ready":
+        return build_portal_summary_degraded(settings, db_status)
+
+    try:
+        rhythm_leads = load_rhythm_leads_from_db(db)
+    except SQLAlchemyError:
+        return build_portal_summary_degraded(settings, "unavailable")
+
     counts = summarize_counts(rhythm_leads)
     segments = segment_breakdown(rhythm_leads)
     readiness = build_readiness_payload(settings)

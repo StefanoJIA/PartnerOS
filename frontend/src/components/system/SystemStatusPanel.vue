@@ -12,6 +12,16 @@
       </div>
     </template>
 
+    <el-alert
+      v-if="health && health.database_status && health.database_status !== 'ready'"
+      type="warning"
+      :closable="false"
+      show-icon
+      class="mb-3"
+      title="Database not ready"
+      :description="DB_HINT"
+    />
+
     <el-alert v-if="error" type="error" :closable="false" show-icon class="mb-3" :title="error" />
 
     <template v-else-if="health">
@@ -83,6 +93,7 @@ import {
   type ManifestEnvelope,
   type ReadinessEnvelope,
 } from '@/api/system'
+import { BACKEND_HINT, DB_HINT } from '@/api/errors'
 
 withDefaults(defineProps<{ compact?: boolean; showDetailLink?: boolean }>(), {
   compact: true,
@@ -122,7 +133,7 @@ async function load() {
     readiness.value = r
     manifest.value = m
   } catch (e: unknown) {
-    error.value = 'Failed to load system status. Is the backend running?'
+    error.value = BACKEND_HINT
     console.error(e)
   } finally {
     loading.value = false
