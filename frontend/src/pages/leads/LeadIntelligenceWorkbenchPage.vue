@@ -4,6 +4,104 @@
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
+            <h2 class="text-lg font-semibold text-slate-800">Lead Completeness</h2>
+            <p class="mt-1 text-xs text-slate-500">
+              Profile gaps before outreach — contact, website, enrichment, and next action (D5.4)
+            </p>
+          </div>
+        </div>
+      </template>
+
+      <div class="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+        <div class="rounded border border-slate-200 bg-slate-50 px-2 py-2 text-center">
+          <p class="text-lg font-semibold text-slate-800">{{ completenessSummary.total }}</p>
+          <p class="text-xs text-slate-500">Total Leads</p>
+        </div>
+        <div class="rounded border border-green-200 bg-green-50 px-2 py-2 text-center">
+          <p class="text-lg font-semibold text-green-800">{{ completenessSummary.complete }}</p>
+          <p class="text-xs text-green-700">Complete</p>
+        </div>
+        <div class="rounded border border-blue-200 bg-blue-50 px-2 py-2 text-center">
+          <p class="text-lg font-semibold text-blue-800">{{ completenessSummary.readyForOutreach }}</p>
+          <p class="text-xs text-blue-700">Ready for Outreach</p>
+        </div>
+        <div class="rounded border border-violet-200 bg-violet-50 px-2 py-2 text-center">
+          <p class="text-lg font-semibold text-violet-800">{{ completenessSummary.needsContactResearch }}</p>
+          <p class="text-xs text-violet-700">Needs Contact Research</p>
+        </div>
+        <div class="rounded border border-red-200 bg-red-50 px-2 py-2 text-center">
+          <p class="text-lg font-semibold text-red-800">{{ completenessSummary.incomplete }}</p>
+          <p class="text-xs text-red-700">Incomplete</p>
+        </div>
+        <div class="rounded border border-amber-200 bg-amber-50 px-2 py-2 text-center">
+          <p class="text-lg font-semibold text-amber-800">{{ completenessSummary.missingWebsite }}</p>
+          <p class="text-xs text-amber-700">Missing Website</p>
+        </div>
+        <div class="rounded border border-orange-200 bg-orange-50 px-2 py-2 text-center">
+          <p class="text-lg font-semibold text-orange-800">{{ completenessSummary.missingContactMethod }}</p>
+          <p class="text-xs text-orange-700">Missing Contact Method</p>
+        </div>
+      </div>
+
+      <p class="mb-1 text-xs font-medium text-slate-600">Completeness filters</p>
+      <el-radio-group v-model="completenessFilter" size="small" class="mb-3 flex flex-wrap gap-1">
+        <el-radio-button v-for="opt in COMPLETENESS_FILTER_OPTIONS" :key="opt.key" :value="opt.key">
+          {{ opt.label }}
+        </el-radio-button>
+      </el-radio-group>
+
+      <el-table
+        :data="filteredCompletenessRows"
+        size="small"
+        stripe
+        highlight-current-row
+        :empty-text="completenessEmptyText"
+        @row-click="onCompletenessRowClick"
+      >
+        <el-table-column prop="companyName" label="Company" min-width="130" show-overflow-tooltip />
+        <el-table-column label="Score" width="64" sortable :sort-method="sortCompletenessByScore">
+          <template #default="{ row }">
+            <span class="font-semibold">{{ row.score }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="Status" width="150">
+          <template #default="{ row }">
+            <el-tag size="small" :type="completenessStatusTagType(row.status)" effect="plain">
+              {{ row.statusLabel }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="Missing Fields" min-width="140">
+          <template #default="{ row }">
+            <span v-if="row.missingFields.length" class="text-xs text-amber-700">
+              {{ row.missingFields.map((f) => MISSING_FIELD_LABELS[f] || f).join(', ') }}
+            </span>
+            <span v-else class="text-xs text-slate-400">—</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="recommendedResearchAction"
+          label="Recommended Research Action"
+          min-width="180"
+          show-overflow-tooltip
+        />
+        <el-table-column label="Segment" min-width="120">
+          <template #default="{ row }">
+            <el-tag v-if="row.segments[0]" size="small" :type="segmentTagType(row.segments[0])" effect="plain">
+              {{ segmentLabel(row.segments[0]) }}
+            </el-tag>
+            <span v-else class="text-xs text-slate-400">—</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="nextAction" label="Next Action" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="lastTouch" label="Last Touchpoint" min-width="100" show-overflow-tooltip />
+      </el-table>
+    </el-card>
+
+    <el-card v-loading="reviewLoading" shadow="never">
+      <template #header>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
             <h2 class="text-lg font-semibold text-slate-800">Manual Outreach Queue</h2>
             <p class="mt-1 text-xs text-slate-500">
               Daily follow-up rhythm - score, segment, outreach status, and next actions (D5.2.8)
@@ -280,6 +378,7 @@
               </p>
 
               <div class="mb-3 flex flex-wrap gap-1">
+                <el-button size="small" @click="applyContactResearchTouchPreset">Contact research preset</el-button>
                 <el-button
                   v-for="s in NEXT_ACTION_SUGGESTIONS.slice(0, 4)"
                   :key="s"
@@ -371,6 +470,17 @@ import {
   type QueueFilterKey,
 } from '@/constants/outreachQueue'
 import {
+  COMPLETENESS_FILTER_OPTIONS,
+  MISSING_FIELD_LABELS,
+  applyContactResearchPreset,
+  computeCompletenessSummary,
+  computeLeadCompleteness,
+  completenessStatusTagType,
+  filterCompletenessRows,
+  type CompletenessFilterKey,
+  type CompletenessRow,
+} from '@/constants/leadCompleteness'
+import {
   CHANNEL_PRESETS,
   NEXT_ACTION_SUGGESTIONS,
   TOUCHPOINT_TYPE_PRESETS,
@@ -401,6 +511,13 @@ type ReviewRow = {
   recommendedChannel: string
   recommendedChannelKey: string
   recommendedProductFocus: string
+  contactTitle: string | null
+  contactLinkedinUrl: string | null
+  contactPhone: string | null
+  suggestedNextActions: string[]
+  companyNotes: string | null
+  businessDescription: string | null
+  industry: string | null
 }
 
 type InteractionBrief = {
@@ -425,6 +542,7 @@ const selectedLeadId = ref<string | null>((route.query.leadId as string) || null
 const reviewRows = ref<ReviewRow[]>([])
 const reviewBoardError = ref('')
 const queueFilter = ref<QueueFilterKey>('today_focus')
+const completenessFilter = ref<CompletenessFilterKey>('all')
 const draftStatusByLead = ref<Record<string, DraftStatus>>({})
 const recentInteractions = ref<InteractionBrief[]>([])
 
@@ -472,6 +590,56 @@ const scoreRows = computed(() => {
 
 const filteredReviewRows = computed(() => filterQueueRows(reviewRows.value, queueFilter.value))
 
+const completenessRows = computed<CompletenessRow[]>(() =>
+  reviewRows.value.map((row) => {
+    const comp = computeLeadCompleteness({
+      companyName: row.companyName,
+      companyType: row.companyType !== '—' ? row.companyType : null,
+      industry: row.industry,
+      notes: row.companyNotes,
+      businessDescription: row.businessDescription,
+      website: row.companyWebsite,
+      contactName: row.contactName !== '—' ? row.contactName : null,
+      contactTitle: row.contactTitle,
+      contactEmail: row.contactEmail,
+      contactLinkedinUrl: row.contactLinkedinUrl,
+      companyLinkedinUrl: row.linkedinUrl,
+      contactPhone: row.contactPhone,
+      segments: row.segments,
+      intelligenceScore: row.score,
+      suggestedNextActions: row.suggestedNextActions,
+      nextAction: row.nextAction,
+      enrichmentStatus: row.enrichmentStatus,
+      touchCount: row.touchCount,
+    })
+    return {
+      leadId: row.leadId,
+      companyName: row.companyName,
+      score: comp.score,
+      status: comp.status,
+      statusLabel: comp.statusLabel,
+      missingFields: comp.missingFields,
+      recommendedResearchAction: comp.recommendedResearchAction,
+      segments: row.segments,
+      nextAction: row.nextAction,
+      lastTouch: row.lastTouch,
+    }
+  }),
+)
+
+const filteredCompletenessRows = computed(() =>
+  filterCompletenessRows(completenessRows.value, completenessFilter.value),
+)
+
+const completenessSummary = computed(() => computeCompletenessSummary(completenessRows.value))
+
+const completenessEmptyText = computed(() => {
+  if (reviewLoading.value) return 'Loading completeness...'
+  if (!completenessRows.value.length) return 'No leads — refresh or import leads.'
+  if (!filteredCompletenessRows.value.length) return 'No leads match this completeness filter.'
+  return 'No leads.'
+})
+
 const queueEmptyText = computed(() => {
   if (reviewLoading.value) return 'Loading leads...'
   if (!reviewRows.value.length) return 'No leads in queue - refresh or import leads.'
@@ -481,6 +649,19 @@ const queueEmptyText = computed(() => {
 
 function sortByScore(a: ReviewRow, b: ReviewRow) {
   return a.score - b.score
+}
+
+function sortCompletenessByScore(a: CompletenessRow, b: CompletenessRow) {
+  return a.score - b.score
+}
+
+function onCompletenessRowClick(row: CompletenessRow) {
+  selectedLeadId.value = row.leadId
+}
+
+function applyContactResearchTouchPreset() {
+  applyContactResearchPreset(touch.value)
+  ElMessage.info('Contact research preset applied — save when ready.')
 }
 
 function formatDate(iso: string) {
@@ -611,7 +792,10 @@ async function loadReviewBoard() {
             ? `${w.primary_contact.first_name} ${w.primary_contact.last_name}`.trim()
             : '—'
           const contactEmail = w.primary_contact?.email ?? null
-          const linkedinUrl = w.company.linkedin_url ?? null
+          const contactTitle = w.primary_contact?.title ?? null
+          const contactLinkedinUrl = w.primary_contact?.linkedin_url ?? null
+          const contactPhone = w.primary_contact?.phone ?? null
+          const linkedinUrl = contactLinkedinUrl ?? w.company.linkedin_url ?? null
           const rec = recommendChannel(w.market_fit_segments || [], contactEmail, linkedinUrl)
 
           const cid = w.company.id
@@ -651,6 +835,13 @@ async function loadReviewBoard() {
             contactName,
             contactEmail,
             linkedinUrl,
+            contactTitle,
+            contactLinkedinUrl,
+            contactPhone,
+            suggestedNextActions: w.suggested_next_actions || [],
+            companyNotes: (w.company as { notes?: string | null }).notes ?? null,
+            businessDescription: w.company.business_description ?? null,
+            industry: (w.company as { industry?: string | null }).industry ?? null,
             score: rhythmBase.score,
             segments: rhythmBase.segments,
             priority: lead.priority ?? w.lead.priority ?? '—',

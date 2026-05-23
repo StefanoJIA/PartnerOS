@@ -52,16 +52,17 @@ python scripts/check_backend_runtime.py
 
 1. 登录 `/login`（seed 凭据见 README，**勿在记录中写密码**）
 2. **（新 lead）** 打开 `/lead-intake` → 粘贴或上传 CSV → **Preview** → 检查 missing / duplicate / segment → **Confirm Import**
-3. 打开 `/lead-intelligence`
-4. 查看 **Daily Summary** cards
-5. 筛选 **High Priority** → 优先处理
-6. 筛选 **Needs First Outreach** → 首次外联
-7. 筛选 **Waiting for Reply** → 跟进已发送未回复
-8. 选择 lead → **Generate Draft**
-9. **Copy Draft** → 在 LinkedIn / Email **系统外**粘贴发送
-10. 回到系统 → **Mark as Sent**（仅记录，不自动发送）
-11. 确认 **next action** 已更新
-12. 每日结束（可选 CLI）：
+3. 打开 `/lead-intelligence` → 查看 **Lead Completeness** → 筛选 **Needs Contact Research** 补资料
+4. 打开 `/lead-intelligence` → Manual Outreach Queue
+5. 查看 **Daily Summary** cards
+6. 筛选 **High Priority** → 优先处理
+7. 筛选 **Needs First Outreach** → 首次外联
+8. 筛选 **Waiting for Reply** → 跟进已发送未回复
+9. 选择 lead → **Generate Draft**
+10. **Copy Draft** → 在 LinkedIn / Email **系统外**粘贴发送
+11. 回到系统 → **Mark as Sent**（仅记录，不自动发送）
+12. 确认 **next action** 已更新
+13. 每日结束（可选 CLI）：
 
 ```powershell
 cd backend

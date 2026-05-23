@@ -1,6 +1,7 @@
 /** Pilot touchpoint presets (frontend-only; no schema change). */
 
 export const TOUCHPOINT_TYPE_PRESETS = [
+  { label: 'Contact research', value: 'contact_research' },
   { label: 'LinkedIn connect note', value: 'linkedin_connect_note' },
   { label: 'Catalog sent', value: 'catalog_sent' },
   { label: 'Quotation follow-up', value: 'quotation_follow_up' },
@@ -23,6 +24,7 @@ export const NEXT_ACTION_SUGGESTIONS = [
 ] as const
 
 export const CHANNEL_PRESETS = [
+  { label: 'Manual research', value: 'manual_research' },
   { label: 'Phone', value: 'phone' },
   { label: 'Email', value: 'email' },
   { label: 'LinkedIn', value: 'linkedin' },

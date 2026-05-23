@@ -18,6 +18,9 @@ from app.schemas.a_domain import (
     LeadIntakePreviewResponse,
     LeadIntakePreviewRowOut,
     LeadIntakePreviewSummaryOut,
+    LeadCompletenessResponse,
+    LeadCompletenessRowOut,
+    LeadCompletenessSummaryOut,
     LeadIntelligenceWorkflowOut,
     OutreachDraftOut,
     TouchpointCreate,
@@ -30,6 +33,10 @@ from app.services.a_domain.lead_import_service import (
     apply_lead_csv_text,
     get_template_csv,
     preview_lead_csv_text,
+)
+from app.services.a_domain.lead_completeness_board import (
+    build_lead_completeness_rows,
+    summarize_completeness,
 )
 
 router = APIRouter(prefix="/a-domain", tags=["a-domain-intelligence"])
@@ -288,4 +295,35 @@ def post_lead_intake_apply(
         created_contacts=result.created_contacts,
         linked_leads=result.linked_leads,
         warnings=result.warnings,
+    )
+
+
+@router.get("/lead-completeness", response_model=LeadCompletenessResponse)
+def get_lead_completeness(
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> LeadCompletenessResponse:
+    """Read-only completeness board for all active leads (D5.4)."""
+    raw_rows = build_lead_completeness_rows(db)
+    summary = summarize_completeness(raw_rows)
+    rows = [
+        LeadCompletenessRowOut(
+            lead_id=r["lead_id"],
+            company_name=r["company_name"],
+            lead_name=r["lead_name"],
+            score=r["score"],
+            status=r["status"],
+            status_label=r["status_label"],
+            missing_fields=r["missing_fields"],
+            recommended_research_action=r["recommended_research_action"],
+            segment=r.get("segment"),
+            segments=r.get("segments") or [],
+            next_action=r.get("next_action"),
+            last_touchpoint=r.get("last_touchpoint"),
+        )
+        for r in raw_rows
+    ]
+    return LeadCompletenessResponse(
+        rows=rows,
+        summary=LeadCompletenessSummaryOut(**summary),
     )

@@ -105,3 +105,33 @@ class LeadIntakeApplyResponse(BaseModel):
     created_contacts: int
     linked_leads: int
     warnings: list[str] = Field(default_factory=list)
+
+
+class LeadCompletenessRowOut(BaseModel):
+    lead_id: str
+    company_name: str
+    lead_name: str
+    score: int
+    status: str
+    status_label: str
+    missing_fields: list[str]
+    recommended_research_action: str
+    segment: str | None = None
+    segments: list[str] = Field(default_factory=list)
+    next_action: str | None = None
+    last_touchpoint: str | None = None
+
+
+class LeadCompletenessSummaryOut(BaseModel):
+    total: int
+    complete: int
+    ready_for_outreach: int
+    needs_contact_research: int
+    incomplete: int
+    missing_website: int
+    missing_contact_method: int
+
+
+class LeadCompletenessResponse(BaseModel):
+    rows: list[LeadCompletenessRowOut]
+    summary: LeadCompletenessSummaryOut

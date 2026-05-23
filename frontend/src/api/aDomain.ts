@@ -29,6 +29,8 @@ export type LeadIntelligenceWorkflow = {
     last_name: string
     email?: string | null
     title?: string | null
+    phone?: string | null
+    linkedin_url?: string | null
   } | null
   intelligence_score: number
   score_breakdown: Record<string, number>
