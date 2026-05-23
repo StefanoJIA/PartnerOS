@@ -1,0 +1,5 @@
+/dist/
+/build/
+/dist-sidecar-*/
+/build-sidecar-*/
+*.spec.bak

@@ -1,0 +1,3 @@
+# D3: tools to freeze backend into a Windows sidecar (build machine only).
+-r requirements.txt
+pyinstaller==6.11.1

@@ -1,0 +1,7 @@
+export { default as ObjectNotesPanel } from './ObjectNotesPanel.vue'
+export { default as ObjectFilesPanel } from './ObjectFilesPanel.vue'
+export { default as ObjectTagsPanel } from './ObjectTagsPanel.vue'
+export { default as ObjectInteractionsPanel } from './ObjectInteractionsPanel.vue'
+export { default as ObjectTasksPanel } from './ObjectTasksPanel.vue'
+export { default as ObjectAiActionsPanel } from './ObjectAiActionsPanel.vue'
+export { default as ObjectActivityLogPanel } from './ObjectActivityLogPanel.vue'

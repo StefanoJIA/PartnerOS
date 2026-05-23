@@ -1,0 +1,49 @@
+# Environment & secrets
+.env
+*.env
+!.env.example
+backend/.env
+frontend/.env
+frontend/.env.local
+
+# Database dumps & local DB files
+*.sqlite
+*.db
+*.dump
+*.sql
+
+# Logs & caches
+*.log
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Node / frontend build
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Manual screenshots (may contain tokens — do not commit unmasked)
+docs/records/screenshots/**/*.png
+docs/records/screenshots/**/*.jpg
+docs/records/screenshots/**/*.jpeg
+docs/records/screenshots/**/*.webp
+
+# Python venv / uploads (local dev)
+.venv/
+venv/
+backend/uploads/
+
+# Tauri / sidecar build artifacts (keep sources)
+frontend/src-tauri/target/

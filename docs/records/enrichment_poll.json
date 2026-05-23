@@ -1,0 +1,24 @@
+[
+  {
+    "key": "office_dealer",
+    "website": "https://example.com",
+    "create": 201,
+    "run_id": "242e3147-139f-4a26-9a6a-7a37bab04c5f",
+    "status": null,
+    "sources": 6,
+    "suggestions": 2,
+    "pages": null,
+    "error_message": null
+  },
+  {
+    "key": "ergo_sitstand",
+    "website": "https://www.steelcase.com",
+    "create": 201,
+    "run_id": "22cc451e-2c46-48e8-89cf-aa946e581ff1",
+    "status": null,
+    "sources": 6,
+    "suggestions": 5,
+    "pages": null,
+    "error_message": null
+  }
+]
