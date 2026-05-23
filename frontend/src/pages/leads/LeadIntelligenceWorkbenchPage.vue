@@ -424,6 +424,8 @@
 
             <ProductFitCard :lead-id="selectedLeadId" />
 
+            <PreQuotePrepCard :lead-id="selectedLeadId" />
+
             <el-card shadow="never" class="mb-4">
               <template #header>记录触达并更新 Next Action</template>
               <el-alert
@@ -567,6 +569,7 @@ import ContactResearchDrawer from '@/components/leads/ContactResearchDrawer.vue'
 import OutreachHistoryTimeline from '@/components/leads/OutreachHistoryTimeline.vue'
 import FollowUpScheduler from '@/components/leads/FollowUpScheduler.vue'
 import ProductFitCard from '@/components/leads/ProductFitCard.vue'
+import PreQuotePrepCard from '@/components/leads/PreQuotePrepCard.vue'
 import ProductOpportunityBoard from '@/components/leads/ProductOpportunityBoard.vue'
 import type { ProductOpportunityFilterKey } from '@/constants/productOpportunity'
 import {

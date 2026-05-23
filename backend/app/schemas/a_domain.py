@@ -422,3 +422,61 @@ class ProductOpportunityBoardResponse(BaseModel):
     safety: ProductOpportunitySafetyOut = Field(default_factory=ProductOpportunitySafetyOut)
     warnings: list[str] = Field(default_factory=list)
     degraded: bool = False
+
+
+class PreQuoteSafetyOut(BaseModel):
+    quote_created: bool = False
+    pricing_generated: bool = False
+    inventory_promised: bool = False
+    certification_promised: bool = False
+    lead_time_promised: bool = False
+    automatic_sending_enabled: bool = False
+
+
+class PreQuoteBriefOut(BaseModel):
+    """D5.14 — pre-quote and sample prep brief (read-only, no quote creation)."""
+
+    lead_id: str
+    company_name: str
+    quote_readiness: str
+    sample_readiness: str
+    recommended_product_focus: list[str] = Field(default_factory=list)
+    project_type: str
+    opportunity_score: int = Field(ge=0, le=100)
+    missing_quote_info: list[str] = Field(default_factory=list)
+    quote_preparation_checklist: list[str] = Field(default_factory=list)
+    sample_preparation_checklist: list[str] = Field(default_factory=list)
+    recommended_customer_questions: list[str] = Field(default_factory=list)
+    recommended_internal_next_steps: list[str] = Field(default_factory=list)
+    recommended_next_action: str
+    pre_quote_brief_text: str
+    sample_discussion_brief_text: str
+    warnings: list[str] = Field(default_factory=list)
+    safety: PreQuoteSafetyOut = Field(default_factory=PreQuoteSafetyOut)
+
+
+class PreQuoteBoardRowOut(BaseModel):
+    lead_id: str
+    company_name: str
+    quote_readiness: str
+    sample_readiness: str
+    missing_quote_info_count: int = 0
+    recommended_next_action: str | None = None
+    recommended_product_focus: list[str] = Field(default_factory=list)
+    opportunity_score: int = 0
+
+
+class PreQuoteBoardSummaryOut(BaseModel):
+    total: int = 0
+    quote_prep_ready: int = 0
+    sample_discussion_ready: int = 0
+    needs_specs_before_quote: int = 0
+    almost_ready: int = 0
+
+
+class PreQuoteBoardResponse(BaseModel):
+    summary: PreQuoteBoardSummaryOut
+    rows: list[PreQuoteBoardRowOut]
+    safety: PreQuoteSafetyOut = Field(default_factory=PreQuoteSafetyOut)
+    warnings: list[str] = Field(default_factory=list)
+    degraded: bool = False

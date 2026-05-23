@@ -48,6 +48,11 @@ from app.schemas.a_domain import (
     ProductOpportunityBoardRowOut,
     ProductOpportunityBoardSummaryOut,
     ProductOpportunitySafetyOut,
+    PreQuoteBriefOut,
+    PreQuoteBoardResponse,
+    PreQuoteBoardRowOut,
+    PreQuoteBoardSummaryOut,
+    PreQuoteSafetyOut,
     LeadIntelligenceWorkflowOut,
     OutreachDraftOut,
     TouchpointCreate,
@@ -80,6 +85,13 @@ from app.services.a_domain.daily_work_summary import (
     build_daily_work_summary,
     build_daily_work_summary_degraded,
 )
+from app.services.a_domain.pre_quote_board import (
+    build_pre_quote_board_degraded,
+    build_pre_quote_board_rows,
+    build_pre_quote_brief_for_lead,
+    summarize_pre_quote_board,
+)
+from app.services.a_domain.pre_quote_prep import PRE_QUOTE_SAFETY
 from app.services.a_domain.product_fit_board import (
     build_product_fit_for_lead,
     build_product_opportunity_board,
@@ -496,6 +508,48 @@ def get_lead_product_fit(
     if not raw:
         raise HTTPException(status_code=404, detail="Lead not found")
     return ProductFitOut(**raw)
+
+
+@router.get("/leads/{lead_id}/pre-quote-brief", response_model=PreQuoteBriefOut)
+def get_lead_pre_quote_brief(
+    lead_id: UUID,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> PreQuoteBriefOut:
+    """Read-only pre-quote and sample prep brief (D5.14 — no quote creation)."""
+    raw = build_pre_quote_brief_for_lead(db, lead_id)
+    if not raw:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    return PreQuoteBriefOut(**raw)
+
+
+@router.get("/pre-quote-board", response_model=PreQuoteBoardResponse)
+def get_pre_quote_board(
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> PreQuoteBoardResponse:
+    """Read-only pre-quote board summary for all active leads (D5.14)."""
+    try:
+        rows_raw = build_pre_quote_board_rows(db)
+        summary = summarize_pre_quote_board(rows_raw)
+        return PreQuoteBoardResponse(
+            summary=PreQuoteBoardSummaryOut(**summary),
+            rows=[PreQuoteBoardRowOut(**r) for r in rows_raw],
+            safety=PreQuoteSafetyOut(**PRE_QUOTE_SAFETY),
+            warnings=[],
+            degraded=False,
+        )
+    except Exception:
+        raw = build_pre_quote_board_degraded(
+            "Pre-quote board unavailable. Check backend and database status."
+        )
+        return PreQuoteBoardResponse(
+            summary=PreQuoteBoardSummaryOut(**raw["summary"]),
+            rows=[],
+            safety=PreQuoteSafetyOut(**raw["safety"]),
+            warnings=raw.get("warnings") or [],
+            degraded=True,
+        )
 
 
 @router.get("/product-opportunity-board", response_model=ProductOpportunityBoardResponse)

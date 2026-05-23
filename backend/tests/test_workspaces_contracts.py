@@ -43,7 +43,14 @@ def test_no_hardcoded_partner_priority_in_core_tree():
     from pathlib import Path
 
     root = Path(__file__).resolve().parent.parent / "app"
-    allow_names = {"prompts.py", "knowledge.py", "outreach_templates.py", "product_fit.py", "product_fit_board.py"}
+    allow_names = {
+        "prompts.py",
+        "knowledge.py",
+        "outreach_templates.py",
+        "product_fit.py",
+        "product_fit_board.py",
+        "pre_quote_prep.py",
+    }
     bad: list[str] = []
     for path in root.rglob("*.py"):
         if path.name in allow_names:

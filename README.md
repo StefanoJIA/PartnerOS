@@ -82,6 +82,7 @@ First-time setup: `python scripts/init_local_env.py` → edit `backend/.env` →
 | **Follow-up scheduling / due queue** | **`/lead-intelligence`** · Follow-up Scheduler + Due filters (D5.7) |
 | **Product fit & project opportunity** | **`/lead-intelligence`** · Product Fit Card + Opportunity Board (D5.12–D5.13) |
 | **Product opportunity dashboard** | **`/`** · Product Opportunity Summary strip (D5.13) |
+| **Pre-quote & sample prep** | **`/lead-intelligence`** · Pre-Quote Prep Card (D5.14) |
 | **Daily ops dashboard** | **`/`** · Daily Operations + Recent Activity + End-of-Day Summary (D5.8–D5.10) |
 | Lead import preview (CLI) | `backend/scripts/lead_import_preview.py` |
 | Outreach draft | Generate Draft in Lead Intelligence |
