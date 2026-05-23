@@ -23,6 +23,11 @@ from app.services.a_domain.follow_up_rhythm import (
 BASE = get_backend_base_url()
 
 
+def _ascii_safe(text: str) -> str:
+    """Avoid em-dash mojibake in Windows PowerShell."""
+    return text.replace("\u2014", "-").replace("\u2013", "-")
+
+
 def _login(client: httpx.Client) -> dict[str, str] | None:
     r = client.post(
         f"{BASE}/api/auth/login",
@@ -75,7 +80,7 @@ def run() -> int:
                 cid = company.get("id")
 
                 touch_count = 0
-                last_touch = "—"
+                last_touch = "-"
                 last_touch_date = None
                 ix = client.get(
                     f"{BASE}/api/objects/lead/{lid}/interactions",
@@ -87,7 +92,7 @@ def run() -> int:
                     items = ix.json().get("items") or []
                     if items:
                         t0 = items[0]
-                        last_touch = t0.get("summary") or t0.get("subject") or t0.get("interaction_type") or "—"
+                        last_touch = t0.get("summary") or t0.get("subject") or t0.get("interaction_type") or "-"
                         last_touch_date = t0.get("interaction_date")
 
                 if cid and cid not in enrich_cache:
@@ -120,7 +125,7 @@ def run() -> int:
                         last_touch_date=last_touch_date,
                         contact_email=contact.get("email") if contact else None,
                         linkedin_url=company.get("linkedin_url"),
-                        enrichment_status=enrich_cache.get(cid, "—") if cid else "—",
+                        enrichment_status=enrich_cache.get(cid, "-") if cid else "-",
                         company_website=company.get("website"),
                     )
                 )
@@ -146,8 +151,8 @@ def run() -> int:
     print()
     print("Top 10 recommended actions:")
     for i, (company, action, reason) in enumerate(top, start=1):
-        action_short = action[:80] + ("…" if len(action) > 80 else "")
-        print(f"{i}. {company} — {action_short} — {reason}")
+        action_short = action[:80] + ("..." if len(action) > 80 else "")
+        print(f"{i}. {_ascii_safe(company)} - {_ascii_safe(action_short)} - {_ascii_safe(reason)}")
     print()
     print("Segment breakdown:")
     for key, val in segments.items():

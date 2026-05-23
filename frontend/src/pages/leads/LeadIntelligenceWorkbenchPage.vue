@@ -6,7 +6,7 @@
           <div>
             <h2 class="text-lg font-semibold text-slate-800">Manual Outreach Queue</h2>
             <p class="mt-1 text-xs text-slate-500">
-              Daily follow-up rhythm — score, segment, outreach status, and next actions (D5.2.7)
+              Daily follow-up rhythm - score, segment, outreach status, and next actions (D5.2.8)
             </p>
           </div>
           <el-button size="small" @click="loadReviewBoard">Refresh</el-button>
@@ -22,11 +22,11 @@
         </div>
         <div class="rounded border border-blue-100 bg-blue-50 px-2 py-2 text-center">
           <p class="text-lg font-semibold text-blue-800">{{ dailySummary.needs_first_outreach }}</p>
-          <p class="text-xs text-blue-600">First Outreach</p>
+          <p class="text-xs text-blue-600">Needs First Outreach</p>
         </div>
         <div class="rounded border border-amber-100 bg-amber-50 px-2 py-2 text-center">
           <p class="text-lg font-semibold text-amber-800">{{ dailySummary.waiting_for_reply }}</p>
-          <p class="text-xs text-amber-600">Waiting Reply</p>
+          <p class="text-xs text-amber-600">Waiting for Reply</p>
         </div>
         <div class="rounded border border-orange-100 bg-orange-50 px-2 py-2 text-center">
           <p class="text-lg font-semibold text-orange-800">{{ dailySummary.follow_up_soon }}</p>
@@ -34,7 +34,7 @@
         </div>
         <div class="rounded border border-violet-100 bg-violet-50 px-2 py-2 text-center">
           <p class="text-lg font-semibold text-violet-800">{{ dailySummary.needs_contact_research }}</p>
-          <p class="text-xs text-violet-600">Contact Research</p>
+          <p class="text-xs text-violet-600">Needs Contact Research</p>
         </div>
         <div class="rounded border border-rose-100 bg-rose-50 px-2 py-2 text-center">
           <p class="text-lg font-semibold text-rose-800">{{ dailySummary.high_priority }}</p>
@@ -65,7 +65,7 @@
         size="small"
         stripe
         highlight-current-row
-        empty-text="No leads in queue — refresh or import leads."
+        :empty-text="queueEmptyText"
         @row-click="onReviewRowClick"
       >
         <el-table-column prop="companyName" label="Company" min-width="130" show-overflow-tooltip />
@@ -203,9 +203,9 @@
               </div>
             </el-card>
 
-            <el-card v-if="recentInteractions.length" shadow="never">
+            <el-card shadow="never">
               <template #header>最近触达记录</template>
-              <ul class="space-y-2 text-sm text-slate-600">
+              <ul v-if="recentInteractions.length" class="space-y-2 text-sm text-slate-600">
                 <li v-for="ix in recentInteractions" :key="ix.id" class="border-b border-slate-100 pb-2 last:border-0">
                   <span class="font-medium">{{ ix.interaction_type }}</span>
                   <span v-if="ix.channel"> · {{ ix.channel }}</span>
@@ -213,6 +213,7 @@
                   <p class="text-xs">{{ ix.summary || ix.subject || '—' }}</p>
                 </li>
               </ul>
+              <p v-else class="text-sm text-slate-500">No touchpoints yet.</p>
             </el-card>
           </el-col>
 
@@ -458,6 +459,13 @@ const scoreRows = computed(() => {
 })
 
 const filteredReviewRows = computed(() => filterQueueRows(reviewRows.value, queueFilter.value))
+
+const queueEmptyText = computed(() => {
+  if (reviewLoading.value) return 'Loading leads...'
+  if (!reviewRows.value.length) return 'No leads in queue - refresh or import leads.'
+  if (!filteredReviewRows.value.length) return 'No leads match this filter.'
+  return 'No leads in queue - refresh or import leads.'
+})
 
 function sortByScore(a: ReviewRow, b: ReviewRow) {
   return a.score - b.score

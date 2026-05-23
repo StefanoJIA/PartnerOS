@@ -32,6 +32,10 @@
 
     <el-alert v-if="error" type="error" :closable="false" class="mb-3" :title="error" />
 
+    <p v-if="!draft && !loading" class="mb-3 text-sm text-slate-500">
+      Generate a draft to start manual outreach.
+    </p>
+
     <template v-if="draft">
       <div v-if="draft.linkedin_connect_note" class="mb-3">
         <p class="text-xs font-medium text-slate-600">LinkedIn note</p>
