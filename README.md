@@ -48,6 +48,7 @@ cd backend
 $env:BACKEND_BASE_URL="http://127.0.0.1:8010"
 python scripts/dev_runtime_doctor.py
 python scripts/smoke_all_d5.py
+python scripts/d5_16_real_lead_uat_check.py   # D5.16 real lead UAT (read-only)
 ```
 
 ### Port 8000 (legacy)

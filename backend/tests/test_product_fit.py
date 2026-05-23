@@ -48,6 +48,19 @@ def test_education_vertical_returns_jooboo_focus():
     assert result["project_type"] == "education_project"
 
 
+def test_project_segment_ranks_before_education_when_both():
+    result = compute_product_fit(
+        _base(
+            segments=["education_vertical", "project_based_furniture"],
+            lead_notes="FF&E project quote; also JOOBOO education furniture line",
+        )
+    )
+    focus = result["recommended_product_focus"]
+    assert "project_supply" in focus
+    assert "jooboo_education_furniture" in focus
+    assert focus.index("project_supply") < focus.index("jooboo_education_furniture")
+
+
 def test_medical_vertical_returns_medical_workspace():
     result = compute_product_fit(
         _base(

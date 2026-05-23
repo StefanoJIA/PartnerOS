@@ -176,13 +176,13 @@ def _recommended_product_focus(segments: list[str]) -> list[str]:
             focus.append(PRODUCT_FOCUS_OEM)
         if PRODUCT_FOCUS_COLUMNS not in focus:
             focus.append(PRODUCT_FOCUS_COLUMNS)
+    if "project_based_furniture" in segments:
+        if PRODUCT_FOCUS_PROJECT not in focus:
+            focus.append(PRODUCT_FOCUS_PROJECT)
     if "education_vertical" in segments:
         focus.append(PRODUCT_FOCUS_EDUCATION)
     if "medical_vertical" in segments:
         focus.append(PRODUCT_FOCUS_MEDICAL)
-    if "project_based_furniture" in segments:
-        if PRODUCT_FOCUS_PROJECT not in focus:
-            focus.append(PRODUCT_FOCUS_PROJECT)
     if "general_office_furniture_only" in segments and not focus:
         focus.extend([PRODUCT_FOCUS_FRAMES, PRODUCT_FOCUS_HOSUN])
     if not focus:
