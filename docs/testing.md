@@ -32,7 +32,12 @@ pytest -q
 
 ### D5.2.2 smoke test（内部 MVP）
 
-**前提**：backend 已在 `http://127.0.0.1:8000` 运行。
+**前提**：backend 已运行。默认 `BACKEND_BASE_URL=http://127.0.0.1:8000`；若使用 **8010**，请先设置：
+
+```powershell
+$env:BACKEND_BASE_URL="http://127.0.0.1:8010"
+python scripts/check_backend_runtime.py
+```
 
 ```powershell
 cd backend
@@ -98,7 +103,7 @@ npm run test -- --run
 - Tauri 工程：`frontend/src-tauri/`（`npm run tauri:dev` / `npm run tauri:build`）  
 - 启动路由：**`/desktop-launch`**（公开路由，不要求登录）  
 - Health 逻辑：`frontend/src/desktop/healthGate.ts`（与后端 D1 `/health` 字段语义一致，不自造冲突状态机）  
-- 后端地址：`frontend/src/config/backendOrigin.ts`；Vite dev 下通过 **`/health` 反代** 到 `127.0.0.1:8000`，与 `/api` 一致
+- 后端地址：`frontend/src/config/backendOrigin.ts`；Vite dev 下 `/api`、`/health` 经 proxy 转发（默认 `127.0.0.1:8000`，可设 `VITE_API_PROXY_TARGET=http://127.0.0.1:8010`）
 
 ### 不取代 development 工作流
 

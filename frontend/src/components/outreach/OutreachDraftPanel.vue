@@ -24,6 +24,7 @@
         <el-option label="Lifting Systems" value="hosun_lifting" />
         <el-option label="Education Furniture" value="jooboo_education" />
         <el-option label="Medical Workspace" value="medical_workspace" />
+        <el-option label="Project Supply" value="project_supply" />
         <el-option label="General" value="general" />
       </el-select>
       <el-button size="small" type="primary" :loading="loading" @click="generate">Generate Draft</el-button>

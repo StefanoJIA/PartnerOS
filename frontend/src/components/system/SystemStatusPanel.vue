@@ -122,7 +122,7 @@ async function load() {
     readiness.value = r
     manifest.value = m
   } catch (e: unknown) {
-    error.value = 'Failed to load system status. Is the backend running on :8000?'
+    error.value = 'Failed to load system status. Is the backend running?'
     console.error(e)
   } finally {
     loading.value = false

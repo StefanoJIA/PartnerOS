@@ -12,8 +12,9 @@ if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
 from app.services.a_domain.outreach_templates import generate_outreach_draft
+from app.core.backend_url import get_backend_base_url, log_backend_base_url
 
-BASE = "http://127.0.0.1:8000"
+BASE = get_backend_base_url()
 
 FORBIDDEN_PHRASES = [
     "guaranteed delivery",
@@ -96,6 +97,8 @@ def _scan_draft_text(text: str) -> list[str]:
 
 
 def run() -> int:
+    global BASE
+    BASE = log_backend_base_url()
     checks = [
         Check("leads count"),
         Check("lift segment lead"),
@@ -232,7 +235,7 @@ def run() -> int:
     except httpx.ConnectError:
         for c in checks:
             if not c.detail:
-                c.fail("backend down")
+                c.fail(f"backend down ({BASE})")
         _print(checks)
         return 1
 

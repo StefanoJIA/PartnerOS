@@ -97,9 +97,51 @@ npm run dev
 ```
 
 - **Docker DB**：`127.0.0.1:5435` → 容器 `5432`（见 `docker-compose.yml`）
-- **Backend**：`http://127.0.0.1:8000/health`
+- **Backend**：`http://127.0.0.1:8000/health`（默认；见下方 **Changing backend port**）
 - **Frontend**：终端打印的 `Local:` URL（5173 被占用时用 5174）
 - **系统状态 UI**：登录后 Dashboard 卡片或 `/system-health`
+
+## Changing backend port
+
+1. **默认** backend 端口为 **8000**。
+2. 若 **8000 被占用**，可使用备用端口 **8010**（不要强行 kill 未知进程）。
+3. **启动 backend（8010 示例）**：
+
+   ```powershell
+   cd backend
+   python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8010
+   ```
+
+4. **PowerShell — 对齐脚本与前端 proxy**：
+
+   ```powershell
+   $env:BACKEND_BASE_URL="http://127.0.0.1:8010"
+   $env:VITE_API_PROXY_TARGET="http://127.0.0.1:8010"
+   ```
+
+5. **前端 `frontend/.env.local`**（已 gitignore，勿提交）：
+
+   ```env
+   VITE_API_PROXY_TARGET=http://127.0.0.1:8010
+   ```
+
+6. **检查**：
+
+   ```powershell
+   cd backend
+   python scripts/check_backend_runtime.py
+   python scripts/smoke_demo_ready.py
+   ```
+
+7. **不要**同时运行多个 backend 实例。
+8. **不要**在 8000 与 8010 上各跑一个不同代码版本的 uvicorn，否则 segment / route 检查可能不一致。
+
+**环境变量摘要**
+
+| 变量 | 用途 | 默认 |
+|------|------|------|
+| `BACKEND_BASE_URL` | 后端 smoke / pilot / import 等脚本 | `http://127.0.0.1:8000` |
+| `VITE_API_PROXY_TARGET` | Vite dev 将 `/api`、`/health` 代理到此地址 | `http://127.0.0.1:8000` |
 
    **Windows 常见启动错误**
 
@@ -107,7 +149,7 @@ npm run dev
    |------|------|
    | `cd backend` 报 `backend\backend` 不存在 | 当前目录已在 `backend` 内，勿重复 `cd backend` |
    | `cd frontend` 报 `backend\frontend` 不存在 | 先 `cd` 到**仓库根目录**再 `cd frontend` |
-   | uvicorn `[Errno 10048] 8000` | 8000 已被占用，说明后端已在跑；用 `http://127.0.0.1:8000/health` 验证，勿重复启动 |
+   | uvicorn `[Errno 10048] 8000` | 8000 已被占用：用 `python scripts/check_backend_runtime.py` 验证是否已有 backend；或改用 **8010**（见 **Changing backend port**） |
    | npm 找不到 `backend\package.json` | 在 `frontend` 目录执行 `npm run dev`，不是 `backend` |
 5. **Desktop shell (D2–D3 / Tauri 2, optional)** — install **Rust** (e.g. `winget install Rustlang.Rustup`). For **packaged sidecar** builds, you also need **Python** + **PyInstaller** (`pip install -r backend/requirements-sidecar-build.txt` in a venv that has the app deps). After Rust install, open a **new** terminal or ensure `%USERPROFILE%\.cargo\bin` is on `PATH` (PowerShell: `$env:Path = "$env:USERPROFILE\.cargo\bin;" + $env:Path`). **Do not** use `&&` in Windows PowerShell 5.x; use `;` or separate lines.  
    - **Path A (external backend, typical dev)** — start `uvicorn` on **:8000**, then from `frontend` e.g. `$env:INTELLIOFFICE_EXTERNAL_BACKEND = "1"; npm run tauri:dev`. Debug builds **do not** spawn sidecar by default; `/health` uses the Vite proxy.  

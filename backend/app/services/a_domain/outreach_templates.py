@@ -20,6 +20,7 @@ PRODUCT_FOCUSES = frozenset(
         "hosun_lifting",
         "jooboo_education",
         "medical_workspace",
+        "project_supply",
         "general",
     }
 )
@@ -60,6 +61,8 @@ def _pick_focus(segments: list[str], product_focus: str) -> str:
         return "hosun_lifting"
     if "education_vertical" in segments:
         return "jooboo_education"
+    if "project_based_furniture" in segments:
+        return "project_supply"
     if "medical_vertical" in segments:
         return "medical_workspace"
     return "general"
@@ -161,6 +164,9 @@ def _generate_en(
         ),
         "medical_workspace": (
             "healthcare and lab workstation configurations supported by precision lifting system manufacturing partners"
+        ),
+        "project_supply": (
+            "project-based office furniture supply, FF&E coordination, and installation-friendly packaging"
         ),
         "general": "office and project furniture supply coordination through intelliOffice",
     }

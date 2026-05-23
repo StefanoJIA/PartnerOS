@@ -12,14 +12,20 @@ if str(BACKEND_ROOT) not in sys.path:
 
 import httpx
 
+from app.services.a_domain.lead_import_apply import (
+    build_contact_create_payload,
+    build_lead_link_payload,
+    format_apply_result,
+    match_existing_contact,
+)
 from app.services.a_domain.lead_import_intake import (
     preview_row,
     read_csv_rows,
-    split_contact_name,
     validate_headers,
 )
+from app.core.backend_url import get_backend_base_url, log_backend_base_url
 
-BASE = "http://127.0.0.1:8000"
+BASE = get_backend_base_url()
 
 SOURCE_MAP = {
     "trade show": "Trade Show",
@@ -29,8 +35,16 @@ SOURCE_MAP = {
     "linkedin": "LinkedIn",
     "email": "Email",
     "manual": "Manual Research",
+    "manual research": "Manual Research",
     "other": "Other",
     "partner intro": "Referral",
+    "phone / prior outreach": "Manual Research",
+    "virtual meeting / quote": "Manual Research",
+    "visit / outreach": "Field Visit",
+    "quotation / outreach": "Manual Research",
+    "lead list / outreach": "Manual Research",
+    "handwritten note / lead record": "Manual Research",
+    "outreach": "Manual Research",
 }
 
 
@@ -56,50 +70,182 @@ def _map_source(raw: str) -> str:
     return SOURCE_MAP.get(key, raw if raw in SOURCE_MAP.values() else "Other")
 
 
+def _normalize_priority(raw: str | None) -> str | None:
+    if not raw:
+        return None
+    p = raw.strip().lower()
+    if p in ("high", "medium", "low", "urgent"):
+        return p
+    return None
+
+
+def _list_contacts(client: httpx.Client, headers: dict[str, str]) -> list[dict]:
+    r = client.get(f"{BASE}/api/contacts", headers=headers, params={"limit": 200})
+    if r.status_code != 200:
+        return []
+    return r.json().get("items", [])
+
+
+def _find_company_id(client: httpx.Client, headers: dict[str, str], name: str) -> str | None:
+    r = client.get(f"{BASE}/api/companies", headers=headers, params={"q": name.split()[0], "limit": 30})
+    if r.status_code != 200:
+        return None
+    for item in r.json().get("items", []):
+        if item.get("company_name") == name:
+            return item["id"]
+    return None
+
+
+def _find_lead_for_company(client: httpx.Client, headers: dict[str, str], company_id: str) -> dict | None:
+    r = client.get(f"{BASE}/api/leads", headers=headers, params={"limit": 200})
+    if r.status_code != 200:
+        return None
+    for lead in r.json().get("items", []):
+        if lead.get("company_id") == company_id:
+            wf = client.get(
+                f"{BASE}/api/a-domain/leads/{lead['id']}/workflow",
+                headers=headers,
+            )
+            if wf.status_code == 200:
+                body = wf.json()
+                primary = body.get("primary_contact")
+                if primary and primary.get("id"):
+                    lead = {**lead, "primary_contact_id": str(primary["id"])}
+            return lead
+    return None
+
+
+def _ensure_contact(
+    client: httpx.Client,
+    headers: dict[str, str],
+    company_id: str,
+    row: dict[str, str],
+    contacts: list[dict] | None = None,
+) -> str | None:
+    if contacts is None:
+        contacts = _list_contacts(client, headers)
+    existing_id = match_existing_contact(contacts, company_id, row)
+    if existing_id:
+        return existing_id
+    cp = build_contact_create_payload(company_id, row)
+    if not cp:
+        return None
+    ccr = client.post(f"{BASE}/api/contacts", headers=headers, json=cp)
+    if ccr.status_code in (200, 201):
+        return str(ccr.json()["id"])
+    return None
+
+
+def _fetch_company_detail(client: httpx.Client, headers: dict[str, str], company_id: str) -> dict:
+    ws = client.get(f"{BASE}/api/companies/{company_id}/workspace", headers=headers)
+    if ws.status_code == 200:
+        return ws.json().get("company") or {}
+    return {}
+
+
+def _maybe_patch_company(
+    client: httpx.Client,
+    headers: dict[str, str],
+    company_id: str,
+    row: dict[str, str],
+) -> bool:
+    co = _fetch_company_detail(client, headers, company_id)
+    patch: dict = {}
+    if row.get("notes") and not co.get("business_description"):
+        patch["business_description"] = row.get("notes")
+        patch["notes"] = row.get("notes")
+    if row.get("initial_interest") and not co.get("product_interest_tags"):
+        patch["product_interest_tags"] = row.get("initial_interest")
+    for field, key in (
+        ("city", "city"),
+        ("state", "state"),
+        ("industry", "industry"),
+        ("company_type", "company_type"),
+    ):
+        if row.get(field) and not co.get(field):
+            patch[key] = row.get(field)
+    if not patch:
+        return False
+    pr = client.put(f"{BASE}/api/companies/{company_id}", headers=headers, json=patch)
+    return pr.status_code == 200
+
+
+def _link_lead(
+    client: httpx.Client,
+    headers: dict[str, str],
+    lead: dict,
+    contact_id: str | None,
+    recommended_next_action: str,
+) -> tuple[bool, str | None]:
+    payload = build_lead_link_payload(lead, contact_id, recommended_next_action)
+    if not payload:
+        return False, None
+    lr = client.put(f"{BASE}/api/leads/{lead['id']}", headers=headers, json=payload)
+    if lr.status_code != 200:
+        return False, f"FAIL link {lead.get('lead_name', lead['id'])}: {lr.status_code} {lr.text[:120]}"
+    return True, None
+
+
 def _apply_row(client: httpx.Client, headers: dict[str, str], row: dict[str, str]) -> str:
     name = row.get("company_name", "").strip()
     existing = _existing_company_names(client, headers)
-    if name in existing:
-        return f"SKIP duplicate: {name}"
-
-    company_type = row.get("company_type") or "Other"
-    payload = {
-        "company_name": name,
-        "website": row.get("website") or None,
-        "linkedin_url": row.get("linkedin_url") or None,
-        "company_type": company_type,
-        "industry": row.get("industry") or None,
-        "city": row.get("city") or None,
-        "state": row.get("state") or None,
-        "country": row.get("country") or "United States",
-        "business_description": row.get("notes") or None,
-        "product_interest_tags": row.get("initial_interest") or None,
-        "source": row.get("source") or None,
-        "notes": row.get("notes") or None,
-        "priority": row.get("priority") or None,
-    }
-    cr = client.post(f"{BASE}/api/companies", headers=headers, json=payload)
-    if cr.status_code not in (200, 201):
-        return f"FAIL company {name}: {cr.status_code} {cr.text[:120]}"
-
-    company_id = cr.json()["id"]
-    contact_id = None
-    if row.get("contact_name"):
-        first, last = split_contact_name(row["contact_name"])
-        cp = {
-            "first_name": first,
-            "last_name": last,
-            "company_id": company_id,
-            "title": row.get("contact_title") or None,
-            "email": row.get("contact_email") or None,
-            "phone": row.get("contact_phone") or None,
-            "linkedin_url": row.get("linkedin_url") or None,
-        }
-        ccr = client.post(f"{BASE}/api/contacts", headers=headers, json=cp)
-        if ccr.status_code in (200, 201):
-            contact_id = ccr.json()["id"]
-
+    company_id: str | None = None
+    contact_id: str | None = None
+    updated_company = False
+    linked = False
+    contacts = _list_contacts(client, headers)
     preview = preview_row(row)
+
+    if name in existing:
+        company_id = _find_company_id(client, headers, name)
+        if not company_id:
+            return format_apply_result(name, fail=f"SKIP duplicate: {name} (not found by id)")
+        updated_company = _maybe_patch_company(client, headers, company_id, row)
+        contact_id = _ensure_contact(client, headers, company_id, row, contacts)
+        lead = _find_lead_for_company(client, headers, company_id)
+        if lead:
+            linked, err = _link_lead(
+                client,
+                headers,
+                lead,
+                contact_id,
+                preview.recommended_next_action,
+            )
+            if err:
+                return err
+            if linked or updated_company:
+                return format_apply_result(
+                    name,
+                    linked=linked,
+                    updated_company=updated_company,
+                )
+            return format_apply_result(name, skipped=True)
+    else:
+        company_type = row.get("company_type") or "Other"
+        payload = {
+            "company_name": name,
+            "website": row.get("website") or None,
+            "linkedin_url": row.get("linkedin_url") or None,
+            "company_type": company_type,
+            "industry": row.get("industry") or None,
+            "city": row.get("city") or None,
+            "state": row.get("state") or None,
+            "country": row.get("country") or "United States",
+            "business_description": row.get("notes") or None,
+            "product_interest_tags": row.get("initial_interest") or None,
+            "source": row.get("source") or None,
+            "notes": row.get("notes") or None,
+            "priority": _normalize_priority(row.get("priority")),
+        }
+        cr = client.post(f"{BASE}/api/companies", headers=headers, json=payload)
+        if cr.status_code not in (200, 201):
+            return format_apply_result(
+                name,
+                fail=f"FAIL company {name}: {cr.status_code} {cr.text[:120]}",
+            )
+        company_id = cr.json()["id"]
+        contact_id = _ensure_contact(client, headers, company_id, row, contacts)
+
     lead_name = f"Lead — {name}"
     lp = {
         "lead_name": lead_name,
@@ -109,15 +255,18 @@ def _apply_row(client: httpx.Client, headers: dict[str, str], row: dict[str, str
         "lead_type": "Channel Lead",
         "product_interest": row.get("initial_interest") or None,
         "current_stage": "New",
-        "priority": row.get("priority") or None,
+        "priority": _normalize_priority(row.get("priority")),
         "next_action": preview.recommended_next_action,
         "notes": row.get("notes") or None,
     }
     lr = client.post(f"{BASE}/api/leads", headers=headers, json=lp)
     if lr.status_code not in (200, 201):
-        return f"PARTIAL {name}: company created, lead failed {lr.status_code}"
+        return format_apply_result(
+            name,
+            partial=f"PARTIAL {name}: company created, lead failed {lr.status_code}",
+        )
 
-    return f"IMPORTED {name} (company + contact + lead)"
+    return format_apply_result(name, imported=True)
 
 
 def _print_preview(previews: list, header_warnings: list[str]) -> None:
@@ -169,6 +318,7 @@ def main() -> int:
             auth = _login(client)
             if not auth:
                 print("Cannot login — is backend running?")
+                print(f"  BACKEND_BASE_URL={get_backend_base_url()}")
                 return 1
             duplicate_names = _existing_company_names(client, auth)
     else:
@@ -185,6 +335,8 @@ def main() -> int:
 
     if args.apply:
         print("--- Apply ---")
+        global BASE
+        BASE = log_backend_base_url()
         with httpx.Client(timeout=60.0) as client:
             auth = _login(client)
             if not auth:

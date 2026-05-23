@@ -1,6 +1,6 @@
 """D5.2.2 read-only smoke check — internal MVP demo readiness.
 
-Requires backend running at http://127.0.0.1:8000 (default).
+Requires backend running (default BACKEND_BASE_URL=http://127.0.0.1:8000).
 Does not write to the database unless --seed-demo is passed (not implemented; use seed scripts).
 """
 
@@ -8,10 +8,17 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
+
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+if str(BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(BACKEND_ROOT))
 
 import httpx
 
-BASE = "http://127.0.0.1:8000"
+from app.core.backend_url import get_backend_base_url, log_backend_base_url
+
+BASE = get_backend_base_url()
 
 COMPANY_NAMES = [
     "New England Office Furniture Dealer",
@@ -70,6 +77,8 @@ def _find_lead_by_company(client: httpx.Client, headers: dict[str, str], company
 
 
 def run_checks(seed_demo: bool) -> int:
+    global BASE
+    BASE = log_backend_base_url()
     if seed_demo:
         print("Note: --seed-demo is not implemented. Run: python -m app.scripts.seed")
         return 1
@@ -242,12 +251,13 @@ def run_checks(seed_demo: bool) -> int:
     except httpx.ConnectError:
         for c in checks:
             if not c.ok and not c.detail:
-                c.fail("backend not reachable at :8000")
+                c.fail(f"backend not reachable at {BASE}")
         print("D5.2.2 Smoke Check")
         for c in checks:
             print(c.line())
         print("\nResult: FAIL")
-        print("Hint: start backend — cd backend && python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000")
+        print(f"Hint: start backend — set BACKEND_BASE_URL if not using default, e.g.:")
+        print(f"  python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000")
         return 1
 
     print("D5.2.2 Smoke Check")

@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 
 const host = process.env.TAURI_DEV_HOST
+const apiProxyTarget = process.env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8000'
 
 /** Tauri injects TAURI_ENV_* when running beforeDevCommand / beforeBuildCommand (see Tauri CLI schema). */
 const tauriHook = Boolean(process.env.TAURI_ENV_PLATFORM)
@@ -33,11 +34,11 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000',
+        target: apiProxyTarget,
         changeOrigin: true,
       },
       '/health': {
-        target: 'http://127.0.0.1:8000',
+        target: apiProxyTarget,
         changeOrigin: true,
       },
     },

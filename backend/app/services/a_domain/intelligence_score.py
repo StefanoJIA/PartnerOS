@@ -85,6 +85,10 @@ MEDICAL_SIGNALS: frozenset[str] = frozenset(
 PROJECT_BASED_FURNITURE_SIGNALS: frozenset[str] = frozenset(
     {
         "project furniture",
+        "project quote",
+        "project-oriented",
+        "project management",
+        "quotation reference",
         "contract interiors",
         "furniture installation",
         "workplace project",
@@ -104,9 +108,38 @@ EDUCATION_SIGNALS: frozenset[str] = frozenset(
     {
         "education adjustable table",
         "education adjustable",
+        "education furniture",
         "school furniture",
         "classroom table",
         "campus furniture",
+    }
+)
+
+# Dealer/reseller context: weak "adjustable desk frame" alone → general office, not lift (D5.2.6 pilot)
+DEALER_SUPPLY_SIGNALS: frozenset[str] = frozenset(
+    {
+        "dealer supply",
+        "office furniture sales",
+        "office furniture dealer",
+        "furniture dealer",
+        "evaluate fit for office furniture dealer",
+        "potential dealer",
+    }
+)
+
+LIFT_STRONG_PHRASES: frozenset[str] = frozenset(
+    {
+        "lifting column",
+        "lifting columns",
+        "lifting system",
+        "lifting systems",
+        "lifting leg",
+        "sit-stand",
+        "sit stand",
+        "height adjustable desk",
+        "height-adjustable desk",
+        "oem",
+        "odm",
     }
 )
 
@@ -182,6 +215,19 @@ def _oem_odm_fit_present(blob: str) -> bool:
     )
 
 
+def _dealer_general_over_weak_lift(blob: str) -> bool:
+    """Office dealer/reseller without OEM or project cues — weak frame mention stays general."""
+    if not _lift_system_signal_present(blob):
+        return False
+    if _oem_odm_fit_present(blob) or _any_signal(blob, PROJECT_BASED_FURNITURE_SIGNALS):
+        return False
+    if not (
+        _any_signal(blob, DEALER_SUPPLY_SIGNALS) or _any_signal(blob, GENERAL_OFFICE_FURNITURE_SIGNALS)
+    ):
+        return False
+    return not _any_signal(blob, LIFT_STRONG_PHRASES)
+
+
 def infer_market_fit_segments(blob: str) -> list[str]:
     """
     Explainable segment tags (API-stable slugs). Overlapping is allowed — except
@@ -215,6 +261,19 @@ def infer_market_fit_segments(blob: str) -> list[str]:
         and not has_stronger_vertical
     ):
         segments.append("general_office_furniture_only")
+
+    if _dealer_general_over_weak_lift(blob):
+        segments = [s for s in segments if s != "lift_system_signal"]
+        has_stronger_vertical = (
+            _oem_odm_fit_present(blob)
+            or _any_signal(blob, MEDICAL_SIGNALS)
+            or _any_signal(blob, EDUCATION_SIGNALS)
+            or _any_signal(blob, HEAVY_DUTY_SIGNALS)
+            or _any_signal(blob, PROJECT_BASED_FURNITURE_SIGNALS)
+        )
+        if _any_signal(blob, GENERAL_OFFICE_FURNITURE_SIGNALS) and not has_stronger_vertical:
+            if "general_office_furniture_only" not in segments:
+                segments.append("general_office_furniture_only")
 
     seen: set[str] = set()
     out: list[str] = []

@@ -72,6 +72,28 @@ def _text_blob(row: dict[str, str]) -> str:
     return " \n ".join(p for p in parts if p).lower()
 
 
+def first_semicolon_token(value: str) -> str:
+    if not value:
+        return ""
+    return value.split(";")[0].strip()
+
+
+def first_email(value: str) -> str:
+    if not value:
+        return ""
+    for part in value.replace(",", ";").split(";"):
+        p = part.strip()
+        if "@" in p:
+            return p
+    return ""
+
+
+def first_phone(value: str) -> str:
+    if not value:
+        return ""
+    return first_semicolon_token(value.replace(",", ";"))
+
+
 def _missing_fields(row: dict[str, str]) -> list[str]:
     missing: list[str] = []
     if not row.get("company_name"):
@@ -80,9 +102,9 @@ def _missing_fields(row: dict[str, str]) -> list[str]:
         missing.append("company_type or industry")
     if not row.get("website") and not row.get("notes"):
         missing.append("website or notes")
-    if not row.get("contact_name"):
+    if not first_semicolon_token(row.get("contact_name", "")):
         missing.append("contact_name")
-    if not row.get("contact_email"):
+    if not first_email(row.get("contact_email", "")):
         missing.append("contact_email")
     return missing
 
@@ -103,14 +125,19 @@ def recommend_next_action(row: dict[str, str], segments: list[str], missing: lis
         return "Enrich company profile before outreach"
     if row.get("next_action"):
         return row["next_action"]
-    if "lift_system_signal" in segments:
+    if "contact_name" in missing or "contact_email" in missing:
+        if "contact research" in (row.get("notes") or "").lower() or not first_semicolon_token(
+            row.get("contact_name", "")
+        ):
+            return "Research contact before outreach"
+    if "lift_system_signal" in segments or "oem_odm_fit" in segments:
         return "Send catalog and ask about adjustable desk frame / lifting column needs"
+    if "project_based_furniture" in segments:
+        return "Ask whether they handle project-based furniture procurement and FF&E lists"
     if "education_vertical" in segments:
         return "Share JOOBOO education line overview and ask about project timeline"
     if "medical_vertical" in segments:
         return "Offer medical / lab workspace intro — confirm compliance documentation needs"
-    if "project_based_furniture" in segments:
-        return "Ask whether they handle project-based furniture procurement and FF&E lists"
     if "oem_odm_fit" in segments:
         return "Schedule short technical call on OEM/ODM lifting components"
     if "general_office_furniture_only" in segments:

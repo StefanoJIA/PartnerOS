@@ -14,8 +14,9 @@ if str(BACKEND_ROOT) not in sys.path:
 import httpx
 
 from app.services.a_domain.outreach_templates import generate_outreach_draft
+from app.core.backend_url import get_backend_base_url, log_backend_base_url
 
-BASE = "http://127.0.0.1:8000"
+BASE = get_backend_base_url()
 
 
 def _login(client: httpx.Client) -> dict[str, str] | None:
@@ -122,7 +123,7 @@ def main() -> int:
         "--product-focus",
         dest="product_focus",
         default="general",
-        choices=["hosun_lifting", "jooboo_education", "medical_workspace", "general"],
+        choices=["hosun_lifting", "jooboo_education", "medical_workspace", "project_supply", "general"],
     )
     parser.add_argument("--json", action="store_true", help="Output JSON")
     args = parser.parse_args()
@@ -131,10 +132,13 @@ def main() -> int:
         print("Provide --company or --company-id")
         return 1
 
+    global BASE
+    BASE = log_backend_base_url()
+
     with httpx.Client(timeout=30.0) as client:
         headers = _login(client)
         if not headers:
-            print("Cannot login — start backend on :8000")
+            print(f"Cannot login — start backend at {BASE}")
             return 1
         company = _resolve_company(
             client,

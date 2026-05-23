@@ -47,3 +47,8 @@ backend/uploads/
 
 # Tauri / sidecar build artifacts (keep sources)
 frontend/src-tauri/target/
+
+# Local real-lead pilot data (never commit)
+local_data/
+*.private.csv
+real_leads_*.csv

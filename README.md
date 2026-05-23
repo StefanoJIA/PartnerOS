@@ -23,8 +23,9 @@
 - **阶段**：D5.2.2 Internal MVP Stabilization（demo-ready 半产品 → 可内部试用）
 - **后端**（在 `backend` 目录）：`python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
 - **前端**（在 `frontend` 目录）：`npm run dev`（端口常见 **5173** 或 **5174**）
-- **健康检查**：`http://127.0.0.1:8000/health` · 前端只读页 `/system-health`
-- **Smoke**：`cd backend && python scripts/smoke_demo_ready.py`（需 backend 运行）
+- **健康检查**：默认 `http://127.0.0.1:8000/health` · 备用本地端口 **8010** · 前端只读页 `/system-health`
+- **Backend URL**：脚本 `BACKEND_BASE_URL` · 前端 Vite proxy `VITE_API_PROXY_TARGET`（见 [docs/dev_guide.md](docs/dev_guide.md) § Changing backend port）
+- **Smoke**：`cd backend && python scripts/smoke_demo_ready.py`（需 backend 运行；可先 `python scripts/check_backend_runtime.py`）
 - **演示脚本**：[docs/records/demo_script_20260523.md](docs/records/demo_script_20260523.md) · **D5.2.2 记录**：[docs/records/d5_2_2_internal_mvp_20260523.md](docs/records/d5_2_2_internal_mvp_20260523.md)
 
 以下内容 **仅供开发者、测试与 CI**，**不代表**最终用户流程：
@@ -49,7 +50,7 @@
    npm install
    npm run dev
    ```
-   Vite 将 `/api` 与 **`/health`（D2 桌面启动页）** 代理到 `http://127.0.0.1:8000`（见 [frontend/vite.config.ts](frontend/vite.config.ts)）。
+   Vite 将 `/api` 与 **`/health`（D2 桌面启动页）** 代理到后端（默认 `http://127.0.0.1:8000`，可通过 `VITE_API_PROXY_TARGET` 改为 **8010** — 见 [frontend/vite.config.ts](frontend/vite.config.ts) 与 [docs/dev_guide.md](docs/dev_guide.md)）。
 5. **桌面壳（D2/D3，可选）**：需本机安装 **Rust** 与（若需本地冻结 sidecar）**Python + PyInstaller**。日常开发可 **只**跑手动 `uvicorn :8000` + `$env:INTELLIOFFICE_EXTERNAL_BACKEND='1'; npm run tauri:dev`（debug 默认 **不**派生 sidecar，`/health` 仍走 Vite 代理）。要验证 **产品路径**：先 `cd frontend; npm run sidecar:prepare`，再例如 `$env:INTELLIOFFICE_MANAGE_SIDECAR='1'; npm run tauri:dev`（sidecar 默认 **`127.0.0.1:17888`**）。正式包 `npm run tauri:build` 会在 `beforeBuildCommand` 中自动 `sidecar:prepare`。详见 **[docs/dev_guide.md](docs/dev_guide.md)**、**[docs/testing.md](docs/testing.md)（D2 Gate + D3 sidecar）**。**不替代**浏览器下的 `npm run dev` 流程。
 
 Default login after `seed`: `admin@example.com` / `admin123`。

@@ -57,9 +57,9 @@ export function recommendChannel(
 
   if (segments.includes('project_based_furniture')) {
     if (hasEmail) {
-      return { label: 'Email intro / Meeting proposal', channel: 'email_intro', productFocus: 'general' }
+      return { label: 'Email intro / Meeting proposal', channel: 'email_intro', productFocus: 'project_supply' }
     }
-    return { label: 'LinkedIn follow-up', channel: 'linkedin_followup', productFocus: 'general' }
+    return { label: 'LinkedIn follow-up', channel: 'linkedin_followup', productFocus: 'project_supply' }
   }
 
   if (hasEmail) {

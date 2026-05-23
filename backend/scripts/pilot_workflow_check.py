@@ -1,15 +1,22 @@
 """D5.2.3 read-only pilot workflow check.
 
-Requires backend at http://127.0.0.1:8000. Does not write to the database.
+Requires live backend (default BACKEND_BASE_URL=http://127.0.0.1:8000). Does not write to the database.
 """
 
 from __future__ import annotations
 
 import sys
+from pathlib import Path
+
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+if str(BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(BACKEND_ROOT))
 
 import httpx
 
-BASE = "http://127.0.0.1:8000"
+from app.core.backend_url import get_backend_base_url, log_backend_base_url
+
+BASE = get_backend_base_url()
 
 UAT_COMPANIES = [
     "New England Office Furniture Dealer",
@@ -75,6 +82,8 @@ def _workflow(client: httpx.Client, headers: dict[str, str], lead_id: str) -> di
 
 
 def run() -> int:
+    global BASE
+    BASE = log_backend_base_url()
     checks: list[Check] = [
         Check("companies"),
         Check("contacts"),
@@ -229,7 +238,7 @@ def run() -> int:
     except httpx.ConnectError:
         for c in checks:
             if not c.ok:
-                c.fail("backend down", "Start: python -m uvicorn app.main:app --reload --port 8000")
+                c.fail(f"backend down ({BASE})", "Start uvicorn or set BACKEND_BASE_URL")
         _print_report(checks)
         return 1
 
