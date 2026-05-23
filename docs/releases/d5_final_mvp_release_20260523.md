@@ -119,4 +119,4 @@ Validated on **2026-05-23** with `BACKEND_BASE_URL=http://127.0.0.1:8013`:
 
 **D5 is ready to close and hand off to Phase 2 planning.**
 
-Recommended next step: **D6.1 Quote Schema & API Design Review** — design only, no implementation in current branch until authorized.
+Recommended next step: **D6.2 Product Catalog & Pricing Foundation** — after D6.1 design review (complete 2026-05-23; see [D6.1 Design Review](../phase2/d6_1_quote_schema_api_design_review.md)).

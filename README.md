@@ -29,7 +29,12 @@
 
 **Phase 2** is Quote / Order / Production / Shipment.
 
-Phase 2 should **not** start until quote schema and product catalog design are reviewed. Recommended entry: **D6.1 Quote Schema & API Design Review** — see [Phase 2 Quote Readiness Brief](docs/phase2/quote_module_readiness_brief.md).
+Phase 2 should **not** start implementation until design is reviewed. **D6.1 Quote Schema & API Design Review is complete** (design only — no DB/API yet). See:
+
+- [D6.1 Design Review](docs/phase2/d6_1_quote_schema_api_design_review.md)
+- [Phase 2 Roadmap](docs/phase2/phase2_roadmap.md)
+
+Recommended next implementation stage: **D6.2 Product Catalog & Pricing Foundation** (when authorized).
 
 ---
 

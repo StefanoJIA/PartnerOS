@@ -77,11 +77,23 @@ Suggested agenda (design only):
 
 **Do not implement Phase 2 in this branch yet.**
 
+## D6.1 Status
+
+**D6.1 Quote Schema & API Design Review — complete (2026-05-23).**
+
+Design documents (no implementation):
+
+- [D6.1 Quote Schema & API Design Review](d6_1_quote_schema_api_design_review.md)
+- [Phase 2 Roadmap](phase2_roadmap.md)
+- [D6.1 Closure Record](../records/d6_1_quote_schema_api_design_review_20260523.md)
+
+**Next implementation stage:** D6.2 Product Catalog & Pricing Foundation (when authorized).
+
 ## Prerequisites Before Implementation
 
 - [ ] D5 Final Release accepted and regression baseline recorded
-- [ ] Product catalog / SKU design reviewed
-- [ ] Quote PDF and approval workflow agreed
+- [x] Product catalog / SKU design reviewed (D6.1 design — see [d6_1_quote_schema_api_design_review.md](d6_1_quote_schema_api_design_review.md))
+- [ ] Quote PDF and approval workflow agreed (D6.4 / D6.5 design in roadmap)
 - [ ] Production `SECRET_KEY`, `PUBLIC_BASE_URL`, HTTPS ready (if deploying)
 - [ ] Explicit user authorization to enter Phase 2 development
 
