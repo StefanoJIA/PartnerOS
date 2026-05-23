@@ -43,7 +43,13 @@ python scripts/config_readiness_check.py
 
 前端：`/system-health`（Portal Readiness）· `/portal-consumer-mock`（External Portal Consumer Mock）。
 
-见 [records/d5_2_9_portal_readonly_integration_20260523.md](records/d5_2_9_portal_readonly_integration_20260523.md) · [records/d5_2_10_portal_consumer_deployment_readiness_20260523.md](records/d5_2_10_portal_consumer_deployment_readiness_20260523.md)。
+见 [records/d5_2_9_portal_readonly_integration_20260523.md](records/d5_2_9_portal_readonly_integration_20260523.md) · [records/d5_2_10_portal_consumer_deployment_readiness_20260523.md](records/d5_2_10_portal_consumer_deployment_readiness_20260523.md) · **[testing_summary_d5_2.md](testing_summary_d5_2.md)**（D5.2.11 测试基线汇总）。
+
+### D5.2.11 Internal MVP Release Pack
+
+- [releases/d5_2_internal_mvp_release_20260523.md](releases/d5_2_internal_mvp_release_20260523.md)
+- [operator_guide.md](operator_guide.md)
+- [deployment_readiness_checklist.md](deployment_readiness_checklist.md)
 
 ### D5.2.2 smoke test（内部 MVP）
 

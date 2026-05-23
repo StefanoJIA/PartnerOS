@@ -1,4 +1,5 @@
-"""D5.2.10 local/server config readiness check (warnings + critical failures)."""
+# D5.2.11 local/server config readiness check (warnings + critical failures).
+# See docs/deployment_readiness_checklist.md and docs/testing_summary_d5_2.md.
 
 from __future__ import annotations
 
@@ -68,6 +69,7 @@ def run() -> int:
         Item("BACKEND_BASE_URL"),
         Item("migration pending"),
         Item("backend/.env gitignore"),
+        Item("frontend/.env.local gitignore"),
         Item("local_data gitignore"),
         Item("SECRET_KEY"),
     ]
@@ -118,18 +120,19 @@ def run() -> int:
         items[4].warn("skipped — database not ready")
 
     items[5].ok() if _git_ignored("backend/.env") else items[5].warn("backend/.env not ignored by git")
-    items[6].ok() if _git_ignored("local_data/") else items[6].warn("local_data/ not ignored by git")
+    items[6].ok() if _git_ignored("frontend/.env.local") else items[6].warn("frontend/.env.local not ignored by git")
+    items[7].ok() if _git_ignored("local_data/") else items[7].warn("local_data/ not ignored by git")
 
     sk = (settings.SECRET_KEY or "").strip()
     if not sk:
-        items[7].fail("SECRET_KEY not set")
+        items[8].fail("SECRET_KEY not set")
         critical_fail = True
     elif sk == "dev-secret-change-in-production":
-        items[7].warn("development default — rotate for production")
+        items[8].warn("development default — rotate for production")
     else:
-        items[7].ok("configured (value not shown)")
+        items[8].ok("configured (value not shown)")
 
-    print("D5.2.10 Config Readiness Check")
+    print("D5.2.11 Config Readiness Check")
     for it in items:
         print(it.line())
     print()

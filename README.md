@@ -12,13 +12,69 @@
 
 **当前代码仓库** 使用 Vue + FastAPI + PostgreSQL（pgvector）实现业务逻辑 — 这是 **实现技术栈**；**不是** 最终用户的手动部署形态。更完整的愿景与六域划分见 **[docs/product_vision.md](docs/product_vision.md)**；桌面目标架构见 **[docs/architecture_desktop_target.md](docs/architecture_desktop_target.md)**；阶段路线 **D0–D6** 见 **[docs/roadmap_desktop_transition.md](docs/roadmap_desktop_transition.md)**；路线调整总结与 **中英文总述（可作 Cursor 上下文）** 见 **[docs/project_reorientation_summary.md](docs/project_reorientation_summary.md)**。
 
-**其他文档**：运行模式 [docs/runtime_modes.md](docs/runtime_modes.md) · 数据库生命周期 [docs/database_lifecycle.md](docs/database_lifecycle.md) · 打包策略 [docs/packaging_strategy.md](docs/packaging_strategy.md) · Web→桌面迁移说明 [docs/migration_from_web_to_desktop.md](docs/migration_from_web_to_desktop.md) · 开放问题 [docs/open_questions_desktop.md](docs/open_questions_desktop.md) · **A 域人工测试与录入** [docs/manual_a_domain_test_plan.md](docs/manual_a_domain_test_plan.md) · **集成化后端标准（双轨 API / v1）** [docs/integrated_backend_standards.md](docs/integrated_backend_standards.md)。
+**其他文档**：运行模式 [docs/runtime_modes.md](docs/runtime_modes.md) · 数据库生命周期 [docs/database_lifecycle.md](docs/database_lifecycle.md) · **运营指南** [docs/operator_guide.md](docs/operator_guide.md) · **D5.2 Release** [docs/releases/d5_2_internal_mvp_release_20260523.md](docs/releases/d5_2_internal_mvp_release_20260523.md) · **部署检查** [docs/deployment_readiness_checklist.md](docs/deployment_readiness_checklist.md) · **测试基线** [docs/testing_summary_d5_2.md](docs/testing_summary_d5_2.md) · 打包策略 [docs/packaging_strategy.md](docs/packaging_strategy.md) · Web→桌面迁移说明 [docs/migration_from_web_to_desktop.md](docs/migration_from_web_to_desktop.md) · 开放问题 [docs/open_questions_desktop.md](docs/open_questions_desktop.md) · **A 域人工测试与录入** [docs/manual_a_domain_test_plan.md](docs/manual_a_domain_test_plan.md) · **集成化后端标准（双轨 API / v1）** [docs/integrated_backend_standards.md](docs/integrated_backend_standards.md)。
+
+---
+
+## Current MVP Status（D5.2 Internal MVP）
+
+- **D5.2 Internal MVP ready** — Lead Intelligence、Manual Outreach Queue、Daily Follow-up、Portal 只读集成
+- **Manual outreach only** — Generate Draft → Copy → 系统外发送 → Mark as Sent
+- **Portal read-only integration ready** — `/api/v1/portal/*` · `/system-health` · `/portal-consumer-mock`
+- **No automatic sending** · **No LinkedIn scraping** · **No Outlook API**
+- **No Phase 2 yet** — 见 [docs/releases/d5_2_internal_mvp_release_20260523.md](docs/releases/d5_2_internal_mvp_release_20260523.md)
+
+**Release pack（D5.2.11）：** [Release Note](docs/releases/d5_2_internal_mvp_release_20260523.md) · [Operator Guide](docs/operator_guide.md) · [Deployment Checklist](docs/deployment_readiness_checklist.md) · [Testing Summary](docs/testing_summary_d5_2.md)
+
+## Quick Start
+
+### Port 8000 (default)
+
+```powershell
+# Terminal 1 — backend
+cd backend
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Terminal 2 — frontend
+cd frontend
+npm run dev
+```
+
+### Port 8010 (when 8000 is busy)
+
+```powershell
+# Terminal 1
+cd backend
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8010
+
+# Terminal 2
+$env:VITE_API_PROXY_TARGET="http://127.0.0.1:8010"
+cd frontend
+npm run dev
+
+# Scripts
+$env:BACKEND_BASE_URL="http://127.0.0.1:8010"
+cd backend
+python scripts/check_backend_runtime.py
+```
+
+First-time setup: `python scripts/init_local_env.py` → edit `backend/.env` → `alembic upgrade head` → `python -m app.scripts.seed`. See [docs/dev_guide.md](docs/dev_guide.md).
+
+## Main Workflows
+
+| Workflow | Entry |
+|----------|-------|
+| Daily outreach | `/lead-intelligence` · [operator_guide.md](docs/operator_guide.md) |
+| Lead import preview | `backend/scripts/lead_import_preview.py` |
+| Outreach draft | Generate Draft in Lead Intelligence |
+| Portal readiness | `/system-health` · `portal_readiness_check.py` |
+| Daily CLI summary | `daily_outreach_summary.py` |
 
 ---
 
 ## B. Development mode（开发模式 — 当前仓库日常）
 
-### Current MVP Status（D5.2.2 internal MVP）
+### Current MVP Status（D5.2.2+ detail）
 
 - **阶段**：D5.2.2 Internal MVP Stabilization（demo-ready 半产品 → 可内部试用）
 - **后端**（在 `backend` 目录）：`python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
