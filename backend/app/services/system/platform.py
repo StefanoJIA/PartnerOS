@@ -160,13 +160,22 @@ def build_manifest_payload(settings: Settings) -> dict[str, Any]:
     public_base = (getattr(settings, "PUBLIC_BASE_URL", None) or "").strip().rstrip("/")
     health_path = "/health"
     readiness_path = "/api/v1/system/readiness"
+    summary_path = "/api/v1/portal/summary"
+    a_domain_status_path = "/api/v1/portal/a-domain/status"
 
     base_url = public_base or "http://127.0.0.1:8000"
 
     modules = [
         {"key": "crm", "name": "CRM", "path": "/companies", "frontend_route": "/companies"},
-        {"key": "leads", "name": "Lead Intelligence", "path": "/leads", "frontend_route": "/lead-intelligence"},
+        {
+            "key": "leads",
+            "name": "Lead Intelligence",
+            "path": "/leads",
+            "frontend_route": "/lead-intelligence",
+            "description": "Daily manual outreach queue with human-reviewed drafts (D5.2.x)",
+        },
         {"key": "contacts", "name": "Contacts", "path": "/contacts", "frontend_route": "/contacts"},
+        {"key": "system_health", "name": "System Health", "path": "/health", "frontend_route": "/system-health"},
         {"key": "rfq", "name": "RFQ Workspace", "path": "/rfqs", "frontend_route": "/rfqs"},
         {"key": "quotes", "name": "Quotations", "path": "/quotations", "frontend_route": "/rfqs"},
         {"key": "orders", "name": "Orders", "path": "/orders", "frontend_route": "/orders"},
@@ -181,7 +190,10 @@ def build_manifest_payload(settings: Settings) -> dict[str, Any]:
         "crm",
         "lead_scoring",
         "lead_intelligence_workbench",
+        "manual_outreach_queue",
+        "human_reviewed_outreach_drafts",
         "public_source_enrichment",
+        "system_health",
         "rfq",
         "quotations",
         "samples",
@@ -195,10 +207,11 @@ def build_manifest_payload(settings: Settings) -> dict[str, Any]:
 
     return {
         "service_id": SERVICE_ID,
-        "service_name": "IE / intelliOffice",
+        "service_name": "intelliOffice",
         "description": (
-            "CRM, lead intelligence, RFQ, quotation, sample, order, production and shipment "
-            "management for IntelliOpus B2B operations."
+            "CRM and A-domain lead intelligence with daily manual outreach rhythm. "
+            "Read-only portal integration exposes system status and outreach summaries; "
+            "no automatic sending or LinkedIn/Outlook automation in D5.2.x."
         ),
         "version": APP_VERSION,
         "api_version": API_VERSION,
@@ -206,9 +219,13 @@ def build_manifest_payload(settings: Settings) -> dict[str, Any]:
         "base_url": base_url,
         "health_url": f"{base_url}{health_path}",
         "readiness_url": f"{base_url}{readiness_path}",
+        "summary_url": f"{base_url}{summary_path}",
+        "a_domain_status_url": f"{base_url}{a_domain_status_path}",
         "legacy_api_prefix": "/api",
         "v1_api_prefix": "/api/v1",
         "portal_integration_enabled": bool(getattr(settings, "PORTAL_INTEGRATION_ENABLED", True)),
+        "portal_read_only": True,
+        "automatic_sending_enabled": False,
         "modules": modules,
         "capabilities": capabilities,
         "generated_at": datetime.now(timezone.utc).isoformat(),

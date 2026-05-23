@@ -37,8 +37,57 @@ export interface ManifestEnvelope {
     version?: string
     api_version?: string
     runtime_mode?: string
-    modules?: { key: string; name: string }[]
+    summary_url?: string
+    a_domain_status_url?: string
+    portal_read_only?: boolean
+    automatic_sending_enabled?: boolean
+    modules?: { key: string; name: string; frontend_route?: string }[]
     capabilities?: string[]
+  }
+  meta?: { request_id?: string; timestamp?: string }
+}
+
+export interface PortalSummaryEnvelope {
+  ok: boolean
+  data: {
+    service_id?: string
+    service_name?: string
+    runtime_mode?: string
+    api_version?: string
+    health?: {
+      status?: string
+      database_status?: string
+      migration_pending?: boolean
+    }
+    lead_intelligence?: {
+      total_leads?: number
+      high_priority?: number
+      needs_first_outreach?: number
+      waiting_for_reply?: number
+      follow_up_soon?: number
+      needs_contact_research?: number
+      needs_enrichment?: number
+    }
+    segments?: Record<string, number>
+    capabilities?: string[]
+    warnings?: string[]
+  }
+  meta?: { request_id?: string; timestamp?: string }
+}
+
+export interface ADomainStatusEnvelope {
+  ok: boolean
+  data: {
+    domain?: string
+    status?: string
+    latest_stage?: string
+    daily_workflow_ready?: boolean
+    manual_outreach_ready?: boolean
+    automatic_sending_enabled?: boolean
+    linkedin_automation_enabled?: boolean
+    outlook_integration_enabled?: boolean
+    database_schema_changed?: boolean
+    known_limitations?: string[]
   }
   meta?: { request_id?: string; timestamp?: string }
 }
@@ -58,5 +107,15 @@ export async function fetchSystemReadiness(): Promise<ReadinessEnvelope> {
 
 export async function fetchPortalManifest(): Promise<ManifestEnvelope> {
   const { data } = await http.get<ManifestEnvelope>('/v1/portal/manifest')
+  return data
+}
+
+export async function fetchPortalSummary(): Promise<PortalSummaryEnvelope> {
+  const { data } = await http.get<PortalSummaryEnvelope>('/v1/portal/summary')
+  return data
+}
+
+export async function fetchADomainStatus(): Promise<ADomainStatusEnvelope> {
+  const { data } = await http.get<ADomainStatusEnvelope>('/v1/portal/a-domain/status')
   return data
 }
