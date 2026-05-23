@@ -116,4 +116,5 @@ python scripts/daily_outreach_summary.py
 
 - [D5.2 Release Note](releases/d5_2_internal_mvp_release_20260523.md)
 - [Deployment Readiness Checklist](deployment_readiness_checklist.md)
+- [D5.2.12 Screenshot Demo Proof](records/d5_2_12_browser_screenshots_demo_proof_20260523.md)
 - [Manual A-Domain Test Plan](manual_a_domain_test_plan.md)

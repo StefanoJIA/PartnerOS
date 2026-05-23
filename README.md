@@ -69,6 +69,7 @@ First-time setup: `python scripts/init_local_env.py` → edit `backend/.env` →
 | Outreach draft | Generate Draft in Lead Intelligence |
 | Portal readiness | `/system-health` · `portal_readiness_check.py` |
 | Daily CLI summary | `daily_outreach_summary.py` |
+| Demo screenshots | `python backend/scripts/capture_demo_screenshots.py` · [D5.2.12 demo proof](docs/records/d5_2_12_browser_screenshots_demo_proof_20260523.md) |
 
 ---
 

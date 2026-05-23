@@ -1,54 +1,56 @@
 # 浏览器 UI 截图目录（2026-05-23）
 
-**归档状态：PARTIAL — 截图需人工补齐（D5.2.11 Release Pack）**
+**归档状态：D5.2.12 — Procedure ready · PNG pending local capture · Not committed**
 
-请在浏览器打开 **http://127.0.0.1:5174**（或 Vite 终端显示的端口），使用 **默认 seed admin 凭据** 登录后截取。
+请在 backend + DB 就绪后打开 **http://127.0.0.1:5174**，登录后截取。详见 [D5.2.12 Demo Proof](../d5_2_12_browser_screenshots_demo_proof_20260523.md)。
 
 **注意**：
 
 - 截图中 **token、password 必须打码**
-- **未打码截图不要提交**（已在根目录 `.gitignore` 排除 `docs/records/screenshots/**/*.png` 等）
-- 真实客户 **邮箱建议打码**
-- PNG 文件由人工放置于本目录，或仅保存在本地 ignored 路径
+- **未打码截图不要提交**（`.gitignore` 排除 `docs/records/screenshots/**/*.png`）
+- 真实客户 **邮箱必须打码**
+- 推荐：**Stored locally only / not committed**
 
 ---
 
-# Screenshot Archive Plan（D5.2.11 最小集）
+## D5.2.12 核心截图状态
+
+| File | Required | Masked | Committed | Notes |
+|------|----------|--------|-----------|-------|
+| `login_success.png` | Yes | N/A | No | Stored locally only — post-login Dashboard |
+| `lead_intelligence_daily_summary.png` | Yes | Review emails | No | Stored locally only |
+| `operation_filters.png` | Yes | Review emails | No | Stored locally only |
+| `manual_outreach_queue.png` | Yes | **Mask emails** | No | Stored locally only |
+| `outreach_draft_panel.png` | Yes | No token | No | Stored locally only |
+| `mark_as_sent_success.png` | Yes | No secrets | No | Stored locally only |
+| `system_health_portal_readiness.png` | Yes | No secrets | No | Stored locally only |
+| `portal_consumer_mock.png` | Yes | No email lists | No | Stored locally only |
+| `company_detail_enrichment.png` | Optional | Public URLs only | No | Optional |
+
+**Capture tool:** `python backend/scripts/capture_demo_screenshots.py` (requires Playwright + running DB)
+
+---
+
+## Screenshot Archive Plan
 
 | # | 文件名 | 内容 |
 |---|--------|------|
 | 1 | `login_success.png` | 登录后 Dashboard |
-| 2 | `lead_intelligence_daily_summary.png` | `/lead-intelligence` Daily Summary cards |
+| 2 | `lead_intelligence_daily_summary.png` | Daily Summary cards |
 | 3 | `operation_filters.png` | Operation + Segment filters |
-| 4 | `outreach_draft_panel.png` | Generate Draft 面板 + Safety notice |
-| 5 | `mark_as_sent_success.png` | Mark as Sent 成功（manual-only 文案） |
-| 6 | `touchpoint_persisted.png` | 触达记录含 `[manually_sent=true]` |
-| 7 | `system_health_portal_readiness.png` | `/system-health` Portal Readiness |
-| 8 | `portal_consumer_mock.png` | `/portal-consumer-mock` 只读 mock |
+| 4 | `manual_outreach_queue.png` | Manual Outreach Queue 表格 |
+| 5 | `outreach_draft_panel.png` | Generate Draft + Safety notice |
+| 6 | `mark_as_sent_success.png` | Mark as Sent 后 touchpoint |
+| 7 | `system_health_portal_readiness.png` | Portal Readiness |
+| 8 | `portal_consumer_mock.png` | External Portal mock |
 
 ---
 
-## D5.2.2 扩展演示截图（9 张，可选）
+## 打码规则
 
-| 文件名 | 内容 |
-|--------|------|
-| `dashboard_system_status.png` | Dashboard 或 system status |
-| `companies_list.png` | `/companies` UAT 公司 |
-| `company_detail_ergo.png` | Ergo 公司详情 |
-| `lead_workflow_ergo.png` | Ergo score + Lifting Signal |
-| `lead_workflow_healthcare_medical.png` | Healthcare medical segment |
-| `lead_workflow_contract_project.png` | Contract project segment |
-| `enrichment_panel_results_ergo.png` | Enrichment 审阅抽屉 |
-| `touchpoint_next_action.png` | Touchpoint + Next Action |
+**必须打码：** token · password · secret · 真实客户私人邮箱/电话 · API key
 
----
-
-## D5.2.8 别名对照
-
-| D5.2.8 文件名 | D5.2.11 等价 |
-|---------------|--------------|
-| `daily_summary_cards.png` | `lead_intelligence_daily_summary.png` |
-| `system_health_page.png` | `system_health_portal_readiness.png` |
+**可保留：** 公司名 · segment · score · summary counts · 公开业务描述
 
 ---
 
@@ -56,13 +58,10 @@
 
 | 文件名 | 内容 |
 |--------|------|
-| `login_page.png` | `/login` |
-| `localstorage_token_masked.png` | DevTools token 打码 |
-| `network_login_200.png` | POST login 200 |
-| `contacts_list.png` | `/contacts` |
+| `company_detail_enrichment.png` | Enrichment evidence / suggestions |
+| `daily_outreach_summary_cli.png` | CLI 输出（可选） |
+| `login_page.png` | 登录页（未登录） |
 
 ---
-
-**当前目录**：结构已就绪；**PNG 尚未生成 — Manual screenshot required.**
 
 See also: [D5.2 Release Note](../../releases/d5_2_internal_mvp_release_20260523.md) · [Operator Guide](../../operator_guide.md)

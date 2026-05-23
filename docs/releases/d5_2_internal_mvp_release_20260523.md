@@ -56,7 +56,7 @@
 
 ## Known Limitations
 
-- 截图需人工补齐（见 [screenshots README](../records/screenshots/20260523/README.md)）
+- **Screenshot archive:** procedure + capture script in D5.2.12; PNG stored locally only (gitignored), not committed — see [d5_2_12 demo proof](../records/d5_2_12_browser_screenshots_demo_proof_20260523.md)
 - Follow-up date 仍是文案推断，无结构化 follow-up 日期字段
 - Redis / worker 未接入（readiness 中为 optional warning）
 - `PUBLIC_BASE_URL` 生产前需配置
