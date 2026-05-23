@@ -53,6 +53,9 @@ from app.schemas.a_domain import (
     PreQuoteBoardRowOut,
     PreQuoteBoardSummaryOut,
     PreQuoteSafetyOut,
+    ProductAwareDraftRequest,
+    ProductAwareDraftResponse,
+    ProductAwareDraftSourceContextOut,
     LeadIntelligenceWorkflowOut,
     OutreachDraftOut,
     TouchpointCreate,
@@ -91,6 +94,7 @@ from app.services.a_domain.pre_quote_board import (
     build_pre_quote_brief_for_lead,
     summarize_pre_quote_board,
 )
+from app.services.a_domain.product_aware_draft_board import build_product_aware_draft_for_lead
 from app.services.a_domain.pre_quote_prep import PRE_QUOTE_SAFETY
 from app.services.a_domain.product_fit_board import (
     build_product_fit_for_lead,
@@ -508,6 +512,49 @@ def get_lead_product_fit(
     if not raw:
         raise HTTPException(status_code=404, detail="Lead not found")
     return ProductFitOut(**raw)
+
+
+@router.post("/leads/{lead_id}/product-aware-draft", response_model=ProductAwareDraftResponse)
+def post_lead_product_aware_draft(
+    lead_id: UUID,
+    body: ProductAwareDraftRequest,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> ProductAwareDraftResponse:
+    """Generate product-aware discovery draft from fit + pre-quote context (D5.15)."""
+    try:
+        raw = build_product_aware_draft_for_lead(
+            db,
+            lead_id,
+            channel=body.channel,
+            draft_purpose=body.draft_purpose,
+            tone=body.tone,
+            language=body.language,
+            include_questions=body.include_questions,
+            include_product_brief=body.include_product_brief,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    if not raw:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    ctx = raw.get("source_context") or {}
+    return ProductAwareDraftResponse(
+        lead_id=raw["lead_id"],
+        company_name=raw["company_name"],
+        channel=raw["channel"],
+        draft_purpose=raw["draft_purpose"],
+        tone=raw["tone"],
+        language=raw["language"],
+        subject=raw.get("subject"),
+        body=raw.get("body"),
+        linkedin_note=raw.get("linkedin_note"),
+        questions=raw.get("questions") or [],
+        recommended_next_action=raw["recommended_next_action"],
+        suggested_follow_up_days=raw.get("suggested_follow_up_days", 5),
+        source_context=ProductAwareDraftSourceContextOut(**ctx),
+        safety=PreQuoteSafetyOut(**raw.get("safety", {})),
+        warnings=raw.get("warnings") or [],
+    )
 
 
 @router.get("/leads/{lead_id}/pre-quote-brief", response_model=PreQuoteBriefOut)

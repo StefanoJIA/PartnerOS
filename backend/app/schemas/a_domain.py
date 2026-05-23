@@ -480,3 +480,37 @@ class PreQuoteBoardResponse(BaseModel):
     safety: PreQuoteSafetyOut = Field(default_factory=PreQuoteSafetyOut)
     warnings: list[str] = Field(default_factory=list)
     degraded: bool = False
+
+
+class ProductAwareDraftRequest(BaseModel):
+    channel: str = "email_intro"
+    draft_purpose: str = "product_discovery"
+    tone: str = "concise"
+    language: str = "en"
+    include_questions: bool = True
+    include_product_brief: bool = True
+
+
+class ProductAwareDraftSourceContextOut(BaseModel):
+    product_focus: list[str] = Field(default_factory=list)
+    quote_readiness: str
+    sample_readiness: str
+    missing_quote_info: list[str] = Field(default_factory=list)
+
+
+class ProductAwareDraftResponse(BaseModel):
+    lead_id: str
+    company_name: str
+    channel: str
+    draft_purpose: str
+    tone: str
+    language: str
+    subject: str | None = None
+    body: str | None = None
+    linkedin_note: str | None = None
+    questions: list[str] = Field(default_factory=list)
+    recommended_next_action: str
+    suggested_follow_up_days: int = 5
+    source_context: ProductAwareDraftSourceContextOut
+    safety: PreQuoteSafetyOut = Field(default_factory=PreQuoteSafetyOut)
+    warnings: list[str] = Field(default_factory=list)

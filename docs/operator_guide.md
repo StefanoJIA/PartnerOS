@@ -89,7 +89,8 @@ Fallback：`$env:BACKEND_BASE_URL="http://127.0.0.1:8013"` 与相同 `VITE_API_P
 4. 选择 lead → 查看 **Product Fit & Project Opportunity** card（D5.12）：产品方向、quote readiness、discovery questions
 5. 查看 **Product Opportunity Board**（D5.13）→ 筛选 High Opportunity / Quote Ready / Lifting Systems
 6. 查看 **Pre-Quote & Sample Prep**（D5.14）→ Copy brief / customer questions
-7. 选择 lead → 查看 **Outreach History** timeline 与 follow-up hint（D5.6）
+7. 使用 **Product-Aware Draft**（D5.15）→ 按 product focus 生成 discovery 草稿
+8. 选择 lead → 查看 **Outreach History** timeline 与 follow-up hint（D5.6）
 7. 打开 `/lead-intelligence` → Manual Outreach Queue
 8. 查看 **Daily Summary** cards
 9. 筛选 **High Priority** → 优先处理
@@ -145,6 +146,7 @@ python scripts/daily_work_summary.py
 | `smoke_all_d5.py` | 一键 D5.x smoke（D5.11） |
 | `product_opportunity_check.py` | Product opportunity board smoke（D5.13） |
 | `pre_quote_brief_check.py` | Pre-quote brief smoke（D5.14） |
+| `product_aware_draft_check.py` | Product-aware draft smoke（D5.15） |
 | `portal_readiness_check.py` | Portal v1 端点 |
 | `portal_consumer_check.py` | 外部 Portal 契约 |
 

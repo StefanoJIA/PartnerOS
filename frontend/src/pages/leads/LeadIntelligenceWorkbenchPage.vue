@@ -426,6 +426,8 @@
 
             <PreQuotePrepCard :lead-id="selectedLeadId" />
 
+            <ProductAwareDraftPanel :lead-id="selectedLeadId" />
+
             <el-card shadow="never" class="mb-4">
               <template #header>记录触达并更新 Next Action</template>
               <el-alert
@@ -570,6 +572,7 @@ import OutreachHistoryTimeline from '@/components/leads/OutreachHistoryTimeline.
 import FollowUpScheduler from '@/components/leads/FollowUpScheduler.vue'
 import ProductFitCard from '@/components/leads/ProductFitCard.vue'
 import PreQuotePrepCard from '@/components/leads/PreQuotePrepCard.vue'
+import ProductAwareDraftPanel from '@/components/leads/ProductAwareDraftPanel.vue'
 import ProductOpportunityBoard from '@/components/leads/ProductOpportunityBoard.vue'
 import type { ProductOpportunityFilterKey } from '@/constants/productOpportunity'
 import {
