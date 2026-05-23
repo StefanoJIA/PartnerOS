@@ -1,25 +1,35 @@
 /** Manual Outreach Queue helpers (D5.2.5 — frontend only). */
 
 import type { SegmentFilterKey } from '@/constants/leadSegments'
+import { SEGMENT_FILTER_OPTIONS } from '@/constants/leadSegments'
+import {
+  filterByRhythmCategory,
+  isOperationFilter,
+  NO_NEXT_ACTION,
+  type OperationFilterKey,
+  type RhythmLeadRow,
+} from '@/constants/followUpRhythm'
 
 export type QueueFilterKey =
   | SegmentFilterKey
+  | OperationFilterKey
   | 'high_score'
   | 'no_next_action'
   | 'needs_followup'
 
+export { NO_NEXT_ACTION }
+
 export type DraftStatus = 'none' | 'generated' | 'copied' | 'sent'
 
-export const QUEUE_FILTER_OPTIONS: { key: QueueFilterKey; label: string }[] = [
-  { key: 'all', label: 'All' },
+export const LEGACY_QUEUE_FILTER_OPTIONS: { key: QueueFilterKey; label: string }[] = [
   { key: 'high_score', label: 'High Score' },
   { key: 'no_next_action', label: 'No Next Action' },
   { key: 'needs_followup', label: 'Needs Follow-up' },
-  { key: 'lift_system_signal', label: 'Lifting' },
-  { key: 'medical_vertical', label: 'Medical' },
-  { key: 'education_vertical', label: 'Education' },
-  { key: 'project_based_furniture', label: 'Project' },
-  { key: 'general_office_furniture_only', label: 'General Office' },
+]
+
+export const QUEUE_FILTER_OPTIONS: { key: QueueFilterKey; label: string }[] = [
+  ...LEGACY_QUEUE_FILTER_OPTIONS,
+  ...SEGMENT_FILTER_OPTIONS,
 ]
 
 export type ChannelRecommendation = {
@@ -102,34 +112,42 @@ export function buildManualSentSummary(params: {
   )
 }
 
-export function filterQueueRows<T extends {
-  score: number
-  segments: string[]
+export function filterQueueRows<T extends RhythmLeadRow & {
   nextAction: string
   touchCount: number
+  score: number
+  segments: string[]
 }>(rows: T[], filter: QueueFilterKey): T[] {
+  if (isOperationFilter(filter)) {
+    return sortQueueRows(filterByRhythmCategory(rows, filter))
+  }
+
   let out = [...rows]
   switch (filter) {
     case 'high_score':
       out = out.filter((r) => r.score >= 70)
       break
     case 'no_next_action':
-      out = out.filter((r) => r.nextAction === 'No next action set.')
+      out = out.filter((r) => r.nextAction === NO_NEXT_ACTION)
       break
     case 'needs_followup':
-      out = out.filter((r) => r.nextAction !== 'No next action set.')
+      out = out.filter((r) => r.nextAction !== NO_NEXT_ACTION)
       break
     case 'all':
       break
     default:
       out = out.filter((r) => r.segments.includes(filter))
   }
+  return sortQueueRows(out)
+}
+
+function sortQueueRows<T extends { touchCount: number; nextAction: string; score: number }>(out: T[]): T[] {
   return out.sort((a, b) => {
     const aNoTouch = a.touchCount === 0 ? 1 : 0
     const bNoTouch = b.touchCount === 0 ? 1 : 0
     if (aNoTouch !== bNoTouch) return bNoTouch - aNoTouch
-    const aHasNext = a.nextAction !== 'No next action set.' ? 1 : 0
-    const bHasNext = b.nextAction !== 'No next action set.' ? 1 : 0
+    const aHasNext = a.nextAction !== NO_NEXT_ACTION ? 1 : 0
+    const bHasNext = b.nextAction !== NO_NEXT_ACTION ? 1 : 0
     if (aHasNext !== bHasNext) return bHasNext - aHasNext
     return b.score - a.score
   })

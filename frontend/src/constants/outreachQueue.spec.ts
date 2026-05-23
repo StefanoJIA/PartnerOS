@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   filterQueueRows,
   followUpNextAction,
+  NO_NEXT_ACTION,
   recommendChannel,
   touchpointTypeForChannel,
 } from '@/constants/outreachQueue'
@@ -20,8 +21,8 @@ describe('outreachQueue', () => {
 
   it('filters high score', () => {
     const rows = [
-      { score: 80, segments: [], nextAction: 'x', touchCount: 0 },
-      { score: 40, segments: [], nextAction: 'x', touchCount: 0 },
+      { score: 80, segments: [], nextAction: 'x', touchCount: 0, lastTouch: '—', lastTouchDate: null, contactEmail: null, linkedinUrl: null, enrichmentStatus: '—', companyWebsite: null },
+      { score: 40, segments: [], nextAction: 'x', touchCount: 0, lastTouch: '—', lastTouchDate: null, contactEmail: null, linkedinUrl: null, enrichmentStatus: '—', companyWebsite: null },
     ]
     expect(filterQueueRows(rows, 'high_score')).toHaveLength(1)
   })

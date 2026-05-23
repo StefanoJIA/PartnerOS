@@ -6,7 +6,7 @@
           <div>
             <h2 class="text-lg font-semibold text-slate-800">Manual Outreach Queue</h2>
             <p class="mt-1 text-xs text-slate-500">
-              Daily lead development — score, segment, draft, and manual send tracking (D5.2.5)
+              Daily follow-up rhythm — score, segment, outreach status, and next actions (D5.2.7)
             </p>
           </div>
           <el-button size="small" @click="loadReviewBoard">Refresh</el-button>
@@ -15,8 +15,47 @@
 
       <el-alert type="info" :closable="false" show-icon class="mb-3" :title="OUTREACH_SAFETY_NOTICE" />
 
+      <div class="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+        <div class="rounded border border-slate-200 bg-slate-50 px-2 py-2 text-center">
+          <p class="text-lg font-semibold text-slate-800">{{ dailySummary.total }}</p>
+          <p class="text-xs text-slate-500">Total Leads</p>
+        </div>
+        <div class="rounded border border-blue-100 bg-blue-50 px-2 py-2 text-center">
+          <p class="text-lg font-semibold text-blue-800">{{ dailySummary.needs_first_outreach }}</p>
+          <p class="text-xs text-blue-600">First Outreach</p>
+        </div>
+        <div class="rounded border border-amber-100 bg-amber-50 px-2 py-2 text-center">
+          <p class="text-lg font-semibold text-amber-800">{{ dailySummary.waiting_for_reply }}</p>
+          <p class="text-xs text-amber-600">Waiting Reply</p>
+        </div>
+        <div class="rounded border border-orange-100 bg-orange-50 px-2 py-2 text-center">
+          <p class="text-lg font-semibold text-orange-800">{{ dailySummary.follow_up_soon }}</p>
+          <p class="text-xs text-orange-600">Follow Up Soon</p>
+        </div>
+        <div class="rounded border border-violet-100 bg-violet-50 px-2 py-2 text-center">
+          <p class="text-lg font-semibold text-violet-800">{{ dailySummary.needs_contact_research }}</p>
+          <p class="text-xs text-violet-600">Contact Research</p>
+        </div>
+        <div class="rounded border border-rose-100 bg-rose-50 px-2 py-2 text-center">
+          <p class="text-lg font-semibold text-rose-800">{{ dailySummary.high_priority }}</p>
+          <p class="text-xs text-rose-600">High Priority</p>
+        </div>
+        <div class="rounded border border-slate-200 bg-white px-2 py-2 text-center">
+          <p class="text-lg font-semibold text-slate-700">{{ dailySummary.needs_enrichment }}</p>
+          <p class="text-xs text-slate-500">Needs Enrichment</p>
+        </div>
+      </div>
+
+      <p class="mb-1 text-xs font-medium text-slate-600">Operation filters</p>
+      <el-radio-group v-model="queueFilter" size="small" class="mb-2 flex flex-wrap gap-1">
+        <el-radio-button v-for="opt in OPERATION_FILTER_OPTIONS" :key="opt.key" :value="opt.key">
+          {{ opt.label }}
+        </el-radio-button>
+      </el-radio-group>
+
+      <p class="mb-1 text-xs font-medium text-slate-600">Segment &amp; legacy filters</p>
       <el-radio-group v-model="queueFilter" size="small" class="mb-3 flex flex-wrap gap-1">
-        <el-radio-button v-for="opt in QUEUE_FILTER_OPTIONS" :key="opt.key" :value="opt.key">
+        <el-radio-button v-for="opt in SEGMENT_AND_LEGACY_FILTER_OPTIONS" :key="opt.key" :value="opt.key">
           {{ opt.label }}
         </el-radio-button>
       </el-radio-group>
@@ -29,8 +68,16 @@
         empty-text="No leads in queue — refresh or import leads."
         @row-click="onReviewRowClick"
       >
-        <el-table-column prop="companyName" label="Company" min-width="140" show-overflow-tooltip />
-        <el-table-column prop="contactName" label="Contact" width="120" show-overflow-tooltip />
+        <el-table-column prop="companyName" label="Company" min-width="130" show-overflow-tooltip />
+        <el-table-column label="Status" width="118">
+          <template #default="{ row }">
+            <el-tag v-if="row.statusBadge" size="small" effect="plain" type="warning">
+              {{ statusBadgeLabel(row.statusBadge) }}
+            </el-tag>
+            <span v-else class="text-xs text-slate-400">—</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="contactName" label="Contact" width="110" show-overflow-tooltip />
         <el-table-column label="Score" width="64" sortable :sort-method="sortByScore">
           <template #default="{ row }">
             <span class="font-semibold">{{ row.score }}</span>
@@ -293,12 +340,21 @@ import {
   segmentTagType,
   segmentTooltip,
   priorityHint,
+  SEGMENT_FILTER_OPTIONS,
 } from '@/constants/leadSegments'
+import {
+  classifyFollowUpCategories,
+  computeDailySummary,
+  OPERATION_FILTER_OPTIONS,
+  primaryStatusBadge,
+  STATUS_BADGE_LABELS,
+  type FollowUpCategory,
+} from '@/constants/followUpRhythm'
 import {
   draftStatusLabel,
   filterQueueRows,
+  LEGACY_QUEUE_FILTER_OPTIONS,
   OUTREACH_SAFETY_NOTICE,
-  QUEUE_FILTER_OPTIONS,
   recommendChannel,
   type DraftStatus,
   type QueueFilterKey,
@@ -323,8 +379,12 @@ type ReviewRow = {
   priority: string | null
   nextAction: string
   lastTouch: string
+  lastTouchDate: string | null
   touchCount: number
   enrichmentStatus: string
+  companyWebsite: string | null
+  followUpCategories: FollowUpCategory[]
+  statusBadge: FollowUpCategory | null
   priorityHint: string
   recommendedChannel: string
   recommendedChannelKey: string
@@ -351,9 +411,17 @@ const wf = ref<LeadIntelligenceWorkflow | null>(null)
 const leadOptions = ref<{ id: string; lead_name: string }[]>([])
 const selectedLeadId = ref<string | null>((route.query.leadId as string) || null)
 const reviewRows = ref<ReviewRow[]>([])
-const queueFilter = ref<QueueFilterKey>('all')
+const queueFilter = ref<QueueFilterKey>('today_focus')
 const draftStatusByLead = ref<Record<string, DraftStatus>>({})
 const recentInteractions = ref<InteractionBrief[]>([])
+
+const SEGMENT_AND_LEGACY_FILTER_OPTIONS = [...SEGMENT_FILTER_OPTIONS, ...LEGACY_QUEUE_FILTER_OPTIONS]
+
+const dailySummary = computed(() => computeDailySummary(reviewRows.value))
+
+function statusBadgeLabel(cat: FollowUpCategory): string {
+  return STATUS_BADGE_LABELS[cat]
+}
 
 const selectedChannelRec = computed(() => {
   const row = reviewRows.value.find((r) => r.leadId === selectedLeadId.value)
@@ -501,6 +569,7 @@ async function loadReviewBoard() {
         try {
           const w = await fetchLeadIntelligenceWorkflow(lead.id)
           let lastTouch = '—'
+          let lastTouchDate: string | null = null
           let touchCount = 0
           try {
             const { data: ix } = await http.get<{ items: InteractionBrief[]; total: number }>(
@@ -511,6 +580,7 @@ async function loadReviewBoard() {
             if (ix.items?.[0]) {
               const t = ix.items[0]
               lastTouch = t.summary || t.subject || t.interaction_type || '—'
+              lastTouchDate = t.interaction_date || null
             }
           } catch {
             /* optional */
@@ -538,6 +608,20 @@ async function loadReviewBoard() {
             }
           }
 
+          const rhythmBase = {
+            score: w.intelligence_score,
+            segments: w.market_fit_segments || [],
+            nextAction: (lead.next_action || w.lead.next_action || '').trim() || 'No next action set.',
+            touchCount,
+            lastTouch,
+            lastTouchDate,
+            contactEmail,
+            linkedinUrl,
+            enrichmentStatus: enrichCache.get(cid) || '—',
+            companyWebsite: w.company.website ?? null,
+          }
+          const followUpCategories = classifyFollowUpCategories(rhythmBase)
+
           return {
             leadId: lead.id,
             leadName: lead.lead_name,
@@ -546,13 +630,17 @@ async function loadReviewBoard() {
             contactName,
             contactEmail,
             linkedinUrl,
-            score: w.intelligence_score,
-            segments: w.market_fit_segments || [],
+            score: rhythmBase.score,
+            segments: rhythmBase.segments,
             priority: lead.priority ?? w.lead.priority ?? '—',
-            nextAction: (lead.next_action || w.lead.next_action || '').trim() || 'No next action set.',
+            nextAction: rhythmBase.nextAction,
             lastTouch,
+            lastTouchDate,
             touchCount,
-            enrichmentStatus: enrichCache.get(cid) || '—',
+            enrichmentStatus: rhythmBase.enrichmentStatus,
+            companyWebsite: rhythmBase.companyWebsite,
+            followUpCategories,
+            statusBadge: primaryStatusBadge(followUpCategories),
             priorityHint: priorityHint(w.intelligence_score, lead.priority ?? w.lead.priority),
             recommendedChannel: rec.label,
             recommendedChannelKey: rec.channel || 'email_intro',
