@@ -95,8 +95,22 @@
         </el-table-column>
         <el-table-column prop="nextAction" label="Next Action" min-width="120" show-overflow-tooltip />
         <el-table-column prop="lastTouch" label="Last Touchpoint" min-width="100" show-overflow-tooltip />
+        <el-table-column label="" width="130" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" type="primary" plain @click.stop="openContactResearch(row)">
+              Research / Edit
+            </el-button>
+          </template>
+        </el-table-column>
       </el-table>
     </el-card>
+
+    <ContactResearchDrawer
+      v-model:visible="contactResearchVisible"
+      :row="contactResearchRow"
+      :initial="contactResearchInitial"
+      @saved="onContactResearchSaved"
+    />
 
     <el-card v-loading="reviewLoading" shadow="never">
       <template #header>
@@ -486,7 +500,20 @@ import {
   TOUCHPOINT_TYPE_PRESETS,
 } from '@/constants/touchpointPresets'
 import OutreachDraftPanel from '@/components/outreach/OutreachDraftPanel.vue'
+import ContactResearchDrawer from '@/components/leads/ContactResearchDrawer.vue'
 import { formatApiError } from '@/api/errors'
+
+type ContactResearchInitial = {
+  website?: string | null
+  companyType?: string | null
+  companyNotes?: string | null
+  contactName?: string | null
+  contactTitle?: string | null
+  contactEmail?: string | null
+  contactPhone?: string | null
+  linkedinUrl?: string | null
+  nextAction?: string | null
+}
 
 type ReviewRow = {
   leadId: string
@@ -545,6 +572,8 @@ const queueFilter = ref<QueueFilterKey>('today_focus')
 const completenessFilter = ref<CompletenessFilterKey>('all')
 const draftStatusByLead = ref<Record<string, DraftStatus>>({})
 const recentInteractions = ref<InteractionBrief[]>([])
+const contactResearchVisible = ref(false)
+const contactResearchRow = ref<CompletenessRow | null>(null)
 
 const SEGMENT_AND_LEGACY_FILTER_OPTIONS = [...SEGMENT_FILTER_OPTIONS, ...LEGACY_QUEUE_FILTER_OPTIONS]
 
@@ -657,6 +686,37 @@ function sortCompletenessByScore(a: CompletenessRow, b: CompletenessRow) {
 
 function onCompletenessRowClick(row: CompletenessRow) {
   selectedLeadId.value = row.leadId
+}
+
+const contactResearchInitial = computed((): ContactResearchInitial | null => {
+  if (!contactResearchRow.value) return null
+  const review = reviewRows.value.find((r) => r.leadId === contactResearchRow.value?.leadId)
+  if (!review) return null
+  return {
+    website: review.companyWebsite,
+    companyType: review.companyType,
+    companyNotes: review.companyNotes,
+    contactName: review.contactName,
+    contactTitle: review.contactTitle,
+    contactEmail: review.contactEmail,
+    contactPhone: review.contactPhone,
+    linkedinUrl: review.contactLinkedinUrl ?? review.linkedinUrl,
+    nextAction: review.nextAction,
+  }
+})
+
+function openContactResearch(row: CompletenessRow) {
+  contactResearchRow.value = row
+  contactResearchVisible.value = true
+}
+
+async function onContactResearchSaved() {
+  await loadReviewBoard()
+  const id = contactResearchRow.value?.leadId || selectedLeadId.value
+  if (id) {
+    selectedLeadId.value = id
+    await loadWorkflow(id)
+  }
 }
 
 function applyContactResearchTouchPreset() {

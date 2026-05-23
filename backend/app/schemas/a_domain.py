@@ -135,3 +135,34 @@ class LeadCompletenessSummaryOut(BaseModel):
 class LeadCompletenessResponse(BaseModel):
     rows: list[LeadCompletenessRowOut]
     summary: LeadCompletenessSummaryOut
+
+
+class ContactResearchCompanyIn(BaseModel):
+    website: str | None = None
+    company_type: str | None = None
+    notes: str | None = None
+
+
+class ContactResearchContactIn(BaseModel):
+    name: str | None = None
+    title: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    linkedin_url: str | None = None
+
+
+class ContactResearchLeadIn(BaseModel):
+    next_action: str | None = None
+
+
+class ContactResearchRequest(BaseModel):
+    company: ContactResearchCompanyIn | None = None
+    contact: ContactResearchContactIn | None = None
+    lead: ContactResearchLeadIn | None = None
+    touchpoint_note: str | None = None
+
+
+class ContactResearchResponse(BaseModel):
+    lead_id: str
+    interaction_id: str
+    completeness: LeadCompletenessRowOut

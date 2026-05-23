@@ -52,7 +52,7 @@ python scripts/check_backend_runtime.py
 
 1. 登录 `/login`（seed 凭据见 README，**勿在记录中写密码**）
 2. **（新 lead）** 打开 `/lead-intake` → 粘贴或上传 CSV → **Preview** → 检查 missing / duplicate / segment → **Confirm Import**
-3. 打开 `/lead-intelligence` → 查看 **Lead Completeness** → 筛选 **Needs Contact Research** 补资料
+3. 打开 `/lead-intelligence` → 查看 **Lead Completeness** → 筛选 **Needs Contact Research** → 点击 **Research / Edit** 在 drawer 中补资料（D5.5）
 4. 打开 `/lead-intelligence` → Manual Outreach Queue
 5. 查看 **Daily Summary** cards
 6. 筛选 **High Priority** → 优先处理

@@ -52,76 +52,83 @@ def _last_touch_summary(db: Session, lead_id: UUID) -> str:
     return row.summary or row.subject or row.interaction_type or "—"
 
 
+def build_lead_completeness_row_for_lead(db: Session, lead_id: UUID) -> dict[str, Any] | None:
+    lead = db.query(Lead).filter(Lead.id == lead_id, Lead.is_active.is_(True)).first()
+    if not lead:
+        return None
+    company = db.query(Company).filter(Company.id == lead.company_id).first()
+    if not company:
+        return None
+    contact = None
+    if lead.primary_contact_id:
+        contact = db.query(Contact).filter(Contact.id == lead.primary_contact_id).first()
+
+    mi_count = (
+        db.query(MarketIntelligenceItem)
+        .filter(MarketIntelligenceItem.related_company_id == company.id)
+        .count()
+    )
+    intel = compute_intelligence_score(
+        IntelligenceScoreInput(
+            has_primary_contact=contact is not None,
+            market_intel_count=mi_count,
+            product_interest_tags=company.product_interest_tags,
+            business_description=company.business_description,
+            lead_product_interest=lead.product_interest,
+            lead_priority=lead.priority,
+            company_strategic_level=company.strategic_level,
+        )
+    )
+
+    contact_name = None
+    if contact:
+        contact_name = f"{contact.first_name} {contact.last_name}".strip()
+
+    na = (lead.next_action or "").strip() or NO_NEXT_ACTION
+    enrich = _enrichment_label(db, company.id)
+    touches = _touch_count(db, lead.id)
+
+    inp = LeadCompletenessInput(
+        company_name=company.company_name,
+        company_type=company.company_type,
+        industry=company.industry,
+        notes=company.notes,
+        business_description=company.business_description,
+        website=company.website,
+        contact_name=contact_name,
+        contact_title=contact.title if contact else None,
+        contact_email=contact.email if contact else None,
+        contact_linkedin_url=contact.linkedin_url if contact else None,
+        company_linkedin_url=company.linkedin_url,
+        contact_phone=contact.phone if contact else None,
+        segments=intel.market_fit_segments,
+        intelligence_score=intel.score,
+        suggested_next_actions=intel.suggestions,
+        next_action=na,
+        enrichment_status=enrich,
+        touch_count=touches,
+    )
+    comp = compute_lead_completeness(inp)
+    return {
+        "lead_id": str(lead.id),
+        "company_name": company.company_name,
+        "lead_name": lead.lead_name,
+        "segment": intel.market_fit_segments[0] if intel.market_fit_segments else None,
+        "segments": intel.market_fit_segments,
+        "next_action": na if na != NO_NEXT_ACTION else None,
+        "last_touchpoint": _last_touch_summary(db, lead.id),
+        **comp,
+    }
+
+
 def build_lead_completeness_rows(db: Session) -> list[dict[str, Any]]:
     leads = db.query(Lead).filter(Lead.is_active.is_(True)).order_by(Lead.created_at.desc()).all()
     rows: list[dict[str, Any]] = []
 
     for lead in leads:
-        company = db.query(Company).filter(Company.id == lead.company_id).first()
-        if not company:
-            continue
-        contact = None
-        if lead.primary_contact_id:
-            contact = db.query(Contact).filter(Contact.id == lead.primary_contact_id).first()
-
-        mi_count = (
-            db.query(MarketIntelligenceItem)
-            .filter(MarketIntelligenceItem.related_company_id == company.id)
-            .count()
-        )
-        intel = compute_intelligence_score(
-            IntelligenceScoreInput(
-                has_primary_contact=contact is not None,
-                market_intel_count=mi_count,
-                product_interest_tags=company.product_interest_tags,
-                business_description=company.business_description,
-                lead_product_interest=lead.product_interest,
-                lead_priority=lead.priority,
-                company_strategic_level=company.strategic_level,
-            )
-        )
-
-        contact_name = None
-        if contact:
-            contact_name = f"{contact.first_name} {contact.last_name}".strip()
-
-        na = (lead.next_action or "").strip() or NO_NEXT_ACTION
-        enrich = _enrichment_label(db, company.id)
-        touches = _touch_count(db, lead.id)
-
-        inp = LeadCompletenessInput(
-            company_name=company.company_name,
-            company_type=company.company_type,
-            industry=company.industry,
-            notes=company.notes,
-            business_description=company.business_description,
-            website=company.website,
-            contact_name=contact_name,
-            contact_title=contact.title if contact else None,
-            contact_email=contact.email if contact else None,
-            contact_linkedin_url=contact.linkedin_url if contact else None,
-            company_linkedin_url=company.linkedin_url,
-            contact_phone=contact.phone if contact else None,
-            segments=intel.market_fit_segments,
-            intelligence_score=intel.score,
-            suggested_next_actions=intel.suggestions,
-            next_action=na,
-            enrichment_status=enrich,
-            touch_count=touches,
-        )
-        comp = compute_lead_completeness(inp)
-        rows.append(
-            {
-                "lead_id": str(lead.id),
-                "company_name": company.company_name,
-                "lead_name": lead.lead_name,
-                "segment": intel.market_fit_segments[0] if intel.market_fit_segments else None,
-                "segments": intel.market_fit_segments,
-                "next_action": na if na != NO_NEXT_ACTION else None,
-                "last_touchpoint": _last_touch_summary(db, lead.id),
-                **comp,
-            }
-        )
+        row = build_lead_completeness_row_for_lead(db, lead.id)
+        if row:
+            rows.append(row)
 
     return rows
 

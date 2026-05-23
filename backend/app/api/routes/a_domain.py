@@ -21,6 +21,8 @@ from app.schemas.a_domain import (
     LeadCompletenessResponse,
     LeadCompletenessRowOut,
     LeadCompletenessSummaryOut,
+    ContactResearchRequest,
+    ContactResearchResponse,
     LeadIntelligenceWorkflowOut,
     OutreachDraftOut,
     TouchpointCreate,
@@ -38,6 +40,7 @@ from app.services.a_domain.lead_completeness_board import (
     build_lead_completeness_rows,
     summarize_completeness,
 )
+from app.services.a_domain.contact_research_service import apply_contact_research
 
 router = APIRouter(prefix="/a-domain", tags=["a-domain-intelligence"])
 
@@ -306,24 +309,55 @@ def get_lead_completeness(
     """Read-only completeness board for all active leads (D5.4)."""
     raw_rows = build_lead_completeness_rows(db)
     summary = summarize_completeness(raw_rows)
-    rows = [
-        LeadCompletenessRowOut(
-            lead_id=r["lead_id"],
-            company_name=r["company_name"],
-            lead_name=r["lead_name"],
-            score=r["score"],
-            status=r["status"],
-            status_label=r["status_label"],
-            missing_fields=r["missing_fields"],
-            recommended_research_action=r["recommended_research_action"],
-            segment=r.get("segment"),
-            segments=r.get("segments") or [],
-            next_action=r.get("next_action"),
-            last_touchpoint=r.get("last_touchpoint"),
-        )
-        for r in raw_rows
-    ]
+    rows = [_completeness_row_out(r) for r in raw_rows]
     return LeadCompletenessResponse(
         rows=rows,
         summary=LeadCompletenessSummaryOut(**summary),
+    )
+
+
+def _completeness_row_out(row: dict) -> LeadCompletenessRowOut:
+    return LeadCompletenessRowOut(
+        lead_id=row["lead_id"],
+        company_name=row["company_name"],
+        lead_name=row["lead_name"],
+        score=row["score"],
+        status=row["status"],
+        status_label=row["status_label"],
+        missing_fields=row["missing_fields"],
+        recommended_research_action=row["recommended_research_action"],
+        segment=row.get("segment"),
+        segments=row.get("segments") or [],
+        next_action=row.get("next_action"),
+        last_touchpoint=row.get("last_touchpoint"),
+    )
+
+
+@router.post("/leads/{lead_id}/contact-research", response_model=ContactResearchResponse)
+def post_lead_contact_research(
+    lead_id: UUID,
+    body: ContactResearchRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> ContactResearchResponse:
+    """Manual contact research update — no auto search or send (D5.5)."""
+    try:
+        result = apply_contact_research(
+            db,
+            user,
+            lead_id,
+            company_data=body.company.model_dump() if body.company else None,
+            contact_data=body.contact.model_dump() if body.contact else None,
+            lead_data=body.lead.model_dump() if body.lead else None,
+            touchpoint_note=body.touchpoint_note,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    comp = result["completeness"]
+    if not comp:
+        raise HTTPException(status_code=404, detail="Lead completeness row not found")
+    return ContactResearchResponse(
+        lead_id=result["lead_id"],
+        interaction_id=result["interaction_id"],
+        completeness=_completeness_row_out(comp),
     )
