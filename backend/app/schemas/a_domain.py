@@ -190,7 +190,55 @@ class LeadTimelineOut(BaseModel):
     lead_id: str
     company_name: str
     next_action: str | None = None
+    next_follow_up_date: str | None = None
+    due_status: str | None = None
+    days_until_due: int | None = None
     last_touchpoint_at: str | None = None
     follow_up_hint: str
     items: list[LeadTimelineItemOut]
     stats: LeadTimelineStatsOut
+
+
+class FollowUpScheduleRequest(BaseModel):
+    next_follow_up_date: date | None = None
+    next_action: str | None = None
+    status_note: str | None = None
+    clear_date: bool = False
+
+
+class FollowUpScheduleResponse(BaseModel):
+    lead_id: str
+    company_name: str
+    next_action: str | None = None
+    next_follow_up_date: str | None = None
+    due_status: str
+    days_until_due: int | None = None
+    interaction_id: str
+
+
+class FollowUpQueueRowOut(BaseModel):
+    lead_id: str
+    company_name: str
+    lead_score: int
+    segments: list[str] = Field(default_factory=list)
+    next_action: str | None = None
+    next_follow_up_date: str | None = None
+    due_status: str
+    days_until_due: int | None = None
+    last_touchpoint_at: str | None = None
+    waiting_reply: bool = False
+    recommended_action: str
+
+
+class FollowUpQueueSummaryOut(BaseModel):
+    total: int
+    overdue: int
+    due_today: int
+    due_soon: int
+    no_follow_up_date: int
+    waiting_reply: int
+
+
+class FollowUpQueueResponse(BaseModel):
+    summary: FollowUpQueueSummaryOut
+    rows: list[FollowUpQueueRowOut]

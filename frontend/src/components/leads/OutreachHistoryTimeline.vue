@@ -68,6 +68,26 @@ defineExpose({ reload })
     />
 
     <template v-if="timeline">
+      <div class="mb-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
+        <div class="rounded border border-slate-200 bg-slate-50 px-2 py-2">
+          <p class="text-xs text-slate-500">Follow-up date</p>
+          <p class="font-medium text-slate-800">{{ timeline.next_follow_up_date || '—' }}</p>
+        </div>
+        <div class="rounded border border-slate-200 bg-slate-50 px-2 py-2">
+          <p class="text-xs text-slate-500">Due status</p>
+          <el-tag v-if="timeline.due_status" size="small" :type="followUpHintTagType(timeline.follow_up_hint)" effect="plain">
+            {{ timeline.due_status.replace(/_/g, ' ') }}
+          </el-tag>
+          <span v-else class="font-medium text-slate-800">—</span>
+        </div>
+        <div class="rounded border border-slate-200 bg-slate-50 px-2 py-2">
+          <p class="text-xs text-slate-500">Days until due</p>
+          <p class="font-medium text-slate-800">
+            {{ timeline.days_until_due != null ? timeline.days_until_due : '—' }}
+          </p>
+        </div>
+      </div>
+
       <div class="mb-4 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
         <div class="rounded border border-slate-200 bg-slate-50 px-2 py-2">
           <p class="text-xs text-slate-500">Company</p>

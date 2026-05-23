@@ -63,13 +63,16 @@ python scripts/check_backend_runtime.py
 11. **Copy Draft** → 在 LinkedIn / Email **系统外**粘贴发送
 12. 回到系统 → **Mark as Sent**（仅记录，不自动发送）
 13. 确认 **Outreach History** timeline 已更新
-14. 确认 **next action** 已更新
-15. 每日结束（可选 CLI）：
+14. 在 **Follow-up Scheduler** 设置下次跟进日期（D5.7）
+15. 使用 **Due queue filters** 查看 Overdue / Due Today / Due Soon
+16. 确认 **next action** 已更新
+17. 每日结束（可选 CLI）：
 
 ```powershell
 cd backend
 $env:BACKEND_BASE_URL="http://127.0.0.1:8010"   # if using 8010
 python scripts/daily_outreach_summary.py
+python scripts/daily_follow_up_summary.py
 ```
 
 ## Useful URLs

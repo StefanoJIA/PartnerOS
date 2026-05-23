@@ -9,6 +9,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.models import Company, Interaction, Lead
+from app.services.a_domain.follow_up_queue import compute_due_status
 from app.services.a_domain.lead_completeness_board import build_lead_completeness_row_for_lead
 
 
@@ -32,6 +33,10 @@ def _is_contact_research(
 
 
 def _timeline_title(ix: Interaction) -> str:
+    if ix.interaction_type == "follow_up_scheduled" or (
+        ix.channel == "internal" and "manually_scheduled=true" in _lower(ix.summary)
+    ):
+        return "Follow-up scheduled"
     if _is_contact_research(ix.interaction_type, ix.channel, ix.summary):
         return "Contact research updated"
     if _is_manual_send(ix.summary, ix.subject):
@@ -73,8 +78,18 @@ def compute_follow_up_hint(
     touch_count: int,
     latest: Interaction | None,
     next_action: str | None,
+    due_status: str | None = None,
 ) -> str:
-    """Derived hint; priority: research > first outreach > follow up soon > waiting > ready > review."""
+    """Derived hint; D5.7 prioritizes structured due date, then legacy rules."""
+    if due_status == "overdue":
+        return "Overdue — follow up today"
+    if due_status == "due_today":
+        return "Due today — follow up"
+    if due_status == "due_soon":
+        return "Due soon — prepare follow-up"
+    if due_status == "scheduled":
+        return "Follow-up scheduled"
+
     candidates: list[tuple[str, str]] = []
 
     if completeness_status == "needs_contact_research":
@@ -136,17 +151,22 @@ def build_lead_timeline(db: Session, lead_id: UUID) -> dict[str, Any]:
     completeness_status = completeness_row.get("status") if completeness_row else None
 
     next_action = (lead.next_action or "").strip() or None
+    due_status, days_until = compute_due_status(lead.next_action_due_date)
 
     return {
         "lead_id": str(lead.id),
         "company_name": company_name,
         "next_action": next_action,
+        "next_follow_up_date": lead.next_action_due_date.isoformat() if lead.next_action_due_date else None,
+        "due_status": due_status,
+        "days_until_due": days_until,
         "last_touchpoint_at": last_touch_at.isoformat() if last_touch_at else None,
         "follow_up_hint": compute_follow_up_hint(
             completeness_status=completeness_status,
             touch_count=len(rows),
             latest=latest,
             next_action=next_action,
+            due_status=due_status,
         ),
         "items": items,
         "stats": {

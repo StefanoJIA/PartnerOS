@@ -69,6 +69,7 @@ First-time setup: `python scripts/init_local_env.py` → edit `backend/.env` →
 | **Lead completeness** | **`/lead-intelligence`** · Lead Completeness section (D5.4) |
 | **Contact research (in-place edit)** | **`/lead-intelligence`** · Research / Edit drawer (D5.5) |
 | **Outreach history timeline** | **`/lead-intelligence`** · Outreach History panel (D5.6) |
+| **Follow-up scheduling / due queue** | **`/lead-intelligence`** · Follow-up Scheduler + Due filters (D5.7) |
 | Lead import preview (CLI) | `backend/scripts/lead_import_preview.py` |
 | Outreach draft | Generate Draft in Lead Intelligence |
 | Portal readiness | `/system-health` · `portal_readiness_check.py` |

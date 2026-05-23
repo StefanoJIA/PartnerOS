@@ -26,6 +26,11 @@ from app.schemas.a_domain import (
     LeadTimelineOut,
     LeadTimelineItemOut,
     LeadTimelineStatsOut,
+    FollowUpScheduleRequest,
+    FollowUpScheduleResponse,
+    FollowUpQueueResponse,
+    FollowUpQueueRowOut,
+    FollowUpQueueSummaryOut,
     LeadIntelligenceWorkflowOut,
     OutreachDraftOut,
     TouchpointCreate,
@@ -45,6 +50,11 @@ from app.services.a_domain.lead_completeness_board import (
 )
 from app.services.a_domain.contact_research_service import apply_contact_research
 from app.services.a_domain.lead_timeline import build_lead_timeline
+from app.services.a_domain.follow_up_queue import (
+    apply_follow_up_schedule,
+    build_follow_up_queue_rows,
+    summarize_follow_up_queue,
+)
 
 router = APIRouter(prefix="/a-domain", tags=["a-domain-intelligence"])
 
@@ -382,8 +392,49 @@ def get_lead_timeline(
         lead_id=raw["lead_id"],
         company_name=raw["company_name"],
         next_action=raw.get("next_action"),
+        next_follow_up_date=raw.get("next_follow_up_date"),
+        due_status=raw.get("due_status"),
+        days_until_due=raw.get("days_until_due"),
         last_touchpoint_at=raw.get("last_touchpoint_at"),
         follow_up_hint=raw["follow_up_hint"],
         items=[LeadTimelineItemOut(**i) for i in raw["items"]],
         stats=LeadTimelineStatsOut(**raw["stats"]),
+    )
+
+
+@router.patch("/leads/{lead_id}/follow-up", response_model=FollowUpScheduleResponse)
+def patch_lead_follow_up(
+    lead_id: UUID,
+    body: FollowUpScheduleRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> FollowUpScheduleResponse:
+    """Schedule manual follow-up date — no auto send or calendar (D5.7)."""
+    try:
+        result = apply_follow_up_schedule(
+            db,
+            user,
+            lead_id,
+            next_follow_up_date=body.next_follow_up_date,
+            next_action=body.next_action,
+            status_note=body.status_note,
+            clear_date=body.clear_date,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    return FollowUpScheduleResponse(**result)
+
+
+@router.get("/follow-up-queue", response_model=FollowUpQueueResponse)
+def get_follow_up_queue(
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> FollowUpQueueResponse:
+    """Read-only due queue for daily follow-up (D5.7)."""
+    raw_rows = build_follow_up_queue_rows(db)
+    summary = summarize_follow_up_queue(raw_rows)
+    rows = [FollowUpQueueRowOut(**r) for r in raw_rows]
+    return FollowUpQueueResponse(
+        summary=FollowUpQueueSummaryOut(**summary),
+        rows=rows,
     )

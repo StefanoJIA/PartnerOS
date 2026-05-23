@@ -144,6 +144,9 @@ export type LeadTimeline = {
   lead_id: string
   company_name: string
   next_action?: string | null
+  next_follow_up_date?: string | null
+  due_status?: string | null
+  days_until_due?: number | null
   last_touchpoint_at?: string | null
   follow_up_hint: string
   items: LeadTimelineItem[]
@@ -157,5 +160,56 @@ export type LeadTimeline = {
 
 export async function fetchLeadTimeline(leadId: string) {
   const { data } = await http.get<LeadTimeline>(`/a-domain/leads/${leadId}/timeline`)
+  return data
+}
+
+export type FollowUpQueueRow = {
+  lead_id: string
+  company_name: string
+  lead_score: number
+  segments: string[]
+  next_action?: string | null
+  next_follow_up_date?: string | null
+  due_status: string
+  days_until_due?: number | null
+  last_touchpoint_at?: string | null
+  waiting_reply: boolean
+  recommended_action: string
+}
+
+export type FollowUpQueueResponse = {
+  summary: {
+    total: number
+    overdue: number
+    due_today: number
+    due_soon: number
+    no_follow_up_date: number
+    waiting_reply: number
+  }
+  rows: FollowUpQueueRow[]
+}
+
+export async function fetchFollowUpQueue() {
+  const { data } = await http.get<FollowUpQueueResponse>('/a-domain/follow-up-queue')
+  return data
+}
+
+export type FollowUpSchedulePayload = {
+  next_follow_up_date?: string | null
+  next_action?: string
+  status_note?: string
+  clear_date?: boolean
+}
+
+export async function patchLeadFollowUp(leadId: string, body: FollowUpSchedulePayload) {
+  const { data } = await http.patch<{
+    lead_id: string
+    company_name: string
+    next_action?: string | null
+    next_follow_up_date?: string | null
+    due_status: string
+    days_until_due?: number | null
+    interaction_id: string
+  }>(`/a-domain/leads/${leadId}/follow-up`, body)
   return data
 }

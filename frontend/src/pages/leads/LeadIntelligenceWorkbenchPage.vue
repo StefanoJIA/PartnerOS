@@ -168,6 +168,36 @@
         </div>
       </div>
 
+      <div class="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-5 lg:grid-cols-5">
+        <div class="rounded border border-red-200 bg-red-50 px-2 py-2 text-center">
+          <p class="text-lg font-semibold text-red-800">{{ followUpSummary.overdue }}</p>
+          <p class="text-xs text-red-600">Overdue</p>
+        </div>
+        <div class="rounded border border-amber-200 bg-amber-50 px-2 py-2 text-center">
+          <p class="text-lg font-semibold text-amber-800">{{ followUpSummary.due_today }}</p>
+          <p class="text-xs text-amber-700">Due Today</p>
+        </div>
+        <div class="rounded border border-orange-200 bg-orange-50 px-2 py-2 text-center">
+          <p class="text-lg font-semibold text-orange-800">{{ followUpSummary.due_soon }}</p>
+          <p class="text-xs text-orange-700">Due Soon</p>
+        </div>
+        <div class="rounded border border-slate-200 bg-slate-50 px-2 py-2 text-center">
+          <p class="text-lg font-semibold text-slate-800">{{ followUpSummary.no_follow_up_date }}</p>
+          <p class="text-xs text-slate-500">No Follow-up Date</p>
+        </div>
+        <div class="rounded border border-blue-200 bg-blue-50 px-2 py-2 text-center">
+          <p class="text-lg font-semibold text-blue-800">{{ followUpSummary.waiting_reply }}</p>
+          <p class="text-xs text-blue-600">Waiting Reply</p>
+        </div>
+      </div>
+
+      <p class="mb-1 text-xs font-medium text-slate-600">Due queue filters (D5.7)</p>
+      <el-radio-group v-model="dueQueueFilter" size="small" class="mb-2 flex flex-wrap gap-1">
+        <el-radio-button v-for="opt in DUE_QUEUE_FILTER_OPTIONS" :key="opt.key" :value="opt.key">
+          {{ opt.label }}
+        </el-radio-button>
+      </el-radio-group>
+
       <p class="mb-1 text-xs font-medium text-slate-600">Operation filters</p>
       <el-radio-group v-model="queueFilter" size="small" class="mb-2 flex flex-wrap gap-1">
         <el-radio-button v-for="opt in OPERATION_FILTER_OPTIONS" :key="opt.key" :value="opt.key">
@@ -224,6 +254,21 @@
         <el-table-column prop="priority" label="Priority" width="72" show-overflow-tooltip />
         <el-table-column prop="lastTouch" label="Last touch" min-width="100" show-overflow-tooltip />
         <el-table-column prop="nextAction" label="Next action" min-width="120" show-overflow-tooltip />
+        <el-table-column label="Follow-up" width="100" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span class="text-xs">{{ row.nextFollowUpDate || '—' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="Due" width="100">
+          <template #default="{ row }">
+            <el-tag size="small" :type="dueStatusTagType(row.dueStatus)" effect="plain">
+              {{ DUE_STATUS_LABELS[row.dueStatus as DueStatus] || row.dueStatus }}
+            </el-tag>
+            <span v-if="row.daysUntilDue != null" class="ml-1 text-xs text-slate-500">
+              {{ formatDaysUntilDue(row.daysUntilDue) }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column prop="recommendedChannel" label="Channel" width="130" show-overflow-tooltip />
         <el-table-column label="Draft" width="100">
           <template #default="{ row }">
@@ -445,6 +490,15 @@
               @marked-sent="onMarkedSent"
             />
 
+            <FollowUpScheduler
+              ref="followUpSchedulerRef"
+              :lead-id="selectedLeadId"
+              :initial-date="wf.lead.next_action_due_date ?? null"
+              :initial-next-action="wf.lead.next_action ?? null"
+              :suggested-date="followUpSuggestedDate"
+              @saved="onFollowUpSaved"
+            />
+
             <OutreachHistoryTimeline ref="timelineRef" :lead-id="selectedLeadId" />
           </el-col>
         </el-row>
@@ -458,7 +512,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import type { LeadIntelligenceWorkflow, TouchpointBody } from '@/api/aDomain'
-import { fetchLeadIntelligenceWorkflow, postLeadIntelligenceTouchpoint } from '@/api/aDomain'
+import { fetchLeadIntelligenceWorkflow, fetchFollowUpQueue, postLeadIntelligenceTouchpoint } from '@/api/aDomain'
 import { listEnrichmentRuns } from '@/api/companyEnrichment'
 import { http } from '@/api/http'
 import {
@@ -504,6 +558,17 @@ import {
 import OutreachDraftPanel from '@/components/outreach/OutreachDraftPanel.vue'
 import ContactResearchDrawer from '@/components/leads/ContactResearchDrawer.vue'
 import OutreachHistoryTimeline from '@/components/leads/OutreachHistoryTimeline.vue'
+import FollowUpScheduler from '@/components/leads/FollowUpScheduler.vue'
+import {
+  DUE_QUEUE_FILTER_OPTIONS,
+  DUE_STATUS_LABELS,
+  type DueQueueFilterKey,
+  type DueStatus,
+  dueStatusTagType,
+  filterByDueQueue,
+  formatDaysUntilDue,
+  quickFollowUpDates,
+} from '@/constants/followUpScheduling'
 import { formatApiError } from '@/api/errors'
 
 type ContactResearchInitial = {
@@ -548,6 +613,9 @@ type ReviewRow = {
   companyNotes: string | null
   businessDescription: string | null
   industry: string | null
+  nextFollowUpDate: string | null
+  dueStatus: DueStatus | string
+  daysUntilDue: number | null
 }
 
 type InteractionBrief = {
@@ -572,12 +640,24 @@ const selectedLeadId = ref<string | null>((route.query.leadId as string) || null
 const reviewRows = ref<ReviewRow[]>([])
 const reviewBoardError = ref('')
 const queueFilter = ref<QueueFilterKey>('today_focus')
+const dueQueueFilter = ref<DueQueueFilterKey>('all')
 const completenessFilter = ref<CompletenessFilterKey>('all')
 const draftStatusByLead = ref<Record<string, DraftStatus>>({})
 const recentInteractions = ref<InteractionBrief[]>([])
 const contactResearchVisible = ref(false)
 const contactResearchRow = ref<CompletenessRow | null>(null)
 const timelineRef = ref<{ reload: () => Promise<void> } | null>(null)
+const followUpSchedulerRef = ref<{ reload?: () => void } | null>(null)
+const followUpSuggestedDate = ref<string | null>(null)
+const followUpSummary = ref({
+  total: 0,
+  overdue: 0,
+  due_today: 0,
+  due_soon: 0,
+  no_follow_up_date: 0,
+  waiting_reply: 0,
+})
+const waitingByLead = ref<Record<string, boolean>>({})
 
 async function refreshTimeline() {
   await timelineRef.value?.reload()
@@ -625,7 +705,10 @@ const scoreRows = computed(() => {
   return Object.entries(wf.value.score_breakdown).map(([k, v]) => ({ k, v }))
 })
 
-const filteredReviewRows = computed(() => filterQueueRows(reviewRows.value, queueFilter.value))
+const filteredReviewRows = computed(() => {
+  const rhythmFiltered = filterQueueRows(reviewRows.value, queueFilter.value)
+  return filterByDueQueue(rhythmFiltered, dueQueueFilter.value, waitingByLead.value)
+})
 
 const completenessRows = computed<CompletenessRow[]>(() =>
   reviewRows.value.map((row) => {
@@ -835,6 +918,16 @@ async function loadReviewBoard() {
 
     const enrichCache = new Map<string, string>()
 
+    let fuMap = new Map<string, import('@/api/aDomain').FollowUpQueueRow>()
+    try {
+      const fq = await fetchFollowUpQueue()
+      followUpSummary.value = fq.summary
+      fuMap = new Map(fq.rows.map((r) => [r.lead_id, r]))
+      waitingByLead.value = Object.fromEntries(fq.rows.map((r) => [r.lead_id, r.waiting_reply]))
+    } catch {
+      /* follow-up queue optional if backend older */
+    }
+
     const rows = await Promise.all(
       leads.map(async (lead): Promise<ReviewRow | null> => {
         try {
@@ -896,6 +989,8 @@ async function loadReviewBoard() {
           }
           const followUpCategories = classifyFollowUpCategories(rhythmBase)
 
+          const followUp = fuMap.get(lead.id)
+
           return {
             leadId: lead.id,
             leadName: lead.lead_name,
@@ -926,6 +1021,9 @@ async function loadReviewBoard() {
             recommendedChannel: rec.label,
             recommendedChannelKey: rec.channel || 'email_intro',
             recommendedProductFocus: rec.productFocus,
+            nextFollowUpDate: followUp?.next_follow_up_date ?? w.lead.next_action_due_date ?? null,
+            dueStatus: (followUp?.due_status ?? 'no_follow_up_date') as DueStatus,
+            daysUntilDue: followUp?.days_until_due ?? null,
           }
         } catch {
           return null
@@ -950,7 +1048,18 @@ function onDraftStatus(s: DraftStatus) {
 async function onMarkedSent() {
   if (!selectedLeadId.value) return
   draftStatusByLead.value[selectedLeadId.value] = 'sent'
+  followUpSuggestedDate.value = quickFollowUpDates().in5Days
+  ElMessage.info('Mark as Sent recorded. Set follow-up date to 5 days from now in Follow-up Scheduler if needed.')
   await loadWorkflow(selectedLeadId.value)
+  await loadReviewBoard()
+  await refreshTimeline()
+}
+
+async function onFollowUpSaved() {
+  followUpSuggestedDate.value = null
+  if (selectedLeadId.value) {
+    await loadWorkflow(selectedLeadId.value)
+  }
   await loadReviewBoard()
   await refreshTimeline()
 }
