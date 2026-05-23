@@ -43,6 +43,10 @@ from app.schemas.a_domain import (
     DailyWorkSummaryCountsOut,
     DailyWorkHighlightOut,
     DailyWorkTomorrowFocusOut,
+    ProductFitOut,
+    ProductOpportunityBoardResponse,
+    ProductOpportunityBoardRowOut,
+    ProductOpportunityBoardSummaryOut,
     LeadIntelligenceWorkflowOut,
     OutreachDraftOut,
     TouchpointCreate,
@@ -74,6 +78,11 @@ from app.services.a_domain.daily_ops_summary import (
 from app.services.a_domain.daily_work_summary import (
     build_daily_work_summary,
     build_daily_work_summary_degraded,
+)
+from app.services.a_domain.product_fit_board import (
+    build_product_fit_for_lead,
+    build_product_fit_rows,
+    summarize_product_opportunity_board,
 )
 
 router = APIRouter(prefix="/a-domain", tags=["a-domain-intelligence"])
@@ -473,6 +482,46 @@ def get_daily_ops_summary(
             "Daily operations unavailable. Check backend and database status."
         )
     return DailyOpsSummaryResponse(**raw)
+
+
+@router.get("/leads/{lead_id}/product-fit", response_model=ProductFitOut)
+def get_lead_product_fit(
+    lead_id: UUID,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> ProductFitOut:
+    """Read-only product fit and project opportunity planner (D5.12)."""
+    raw = build_product_fit_for_lead(db, lead_id)
+    if not raw:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    return ProductFitOut(**raw)
+
+
+@router.get("/product-opportunity-board", response_model=ProductOpportunityBoardResponse)
+def get_product_opportunity_board(
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> ProductOpportunityBoardResponse:
+    """Read-only product opportunity summary for all active leads (D5.12)."""
+    raw_rows = build_product_fit_rows(db)
+    summary = summarize_product_opportunity_board(raw_rows)
+    rows = [
+        ProductOpportunityBoardRowOut(
+            lead_id=r["lead_id"],
+            company_name=r["company_name"],
+            project_opportunity_score=r["project_opportunity_score"],
+            opportunity_level=r["opportunity_level"],
+            project_type=r["project_type"],
+            quote_readiness=r["quote_readiness"],
+            sample_readiness=r["sample_readiness"],
+            recommended_product_focus=r.get("recommended_product_focus") or [],
+        )
+        for r in raw_rows
+    ]
+    return ProductOpportunityBoardResponse(
+        summary=ProductOpportunityBoardSummaryOut(**summary),
+        rows=rows,
+    )
 
 
 @router.get("/daily-work-summary", response_model=DailyWorkSummaryResponse)

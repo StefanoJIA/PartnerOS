@@ -417,6 +417,8 @@
               <p v-else class="mt-3 text-xs text-slate-500">No suggestions available yet.</p>
             </el-card>
 
+            <ProductFitCard :lead-id="selectedLeadId" />
+
             <el-card shadow="never" class="mb-4">
               <template #header>记录触达并更新 Next Action</template>
               <el-alert
@@ -559,6 +561,7 @@ import OutreachDraftPanel from '@/components/outreach/OutreachDraftPanel.vue'
 import ContactResearchDrawer from '@/components/leads/ContactResearchDrawer.vue'
 import OutreachHistoryTimeline from '@/components/leads/OutreachHistoryTimeline.vue'
 import FollowUpScheduler from '@/components/leads/FollowUpScheduler.vue'
+import ProductFitCard from '@/components/leads/ProductFitCard.vue'
 import {
   DUE_QUEUE_FILTER_OPTIONS,
   DUE_STATUS_LABELS,

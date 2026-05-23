@@ -213,3 +213,51 @@ export async function patchLeadFollowUp(leadId: string, body: FollowUpSchedulePa
   }>(`/a-domain/leads/${leadId}/follow-up`, body)
   return data
 }
+
+export type ProductFit = {
+  lead_id: string
+  company_name: string
+  recommended_product_focus: string[]
+  project_opportunity_score: number
+  opportunity_level: string
+  project_type: string
+  quote_readiness: string
+  sample_readiness: string
+  missing_quote_info: string[]
+  recommended_discovery_questions: string[]
+  recommended_next_product_action: string
+  sales_angle: string
+  warnings: string[]
+}
+
+export async function fetchProductFit(leadId: string) {
+  const { data } = await http.get<ProductFit>(`/a-domain/leads/${leadId}/product-fit`)
+  return data
+}
+
+export type ProductOpportunityBoardRow = {
+  lead_id: string
+  company_name: string
+  project_opportunity_score: number
+  opportunity_level: string
+  project_type: string
+  quote_readiness: string
+  sample_readiness: string
+  recommended_product_focus: string[]
+}
+
+export async function fetchProductOpportunityBoard() {
+  const { data } = await http.get<{
+    summary: {
+      total: number
+      high_opportunity: number
+      quote_ready: number
+      almost_ready: number
+      needs_specs: number
+      oem_odm_potential: number
+      lifting_system_fit: number
+    }
+    rows: ProductOpportunityBoardRow[]
+  }>('/a-domain/product-opportunity-board')
+  return data
+}

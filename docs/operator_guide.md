@@ -86,21 +86,22 @@ Fallback：`$env:BACKEND_BASE_URL="http://127.0.0.1:8013"` 与相同 `VITE_API_P
 1. 登录 `/login`（seed 凭据见 README，**勿在记录中写密码**）
 2. **（新 lead）** 打开 `/lead-intake` → 粘贴或上传 CSV → **Preview** → 检查 missing / duplicate / segment → **Confirm Import**
 3. 打开 `/lead-intelligence` → 查看 **Lead Completeness** → 筛选 **Needs Contact Research** → 点击 **Research / Edit** 在 drawer 中补资料（D5.5）
-4. 选择 lead → 查看 **Outreach History** timeline 与 follow-up hint（D5.6）
-5. 打开 `/lead-intelligence` → Manual Outreach Queue
-6. 查看 **Daily Summary** cards
-7. 筛选 **High Priority** → 优先处理
-8. 筛选 **Needs First Outreach** → 首次外联
-9. 筛选 **Waiting for Reply** → 跟进已发送未回复
-10. 选择 lead → **Generate Draft**
-11. **Copy Draft** → 在 LinkedIn / Email **系统外**粘贴发送
-12. 回到系统 → **Mark as Sent**（仅记录，不自动发送）
-13. 确认 **Outreach History** timeline 已更新
-14. 在 **Follow-up Scheduler** 设置下次跟进日期（D5.7）
-15. 使用 **Due queue filters** 查看 Overdue / Due Today / Due Soon
-16. 确认 **next action** 已更新
-17. 收工时 Dashboard **End-of-Day Summary** → **Copy Summary**（D5.10）
-18. 每日结束（可选 CLI）：
+4. 选择 lead → 查看 **Product Fit & Project Opportunity** card（D5.12）：产品方向、quote readiness、discovery questions
+5. 选择 lead → 查看 **Outreach History** timeline 与 follow-up hint（D5.6）
+6. 打开 `/lead-intelligence` → Manual Outreach Queue
+7. 查看 **Daily Summary** cards
+8. 筛选 **High Priority** → 优先处理
+9. 筛选 **Needs First Outreach** → 首次外联
+10. 筛选 **Waiting for Reply** → 跟进已发送未回复
+11. 选择 lead → **Generate Draft**
+12. **Copy Draft** → 在 LinkedIn / Email **系统外**粘贴发送
+13. 回到系统 → **Mark as Sent**（仅记录，不自动发送）
+14. 确认 **Outreach History** timeline 已更新
+15. 在 **Follow-up Scheduler** 设置下次跟进日期（D5.7）
+16. 使用 **Due queue filters** 查看 Overdue / Due Today / Due Soon
+17. 确认 **next action** 已更新
+18. 收工时 Dashboard **End-of-Day Summary** → **Copy Summary**（D5.10）
+19. 每日结束（可选 CLI）：
 
 ```powershell
 cd backend

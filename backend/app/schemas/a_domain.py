@@ -353,3 +353,47 @@ class DailyWorkSummaryResponse(BaseModel):
     copyable_summary: str
     warnings: list[str] = Field(default_factory=list)
     degraded: bool = False
+
+
+class ProductFitOut(BaseModel):
+    """D5.12 — derived product fit and project opportunity (read-only, no quotes)."""
+
+    lead_id: str
+    company_name: str
+    recommended_product_focus: list[str] = Field(default_factory=list)
+    project_opportunity_score: int = Field(ge=0, le=100)
+    opportunity_level: str
+    project_type: str
+    quote_readiness: str
+    sample_readiness: str
+    missing_quote_info: list[str] = Field(default_factory=list)
+    recommended_discovery_questions: list[str] = Field(default_factory=list)
+    recommended_next_product_action: str
+    sales_angle: str
+    warnings: list[str] = Field(default_factory=list)
+
+
+class ProductOpportunityBoardRowOut(BaseModel):
+    lead_id: str
+    company_name: str
+    project_opportunity_score: int
+    opportunity_level: str
+    project_type: str
+    quote_readiness: str
+    sample_readiness: str
+    recommended_product_focus: list[str] = Field(default_factory=list)
+
+
+class ProductOpportunityBoardSummaryOut(BaseModel):
+    total: int = 0
+    high_opportunity: int = 0
+    quote_ready: int = 0
+    almost_ready: int = 0
+    needs_specs: int = 0
+    oem_odm_potential: int = 0
+    lifting_system_fit: int = 0
+
+
+class ProductOpportunityBoardResponse(BaseModel):
+    summary: ProductOpportunityBoardSummaryOut
+    rows: list[ProductOpportunityBoardRowOut]
