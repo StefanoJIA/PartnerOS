@@ -41,6 +41,15 @@ python scripts/smoke_demo_ready.py
 
 只读检查：`/health`、readiness、manifest、demo 公司/联系人、三条 segment 调参、enrichment run、next action/touchpoint。缺数据时提示 seed/UAT，**默认不写库**（`--seed-demo` 未实现，请用 `python -m app.scripts.seed`）。
 
+### D5.2.3 pilot workflow check
+
+```powershell
+cd backend
+python scripts/pilot_workflow_check.py
+```
+
+验证 education segment、enrichment 审阅、touchpoint 等 pilot 台账能力。见 [records/d5_2_3_internal_pilot_workflow_20260523.md](records/d5_2_3_internal_pilot_workflow_20260523.md)。
+
 ### 前端组件测试
 
 ```powershell
