@@ -39,8 +39,12 @@ def run() -> int:
         if port_in_use:
             print(
                 f"[HINT] Port {port} on {host} is in use but /health is not OK — "
-                "possible stale process or wrong service. See docs/dev_guide.md § Changing backend port."
+                "possible stale process or wrong service."
             )
+            print(f"  netstat -ano | findstr :{port}")
+            print("  tasklist /FI \"PID eq <PID>\"")
+            print("  Stop-Process -Id <PID> -Force")
+            print('[HINT] Fallback: $env:BACKEND_BASE_URL="http://127.0.0.1:8013"')
         return 1
     except httpx.ConnectError:
         if port_in_use:
@@ -48,7 +52,7 @@ def run() -> int:
                 f"[WARN] Port {port} on {host} is in use but {health_url} did not respond — "
                 "stale process or non-PartnerOS service may be bound."
             )
-            print("[HINT] Use a different port, e.g. BACKEND_BASE_URL=http://127.0.0.1:8010")
+            print("[HINT] Use a different port, e.g. BACKEND_BASE_URL=http://127.0.0.1:8013")
         else:
             print(f"[FAIL] backend not reachable at {base}")
             print("[HINT] Start backend, e.g.:")

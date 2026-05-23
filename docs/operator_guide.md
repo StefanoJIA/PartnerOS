@@ -5,21 +5,23 @@
 
 ## Daily Startup
 
-### Backend — port 8000 (default)
+### Recommended — port 8010 (D5.11 default)
 
 ```powershell
-cd backend
-python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
+# Optional: set env in one shot
+.\scripts\dev_env_8010.ps1
 
-### Backend — port 8010 (when 8000 is busy)
-
-```powershell
 cd backend
 python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8010
 ```
 
-Align scripts and frontend proxy (PowerShell):
+Or use helper (does not auto-kill stale processes):
+
+```powershell
+.\scripts\start_backend_8010.ps1
+```
+
+Align scripts and frontend proxy:
 
 ```powershell
 $env:BACKEND_BASE_URL="http://127.0.0.1:8010"
@@ -30,6 +32,16 @@ Or set `frontend/.env.local` (gitignored):
 
 ```env
 VITE_API_PROXY_TARGET=http://127.0.0.1:8010
+```
+
+**Do not run multiple uvicorn instances with different code versions.** If 8010 is occupied but `/health` fails, see [Runtime Startup Routine](#runtime-startup-routine).
+
+### Legacy — port 8000
+
+```powershell
+cd backend
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+$env:BACKEND_BASE_URL="http://127.0.0.1:8000"
 ```
 
 ### Frontend
@@ -46,7 +58,27 @@ Open the URL printed by Vite (often `http://127.0.0.1:5173` or `5174`).
 ```powershell
 cd backend
 python scripts/check_backend_runtime.py
+python scripts/dev_runtime_doctor.py
 ```
+
+## Runtime Startup Routine
+
+1. 启动 Docker DB：`docker compose up -d db`
+2. 设置环境：`.\scripts\dev_env_8010.ps1`（或手动 `BACKEND_BASE_URL` / `VITE_API_PROXY_TARGET`）
+3. 启动 backend **8010**（单一实例，最新代码）
+4. 启动 frontend：`cd frontend; npm run dev`
+5. 运行 `python scripts/dev_runtime_doctor.py`
+6. 运行 `python scripts/smoke_all_d5.py`
+
+**Stale port 8010**（占用但 `/health` 失败）：
+
+```powershell
+netstat -ano | findstr :8010
+tasklist /FI "PID eq <PID>"
+Stop-Process -Id <PID> -Force
+```
+
+Fallback：`$env:BACKEND_BASE_URL="http://127.0.0.1:8013"` 与相同 `VITE_API_PROXY_TARGET`。
 
 ## Daily Workflow
 
@@ -106,6 +138,8 @@ python scripts/daily_work_summary.py
 | `daily_follow_up_summary.py` | 每日 follow-up 摘要（D5.7） |
 | `daily_ops_summary_check.py` | Daily Operations API smoke（D5.8） |
 | `daily_work_summary.py` | End-of-day work summary CLI（D5.10） |
+| `dev_runtime_doctor.py` | 统一 runtime 诊断（D5.11） |
+| `smoke_all_d5.py` | 一键 D5.x smoke（D5.11） |
 | `portal_readiness_check.py` | Portal v1 端点 |
 | `portal_consumer_check.py` | 外部 Portal 契约 |
 

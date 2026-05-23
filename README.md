@@ -28,7 +28,29 @@
 
 ## Quick Start
 
-### Port 8000 (default)
+### Port 8010 (recommended default — D5.11)
+
+```powershell
+# Terminal 1 — backend
+.\scripts\dev_env_8010.ps1
+cd backend
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8010
+
+# Terminal 2 — frontend
+cd frontend
+npm run dev
+```
+
+### Quick Runtime Check
+
+```powershell
+cd backend
+$env:BACKEND_BASE_URL="http://127.0.0.1:8010"
+python scripts/dev_runtime_doctor.py
+python scripts/smoke_all_d5.py
+```
+
+### Port 8000 (legacy)
 
 ```powershell
 # Terminal 1 — backend
@@ -38,22 +60,9 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 # Terminal 2 — frontend
 cd frontend
 npm run dev
-```
-
-### Port 8010 (when 8000 is busy)
-
-```powershell
-# Terminal 1
-cd backend
-python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8010
-
-# Terminal 2
-$env:VITE_API_PROXY_TARGET="http://127.0.0.1:8010"
-cd frontend
-npm run dev
 
 # Scripts
-$env:BACKEND_BASE_URL="http://127.0.0.1:8010"
+$env:BACKEND_BASE_URL="http://127.0.0.1:8000"
 cd backend
 python scripts/check_backend_runtime.py
 ```

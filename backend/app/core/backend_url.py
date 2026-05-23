@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from urllib.parse import urlparse
 
-DEFAULT_BACKEND_BASE_URL = "http://127.0.0.1:8000"
+DEFAULT_BACKEND_BASE_URL = "http://127.0.0.1:8010"
 
 
 def get_backend_base_url() -> str:

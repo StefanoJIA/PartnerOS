@@ -10,8 +10,8 @@
 | `DATABASE_URL` | `backend/.env` | PostgreSQL 连接串（勿提交） |
 | `SECRET_KEY` | `backend/.env` | JWT 签名；生产必须更换 dev 默认值 |
 | `PUBLIC_BASE_URL` | `backend/.env` | 对外 HTTPS 域名，用于 manifest URL |
-| `BACKEND_BASE_URL` | shell / CI | 脚本探测后端，如 `http://127.0.0.1:8010` |
-| `VITE_API_PROXY_TARGET` | `frontend/.env.local` | 开发 proxy，须与 backend 端口一致 |
+| `BACKEND_BASE_URL` | shell / CI | 脚本探测后端，默认 **`http://127.0.0.1:8010`**（D5.11） |
+| `VITE_API_PROXY_TARGET` | `frontend/.env.local` | 开发 proxy，**须与 BACKEND_BASE_URL 端口一致** |
 | `PUBLIC_ENRICHMENT_ENABLED` | `backend/.env` | 无外网/CI 可设 `false` |
 
 See `backend/.env.example` and `frontend/.env.example`.
@@ -31,6 +31,9 @@ See `backend/.env.example` and `frontend/.env.example`.
 - [ ] `GET /api/v1/portal/a-domain/status` → `manual_outreach_ready: true`
 - [ ] `python scripts/portal_consumer_check.py` → PASS
 - [ ] `python scripts/config_readiness_check.py` → PASS（允许 PUBLIC_BASE_URL 等 WARN 在 staging 修复）
+- [ ] `python scripts/dev_runtime_doctor.py` → PASS（D5.11）
+- [ ] `python scripts/smoke_all_d5.py` → PASS（D5.11）
+- [ ] `BACKEND_BASE_URL` 与 `VITE_API_PROXY_TARGET` 端口对齐
 - [ ] 确认 **no secret leakage** in portal responses
 - [ ] 确认 **automatic_sending_enabled: false**
 - [ ] 确认 **LinkedIn / Outlook automation disabled**
@@ -40,7 +43,10 @@ See `backend/.env.example` and `frontend/.env.example`.
 
 ```powershell
 cd backend
+$env:BACKEND_BASE_URL="http://127.0.0.1:8010"
 python scripts/config_readiness_check.py
+python scripts/dev_runtime_doctor.py
+python scripts/smoke_all_d5.py
 python scripts/portal_consumer_check.py
 python scripts/portal_readiness_check.py
 python scripts/smoke_demo_ready.py

@@ -90,7 +90,7 @@ def main() -> int:
                 print("  Run: python -m alembic upgrade head")
         except Exception:
             pass
-        print("  Start API: python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000")
+        print("  Start API: python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8010")
 
     return 0 if db_status == "ready" else 1
 

@@ -16,10 +16,10 @@ from app.core.backend_url import (
 def test_default_backend_base_url(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("BACKEND_BASE_URL", raising=False)
     assert get_backend_base_url() == DEFAULT_BACKEND_BASE_URL
-    assert get_health_url() == "http://127.0.0.1:8000/health"
+    assert get_health_url() == "http://127.0.0.1:8010/health"
     host, port = parse_backend_host_port()
     assert host == "127.0.0.1"
-    assert port == 8000
+    assert port == 8010
 
 
 def test_custom_backend_base_url(monkeypatch: pytest.MonkeyPatch):
