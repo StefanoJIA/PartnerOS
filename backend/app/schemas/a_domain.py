@@ -377,23 +377,48 @@ class ProductOpportunityBoardRowOut(BaseModel):
     lead_id: str
     company_name: str
     project_opportunity_score: int
+    opportunity_score: int | None = None
     opportunity_level: str
     project_type: str
     quote_readiness: str
     sample_readiness: str
     recommended_product_focus: list[str] = Field(default_factory=list)
+    missing_quote_info: list[str] = Field(default_factory=list)
+    recommended_next_product_action: str | None = None
+    sales_angle: str | None = None
+    next_action: str | None = None
+    follow_up_date: str | None = None
+    due_status: str | None = None
 
 
 class ProductOpportunityBoardSummaryOut(BaseModel):
     total: int = 0
     high_opportunity: int = 0
+    promising: int = 0
     quote_ready: int = 0
     almost_ready: int = 0
+    almost_quote_ready: int = 0
+    sample_ready: int = 0
     needs_specs: int = 0
-    oem_odm_potential: int = 0
     lifting_system_fit: int = 0
+    project_supply_fit: int = 0
+    education_fit: int = 0
+    medical_fit: int = 0
+    oem_odm_fit: int = 0
+    oem_odm_potential: int = 0
+
+
+class ProductOpportunitySafetyOut(BaseModel):
+    automatic_quote_creation: bool = False
+    automatic_sending_enabled: bool = False
+    price_promises_enabled: bool = False
+    inventory_promises_enabled: bool = False
 
 
 class ProductOpportunityBoardResponse(BaseModel):
     summary: ProductOpportunityBoardSummaryOut
+    missing_info_summary: dict[str, int] = Field(default_factory=dict)
     rows: list[ProductOpportunityBoardRowOut]
+    safety: ProductOpportunitySafetyOut = Field(default_factory=ProductOpportunitySafetyOut)
+    warnings: list[str] = Field(default_factory=list)
+    degraded: bool = False

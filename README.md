@@ -80,7 +80,8 @@ First-time setup: `python scripts/init_local_env.py` → edit `backend/.env` →
 | **Contact research (in-place edit)** | **`/lead-intelligence`** · Research / Edit drawer (D5.5) |
 | **Outreach history timeline** | **`/lead-intelligence`** · Outreach History panel (D5.6) |
 | **Follow-up scheduling / due queue** | **`/lead-intelligence`** · Follow-up Scheduler + Due filters (D5.7) |
-| **Product fit & project opportunity** | **`/lead-intelligence`** · Product Fit Card + `GET /api/a-domain/leads/{id}/product-fit` (D5.12) |
+| **Product fit & project opportunity** | **`/lead-intelligence`** · Product Fit Card + Opportunity Board (D5.12–D5.13) |
+| **Product opportunity dashboard** | **`/`** · Product Opportunity Summary strip (D5.13) |
 | **Daily ops dashboard** | **`/`** · Daily Operations + Recent Activity + End-of-Day Summary (D5.8–D5.10) |
 | Lead import preview (CLI) | `backend/scripts/lead_import_preview.py` |
 | Outreach draft | Generate Draft in Lead Intelligence |

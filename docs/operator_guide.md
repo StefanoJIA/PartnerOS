@@ -87,21 +87,22 @@ Fallback：`$env:BACKEND_BASE_URL="http://127.0.0.1:8013"` 与相同 `VITE_API_P
 2. **（新 lead）** 打开 `/lead-intake` → 粘贴或上传 CSV → **Preview** → 检查 missing / duplicate / segment → **Confirm Import**
 3. 打开 `/lead-intelligence` → 查看 **Lead Completeness** → 筛选 **Needs Contact Research** → 点击 **Research / Edit** 在 drawer 中补资料（D5.5）
 4. 选择 lead → 查看 **Product Fit & Project Opportunity** card（D5.12）：产品方向、quote readiness、discovery questions
-5. 选择 lead → 查看 **Outreach History** timeline 与 follow-up hint（D5.6）
-6. 打开 `/lead-intelligence` → Manual Outreach Queue
-7. 查看 **Daily Summary** cards
-8. 筛选 **High Priority** → 优先处理
-9. 筛选 **Needs First Outreach** → 首次外联
-10. 筛选 **Waiting for Reply** → 跟进已发送未回复
-11. 选择 lead → **Generate Draft**
-12. **Copy Draft** → 在 LinkedIn / Email **系统外**粘贴发送
-13. 回到系统 → **Mark as Sent**（仅记录，不自动发送）
-14. 确认 **Outreach History** timeline 已更新
-15. 在 **Follow-up Scheduler** 设置下次跟进日期（D5.7）
-16. 使用 **Due queue filters** 查看 Overdue / Due Today / Due Soon
-17. 确认 **next action** 已更新
-18. 收工时 Dashboard **End-of-Day Summary** → **Copy Summary**（D5.10）
-19. 每日结束（可选 CLI）：
+5. 查看 **Product Opportunity Board**（D5.13）→ 筛选 High Opportunity / Quote Ready / Lifting Systems
+6. 选择 lead → 查看 **Outreach History** timeline 与 follow-up hint（D5.6）
+7. 打开 `/lead-intelligence` → Manual Outreach Queue
+8. 查看 **Daily Summary** cards
+9. 筛选 **High Priority** → 优先处理
+10. 筛选 **Needs First Outreach** → 首次外联
+11. 筛选 **Waiting for Reply** → 跟进已发送未回复
+12. 选择 lead → **Generate Draft**
+13. **Copy Draft** → 在 LinkedIn / Email **系统外**粘贴发送
+14. 回到系统 → **Mark as Sent**（仅记录，不自动发送）
+15. 确认 **Outreach History** timeline 已更新
+16. 在 **Follow-up Scheduler** 设置下次跟进日期（D5.7）
+17. 使用 **Due queue filters** 查看 Overdue / Due Today / Due Soon
+18. 确认 **next action** 已更新
+19. 收工时 Dashboard **End-of-Day Summary** → **Copy Summary**（D5.10）
+20. 每日结束（可选 CLI）：
 
 ```powershell
 cd backend
@@ -141,6 +142,7 @@ python scripts/daily_work_summary.py
 | `daily_work_summary.py` | End-of-day work summary CLI（D5.10） |
 | `dev_runtime_doctor.py` | 统一 runtime 诊断（D5.11） |
 | `smoke_all_d5.py` | 一键 D5.x smoke（D5.11） |
+| `product_opportunity_check.py` | Product opportunity board smoke（D5.13） |
 | `portal_readiness_check.py` | Portal v1 端点 |
 | `portal_consumer_check.py` | 外部 Portal 契约 |
 

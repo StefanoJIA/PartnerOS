@@ -47,6 +47,7 @@ from app.schemas.a_domain import (
     ProductOpportunityBoardResponse,
     ProductOpportunityBoardRowOut,
     ProductOpportunityBoardSummaryOut,
+    ProductOpportunitySafetyOut,
     LeadIntelligenceWorkflowOut,
     OutreachDraftOut,
     TouchpointCreate,
@@ -81,8 +82,8 @@ from app.services.a_domain.daily_work_summary import (
 )
 from app.services.a_domain.product_fit_board import (
     build_product_fit_for_lead,
-    build_product_fit_rows,
-    summarize_product_opportunity_board,
+    build_product_opportunity_board,
+    build_product_opportunity_board_degraded,
 )
 
 router = APIRouter(prefix="/a-domain", tags=["a-domain-intelligence"])
@@ -502,25 +503,40 @@ def get_product_opportunity_board(
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ) -> ProductOpportunityBoardResponse:
-    """Read-only product opportunity summary for all active leads (D5.12)."""
-    raw_rows = build_product_fit_rows(db)
-    summary = summarize_product_opportunity_board(raw_rows)
+    """Read-only product opportunity board for all active leads (D5.12 / D5.13)."""
+    try:
+        raw = build_product_opportunity_board(db)
+    except Exception:
+        raw = build_product_opportunity_board_degraded(
+            "Product opportunity board unavailable. Check backend and database status."
+        )
     rows = [
         ProductOpportunityBoardRowOut(
             lead_id=r["lead_id"],
             company_name=r["company_name"],
             project_opportunity_score=r["project_opportunity_score"],
+            opportunity_score=r.get("opportunity_score", r["project_opportunity_score"]),
             opportunity_level=r["opportunity_level"],
             project_type=r["project_type"],
             quote_readiness=r["quote_readiness"],
             sample_readiness=r["sample_readiness"],
             recommended_product_focus=r.get("recommended_product_focus") or [],
+            missing_quote_info=r.get("missing_quote_info") or [],
+            recommended_next_product_action=r.get("recommended_next_product_action"),
+            sales_angle=r.get("sales_angle"),
+            next_action=r.get("next_action"),
+            follow_up_date=r.get("follow_up_date"),
+            due_status=r.get("due_status"),
         )
-        for r in raw_rows
+        for r in raw["rows"]
     ]
     return ProductOpportunityBoardResponse(
-        summary=ProductOpportunityBoardSummaryOut(**summary),
+        summary=ProductOpportunityBoardSummaryOut(**raw["summary"]),
+        missing_info_summary=raw.get("missing_info_summary") or {},
         rows=rows,
+        safety=ProductOpportunitySafetyOut(**raw.get("safety", {})),
+        warnings=raw.get("warnings") or [],
+        degraded=bool(raw.get("degraded")),
     )
 
 

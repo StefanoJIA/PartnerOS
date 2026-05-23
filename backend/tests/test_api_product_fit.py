@@ -83,30 +83,52 @@ def board_client(monkeypatch):
     app.dependency_overrides[get_db] = lambda: (yield MagicMock())
 
     monkeypatch.setattr(
-        "app.api.routes.a_domain.build_product_fit_rows",
-        lambda db: [
-            {
-                "lead_id": "a",
-                "company_name": "Demo",
-                "project_opportunity_score": 85,
-                "opportunity_level": "high_opportunity",
-                "project_type": "project_based",
-                "quote_readiness": "ready",
-                "sample_readiness": "needs_specs",
-                "recommended_product_focus": ["project_supply"],
-            }
-        ],
-    )
-    monkeypatch.setattr(
-        "app.api.routes.a_domain.summarize_product_opportunity_board",
-        lambda rows: {
-            "total": 1,
-            "high_opportunity": 1,
-            "quote_ready": 1,
-            "almost_ready": 0,
-            "needs_specs": 1,
-            "oem_odm_potential": 0,
-            "lifting_system_fit": 0,
+        "app.api.routes.a_domain.build_product_opportunity_board",
+        lambda db: {
+            "summary": {
+                "total": 1,
+                "high_opportunity": 1,
+                "promising": 0,
+                "quote_ready": 1,
+                "almost_ready": 0,
+                "almost_quote_ready": 0,
+                "sample_ready": 0,
+                "needs_specs": 1,
+                "lifting_system_fit": 0,
+                "project_supply_fit": 1,
+                "education_fit": 0,
+                "medical_fit": 0,
+                "oem_odm_fit": 0,
+                "oem_odm_potential": 0,
+            },
+            "missing_info_summary": {"quantity_or_volume": 1},
+            "rows": [
+                {
+                    "lead_id": "a",
+                    "company_name": "Demo",
+                    "project_opportunity_score": 85,
+                    "opportunity_score": 85,
+                    "opportunity_level": "high_opportunity",
+                    "project_type": "project_based",
+                    "quote_readiness": "ready",
+                    "sample_readiness": "needs_specs",
+                    "recommended_product_focus": ["project_supply"],
+                    "missing_quote_info": ["quantity_or_volume"],
+                    "recommended_next_product_action": "Confirm specs.",
+                    "sales_angle": "Project supply partner.",
+                    "next_action": "Follow up",
+                    "follow_up_date": None,
+                    "due_status": "no_follow_up_date",
+                }
+            ],
+            "safety": {
+                "automatic_quote_creation": False,
+                "automatic_sending_enabled": False,
+                "price_promises_enabled": False,
+                "inventory_promises_enabled": False,
+            },
+            "warnings": [],
+            "degraded": False,
         },
     )
 
@@ -121,3 +143,5 @@ def test_product_opportunity_board_endpoint(board_client):
     body = r.json()
     assert body["summary"]["total"] == 1
     assert body["rows"][0]["quote_readiness"] == "ready"
+    assert body["safety"]["automatic_quote_creation"] is False
+    assert body["missing_info_summary"]["quantity_or_volume"] == 1

@@ -112,6 +112,11 @@
       @saved="onContactResearchSaved"
     />
 
+    <ProductOpportunityBoard
+      :external-filter="productOpportunityFilter"
+      @select-lead="onProductOpportunitySelect"
+    />
+
     <el-card v-loading="reviewLoading" shadow="never">
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-2">
@@ -562,6 +567,8 @@ import ContactResearchDrawer from '@/components/leads/ContactResearchDrawer.vue'
 import OutreachHistoryTimeline from '@/components/leads/OutreachHistoryTimeline.vue'
 import FollowUpScheduler from '@/components/leads/FollowUpScheduler.vue'
 import ProductFitCard from '@/components/leads/ProductFitCard.vue'
+import ProductOpportunityBoard from '@/components/leads/ProductOpportunityBoard.vue'
+import type { ProductOpportunityFilterKey } from '@/constants/productOpportunity'
 import {
   DUE_QUEUE_FILTER_OPTIONS,
   DUE_STATUS_LABELS,
@@ -645,6 +652,7 @@ const reviewBoardError = ref('')
 const queueFilter = ref<QueueFilterKey>('today_focus')
 const dueQueueFilter = ref<DueQueueFilterKey>('all')
 const completenessFilter = ref<CompletenessFilterKey>('all')
+const productOpportunityFilter = ref<ProductOpportunityFilterKey | null>(null)
 const draftStatusByLead = ref<Record<string, DraftStatus>>({})
 const recentInteractions = ref<InteractionBrief[]>([])
 const contactResearchVisible = ref(false)
@@ -844,6 +852,16 @@ watch(
 )
 
 watch(
+  () => route.query.productFilter,
+  (f) => {
+    if (typeof f === 'string' && f) {
+      productOpportunityFilter.value = f as ProductOpportunityFilterKey
+    }
+  },
+  { immediate: true },
+)
+
+watch(
   () => route.query.filter,
   (f) => {
     if (typeof f !== 'string' || !f) return
@@ -889,6 +907,11 @@ watch(selectedLeadId, (id) => {
 
 function onReviewRowClick(row: ReviewRow) {
   selectedLeadId.value = row.leadId
+}
+
+function onProductOpportunitySelect(leadId: string) {
+  selectedLeadId.value = leadId
+  router.replace({ query: { ...route.query, leadId } })
 }
 
 async function loadLeadsOnce() {

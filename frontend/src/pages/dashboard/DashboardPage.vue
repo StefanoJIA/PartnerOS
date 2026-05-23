@@ -10,6 +10,8 @@
 
     <DailyOperationsPanel />
 
+    <ProductOpportunitySummary />
+
     <EndOfDaySummaryPanel />
 
     <el-collapse class="border-0">
@@ -172,6 +174,7 @@ import ActionLeadList from './dashboard/ActionLeadList.vue'
 import RfqMini from './dashboard/RfqMini.vue'
 import SampleMini from './dashboard/SampleMini.vue'
 import DailyOperationsPanel from '@/components/dashboard/DailyOperationsPanel.vue'
+import ProductOpportunitySummary from '@/components/dashboard/ProductOpportunitySummary.vue'
 import EndOfDaySummaryPanel from '@/components/dashboard/EndOfDaySummaryPanel.vue'
 
 const router = useRouter()
