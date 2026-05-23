@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -38,6 +39,10 @@ from app.schemas.a_domain import (
     DailyOpsSafetyOut,
     DailyOpsRecentOutreachOut,
     DailyOpsRecentActivityOut,
+    DailyWorkSummaryResponse,
+    DailyWorkSummaryCountsOut,
+    DailyWorkHighlightOut,
+    DailyWorkTomorrowFocusOut,
     LeadIntelligenceWorkflowOut,
     OutreachDraftOut,
     TouchpointCreate,
@@ -65,6 +70,10 @@ from app.services.a_domain.follow_up_queue import (
 from app.services.a_domain.daily_ops_summary import (
     build_daily_ops_summary,
     build_daily_ops_summary_degraded,
+)
+from app.services.a_domain.daily_work_summary import (
+    build_daily_work_summary,
+    build_daily_work_summary_degraded,
 )
 
 router = APIRouter(prefix="/a-domain", tags=["a-domain-intelligence"])
@@ -464,3 +473,21 @@ def get_daily_ops_summary(
             "Daily operations unavailable. Check backend and database status."
         )
     return DailyOpsSummaryResponse(**raw)
+
+
+@router.get("/daily-work-summary", response_model=DailyWorkSummaryResponse)
+def get_daily_work_summary(
+    work_date: date | None = Query(None, alias="date"),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> DailyWorkSummaryResponse:
+    """Read-only end-of-day work summary (D5.10)."""
+    target = work_date or date.today()
+    try:
+        raw = build_daily_work_summary(db, target_date=target)
+    except Exception:
+        raw = build_daily_work_summary_degraded(
+            target,
+            "Daily work summary unavailable. Check backend and database status.",
+        )
+    return DailyWorkSummaryResponse(**raw)

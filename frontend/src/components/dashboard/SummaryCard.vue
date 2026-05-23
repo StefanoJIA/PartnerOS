@@ -16,7 +16,7 @@ import { useRouter } from 'vue-router'
 const props = defineProps<{
   label: string
   value: number | undefined | null
-  tone?: 'danger' | 'warning' | 'info' | 'primary'
+  tone?: 'danger' | 'warning' | 'info' | 'primary' | 'success'
   to?: string
 }>()
 
@@ -33,6 +33,7 @@ const toneClass = computed(() => {
   if (props.tone === 'warning') return 'border-amber-100 bg-amber-50'
   if (props.tone === 'info') return 'border-sky-100 bg-sky-50'
   if (props.tone === 'primary') return 'border-indigo-100 bg-indigo-50'
+  if (props.tone === 'success') return 'border-emerald-100 bg-emerald-50'
   return ''
 })
 
@@ -41,6 +42,7 @@ const valueClass = computed(() => {
   if (props.tone === 'warning') return 'text-amber-700'
   if (props.tone === 'info') return 'text-sky-700'
   if (props.tone === 'primary') return 'text-indigo-700'
+  if (props.tone === 'success') return 'text-emerald-700'
   return 'text-slate-800'
 })
 

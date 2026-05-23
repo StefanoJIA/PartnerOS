@@ -67,13 +67,15 @@ python scripts/check_backend_runtime.py
 14. 在 **Follow-up Scheduler** 设置下次跟进日期（D5.7）
 15. 使用 **Due queue filters** 查看 Overdue / Due Today / Due Soon
 16. 确认 **next action** 已更新
-17. 每日结束（可选 CLI）：
+17. 收工时 Dashboard **End-of-Day Summary** → **Copy Summary**（D5.10）
+18. 每日结束（可选 CLI）：
 
 ```powershell
 cd backend
 $env:BACKEND_BASE_URL="http://127.0.0.1:8010"   # if using 8010
 python scripts/daily_outreach_summary.py
 python scripts/daily_follow_up_summary.py
+python scripts/daily_work_summary.py
 ```
 
 ## Useful URLs
@@ -103,6 +105,7 @@ python scripts/daily_follow_up_summary.py
 | `daily_outreach_summary.py` | 每日只读摘要 |
 | `daily_follow_up_summary.py` | 每日 follow-up 摘要（D5.7） |
 | `daily_ops_summary_check.py` | Daily Operations API smoke（D5.8） |
+| `daily_work_summary.py` | End-of-day work summary CLI（D5.10） |
 | `portal_readiness_check.py` | Portal v1 端点 |
 | `portal_consumer_check.py` | 外部 Portal 契约 |
 

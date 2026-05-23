@@ -316,3 +316,40 @@ class DailyOpsSummaryResponse(BaseModel):
     safety: DailyOpsSafetyOut
     warnings: list[str] = Field(default_factory=list)
     degraded: bool = False
+
+
+class DailyWorkSummaryCountsOut(BaseModel):
+    manual_outreach_sent: int = 0
+    contact_research_updates: int = 0
+    follow_ups_scheduled: int = 0
+    drafts_generated: int | None = None
+    leads_touched: int = 0
+    overdue_remaining: int = 0
+    due_today_remaining: int = 0
+    due_soon: int = 0
+    needs_contact_research: int = 0
+    high_priority_remaining: int = 0
+
+
+class DailyWorkHighlightOut(BaseModel):
+    lead_id: str
+    company_name: str
+    action: str
+    next_action: str | None = None
+
+
+class DailyWorkTomorrowFocusOut(BaseModel):
+    lead_id: str
+    company_name: str
+    reason: str
+    next_action: str | None = None
+
+
+class DailyWorkSummaryResponse(BaseModel):
+    date: str
+    summary: DailyWorkSummaryCountsOut
+    highlights: list[DailyWorkHighlightOut] = Field(default_factory=list)
+    tomorrow_focus: list[DailyWorkTomorrowFocusOut] = Field(default_factory=list)
+    copyable_summary: str
+    warnings: list[str] = Field(default_factory=list)
+    degraded: bool = False

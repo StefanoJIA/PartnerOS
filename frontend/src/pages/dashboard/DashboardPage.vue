@@ -10,6 +10,8 @@
 
     <DailyOperationsPanel />
 
+    <EndOfDaySummaryPanel />
+
     <el-collapse class="border-0">
       <el-collapse-item title="更多行动看板（RFQ / 样品 / 订单 / 任务）" name="legacy">
         <div class="space-y-6 pt-2">
@@ -170,6 +172,7 @@ import ActionLeadList from './dashboard/ActionLeadList.vue'
 import RfqMini from './dashboard/RfqMini.vue'
 import SampleMini from './dashboard/SampleMini.vue'
 import DailyOperationsPanel from '@/components/dashboard/DailyOperationsPanel.vue'
+import EndOfDaySummaryPanel from '@/components/dashboard/EndOfDaySummaryPanel.vue'
 
 const router = useRouter()
 const loading = ref(false)
