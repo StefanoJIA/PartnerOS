@@ -12,7 +12,7 @@
 
 **当前代码仓库** 使用 Vue + FastAPI + PostgreSQL（pgvector）实现业务逻辑 — 这是 **实现技术栈**；**不是** 最终用户的手动部署形态。更完整的愿景与六域划分见 **[docs/product_vision.md](docs/product_vision.md)**；桌面目标架构见 **[docs/architecture_desktop_target.md](docs/architecture_desktop_target.md)**；阶段路线 **D0–D6** 见 **[docs/roadmap_desktop_transition.md](docs/roadmap_desktop_transition.md)**；路线调整总结与 **中英文总述（可作 Cursor 上下文）** 见 **[docs/project_reorientation_summary.md](docs/project_reorientation_summary.md)**。
 
-**其他文档**：运行模式 [docs/runtime_modes.md](docs/runtime_modes.md) · 数据库生命周期 [docs/database_lifecycle.md](docs/database_lifecycle.md) · **运营指南** [docs/operator_guide.md](docs/operator_guide.md) · **D5 Final Release** [docs/releases/d5_final_mvp_release_20260523.md](docs/releases/d5_final_mvp_release_20260523.md) · **D5 Capability Map** [docs/architecture/d5_capability_map.md](docs/architecture/d5_capability_map.md) · **Phase 2 Readiness** [docs/phase2/quote_module_readiness_brief.md](docs/phase2/quote_module_readiness_brief.md) · **D5.2 Release** [docs/releases/d5_2_internal_mvp_release_20260523.md](docs/releases/d5_2_internal_mvp_release_20260523.md) · **部署检查** [docs/deployment_readiness_checklist.md](docs/deployment_readiness_checklist.md) · **测试基线** [docs/testing_summary_d5_2.md](docs/testing_summary_d5_2.md) · 打包策略 [docs/packaging_strategy.md](docs/packaging_strategy.md) · Web→桌面迁移说明 [docs/migration_from_web_to_desktop.md](docs/migration_from_web_to_desktop.md) · 开放问题 [docs/open_questions_desktop.md](docs/open_questions_desktop.md) · **A 域人工测试与录入** [docs/manual_a_domain_test_plan.md](docs/manual_a_domain_test_plan.md) · **集成化后端标准（双轨 API / v1）** [docs/integrated_backend_standards.md](docs/integrated_backend_standards.md)。
+**其他文档**：运行模式 [docs/runtime_modes.md](docs/runtime_modes.md) · 数据库生命周期 [docs/database_lifecycle.md](docs/database_lifecycle.md) · **运营指南** [docs/operator_guide.md](docs/operator_guide.md) · **D5 Final Release** [docs/releases/d5_final_mvp_release_20260523.md](docs/releases/d5_final_mvp_release_20260523.md) · **D6 Final Release** [docs/releases/d6_final_quote_mvp_release_20260523.md](docs/releases/d6_final_quote_mvp_release_20260523.md) · **D5 Capability Map** [docs/architecture/d5_capability_map.md](docs/architecture/d5_capability_map.md) · **D6 Capability Map** [docs/architecture/d6_quote_capability_map.md](docs/architecture/d6_quote_capability_map.md) · **Phase 2 Readiness** [docs/phase2/quote_module_readiness_brief.md](docs/phase2/quote_module_readiness_brief.md) · **D7 Readiness Brief** [docs/phase3/d7_order_module_readiness_brief.md](docs/phase3/d7_order_module_readiness_brief.md) · **D5.2 Release** [docs/releases/d5_2_internal_mvp_release_20260523.md](docs/releases/d5_2_internal_mvp_release_20260523.md) · **部署检查** [docs/deployment_readiness_checklist.md](docs/deployment_readiness_checklist.md) · **测试基线** [docs/testing_summary_d5_2.md](docs/testing_summary_d5_2.md) · 打包策略 [docs/packaging_strategy.md](docs/packaging_strategy.md) · Web→桌面迁移说明 [docs/migration_from_web_to_desktop.md](docs/migration_from_web_to_desktop.md) · 开放问题 [docs/open_questions_desktop.md](docs/open_questions_desktop.md) · **A 域人工测试与录入** [docs/manual_a_domain_test_plan.md](docs/manual_a_domain_test_plan.md) · **集成化后端标准（双轨 API / v1）** [docs/integrated_backend_standards.md](docs/integrated_backend_standards.md)。
 
 ---
 
@@ -25,19 +25,33 @@
 - **No formal quotes** — Quote Input Contract is the Phase 2 boundary object
 - **No Phase 2 implementation** — see [D5 Final Release](docs/releases/d5_final_mvp_release_20260523.md) · [Closure Record](docs/records/d5_final_closure_20260523.md)
 
+## D6 Final Quote MVP Status
+
+**D6 is closed** as a Quote MVP covering product catalog, pricing foundation, quote records, quote line items, quote versioning, PDF export, manual delivery tracking, and quote-to-order readiness.
+
+- Full quote workflow: Catalog → Pricing Preview → Quote CRUD → PDF Export → Manual Send → Delivery Log → Timeline → **Order Readiness Gate**
+- **Manual delivery only** — export PDF does not send; Mark as Sent records external action
+- **No orders, production, or shipment** — Order Readiness produces Order Input Contract only
+- See [D6 Final Release](docs/releases/d6_final_quote_mvp_release_20260523.md) · [D6 Closure Record](docs/records/d6_final_closure_20260523.md) · [D6 Capability Map](docs/architecture/d6_quote_capability_map.md)
+
+## Current Major Boundary
+
+| Stage | Scope |
+|---|---|
+| **D5** | Lead Intelligence and Pre-Quote Preparation |
+| **D6** | Quote MVP (closed) |
+| **D7** | Order / Production / Shipment (not started) |
+
 ## Next Major Stage
 
-**Phase 2** is Quote / Order / Production / Shipment.
+**D7** is Order / Production / Shipment.
 
-**D6.1 Quote Schema & API Design Review** is complete. **D6.2 Product Catalog & Pricing Foundation** is implemented (catalog, cost/price tiers, FX, pricing preview — **no Quote CRUD**). See:
+D7 should not start until order schema, supplier confirmation, production milestone, and shipment tracking boundaries are reviewed. See [D7 Order Module Readiness Brief](docs/phase3/d7_order_module_readiness_brief.md) · [Phase 2 Roadmap](docs/phase2/phase2_roadmap.md).
+
+D6 implementation references:
 
 - [D6.1 Design Review](docs/phase2/d6_1_quote_schema_api_design_review.md)
 - [D6.2 Product Catalog & Pricing Foundation](docs/phase2/d6_2_product_catalog_pricing_foundation.md)
-- [D6.2.1 Excel Import Alignment](docs/phase2/d6_2_1_excel_import_alignment.md)
-- [Phase 2 Roadmap](docs/phase2/phase2_roadmap.md)
-
-Recommended next implementation stage: **D7 Order Module** or **D6.4.1 PDF layout polish** (when authorized).
-
 - [D6.5 Quote Send Tracking & Delivery Log](docs/phase2/d6_5_quote_send_tracking_delivery_log.md)
 - [D6.6 Quote-to-Order Readiness Gate](docs/phase2/d6_6_quote_to_order_readiness_gate.md)
 
@@ -88,6 +102,7 @@ python scripts/d6_3_quote_crud_check.py  # D6.3 quote CRUD smoke
 python scripts/d6_4_quote_pdf_export_check.py  # D6.4 quote PDF export smoke
 python scripts/d6_5_quote_send_tracking_check.py  # D6.5 send tracking smoke
 python scripts/d6_6_quote_order_readiness_check.py  # D6.6 order readiness smoke
+python scripts/d6_final_closure_check.py  # D6.7 final closure gate
 ```
 
 ### Port 8000 (legacy)

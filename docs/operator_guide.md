@@ -80,6 +80,38 @@ Stop-Process -Id <PID> -Force
 
 Fallback：`$env:BACKEND_BASE_URL="http://127.0.0.1:8013"` 与相同 `VITE_API_PROXY_TARGET`。
 
+## D6 Final Quote Workflow
+
+End-to-end operator flow for the closed D6 Quote MVP:
+
+1. Maintain product catalog (`/quote-catalog` or seed/import scripts).
+2. Maintain FX rate (`POST /api/v1/fx-rates` or seed).
+3. Preview pricing (`/pricing-preview` — does not create a quote).
+4. Create quote (`/quotes/new` or from lead contract).
+5. Add line items.
+6. Review totals and adjustments.
+7. Create or review quote version.
+8. Export customer PDF (`/quotes/:id` — **does not send the quote**).
+9. Send PDF manually outside intelliOffice (email, WeChat, etc.).
+10. Return to intelliOffice.
+11. Mark as Sent (records manual external delivery only).
+12. Review delivery log.
+13. Review quote timeline.
+14. Review order readiness checklist and order input contract.
+15. **Do not convert to order until D7** — no Convert to Order action exists in D6.
+
+### D6 safety (mandatory)
+
+- **Export PDF does not send the quote.**
+- **Mark as Sent** only records manual external delivery.
+- **Order Readiness does not create an order.**
+- No production or shipment exists in D6.
+
+```powershell
+$env:BACKEND_BASE_URL="http://127.0.0.1:8013"
+python scripts/d6_final_closure_check.py
+```
+
 ## D6.6 Quote-to-Order Readiness Gate
 
 D6.6 evaluates whether a **sent quote** is ready for **manual order review** — no order is created.
@@ -281,6 +313,7 @@ python scripts/daily_work_summary.py
 | `d6_4_quote_pdf_export_check.py` | D6.4 quote PDF export smoke |
 | `d6_5_quote_send_tracking_check.py` | D6.5 send tracking smoke |
 | `d6_6_quote_order_readiness_check.py` | D6.6 order readiness smoke |
+| `d6_final_closure_check.py` | D6.7 final closure gate |
 | `d6_2_pricing_foundation_check.py` | D6.2 pricing foundation smoke |
 | `portal_readiness_check.py` | Portal v1 端点 |
 | `portal_consumer_check.py` | 外部 Portal 契约 |
