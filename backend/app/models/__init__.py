@@ -13,6 +13,13 @@ from app.models.orders import Order, OrderItem, ProductionMilestone, ShippingRec
 from app.models.partners import ManufacturingPartner, PartnerCapability, PartnerContact
 from app.models.products import Product, ProductCategory, ProductDocument, ProductPartnerLink
 from app.models.quality import FactoryAudit, QualityDocument
+from app.models.customer_quotes import (
+    Quote,
+    QuoteAdjustment,
+    QuoteLineItem,
+    QuoteTerms,
+    QuoteVersion,
+)
 from app.models.quote_catalog import (
     FxRate,
     MarginStrategyTier,
@@ -60,6 +67,11 @@ __all__ = [
     "ProductDocument",
     "ProductPartnerLink",
     "QualityDocument",
+    "Quote",
+    "QuoteAdjustment",
+    "QuoteLineItem",
+    "QuoteTerms",
+    "QuoteVersion",
     "Quotation",
     "QuotationItem",
     "RFQ",

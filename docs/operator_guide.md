@@ -80,9 +80,23 @@ Stop-Process -Id <PID> -Force
 
 Fallback：`$env:BACKEND_BASE_URL="http://127.0.0.1:8013"` 与相同 `VITE_API_PROXY_TARGET`。
 
+## D6.3 Customer Quotes
+
+D6.3 adds **formal quote records** — manual mark-sent only, no PDF, no auto-send.
+
+| URL | Purpose |
+|-----|---------|
+| `/quotes` | Customer quote list |
+| `/quotes/new` | Minimal quote builder |
+| `/quotes/:id` | Quote detail, mark-ready, mark-sent (manual only) |
+
+```powershell
+python scripts/d6_3_quote_crud_check.py
+```
+
 ## D6.2 Product Catalog & Pricing (Phase 2 foundation)
 
-D6.2 adds **catalog + pricing preview only** — no Quote CRUD, no PDF, no auto-send.
+D6.2 adds **catalog + pricing preview only** — pricing preview does not create quotes.
 
 ### One-time setup
 
@@ -216,6 +230,7 @@ python scripts/daily_work_summary.py
 | `seed_quote_catalog.py` | D6.2 demo catalog seed |
 | `import_pricing_excel.py` | D6.2 / D6.2.1 Excel import (local_data only) |
 | `d6_2_1_excel_import_check.py` | D6.2.1 Excel import alignment smoke |
+| `d6_3_quote_crud_check.py` | D6.3 quote CRUD smoke |
 | `d6_2_pricing_foundation_check.py` | D6.2 pricing foundation smoke |
 | `portal_readiness_check.py` | Portal v1 端点 |
 | `portal_consumer_check.py` | 外部 Portal 契约 |

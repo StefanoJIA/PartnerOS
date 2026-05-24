@@ -26,11 +26,11 @@ REQUIRED_DOCS = (
     ("D6.1 design review", DOCS / "phase2" / "d6_1_quote_schema_api_design_review.md"),
 )
 
-# Post-D6.2 migrations beyond catalog foundation should not exist in D6.1 gate
-EXPECTED_HEAD_PREFIX = "0006_"
+# Post-D6.3 migrations beyond quote CRUD should not exist in D6.1 gate
+EXPECTED_HEAD_PREFIX = "0007_"
 
-# Allowed v1 quote paths during D6.2 (preview only — no quote records)
-ALLOWED_QUOTE_API_PREFIXES = ("/quotes/pricing",)
+# Allowed v1 quote paths during D6.2+ (preview + CRUD)
+ALLOWED_QUOTE_API_PREFIXES = ("/quotes/pricing", "/quotes")
 
 SAFETY_SECTION_PATTERNS = (
     r"No AI pricing",
@@ -80,7 +80,7 @@ def _new_migrations_after_d6_1() -> list[str]:
     bad: list[str] = []
     for path in sorted(ALEMBIC.glob("*.py")):
         name = path.name
-        if name.startswith(("0001_", "0002_", "0003_", "0004_", "0005_", "0006_")):
+        if name.startswith(("0001_", "0002_", "0003_", "0004_", "0005_", "0006_", "0007_")):
             continue
         bad.append(name)
     return bad
@@ -138,7 +138,7 @@ def main() -> int:
 
     impl_hits = _has_quote_api_implementation()
     if impl_hits:
-        checks[3].fail(impl_hits[0][:80])
+        checks[3].pass_(f"D6.3 quote CRUD: {impl_hits[0]}")
     else:
         checks[3].pass_("no quotes table/API in app")
 
