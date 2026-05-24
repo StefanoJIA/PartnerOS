@@ -80,6 +80,20 @@ Stop-Process -Id <PID> -Force
 
 Fallback：`$env:BACKEND_BASE_URL="http://127.0.0.1:8013"` 与相同 `VITE_API_PROXY_TARGET`。
 
+## D6.6 Quote-to-Order Readiness Gate
+
+D6.6 evaluates whether a **sent quote** is ready for **manual order review** — no order is created.
+
+| URL / API | Purpose |
+|-----------|---------|
+| `/quotes/:id` | Order Readiness section, checklist, order input contract |
+| `GET /api/v1/quotes/{id}/order-readiness` | Full readiness payload |
+| `GET /api/v1/quotes/order-readiness-board` | Board summary |
+
+```powershell
+python scripts/d6_6_quote_order_readiness_check.py
+```
+
 ## D6.5 Quote Send Tracking & Delivery Log
 
 D6.5 records **manual quote delivery** — mark-sent creates a delivery log; intelliOffice does not send email or attachments.
@@ -266,6 +280,7 @@ python scripts/daily_work_summary.py
 | `d6_3_quote_crud_check.py` | D6.3 quote CRUD smoke |
 | `d6_4_quote_pdf_export_check.py` | D6.4 quote PDF export smoke |
 | `d6_5_quote_send_tracking_check.py` | D6.5 send tracking smoke |
+| `d6_6_quote_order_readiness_check.py` | D6.6 order readiness smoke |
 | `d6_2_pricing_foundation_check.py` | D6.2 pricing foundation smoke |
 | `portal_readiness_check.py` | Portal v1 端点 |
 | `portal_consumer_check.py` | 外部 Portal 契约 |

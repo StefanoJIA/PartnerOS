@@ -240,3 +240,44 @@ export async function fetchQuotePdfExports(quoteId: string): Promise<PdfExportLi
 export function quotePdfDownloadUrl(quoteId: string, exportId: string): string {
   return `/api/v1/quotes/${quoteId}/pdf-exports/${exportId}/download`
 }
+
+export type ReadinessStatus =
+  | 'ready_for_order_review'
+  | 'needs_customer_confirmation'
+  | 'needs_internal_review'
+  | 'not_ready'
+
+export interface ReadinessChecklistItem {
+  key: string
+  label: string
+  status: 'pass' | 'warning' | 'fail'
+  details?: string
+}
+
+export interface OrderReadinessSafety {
+  order_created: boolean
+  production_started: boolean
+  shipment_created: boolean
+  automatic_sending_enabled: boolean
+  inventory_promised?: boolean
+  certification_promised?: boolean
+  lead_time_promised?: boolean
+}
+
+export interface OrderReadiness {
+  quote_id: string
+  quote_number: string
+  readiness_status: ReadinessStatus
+  readiness_score: number
+  blocking_items: string[]
+  warning_items: string[]
+  checklist: ReadinessChecklistItem[]
+  order_input_contract: Record<string, unknown>
+  recommended_next_action: string
+  safety: OrderReadinessSafety
+}
+
+export async function fetchOrderReadiness(quoteId: string): Promise<OrderReadiness> {
+  const { data } = await http.get<V1Envelope<OrderReadiness>>(`/v1/quotes/${quoteId}/order-readiness`)
+  return data.data
+}

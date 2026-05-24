@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import {
   exportQuotePdf,
   fetchDeliveryLogs,
+  fetchOrderReadiness,
   fetchQuote,
   fetchQuotePdfExports,
   fetchQuoteTimeline,
@@ -13,6 +14,7 @@ import {
   quotePdfDownloadUrl,
   SENT_CHANNELS,
   type DeliveryLog,
+  type OrderReadiness,
   type PdfExportRecord,
   type QuoteDetail,
   type QuoteVersionSummary,
@@ -37,6 +39,13 @@ const showDeliveryForm = ref(false)
 const timelineItems = ref<TimelineItem[]>([])
 const timelineLoading = ref(false)
 const versions = ref<QuoteVersionSummary[]>([])
+const readiness = ref<OrderReadiness | null>(null)
+const readinessLoading = ref(false)
+const readinessError = ref('')
+const copyMsg = ref('')
+
+const READINESS_SAFETY =
+  'This readiness check does not create an order, start production, create shipment, or confirm customer acceptance. Conversion to order must be a separate manual action in a future stage.'
 
 const deliveryForm = reactive({
   sent_channel: 'email',
@@ -108,6 +117,40 @@ async function loadTimeline() {
   }
 }
 
+async function loadReadiness() {
+  if (!quote.value) return
+  readinessLoading.value = true
+  readinessError.value = ''
+  try {
+    readiness.value = await fetchOrderReadiness(quote.value.id)
+  } catch (e: unknown) {
+    readinessError.value = e instanceof Error ? e.message : 'Failed to load order readiness'
+  } finally {
+    readinessLoading.value = false
+  }
+}
+
+function statusTagType(status: string) {
+  if (status === 'needs_customer_confirmation') return 'warning'
+  if (status === 'needs_internal_review') return 'danger'
+  if (status === 'ready_for_order_review') return 'success'
+  return 'info'
+}
+
+async function copyOrderSummary() {
+  if (!readiness.value) return
+  const text = JSON.stringify(readiness.value.order_input_contract, null, 2)
+  await navigator.clipboard.writeText(text)
+  copyMsg.value = 'Order input summary copied'
+}
+
+async function copyMissingItems() {
+  if (!readiness.value) return
+  const items = [...readiness.value.blocking_items, ...readiness.value.warning_items]
+  await navigator.clipboard.writeText(items.join('\n'))
+  copyMsg.value = 'Missing / warning items copied'
+}
+
 async function loadVersions() {
   if (!quote.value) return
   try {
@@ -134,7 +177,7 @@ async function load() {
   try {
     quote.value = await fetchQuote(String(route.params.id))
     prefillDeliveryForm()
-    await Promise.all([loadPdfExports(), loadDeliveryLogs(), loadTimeline(), loadVersions()])
+    await Promise.all([loadPdfExports(), loadDeliveryLogs(), loadTimeline(), loadVersions(), loadReadiness()])
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : 'Failed to load quote'
   } finally {
@@ -191,7 +234,7 @@ async function onSubmitDelivery() {
       ? `Delivery recorded. ${result.warnings.join(' ')}`
       : 'Delivery recorded — quote marked as sent.'
     showDeliveryForm.value = false
-    await Promise.all([loadDeliveryLogs(), loadTimeline()])
+    await Promise.all([loadDeliveryLogs(), loadTimeline(), loadReadiness()])
   } catch (e: unknown) {
     deliveryError.value = e instanceof Error ? e.message : 'Mark sent failed'
   } finally {
@@ -321,6 +364,68 @@ onMounted(load)
       </section>
 
       <section class="section mb">
+        <h3>Order Readiness</h3>
+        <el-alert type="warning" :closable="false" show-icon title="Readiness Safety" :description="READINESS_SAFETY" class="mb" />
+        <el-alert v-if="readinessError" type="error" :title="readinessError" show-icon class="mb" />
+        <el-alert v-if="copyMsg" type="success" :title="copyMsg" show-icon class="mb" @close="copyMsg = ''" />
+        <el-button :loading="readinessLoading" @click="loadReadiness">Refresh Readiness</el-button>
+        <el-button v-if="readiness" @click="copyOrderSummary">Copy Order Input Summary</el-button>
+        <el-button v-if="readiness" @click="copyMissingItems">Copy Missing Items</el-button>
+
+        <div v-if="readinessLoading" v-loading="true" style="min-height: 100px; margin-top: 16px" />
+        <template v-else-if="readiness">
+          <div class="readiness-header mt">
+            <el-tag :type="statusTagType(readiness.readiness_status)" size="large">
+              {{ readiness.readiness_status }}
+            </el-tag>
+            <span class="score">Score: {{ readiness.readiness_score }}</span>
+          </div>
+          <p class="next-action">{{ readiness.recommended_next_action }}</p>
+
+          <el-alert
+            v-if="readiness.blocking_items.length"
+            type="error"
+            title="Blocking items"
+            :description="readiness.blocking_items.join(', ')"
+            show-icon
+            class="mb"
+          />
+          <el-alert
+            v-if="readiness.warning_items.length"
+            type="warning"
+            title="Warnings"
+            :description="readiness.warning_items.slice(0, 8).join(', ')"
+            show-icon
+            class="mb"
+          />
+
+          <el-table :data="readiness.checklist" stripe class="mt" max-height="320">
+            <el-table-column prop="label" label="Check" />
+            <el-table-column prop="status" label="Status" width="100" />
+            <el-table-column prop="details" label="Details" />
+          </el-table>
+
+          <h4 class="mt">Order Input Contract Summary</h4>
+          <el-descriptions :column="2" border size="small">
+            <el-descriptions-item label="Customer">
+              {{ (readiness.order_input_contract.customer as Record<string, string>)?.company_name || '—' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="Grand Total">
+              {{ (readiness.order_input_contract.totals as Record<string, string>)?.currency }}
+              {{ (readiness.order_input_contract.totals as Record<string, string>)?.grand_total }}
+            </el-descriptions-item>
+            <el-descriptions-item label="Line Items">
+              {{ (readiness.order_input_contract.line_items as unknown[])?.length ?? 0 }}
+            </el-descriptions-item>
+            <el-descriptions-item label="Source Quote">
+              {{ (readiness.order_input_contract.source_quote as Record<string, string>)?.quote_number }}
+            </el-descriptions-item>
+          </el-descriptions>
+        </template>
+        <el-empty v-else description="No readiness data" class="mt" />
+      </section>
+
+      <section class="section mb">
         <h3>Quote Timeline</h3>
         <div v-if="timelineLoading" v-loading="true" style="min-height: 80px" />
         <el-empty v-else-if="!timelineItems.length" description="No timeline events yet" />
@@ -357,4 +462,7 @@ onMounted(load)
 .actions { display: flex; gap: 12px; }
 .section { border-top: 1px solid var(--el-border-color); padding-top: 16px; }
 .delivery-form { max-width: 640px; background: var(--el-fill-color-light); padding: 16px; border-radius: 8px; }
+.readiness-header { display: flex; align-items: center; gap: 16px; }
+.score { font-weight: 600; }
+.next-action { margin: 12px 0; color: var(--el-text-color-secondary); }
 </style>
