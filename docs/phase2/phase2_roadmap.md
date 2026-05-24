@@ -34,19 +34,19 @@ Phase 2 delivered the **Customer Quote MVP** (D6). **Order / Production / Shipme
 
 ---
 
-## D7 Stages (Not Started)
+## D7 Stages (Planning — D7.1 design complete)
 
-| Stage | Name | Scope |
+| Stage | Name | Status |
 |---|---|---|
-| **D7.1** | Order Schema & API Design Review | Design only |
-| **D7.2** | Order CRUD MVP | Order records from readiness contract |
-| **D7.3** | Order Line Items from Quote | Line mapping |
-| **D7.4** | Supplier Confirmation / Partner Split | Per-partner acknowledgment |
-| **D7.5** | Production Milestone Planning | Internal milestones |
-| **D7.6** | Shipment Tracking Foundation | Shipment records |
+| **D7.1** | Order Schema & API Design Review | ✅ Design complete |
+| **D7.2** | Order CRUD MVP | Planned |
+| **D7.3** | Customer Confirmation Flow | Planned |
+| **D7.4** | Partner Split & Supplier Confirmation | Planned |
+| **D7.5** | Production Milestone Foundation | Planned |
+| **D7.6** | Shipment Tracking Foundation | Planned |
 | **D7.7** | Customer Order Status View | Future |
 
-See [D7 Order Module Readiness Brief](../phase3/d7_order_module_readiness_brief.md).
+See [Phase 3 Roadmap](../phase3/phase3_roadmap.md) · [D7.1 Design Review](../phase3/d7_1_order_schema_api_design_review.md).
 
 ---
 
@@ -90,6 +90,8 @@ flowchart TD
 - [D6 Capability Map](../architecture/d6_quote_capability_map.md)
 - [D6 Final Closure Record](../records/d6_final_closure_20260523.md)
 - [D7 Order Module Readiness Brief](../phase3/d7_order_module_readiness_brief.md)
+- [D7.1 Order Schema & API Design Review](../phase3/d7_1_order_schema_api_design_review.md)
+- [Phase 3 Roadmap](../phase3/phase3_roadmap.md)
 - [D6.1 Quote Schema & API Design Review](d6_1_quote_schema_api_design_review.md)
 - [Quote Module Readiness Brief](quote_module_readiness_brief.md)
 - [D5 Final MVP Release](../releases/d5_final_mvp_release_20260523.md)

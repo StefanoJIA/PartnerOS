@@ -110,7 +110,23 @@ End-to-end operator flow for the closed D6 Quote MVP:
 ```powershell
 $env:BACKEND_BASE_URL="http://127.0.0.1:8013"
 python scripts/d6_final_closure_check.py
+python scripts/d7_1_design_readiness_check.py
 ```
+
+## D7.1 Order Design (design only — not implemented)
+
+D7.1 completed the Order schema and API design review. **No order module exists yet.**
+
+| Document | Purpose |
+|----------|---------|
+| [D7.1 Design Review](../phase3/d7_1_order_schema_api_design_review.md) | Data model, lifecycle, API, permissions |
+| [Phase 3 Roadmap](../phase3/phase3_roadmap.md) | D7.2–D7.7 stages |
+
+**D7 safety (mandatory until implemented):**
+
+- Order creation is **not available** in D6 or D7.1
+- Quote readiness does **not** create orders
+- Production and shipment are **future** D7.5–D7.6 stages
 
 ## D6.6 Quote-to-Order Readiness Gate
 
@@ -314,6 +330,7 @@ python scripts/daily_work_summary.py
 | `d6_5_quote_send_tracking_check.py` | D6.5 send tracking smoke |
 | `d6_6_quote_order_readiness_check.py` | D6.6 order readiness smoke |
 | `d6_final_closure_check.py` | D6.7 final closure gate |
+| `d7_1_design_readiness_check.py` | D7.1 design gate |
 | `d6_2_pricing_foundation_check.py` | D6.2 pricing foundation smoke |
 | `portal_readiness_check.py` | Portal v1 端点 |
 | `portal_consumer_check.py` | 外部 Portal 契约 |
