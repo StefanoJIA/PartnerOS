@@ -17,6 +17,7 @@ from app.models.customer_quotes import (
     Quote,
     QuoteAdjustment,
     QuoteLineItem,
+    QuotePdfExport,
     QuoteTerms,
     QuoteVersion,
 )
@@ -70,6 +71,7 @@ __all__ = [
     "Quote",
     "QuoteAdjustment",
     "QuoteLineItem",
+    "QuotePdfExport",
     "QuoteTerms",
     "QuoteVersion",
     "Quotation",

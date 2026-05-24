@@ -44,6 +44,7 @@ docs/records/screenshots/**/*.webp
 .venv/
 venv/
 backend/uploads/
+backend/storage/
 
 # Tauri / sidecar build artifacts (keep sources)
 frontend/src-tauri/target/

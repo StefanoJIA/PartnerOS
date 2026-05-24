@@ -16,6 +16,41 @@ export interface QuoteSafety {
   lead_time_promised: boolean
 }
 
+export interface PdfExportSafety {
+  automatic_sending_enabled: boolean
+  inventory_promised: boolean
+  certification_promised: boolean
+  lead_time_promised: boolean
+  order_created?: boolean
+}
+
+export interface PdfExportRecord {
+  export_id: string
+  quote_id: string
+  quote_version_id: string | null
+  export_type: string
+  file_name: string
+  file_size_bytes: number | null
+  content_type: string
+  status: string
+  exported_at: string | null
+  download_url: string
+}
+
+export interface PdfExportResult {
+  export_id: string
+  file_name: string
+  content_type: string
+  file_size_bytes: number
+  download_url: string
+  safety: PdfExportSafety
+}
+
+export interface PdfExportListData {
+  items: PdfExportRecord[]
+  total: number
+}
+
 export interface QuoteLineItem {
   id: string
   line_number: number
@@ -87,4 +122,24 @@ export async function markQuoteSent(id: string, sendChannel?: string): Promise<Q
     send_channel: sendChannel || 'manual',
   })
   return data.data
+}
+
+export async function exportQuotePdf(
+  quoteId: string,
+  body?: { quote_version_id?: string; export_type?: string },
+): Promise<PdfExportResult> {
+  const { data } = await http.post<V1Envelope<PdfExportResult>>(`/v1/quotes/${quoteId}/export-pdf`, {
+    export_type: 'customer_pdf',
+    ...body,
+  })
+  return data.data
+}
+
+export async function fetchQuotePdfExports(quoteId: string): Promise<PdfExportListData> {
+  const { data } = await http.get<V1Envelope<PdfExportListData>>(`/v1/quotes/${quoteId}/pdf-exports`)
+  return data.data
+}
+
+export function quotePdfDownloadUrl(quoteId: string, exportId: string): string {
+  return `/api/v1/quotes/${quoteId}/pdf-exports/${exportId}/download`
 }

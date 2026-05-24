@@ -80,15 +80,32 @@ Stop-Process -Id <PID> -Force
 
 Fallback：`$env:BACKEND_BASE_URL="http://127.0.0.1:8013"` 与相同 `VITE_API_PROXY_TARGET`。
 
+## D6.4 Quote PDF Export
+
+D6.4 adds **customer PDF generation and download** — export does not send the quote or create orders.
+
+| URL / API | Purpose |
+|-----------|---------|
+| `/quotes/:id` | Export Customer PDF, export list, download |
+| `POST /api/v1/quotes/{id}/export-pdf` | Generate PDF |
+| `GET /api/v1/quotes/{id}/pdf-exports` | List exports |
+| `GET /api/v1/quotes/{id}/pdf-exports/{export_id}/download` | Download file |
+
+```powershell
+python scripts/d6_4_quote_pdf_export_check.py
+```
+
+Generated PDFs are stored under `backend/storage/quote_pdfs/` (gitignored).
+
 ## D6.3 Customer Quotes
 
-D6.3 adds **formal quote records** — manual mark-sent only, no PDF, no auto-send.
+D6.3 adds **formal quote records** — manual mark-sent only; PDF export is D6.4.
 
 | URL | Purpose |
 |-----|---------|
 | `/quotes` | Customer quote list |
 | `/quotes/new` | Minimal quote builder |
-| `/quotes/:id` | Quote detail, mark-ready, mark-sent (manual only) |
+| `/quotes/:id` | Quote detail, PDF export, mark-ready, mark-sent (manual only) |
 
 ```powershell
 python scripts/d6_3_quote_crud_check.py
@@ -231,6 +248,7 @@ python scripts/daily_work_summary.py
 | `import_pricing_excel.py` | D6.2 / D6.2.1 Excel import (local_data only) |
 | `d6_2_1_excel_import_check.py` | D6.2.1 Excel import alignment smoke |
 | `d6_3_quote_crud_check.py` | D6.3 quote CRUD smoke |
+| `d6_4_quote_pdf_export_check.py` | D6.4 quote PDF export smoke |
 | `d6_2_pricing_foundation_check.py` | D6.2 pricing foundation smoke |
 | `portal_readiness_check.py` | Portal v1 端点 |
 | `portal_consumer_check.py` | 外部 Portal 契约 |

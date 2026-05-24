@@ -73,6 +73,7 @@ class Quote(Base, TimestampMixin, UserAuditMixin):
     adjustments: Mapped[list["QuoteAdjustment"]] = relationship("QuoteAdjustment", back_populates="quote", cascade="all, delete-orphan")
     versions: Mapped[list["QuoteVersion"]] = relationship("QuoteVersion", back_populates="quote", cascade="all, delete-orphan")
     terms: Mapped["QuoteTerms | None"] = relationship("QuoteTerms", back_populates="quote", uselist=False, cascade="all, delete-orphan")
+    pdf_exports: Mapped[list["QuotePdfExport"]] = relationship("QuotePdfExport", back_populates="quote", cascade="all, delete-orphan")
 
 
 class QuoteVersion(Base):
@@ -163,3 +164,23 @@ class QuoteTerms(Base, TimestampMixin):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     quote: Mapped["Quote"] = relationship("Quote", back_populates="terms")
+
+
+class QuotePdfExport(Base, TimestampMixin):
+    __tablename__ = "quote_pdf_exports"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    quote_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("quotes.id", ondelete="CASCADE"), nullable=False, index=True)
+    quote_version_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("quote_versions.id", ondelete="SET NULL"), nullable=True)
+    export_type: Mapped[str] = mapped_column(String(32), nullable=False, default="customer_pdf")
+    file_name: Mapped[str] = mapped_column(String(256), nullable=False)
+    file_path: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    file_size_bytes: Mapped[int | None] = mapped_column(nullable=True)
+    content_type: Mapped[str] = mapped_column(String(64), nullable=False, default="application/pdf")
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="generated")
+    exported_by_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    exported_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    snapshot_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    quote: Mapped["Quote"] = relationship("Quote", back_populates="pdf_exports")

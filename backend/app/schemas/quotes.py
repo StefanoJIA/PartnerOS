@@ -105,3 +105,8 @@ class QuoteVersionCreateIn(BaseModel):
 
 class MarkSentIn(BaseModel):
     send_channel: str | None = None
+
+
+class ExportPdfIn(BaseModel):
+    quote_version_id: UUID | None = None
+    export_type: str = "customer_pdf"
