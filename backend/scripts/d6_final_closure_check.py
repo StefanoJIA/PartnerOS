@@ -76,19 +76,20 @@ def _migration_head_ok() -> tuple[bool, str]:
 
 def _order_mvp_migration_ok() -> tuple[bool, str]:
     versions_dir = BACKEND_ROOT / "alembic" / "versions"
-    forbidden_tables = (
-        "supplier_confirmations",
-        "production_milestones",
-        "shipment_plans",
-        "order_partner_splits",
-    )
+    always_forbidden = ("production_milestones", "shipment_plans")
+    d74_tables = ("order_partner_splits", "supplier_confirmations")
+
     for path in sorted(versions_dir.glob("*.py")):
         text = path.read_text(encoding="utf-8").lower()
-        for tbl in forbidden_tables:
+        for tbl in always_forbidden:
             if tbl in text:
                 return False, f"{tbl} in {path.name}"
-        if path.name.startswith("0012_"):
+        if path.name.startswith("0013_"):
             return False, f"unexpected migration {path.name}"
+        for tbl in d74_tables:
+            if tbl in text and not path.name.startswith("0012_"):
+                return False, f"{tbl} in {path.name} (only allowed in 0012)"
+
     if (versions_dir / "0010_order_crud_mvp.py").is_file():
         t10 = (versions_dir / "0010_order_crud_mvp.py").read_text(encoding="utf-8").lower()
         if "customer_orders" not in t10:
@@ -97,6 +98,11 @@ def _order_mvp_migration_ok() -> tuple[bool, str]:
         t11 = (versions_dir / "0011_order_customer_confirmations.py").read_text(encoding="utf-8").lower()
         if "order_confirmations" not in t11:
             return False, "0011 missing order_confirmations"
+    if (versions_dir / "0012_partner_supplier.py").is_file():
+        t12 = (versions_dir / "0012_partner_supplier.py").read_text(encoding="utf-8").lower()
+        if "order_partner_splits" not in t12 or "supplier_confirmations" not in t12:
+            return False, "0012 missing partner split tables"
+        return True, "0010-0012 order MVP + partner supplier"
     return True, "0010-0011 order MVP + confirmations only"
 
 

@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, field_validator
 
-from app.models.customer_orders import CUSTOMER_CONFIRMATION_TYPES
+from app.models.customer_orders import CUSTOMER_CONFIRMATION_TYPES, SUPPLIER_CONFIRMATION_STATUSES
 
 
 class AddressIn(BaseModel):
@@ -80,4 +80,31 @@ class VoidConfirmationIn(BaseModel):
 
 
 class CancelOrderIn(BaseModel):
+    reason: str | None = None
+
+
+class SupplierConfirmationIn(BaseModel):
+    confirmation_status: str
+    confirmed_at: datetime | str | None = None
+    confirmed_by_name: str | None = None
+    confirmed_by_email: str | None = None
+    confirmation_channel: str | None = None
+    inventory_confirmed: bool = False
+    certification_confirmed: bool = False
+    lead_time_confirmed: bool = False
+    production_capacity_confirmed: bool = False
+    expected_production_start: date | str | None = None
+    expected_ready_date: date | str | None = None
+    supplier_reference: str | None = None
+    note: str | None = None
+
+    @field_validator("confirmation_status")
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        if v not in SUPPLIER_CONFIRMATION_STATUSES:
+            raise ValueError(f"confirmation_status must be one of {SUPPLIER_CONFIRMATION_STATUSES}")
+        return v
+
+
+class VoidSupplierConfirmationIn(BaseModel):
     reason: str | None = None

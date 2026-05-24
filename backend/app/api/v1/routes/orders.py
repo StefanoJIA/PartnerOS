@@ -19,7 +19,21 @@ from app.schemas.customer_orders import (
     ConfirmCustomerIn,
     OrderFromQuoteIn,
     OrderUpdateIn,
+    SupplierConfirmationIn,
     VoidConfirmationIn,
+    VoidSupplierConfirmationIn,
+)
+from app.services.orders.partner_split_service import (
+    ensure_partner_splits,
+    get_partner_split_detail,
+    get_partner_splits,
+    split_to_dict,
+)
+from app.services.orders.supplier_confirmation_service import (
+    add_supplier_confirmation,
+    confirmation_to_dict as supplier_confirmation_to_dict,
+    list_supplier_confirmations,
+    void_supplier_confirmation,
 )
 from app.services.orders.order_confirmation_service import (
     add_customer_confirmation,
@@ -229,3 +243,116 @@ def order_timeline_route(
 ):
     rid = get_request_id(request)
     return success_envelope(build_order_timeline(db, order_id), request_id=rid)
+
+
+@router.post("/{order_id}/partner-splits/ensure")
+def ensure_partner_splits_route(
+    order_id: UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    result = ensure_partner_splits(db, user.id, order_id)
+    rid = get_request_id(request)
+    payload = order_detail_payload(db, get_order(db, order_id))
+    payload.update(result)
+    return success_envelope(payload, request_id=rid)
+
+
+@router.get("/{order_id}/partner-splits")
+def list_partner_splits_route(
+    order_id: UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    rows = get_partner_splits(db, order_id)
+    rid = get_request_id(request)
+    return success_envelope(
+        {"items": [split_to_dict(db, r) for r in rows], "total": len(rows)},
+        request_id=rid,
+    )
+
+
+@router.get("/{order_id}/partner-splits/{split_id}")
+def get_partner_split_route(
+    order_id: UUID,
+    split_id: UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    rid = get_request_id(request)
+    return success_envelope(get_partner_split_detail(db, order_id, split_id), request_id=rid)
+
+
+@router.post("/{order_id}/partner-splits/{split_id}/supplier-confirmations")
+def add_supplier_confirmation_route(
+    order_id: UUID,
+    split_id: UUID,
+    body: SupplierConfirmationIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    result = add_supplier_confirmation(
+        db,
+        user,
+        order_id,
+        split_id,
+        confirmation_status=body.confirmation_status,
+        confirmed_at=body.confirmed_at,
+        confirmed_by_name=body.confirmed_by_name,
+        confirmed_by_email=body.confirmed_by_email,
+        confirmation_channel=body.confirmation_channel,
+        inventory_confirmed=body.inventory_confirmed,
+        certification_confirmed=body.certification_confirmed,
+        lead_time_confirmed=body.lead_time_confirmed,
+        production_capacity_confirmed=body.production_capacity_confirmed,
+        expected_production_start=body.expected_production_start,
+        expected_ready_date=body.expected_ready_date,
+        supplier_reference=body.supplier_reference,
+        note=body.note,
+    )
+    rid = get_request_id(request)
+    payload = get_partner_split_detail(db, order_id, split_id)
+    payload["confirmation"] = supplier_confirmation_to_dict(result["confirmation"])
+    payload["warnings"] = result.get("warnings") or []
+    payload["safety"] = result.get("safety")
+    return success_envelope(payload, request_id=rid, status_code=201)
+
+
+@router.get("/{order_id}/supplier-confirmations")
+def list_supplier_confirmations_route(
+    order_id: UUID,
+    request: Request,
+    split_id: UUID | None = None,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    rows = list_supplier_confirmations(db, order_id, split_id=split_id)
+    rid = get_request_id(request)
+    return success_envelope(
+        {"items": [supplier_confirmation_to_dict(r) for r in rows], "total": len(rows)},
+        request_id=rid,
+    )
+
+
+@router.post("/{order_id}/supplier-confirmations/{confirmation_id}/void")
+def void_supplier_confirmation_route(
+    order_id: UUID,
+    confirmation_id: UUID,
+    body: VoidSupplierConfirmationIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    result = void_supplier_confirmation(
+        db, user, order_id, confirmation_id, reason=body.reason
+    )
+    rid = get_request_id(request)
+    payload = get_partner_split_detail(db, order_id, result["split"].id)
+    payload["confirmation"] = supplier_confirmation_to_dict(result["confirmation"])
+    payload["warnings"] = result.get("warnings") or []
+    payload["safety"] = result.get("safety")
+    return success_envelope(payload, request_id=rid)

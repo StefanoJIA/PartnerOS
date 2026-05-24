@@ -143,6 +143,22 @@ python scripts/d7_3_customer_confirmation_check.py
 
 Recording confirmation does not notify suppliers or start production.
 
+## D7.4 Partner Splits & Supplier Confirmations
+
+| URL / API | Purpose |
+|-----------|---------|
+| `/orders/:id` | Partner splits, ensure, supplier confirmation |
+| `POST /api/v1/orders/{id}/partner-splits/ensure` | Generate/update splits by partner |
+| `GET /api/v1/orders/{id}/partner-splits` | List splits |
+| `POST /api/v1/orders/{id}/partner-splits/{id}/supplier-confirmations` | Record supplier confirmation |
+| `GET /api/v1/orders/{id}/supplier-confirmations` | List all supplier confirmations |
+
+```powershell
+python scripts/d7_4_partner_supplier_check.py
+```
+
+Supplier confirmation is manually recorded only; it does not notify suppliers or start production.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate
@@ -347,6 +363,7 @@ python scripts/daily_work_summary.py
 | `d6_5_quote_send_tracking_check.py` | D6.5 send tracking smoke |
 | `d6_6_quote_order_readiness_check.py` | D6.6 order readiness smoke |
 | `d6_final_closure_check.py` | D6.7 final closure gate |
+| `d7_4_partner_supplier_check.py` | D7.4 partner split & supplier confirmation smoke |
 | `d7_3_customer_confirmation_check.py` | D7.3 customer confirmation smoke |
 | `d6_2_pricing_foundation_check.py` | D6.2 pricing foundation smoke |
 | `portal_readiness_check.py` | Portal v1 端点 |

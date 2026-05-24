@@ -26,6 +26,7 @@ ORDER_SAFETY: dict[str, bool] = {
     "order_created": True,
     "order_confirmed": False,
     "customer_confirmation_recorded": False,
+    "supplier_confirmation_recorded": False,
     "production_started": False,
     "shipment_created": False,
     "supplier_notified": False,
@@ -453,14 +454,26 @@ def update_order(
 
 def order_detail_payload(db: Session, order: CustomerOrder) -> dict[str, Any]:
     from app.services.orders.order_confirmation_service import confirmation_summary, confirmation_safety
+    from app.services.orders.partner_split_service import partner_splits_summary, split_safety
+    from app.services.orders.supplier_confirmation_service import (
+        supplier_confirmation_summary,
+        supplier_confirmation_safety,
+    )
 
     payload = order_to_dict(order)
     payload["source_quote"] = _source_quote_summary(db, order.source_quote_id)
     summary = confirmation_summary(db, order)
     payload["confirmation_summary"] = summary
-    payload["warnings"] = summary.get("warnings") or []
+    payload["partner_splits_summary"] = partner_splits_summary(db, order)
+    payload["supplier_confirmation_summary"] = supplier_confirmation_summary(db, order.id)
+    payload["warnings"] = list(summary.get("warnings") or [])
     has_active = summary.get("active_count", 0) > 0
-    payload["safety"] = confirmation_safety(order_confirmed=has_active or order.status == "confirmed")
+    sc_summary = payload["supplier_confirmation_summary"]
+    payload["safety"] = {
+        **confirmation_safety(order_confirmed=has_active or order.status == "confirmed"),
+        **split_safety(),
+        **supplier_confirmation_safety(recorded=sc_summary.get("active_confirmations", 0) > 0),
+    }
     return payload
 
 

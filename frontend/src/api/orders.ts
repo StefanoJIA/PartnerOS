@@ -5,6 +5,7 @@ export interface OrderSafety {
   order_created: boolean
   order_confirmed: boolean
   customer_confirmation_recorded: boolean
+  supplier_confirmation_recorded: boolean
   production_started: boolean
   shipment_created: boolean
   supplier_notified: boolean
@@ -81,6 +82,18 @@ export interface OrderDetail extends OrderSummary {
     latest: OrderConfirmationRecord | null
     warnings: string[]
   }
+  partner_splits_summary?: {
+    total_splits: number
+    confirmed_splits: number
+    pending_splits: number
+    needs_clarification_splits: number
+  }
+  supplier_confirmation_summary?: {
+    active_confirmations: number
+    confirmed_count: number
+    needs_clarification_count: number
+    rejected_count: number
+  }
   confirmation?: OrderConfirmationRecord
   warnings?: string[]
   timeline?: OrderTimelineItem[]
@@ -92,6 +105,46 @@ export interface OrderTimelineItem {
   timestamp: string | null
   actor?: string
   meta?: Record<string, unknown>
+}
+
+export interface PartnerSplit {
+  id: string
+  order_id: string
+  partner_id: string
+  partner_name: string
+  split_number: string
+  split_status: string
+  supplier_confirmation_status: string
+  supplier_confirmed_at: string | null
+  expected_production_start: string | null
+  expected_ready_date: string | null
+  line_item_count: number
+  subtotal: string
+  currency: string
+  notes: string | null
+  line_items?: OrderLineItem[]
+  supplier_confirmations?: SupplierConfirmationRecord[]
+}
+
+export interface SupplierConfirmationRecord {
+  id: string
+  order_id: string
+  partner_split_id: string
+  partner_id: string
+  confirmation_status: string
+  confirmed_at: string | null
+  confirmed_by_name: string | null
+  confirmed_by_email: string | null
+  confirmation_channel: string | null
+  inventory_confirmed: boolean
+  certification_confirmed: boolean
+  lead_time_confirmed: boolean
+  production_capacity_confirmed: boolean
+  expected_production_start: string | null
+  expected_ready_date: string | null
+  supplier_reference: string | null
+  note: string | null
+  status: string
 }
 
 export interface OrderListData {
@@ -187,6 +240,77 @@ export async function fetchOrderTimeline(orderId: string): Promise<{ items: Orde
   )
   return data.data
 }
+
+export async function ensurePartnerSplits(orderId: string): Promise<OrderDetail & { splits?: PartnerSplit[]; warnings?: string[] }> {
+  const { data } = await http.post<V1Envelope<OrderDetail & { splits?: PartnerSplit[]; warnings?: string[] }>>(
+    `/v1/orders/${orderId}/partner-splits/ensure`,
+    {},
+  )
+  return data.data
+}
+
+export async function fetchPartnerSplits(orderId: string): Promise<{ items: PartnerSplit[]; total: number }> {
+  const { data } = await http.get<V1Envelope<{ items: PartnerSplit[]; total: number }>>(
+    `/v1/orders/${orderId}/partner-splits`,
+  )
+  return data.data
+}
+
+export async function fetchPartnerSplitDetail(orderId: string, splitId: string): Promise<PartnerSplit> {
+  const { data } = await http.get<V1Envelope<PartnerSplit>>(`/v1/orders/${orderId}/partner-splits/${splitId}`)
+  return data.data
+}
+
+export interface SupplierConfirmationPayload {
+  confirmation_status: string
+  confirmed_at?: string
+  confirmed_by_name?: string
+  confirmed_by_email?: string
+  confirmation_channel?: string
+  inventory_confirmed?: boolean
+  certification_confirmed?: boolean
+  lead_time_confirmed?: boolean
+  production_capacity_confirmed?: boolean
+  expected_production_start?: string
+  expected_ready_date?: string
+  supplier_reference?: string
+  note?: string
+}
+
+export async function addSupplierConfirmation(
+  orderId: string,
+  splitId: string,
+  payload: SupplierConfirmationPayload,
+): Promise<PartnerSplit & { confirmation?: SupplierConfirmationRecord; warnings?: string[] }> {
+  const { data } = await http.post<
+    V1Envelope<PartnerSplit & { confirmation?: SupplierConfirmationRecord; warnings?: string[] }>
+  >(`/v1/orders/${orderId}/partner-splits/${splitId}/supplier-confirmations`, payload)
+  return data.data
+}
+
+export async function fetchSupplierConfirmations(
+  orderId: string,
+): Promise<{ items: SupplierConfirmationRecord[]; total: number }> {
+  const { data } = await http.get<V1Envelope<{ items: SupplierConfirmationRecord[]; total: number }>>(
+    `/v1/orders/${orderId}/supplier-confirmations`,
+  )
+  return data.data
+}
+
+export async function voidSupplierConfirmation(
+  orderId: string,
+  confirmationId: string,
+  reason?: string,
+): Promise<PartnerSplit> {
+  const { data } = await http.post<V1Envelope<PartnerSplit>>(
+    `/v1/orders/${orderId}/supplier-confirmations/${confirmationId}/void`,
+    { reason },
+  )
+  return data.data
+}
+
+export const SUPPLIER_SAFETY_NOTE =
+  'Recording supplier confirmation does not notify suppliers, start production, create shipments, or guarantee inventory, certifications, or lead times unless explicitly confirmed by the supplier and manually recorded.'
 
 export function strengthTagType(strength: string): '' | 'success' | 'warning' | 'danger' {
   if (strength === 'strong') return 'success'

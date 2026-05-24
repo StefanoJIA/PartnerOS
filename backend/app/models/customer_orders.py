@@ -65,6 +65,32 @@ STRENGTH_BY_TYPE = {
     "other": "weak",
 }
 
+SPLIT_STATUSES = (
+    "pending_supplier_confirmation",
+    "supplier_confirmed",
+    "production_pending",
+    "on_hold",
+    "cancelled",
+)
+
+SUPPLIER_SPLIT_CONFIRMATION_STATUSES = (
+    "not_requested",
+    "pending",
+    "partially_confirmed",
+    "confirmed",
+    "rejected",
+    "needs_clarification",
+)
+
+SUPPLIER_CONFIRMATION_STATUSES = (
+    "confirmed",
+    "rejected",
+    "needs_clarification",
+    "partially_confirmed",
+)
+
+SUPPLIER_RECORD_STATUSES = ("active", "voided")
+
 
 class CustomerOrder(Base, TimestampMixin):
     __tablename__ = "customer_orders"
@@ -123,6 +149,12 @@ class CustomerOrder(Base, TimestampMixin):
     )
     confirmations: Mapped[list["OrderConfirmation"]] = relationship(
         "OrderConfirmation", back_populates="order", cascade="all, delete-orphan"
+    )
+    partner_splits: Mapped[list["OrderPartnerSplit"]] = relationship(
+        "OrderPartnerSplit", back_populates="order", cascade="all, delete-orphan"
+    )
+    supplier_confirmations: Mapped[list["SupplierConfirmation"]] = relationship(
+        "SupplierConfirmation", back_populates="order", cascade="all, delete-orphan"
     )
 
 
@@ -191,3 +223,69 @@ class OrderLineItem(Base, TimestampMixin):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     order: Mapped["CustomerOrder"] = relationship("CustomerOrder", back_populates="line_items")
+
+
+class OrderPartnerSplit(Base, TimestampMixin):
+    __tablename__ = "order_partner_splits"
+    __table_args__ = (UniqueConstraint("order_id", "partner_id", name="uq_order_partner_splits_order_partner"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    order_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("customer_orders.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    partner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("manufacturing_partners.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    split_number: Mapped[str] = mapped_column(String(32), nullable=False)
+    split_status: Mapped[str] = mapped_column(String(48), nullable=False, default="pending_supplier_confirmation")
+    partner_reference_number: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    supplier_confirmation_status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending")
+    supplier_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    expected_production_start: Mapped[date | None] = mapped_column(Date, nullable=True)
+    expected_ready_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    line_item_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    subtotal: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, default=Decimal("0"))
+    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="USD")
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    order: Mapped["CustomerOrder"] = relationship("CustomerOrder", back_populates="partner_splits")
+    supplier_confirmations: Mapped[list["SupplierConfirmation"]] = relationship(
+        "SupplierConfirmation", back_populates="partner_split", cascade="all, delete-orphan"
+    )
+
+
+class SupplierConfirmation(Base, TimestampMixin):
+    __tablename__ = "supplier_confirmations"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    order_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("customer_orders.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    partner_split_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("order_partner_splits.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    partner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("manufacturing_partners.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    confirmation_status: Mapped[str] = mapped_column(String(32), nullable=False)
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    confirmed_by_name: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    confirmed_by_email: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    confirmation_channel: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    inventory_confirmed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    certification_confirmed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    lead_time_confirmed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    production_capacity_confirmed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    expected_production_start: Mapped[date | None] = mapped_column(Date, nullable=True)
+    expected_ready_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    supplier_reference: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="active", index=True)
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    voided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    voided_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    order: Mapped["CustomerOrder"] = relationship("CustomerOrder", back_populates="supplier_confirmations")
+    partner_split: Mapped["OrderPartnerSplit"] = relationship("OrderPartnerSplit", back_populates="supplier_confirmations")

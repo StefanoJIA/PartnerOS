@@ -13,7 +13,7 @@ from app.models.orders import Order, OrderItem, ProductionMilestone, ShippingRec
 from app.models.partners import ManufacturingPartner, PartnerCapability, PartnerContact
 from app.models.products import Product, ProductCategory, ProductDocument, ProductPartnerLink
 from app.models.quality import FactoryAudit, QualityDocument
-from app.models.customer_orders import CustomerOrder, OrderConfirmation, OrderLineItem
+from app.models.customer_orders import CustomerOrder, OrderConfirmation, OrderLineItem, OrderPartnerSplit, SupplierConfirmation
 from app.models.customer_quotes import (
     Quote,
     QuoteAdjustment,
@@ -61,6 +61,7 @@ __all__ = [
     "OrderConfirmation",
     "OrderItem",
     "OrderLineItem",
+    "OrderPartnerSplit",
     "OutreachTemplate",
     "PartnerCapability",
     "PartnerContact",
@@ -89,6 +90,7 @@ __all__ = [
     "Sample",
     "SampleShipment",
     "ShippingRecord",
+    "SupplierConfirmation",
     "Tag",
     "Task",
     "User",
