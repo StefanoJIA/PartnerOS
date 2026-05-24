@@ -91,6 +91,34 @@ SUPPLIER_CONFIRMATION_STATUSES = (
 
 SUPPLIER_RECORD_STATUSES = ("active", "voided")
 
+MILESTONE_TYPES = (
+    "order_received",
+    "supplier_confirmed",
+    "materials_prepared",
+    "cutting",
+    "welding",
+    "painting",
+    "assembly",
+    "quality_check",
+    "packing",
+    "ready_to_ship",
+    "production_started",
+    "production_pending",
+    "custom",
+)
+
+MILESTONE_STATUSES = (
+    "planned",
+    "in_progress",
+    "completed",
+    "delayed",
+    "blocked",
+    "skipped",
+    "cancelled",
+)
+
+MILESTONE_SOURCES = ("template", "manual", "imported", "system")
+
 
 class CustomerOrder(Base, TimestampMixin):
     __tablename__ = "customer_orders"
@@ -155,6 +183,9 @@ class CustomerOrder(Base, TimestampMixin):
     )
     supplier_confirmations: Mapped[list["SupplierConfirmation"]] = relationship(
         "SupplierConfirmation", back_populates="order", cascade="all, delete-orphan"
+    )
+    production_milestones: Mapped[list["OrderProductionMilestone"]] = relationship(
+        "OrderProductionMilestone", back_populates="order", cascade="all, delete-orphan"
     )
 
 
@@ -252,6 +283,9 @@ class OrderPartnerSplit(Base, TimestampMixin):
     supplier_confirmations: Mapped[list["SupplierConfirmation"]] = relationship(
         "SupplierConfirmation", back_populates="partner_split", cascade="all, delete-orphan"
     )
+    production_milestones: Mapped[list["OrderProductionMilestone"]] = relationship(
+        "OrderProductionMilestone", back_populates="partner_split", cascade="all, delete-orphan"
+    )
 
 
 class SupplierConfirmation(Base, TimestampMixin):
@@ -289,3 +323,36 @@ class SupplierConfirmation(Base, TimestampMixin):
 
     order: Mapped["CustomerOrder"] = relationship("CustomerOrder", back_populates="supplier_confirmations")
     partner_split: Mapped["OrderPartnerSplit"] = relationship("OrderPartnerSplit", back_populates="supplier_confirmations")
+
+
+class OrderProductionMilestone(Base, TimestampMixin):
+    __tablename__ = "order_production_milestones"
+    __table_args__ = (
+        UniqueConstraint("partner_split_id", "milestone_type", name="uq_order_prod_milestones_split_type"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    order_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("customer_orders.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    partner_split_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("order_partner_splits.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    partner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("manufacturing_partners.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    milestone_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    milestone_label: Mapped[str] = mapped_column(String(128), nullable=False)
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="planned", index=True)
+    planned_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    actual_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    responsible_party: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    source: Mapped[str] = mapped_column(String(32), nullable=False, default="template")
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+
+    order: Mapped["CustomerOrder"] = relationship("CustomerOrder", back_populates="production_milestones")
+    partner_split: Mapped["OrderPartnerSplit"] = relationship("OrderPartnerSplit", back_populates="production_milestones")

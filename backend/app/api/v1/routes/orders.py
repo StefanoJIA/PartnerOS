@@ -19,6 +19,7 @@ from app.schemas.customer_orders import (
     ConfirmCustomerIn,
     OrderFromQuoteIn,
     OrderUpdateIn,
+    ProductionMilestoneUpdateIn,
     SupplierConfirmationIn,
     VoidConfirmationIn,
     VoidSupplierConfirmationIn,
@@ -52,6 +53,12 @@ from app.services.orders.order_service import (
     update_order,
 )
 from app.services.orders.order_timeline import build_order_timeline
+from app.services.orders.production_milestone_service import (
+    ensure_production_milestones,
+    list_production_milestones,
+    milestone_to_dict,
+    update_production_milestone,
+)
 
 router = APIRouter(prefix="/orders", tags=["v1-orders"])
 
@@ -353,6 +360,84 @@ def void_supplier_confirmation_route(
     rid = get_request_id(request)
     payload = get_partner_split_detail(db, order_id, result["split"].id)
     payload["confirmation"] = supplier_confirmation_to_dict(result["confirmation"])
+    payload["warnings"] = result.get("warnings") or []
+    payload["safety"] = result.get("safety")
+    return success_envelope(payload, request_id=rid)
+
+
+@router.post("/{order_id}/partner-splits/{split_id}/production-milestones/ensure")
+def ensure_production_milestones_route(
+    order_id: UUID,
+    split_id: UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    result = ensure_production_milestones(db, user, order_id, split_id)
+    rid = get_request_id(request)
+    payload = order_detail_payload(db, get_order(db, order_id))
+    payload.update(result)
+    return success_envelope(payload, request_id=rid)
+
+
+@router.get("/{order_id}/production-milestones")
+def list_order_production_milestones_route(
+    order_id: UUID,
+    request: Request,
+    partner_split_id: UUID | None = None,
+    status: str | None = None,
+    milestone_type: str | None = None,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    rows = list_production_milestones(
+        db, order_id, partner_split_id=partner_split_id, status=status, milestone_type=milestone_type
+    )
+    rid = get_request_id(request)
+    return success_envelope(
+        {"items": [milestone_to_dict(r) for r in rows], "total": len(rows)},
+        request_id=rid,
+    )
+
+
+@router.get("/{order_id}/partner-splits/{split_id}/production-milestones")
+def list_split_production_milestones_route(
+    order_id: UUID,
+    split_id: UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    rows = list_production_milestones(db, order_id, partner_split_id=split_id)
+    rid = get_request_id(request)
+    return success_envelope(
+        {"items": [milestone_to_dict(r) for r in rows], "total": len(rows)},
+        request_id=rid,
+    )
+
+
+@router.patch("/{order_id}/production-milestones/{milestone_id}")
+def update_production_milestone_route(
+    order_id: UUID,
+    milestone_id: UUID,
+    body: ProductionMilestoneUpdateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    result = update_production_milestone(
+        db,
+        user,
+        order_id,
+        milestone_id,
+        status=body.status,
+        planned_date=body.planned_date,
+        actual_date=body.actual_date,
+        responsible_party=body.responsible_party,
+        notes=body.notes,
+    )
+    rid = get_request_id(request)
+    payload = milestone_to_dict(result["milestone"])
     payload["warnings"] = result.get("warnings") or []
     payload["safety"] = result.get("safety")
     return success_envelope(payload, request_id=rid)

@@ -7,18 +7,23 @@ import {
   confirmOrderCustomer,
   confirmationTypeWarning,
   ensurePartnerSplits,
+  ensureProductionMilestones,
   fetchOrder,
   fetchOrderConfirmations,
   fetchOrderTimeline,
   fetchPartnerSplits,
   fetchPartnerSplitDetail,
+  fetchProductionMilestones,
+  updateProductionMilestone,
   strengthTagType,
   SUPPLIER_SAFETY_NOTE,
+  PRODUCTION_SAFETY_NOTE,
   voidOrderConfirmation,
   type OrderConfirmationRecord,
   type OrderDetail,
   type OrderTimelineItem,
   type PartnerSplit,
+  type ProductionMilestone,
   type SupplierConfirmationRecord,
 } from '@/api/orders'
 
@@ -36,6 +41,15 @@ const actionLoading = ref(false)
 const successMsg = ref('')
 const showAddForm = ref(false)
 const showSupplierFormFor = ref<string | null>(null)
+const milestonesBySplit = ref<Record<string, ProductionMilestone[]>>({})
+const editingMilestoneId = ref<string | null>(null)
+const milestoneForm = reactive({
+  status: 'planned',
+  planned_date: '',
+  actual_date: '',
+  responsible_party: '',
+  notes: '',
+})
 
 const SAFETY =
   'Recording customer confirmation does not notify suppliers, start production, create shipments, confirm inventory, confirm certifications, or confirm lead time.'
@@ -70,6 +84,7 @@ const cancelReason = ref('')
 const canAddConfirmation = computed(() => order.value?.status !== 'cancelled')
 const canEnsureSplits = computed(() => order.value?.status !== 'cancelled')
 const canAddSupplierConfirmation = computed(() => order.value?.status === 'confirmed')
+const canEnsureMilestones = computed(() => order.value?.status === 'confirmed')
 const canCancel = computed(() => order.value && ['pending_customer_confirmation', 'confirmed'].includes(order.value.status))
 const typeWarning = computed(() => confirmationTypeWarning(confirmForm.confirmation_type))
 const orderWarnings = computed(() => order.value?.warnings || order.value?.confirmation_summary?.warnings || [])
@@ -120,8 +135,67 @@ async function toggleSplitDetail(split: PartnerSplit) {
     return
   }
   expandedSplitId.value = split.id
-  if (!order.value || splitDetails.value[split.id]) return
-  splitDetails.value[split.id] = await fetchPartnerSplitDetail(order.value.id, split.id)
+  if (!order.value) return
+  if (!splitDetails.value[split.id]) {
+    splitDetails.value[split.id] = await fetchPartnerSplitDetail(order.value.id, split.id)
+  }
+  await loadMilestonesForSplit(split.id)
+}
+
+async function loadMilestonesForSplit(splitId: string) {
+  if (!order.value) return
+  const ms = await fetchProductionMilestones(order.value.id, splitId)
+  milestonesBySplit.value[splitId] = ms.items
+}
+
+async function onEnsureMilestones(splitId: string) {
+  if (!order.value) return
+  actionLoading.value = true
+  error.value = ''
+  try {
+    order.value = await ensureProductionMilestones(order.value.id, splitId)
+    await loadMilestonesForSplit(splitId)
+    await loadPartnerSplits()
+    successMsg.value = 'Production milestones ensured.'
+  } catch (e: unknown) {
+    error.value = e instanceof Error ? e.message : 'Ensure milestones failed'
+  } finally {
+    actionLoading.value = false
+  }
+}
+
+function startEditMilestone(m: ProductionMilestone) {
+  editingMilestoneId.value = m.id
+  milestoneForm.status = m.status
+  milestoneForm.planned_date = m.planned_date || ''
+  milestoneForm.actual_date = m.actual_date || ''
+  milestoneForm.responsible_party = m.responsible_party || ''
+  milestoneForm.notes = m.notes || ''
+}
+
+async function onUpdateMilestone(m: ProductionMilestone) {
+  if (!order.value) return
+  actionLoading.value = true
+  error.value = ''
+  try {
+    await updateProductionMilestone(order.value.id, m.id, {
+      status: milestoneForm.status,
+      planned_date: milestoneForm.planned_date || undefined,
+      actual_date: milestoneForm.actual_date || undefined,
+      responsible_party: milestoneForm.responsible_party || undefined,
+      notes: milestoneForm.notes || undefined,
+    })
+    await loadMilestonesForSplit(m.partner_split_id)
+    order.value = await fetchOrder(order.value.id)
+    const tl = await fetchOrderTimeline(order.value.id)
+    timelineItems.value = tl.items
+    editingMilestoneId.value = null
+    successMsg.value = 'Milestone updated.'
+  } catch (e: unknown) {
+    error.value = e instanceof Error ? e.message : 'Update milestone failed'
+  } finally {
+    actionLoading.value = false
+  }
 }
 
 async function onAddSupplierConfirmation(splitId: string) {
@@ -422,8 +496,69 @@ onMounted(load)
                 <el-button type="primary" :loading="actionLoading" @click="onAddSupplierConfirmation(split.id)">Record</el-button>
               </el-form-item>
             </el-form>
+            <h5 class="mt">Production Milestones</h5>
+            <el-alert type="info" :closable="false" :description="PRODUCTION_SAFETY_NOTE" class="mb" />
+            <el-button
+              v-if="canEnsureMilestones"
+              size="small"
+              class="mb"
+              :loading="actionLoading"
+              @click="onEnsureMilestones(split.id)"
+            >
+              Ensure Milestones
+            </el-button>
+            <el-table :data="milestonesBySplit[split.id] || []" stripe size="small" class="mb">
+              <el-table-column prop="sequence" label="#" width="50" />
+              <el-table-column prop="milestone_label" label="Milestone" />
+              <el-table-column prop="status" label="Status" width="110" />
+              <el-table-column prop="planned_date" label="Planned" width="110" />
+              <el-table-column prop="actual_date" label="Actual" width="110" />
+              <el-table-column label="" width="90">
+                <template #default="{ row }">
+                  <el-button v-if="canEnsureMilestones" size="small" @click="startEditMilestone(row)">Update</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <el-form
+              v-if="editingMilestoneId && (milestonesBySplit[split.id] || []).some(m => m.id === editingMilestoneId)"
+              label-width="140px"
+              class="mt"
+            >
+              <el-form-item label="Status">
+                <el-select v-model="milestoneForm.status" style="width: 200px">
+                  <el-option label="Planned" value="planned" />
+                  <el-option label="In Progress" value="in_progress" />
+                  <el-option label="Completed" value="completed" />
+                  <el-option label="Delayed" value="delayed" />
+                  <el-option label="Blocked" value="blocked" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="Planned Date"><el-input v-model="milestoneForm.planned_date" placeholder="YYYY-MM-DD" /></el-form-item>
+              <el-form-item label="Actual Date"><el-input v-model="milestoneForm.actual_date" placeholder="YYYY-MM-DD" /></el-form-item>
+              <el-form-item label="Responsible"><el-input v-model="milestoneForm.responsible_party" /></el-form-item>
+              <el-form-item label="Notes"><el-input v-model="milestoneForm.notes" type="textarea" :rows="2" /></el-form-item>
+              <el-form-item>
+                <el-button
+                  type="primary"
+                  :loading="actionLoading"
+                  @click="onUpdateMilestone((milestonesBySplit[split.id] || []).find(m => m.id === editingMilestoneId)!)"
+                >
+                  Save Milestone
+                </el-button>
+              </el-form-item>
+            </el-form>
           </div>
         </div>
+      </section>
+
+      <section v-if="order.production_summary" class="section mb">
+        <h3>Production Summary</h3>
+        <el-descriptions :column="4" border>
+          <el-descriptions-item label="Total">{{ order.production_summary.total_milestones }}</el-descriptions-item>
+          <el-descriptions-item label="Completed">{{ order.production_summary.completed_milestones }}</el-descriptions-item>
+          <el-descriptions-item label="In Progress">{{ order.production_summary.in_progress_milestones }}</el-descriptions-item>
+          <el-descriptions-item label="Shipment Created">{{ order.production_summary.shipment_created ? 'Yes' : 'No' }}</el-descriptions-item>
+        </el-descriptions>
       </section>
 
       <section v-if="canCancel" class="section mb">

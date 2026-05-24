@@ -46,9 +46,9 @@
 
 **D7** is Order / Production / Shipment.
 
-**D7.4 Partner Split & Supplier Confirmation** is implemented. Next: **D7.5 Production Milestones**.
+**D7.5 Production Milestone Foundation** is implemented. Next: **D7.6 Shipment Tracking**.
 
-See [D7.4 Partner Split & Supplier Confirmation](docs/phase3/d7_4_partner_split_supplier_confirmation.md) · [D7.3 Customer Confirmation Flow](docs/phase3/d7_3_customer_confirmation_flow.md) · [Phase 3 Roadmap](docs/phase3/phase3_roadmap.md).
+See [D7.5 Production Milestone Foundation](docs/phase3/d7_5_production_milestone_foundation.md) · [D7.4 Partner Split & Supplier Confirmation](docs/phase3/d7_4_partner_split_supplier_confirmation.md) · [Phase 3 Roadmap](docs/phase3/phase3_roadmap.md).
 
 D6 implementation references:
 
@@ -107,6 +107,7 @@ python scripts/d6_6_quote_order_readiness_check.py  # D6.6 order readiness smoke
 python scripts/d6_final_closure_check.py  # D6.7 final closure gate
 python scripts/d7_1_design_readiness_check.py  # D7.1 design gate
 python scripts/d7_2_order_crud_check.py  # D7.2 order CRUD smoke
+python scripts/d7_5_production_milestone_check.py  # D7.5 production milestone smoke
 python scripts/d7_4_partner_supplier_check.py   # D7.4 partner split & supplier confirmation smoke
 python scripts/d7_3_customer_confirmation_check.py  # D7.3 customer confirmation smoke
 ```

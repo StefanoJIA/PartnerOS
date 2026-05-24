@@ -14,6 +14,8 @@ export interface OrderSafety {
   certification_promised: boolean
   lead_time_promised: boolean
   payment_received: boolean
+  customer_notified?: boolean
+  milestone_updated?: boolean
 }
 
 export interface OrderConfirmationRecord {
@@ -94,6 +96,15 @@ export interface OrderDetail extends OrderSummary {
     needs_clarification_count: number
     rejected_count: number
   }
+  production_summary?: {
+    total_milestones: number
+    completed_milestones: number
+    in_progress_milestones: number
+    delayed_milestones: number
+    blocked_milestones: number
+    ready_to_ship_completed: boolean
+    shipment_created: boolean
+  }
   confirmation?: OrderConfirmationRecord
   warnings?: string[]
   timeline?: OrderTimelineItem[]
@@ -105,6 +116,22 @@ export interface OrderTimelineItem {
   timestamp: string | null
   actor?: string
   meta?: Record<string, unknown>
+}
+
+export interface ProductionMilestone {
+  id: string
+  order_id: string
+  partner_split_id: string
+  partner_id: string
+  milestone_type: string
+  milestone_label: string
+  sequence: number
+  status: string
+  planned_date: string | null
+  actual_date: string | null
+  responsible_party: string | null
+  source: string
+  notes: string | null
 }
 
 export interface PartnerSplit {
@@ -122,6 +149,10 @@ export interface PartnerSplit {
   subtotal: string
   currency: string
   notes: string | null
+  production_milestone_count?: number
+  production_completed_count?: number
+  current_milestone?: ProductionMilestone | null
+  next_milestone?: ProductionMilestone | null
   line_items?: OrderLineItem[]
   supplier_confirmations?: SupplierConfirmationRecord[]
 }
@@ -311,6 +342,48 @@ export async function voidSupplierConfirmation(
 
 export const SUPPLIER_SAFETY_NOTE =
   'Recording supplier confirmation does not notify suppliers, start production, create shipments, or guarantee inventory, certifications, or lead times unless explicitly confirmed by the supplier and manually recorded.'
+
+export const PRODUCTION_SAFETY_NOTE =
+  'Production milestones are internal planning and tracking records. They do not create shipments, notify suppliers or customers, or guarantee lead time.'
+
+export async function ensureProductionMilestones(orderId: string, splitId: string): Promise<OrderDetail & { milestones?: ProductionMilestone[] }> {
+  const { data } = await http.post<V1Envelope<OrderDetail & { milestones?: ProductionMilestone[] }>>(
+    `/v1/orders/${orderId}/partner-splits/${splitId}/production-milestones/ensure`,
+    {},
+  )
+  return data.data
+}
+
+export async function fetchProductionMilestones(
+  orderId: string,
+  splitId?: string,
+): Promise<{ items: ProductionMilestone[]; total: number }> {
+  const path = splitId
+    ? `/v1/orders/${orderId}/partner-splits/${splitId}/production-milestones`
+    : `/v1/orders/${orderId}/production-milestones`
+  const { data } = await http.get<V1Envelope<{ items: ProductionMilestone[]; total: number }>>(path)
+  return data.data
+}
+
+export interface ProductionMilestoneUpdatePayload {
+  status?: string
+  planned_date?: string
+  actual_date?: string
+  responsible_party?: string
+  notes?: string
+}
+
+export async function updateProductionMilestone(
+  orderId: string,
+  milestoneId: string,
+  payload: ProductionMilestoneUpdatePayload,
+): Promise<ProductionMilestone & { warnings?: string[] }> {
+  const { data } = await http.patch<V1Envelope<ProductionMilestone & { warnings?: string[] }>>(
+    `/v1/orders/${orderId}/production-milestones/${milestoneId}`,
+    payload,
+  )
+  return data.data
+}
 
 export function strengthTagType(strength: string): '' | 'success' | 'warning' | 'danger' {
   if (strength === 'strong') return 'success'

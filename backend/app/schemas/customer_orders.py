@@ -108,3 +108,11 @@ class SupplierConfirmationIn(BaseModel):
 
 class VoidSupplierConfirmationIn(BaseModel):
     reason: str | None = None
+
+
+class ProductionMilestoneUpdateIn(BaseModel):
+    status: str | None = None
+    planned_date: date | str | None = None
+    actual_date: date | str | None = None
+    responsible_party: str | None = None
+    notes: str | None = None

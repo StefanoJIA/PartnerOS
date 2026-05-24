@@ -36,8 +36,8 @@ def _partner_name(db: Session, partner_id: UUID) -> str:
     return row.partner_name or row.brand_name or str(partner_id)[:8]
 
 
-def split_to_dict(db: Session, split: OrderPartnerSplit) -> dict[str, Any]:
-    return {
+def split_to_dict(db: Session, split: OrderPartnerSplit, *, include_production: bool = False) -> dict[str, Any]:
+    payload = {
         "id": str(split.id),
         "order_id": str(split.order_id),
         "partner_id": str(split.partner_id),
@@ -56,6 +56,11 @@ def split_to_dict(db: Session, split: OrderPartnerSplit) -> dict[str, Any]:
         "created_at": split.created_at.isoformat() if split.created_at else None,
         "updated_at": split.updated_at.isoformat() if split.updated_at else None,
     }
+    if include_production:
+        from app.services.orders.production_milestone_service import split_milestone_summary
+
+        payload.update(split_milestone_summary(db, split))
+    return payload
 
 
 def _next_split_number(existing_count: int) -> str:
@@ -98,7 +103,7 @@ def get_partner_split_detail(db: Session, order_id: UUID, split_id: UUID) -> dic
     split = get_partner_split(db, order_id, split_id)
     lines = [li for li in order.line_items if li.partner_id == split.partner_id and li.status != "cancelled"]
     confirmations = list_supplier_confirmations(db, order_id, split_id=split_id)
-    payload = split_to_dict(db, split)
+    payload = split_to_dict(db, split, include_production=True)
     payload["line_items"] = [_serialize_line(li) for li in sorted(lines, key=lambda x: x.created_at)]
     payload["supplier_confirmations"] = [confirmation_to_dict(c) for c in confirmations]
     payload["safety"] = split_safety()

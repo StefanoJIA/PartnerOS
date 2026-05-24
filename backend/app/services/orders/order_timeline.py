@@ -8,7 +8,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.models import User
-from app.models.customer_orders import OrderConfirmation, OrderPartnerSplit, SupplierConfirmation
+from app.models.customer_orders import OrderConfirmation, OrderPartnerSplit, OrderProductionMilestone, SupplierConfirmation
 from app.services.orders.order_service import get_order
 from app.services.orders.partner_split_service import _partner_name
 
@@ -149,6 +149,55 @@ def build_order_timeline(db: Session, order_id: UUID) -> dict[str, Any]:
                         "confirmation_id": str(sc.id),
                         "partner": partner,
                         "reason": sc.voided_reason,
+                    },
+                }
+            )
+
+    prod_milestones = (
+        db.query(OrderProductionMilestone)
+        .filter(OrderProductionMilestone.order_id == order_id)
+        .order_by(OrderProductionMilestone.sequence.asc())
+        .all()
+    )
+    splits_created: set[UUID] = set()
+    for pm in prod_milestones:
+        partner = _partner_name(db, pm.partner_id)
+        if pm.partner_split_id not in splits_created:
+            splits_created.add(pm.partner_split_id)
+            items.append(
+                {
+                    "type": "production_milestones_created",
+                    "title": "Production milestones created",
+                    "timestamp": pm.created_at.isoformat() if pm.created_at else None,
+                    "actor": "",
+                    "meta": {
+                        "partner": partner,
+                        "partner_split_id": str(pm.partner_split_id),
+                        "milestone_type": pm.milestone_type,
+                    },
+                }
+            )
+        if pm.updated_at and pm.created_at and pm.updated_at > pm.created_at:
+            if pm.milestone_type == "ready_to_ship" and pm.status == "completed":
+                event_type = "ready_to_ship_marked"
+                title = "Ready to ship milestone completed"
+            elif pm.status == "completed":
+                event_type = "production_milestone_completed"
+                title = "Production milestone completed"
+            else:
+                event_type = "production_milestone_updated"
+                title = "Production milestone updated"
+            items.append(
+                {
+                    "type": event_type,
+                    "title": title,
+                    "timestamp": pm.updated_at.isoformat(),
+                    "actor": "",
+                    "meta": {
+                        "partner": partner,
+                        "milestone_type": pm.milestone_type,
+                        "status": pm.status,
+                        "milestone_id": str(pm.id),
                     },
                 }
             )
