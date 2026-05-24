@@ -80,6 +80,45 @@ Stop-Process -Id <PID> -Force
 
 Fallback：`$env:BACKEND_BASE_URL="http://127.0.0.1:8013"` 与相同 `VITE_API_PROXY_TARGET`。
 
+## D6.2 Product Catalog & Pricing (Phase 2 foundation)
+
+D6.2 adds **catalog + pricing preview only** — no Quote CRUD, no PDF, no auto-send.
+
+### One-time setup
+
+```powershell
+cd backend
+alembic upgrade head
+python scripts/seed_quote_catalog.py --apply --confirm
+```
+
+### Daily / demo URLs
+
+| URL | Purpose |
+|-----|---------|
+| `/quote-catalog` | Product catalog list (partner / category filters) |
+| `/pricing-preview` | Pricing preview — **does not create a quote** |
+
+### Excel import (local only — never commit workbook)
+
+Place workbook at `local_data/报价模型与格式.xlsx` (gitignored):
+
+```powershell
+cd backend
+python scripts/import_pricing_excel.py --file "../local_data/报价模型与格式.xlsx" --dry-run
+python scripts/import_pricing_excel.py --file "../local_data/报价模型与格式.xlsx" --apply --confirm
+python scripts/import_pricing_excel.py --file "../local_data/报价模型与格式.xlsx" --apply --confirm --overwrite
+```
+
+### D6.2 smoke
+
+```powershell
+$env:BACKEND_BASE_URL="http://127.0.0.1:8013"
+python scripts/d6_2_pricing_foundation_check.py
+```
+
+**Safety:** Pricing preview returns `quote_created=false` and does not promise inventory, certification, or lead time.
+
 ## D5 Final Daily Workflow
 
 D5 is closed — use this as the standard daily operator path:
@@ -174,6 +213,9 @@ python scripts/daily_work_summary.py
 | `d5_17_rule_tuning_check.py` | Lifting / product rule tuning regression（D5.17） |
 | `quote_handoff_check.py` | Soft quote handoff smoke（D5.18） |
 | `d5_19_quote_input_contract_check.py` | Quote input contract UAT smoke（D5.19） |
+| `seed_quote_catalog.py` | D6.2 demo catalog seed |
+| `import_pricing_excel.py` | D6.2 Excel import (local_data only) |
+| `d6_2_pricing_foundation_check.py` | D6.2 pricing foundation smoke |
 | `portal_readiness_check.py` | Portal v1 端点 |
 | `portal_consumer_check.py` | 外部 Portal 契约 |
 

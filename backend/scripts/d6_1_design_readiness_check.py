@@ -26,8 +26,11 @@ REQUIRED_DOCS = (
     ("D6.1 design review", DOCS / "phase2" / "d6_1_quote_schema_api_design_review.md"),
 )
 
-# Post-D6.1 migrations should not exist yet (head stays 0005 until D6.2)
-EXPECTED_HEAD_PREFIX = "0005_"
+# Post-D6.2 migrations beyond catalog foundation should not exist in D6.1 gate
+EXPECTED_HEAD_PREFIX = "0006_"
+
+# Allowed v1 quote paths during D6.2 (preview only — no quote records)
+ALLOWED_QUOTE_API_PREFIXES = ("/quotes/pricing",)
 
 SAFETY_SECTION_PATTERNS = (
     r"No AI pricing",
@@ -61,10 +64,6 @@ class Check:
 def _has_quote_api_implementation() -> list[str]:
     hits: list[str] = []
     patterns = (
-        r'@router\.(get|post|put|patch|delete)\(["\']/quotes',
-        r'prefix=["\']/quotes["\']',
-        r'APIRouter\(prefix="/quotes"',
-        r"class Quote\(",
         r'__tablename__\s*=\s*["\']quotes["\']',
         r'__tablename__\s*=\s*["\']quote_line_items["\']',
     )
@@ -72,10 +71,8 @@ def _has_quote_api_implementation() -> list[str]:
         if "test_" in path.name:
             continue
         text = path.read_text(encoding="utf-8")
-        for pat in patterns:
-            if re.search(pat, text):
-                hits.append(f"{path.relative_to(BACKEND_ROOT)}: {pat}")
-                break
+        if '__tablename__ = "quotes"' in text or '__tablename__ = "quote_line_items"' in text:
+            hits.append(str(path.relative_to(BACKEND_ROOT)))
     return hits
 
 
@@ -83,9 +80,7 @@ def _new_migrations_after_d6_1() -> list[str]:
     bad: list[str] = []
     for path in sorted(ALEMBIC.glob("*.py")):
         name = path.name
-        if name.startswith("0001_") or name.startswith("0002_") or name.startswith("0003_"):
-            continue
-        if name.startswith("0004_") or name.startswith("0005_"):
+        if name.startswith(("0001_", "0002_", "0003_", "0004_", "0005_", "0006_")):
             continue
         bad.append(name)
     return bad

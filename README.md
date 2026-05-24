@@ -29,12 +29,13 @@
 
 **Phase 2** is Quote / Order / Production / Shipment.
 
-Phase 2 should **not** start implementation until design is reviewed. **D6.1 Quote Schema & API Design Review is complete** (design only — no DB/API yet). See:
+**D6.1 Quote Schema & API Design Review** is complete. **D6.2 Product Catalog & Pricing Foundation** is implemented (catalog, cost/price tiers, FX, pricing preview — **no Quote CRUD**). See:
 
 - [D6.1 Design Review](docs/phase2/d6_1_quote_schema_api_design_review.md)
+- [D6.2 Product Catalog & Pricing Foundation](docs/phase2/d6_2_product_catalog_pricing_foundation.md)
 - [Phase 2 Roadmap](docs/phase2/phase2_roadmap.md)
 
-Recommended next implementation stage: **D6.2 Product Catalog & Pricing Foundation** (when authorized).
+Recommended next implementation stage: **D6.3 Quote CRUD & Versioning** (when authorized).
 
 ---
 
@@ -75,6 +76,10 @@ python scripts/d5_17_rule_tuning_check.py     # D5.17 product rule tuning
 python scripts/quote_handoff_check.py         # D5.18 soft quote handoff
 python scripts/d5_19_quote_input_contract_check.py  # D5.19 quote input contract UAT
 python scripts/smoke_all_d5.py                  # D5 full smoke (closure regression)
+python scripts/seed_quote_catalog.py --dry-run  # D6.2 demo catalog seed preview
+python scripts/seed_quote_catalog.py --apply --confirm  # D6.2 demo catalog seed
+python scripts/import_pricing_excel.py --file "../local_data/报价模型与格式.xlsx" --dry-run
+python scripts/d6_2_pricing_foundation_check.py  # D6.2 pricing foundation smoke
 ```
 
 ### Port 8000 (legacy)
@@ -113,6 +118,8 @@ First-time setup: `python scripts/init_local_env.py` → edit `backend/.env` →
 | **Product-aware discovery draft** | **`/lead-intelligence`** · Product-Aware Draft panel (D5.15) |
 | **Soft quote handoff** | **`/lead-intelligence`** · Soft Quote Handoff panel (D5.18) |
 | **Quote input contract** | **`/lead-intelligence`** · Quote Input Contract panel (D5.19) |
+| **Quote catalog (D6.2)** | **`/quote-catalog`** · partner/category filters · read-only list |
+| **Pricing preview (D6.2)** | **`/pricing-preview`** · preview only — no quote created |
 | **Daily ops dashboard** | **`/`** · Daily Operations + Recent Activity + End-of-Day Summary (D5.8–D5.10) |
 | Lead import preview (CLI) | `backend/scripts/lead_import_preview.py` |
 | Outreach draft | Generate Draft in Lead Intelligence |

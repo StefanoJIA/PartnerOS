@@ -50,5 +50,6 @@ frontend/src-tauri/target/
 
 # Local real-lead pilot data (never commit)
 local_data/
+local_data/报价模型与格式.xlsx
 *.private.csv
 real_leads_*.csv

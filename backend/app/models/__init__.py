@@ -13,6 +13,13 @@ from app.models.orders import Order, OrderItem, ProductionMilestone, ShippingRec
 from app.models.partners import ManufacturingPartner, PartnerCapability, PartnerContact
 from app.models.products import Product, ProductCategory, ProductDocument, ProductPartnerLink
 from app.models.quality import FactoryAudit, QualityDocument
+from app.models.quote_catalog import (
+    FxRate,
+    MarginStrategyTier,
+    ProductCatalog,
+    ProductCostModel,
+    ProductPriceTier,
+)
 from app.models.rfq import Quotation, QuotationItem, RFQ, RFQItem, RFQPartnerCandidate
 from app.models.samples import Sample, SampleShipment
 
@@ -25,6 +32,7 @@ __all__ = [
     "CompanyEnrichmentSuggestion",
     "Contact",
     "FactoryAudit",
+    "FxRate",
     "FieldVisitPlan",
     "FieldVisitTarget",
     "File",
@@ -34,6 +42,7 @@ __all__ = [
     "KbDocument",
     "Lead",
     "ManufacturingPartner",
+    "MarginStrategyTier",
     "MarketIntelligenceItem",
     "Note",
     "ObjectTag",
@@ -44,7 +53,10 @@ __all__ = [
     "PartnerContact",
     "ProductionMilestone",
     "Product",
+    "ProductCatalog",
     "ProductCategory",
+    "ProductCostModel",
+    "ProductPriceTier",
     "ProductDocument",
     "ProductPartnerLink",
     "QualityDocument",

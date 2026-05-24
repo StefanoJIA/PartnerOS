@@ -62,6 +62,10 @@ class ManufacturingPartner(Base, TimestampMixin, UserAuditMixin):
     ai_risk_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     extra_scores: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
+    partner_code: Mapped[str | None] = mapped_column(String(32), nullable=True, unique=True, index=True)
+    default_incoterm: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    default_currency: Mapped[str | None] = mapped_column(String(3), nullable=True, default="USD")
+    catalog_status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
 
     contacts: Mapped[list["PartnerContact"]] = relationship(
         "PartnerContact", back_populates="partner", cascade="all, delete-orphan"
