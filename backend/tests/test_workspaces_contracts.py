@@ -55,6 +55,7 @@ def test_no_hardcoded_partner_priority_in_core_tree():
         "quote_handoff_board.py",
         "quote_input_contract.py",
         "quote_input_contract_board.py",
+        "pricing_excel_parser.py",  # Excel import partner alias map (D6.2.1)
     }
     bad: list[str] = []
     for path in root.rglob("*.py"):

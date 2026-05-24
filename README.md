@@ -33,6 +33,7 @@
 
 - [D6.1 Design Review](docs/phase2/d6_1_quote_schema_api_design_review.md)
 - [D6.2 Product Catalog & Pricing Foundation](docs/phase2/d6_2_product_catalog_pricing_foundation.md)
+- [D6.2.1 Excel Import Alignment](docs/phase2/d6_2_1_excel_import_alignment.md)
 - [Phase 2 Roadmap](docs/phase2/phase2_roadmap.md)
 
 Recommended next implementation stage: **D6.3 Quote CRUD & Versioning** (when authorized).
@@ -79,6 +80,7 @@ python scripts/smoke_all_d5.py                  # D5 full smoke (closure regress
 python scripts/seed_quote_catalog.py --dry-run  # D6.2 demo catalog seed preview
 python scripts/seed_quote_catalog.py --apply --confirm  # D6.2 demo catalog seed
 python scripts/import_pricing_excel.py --file "../local_data/报价模型与格式.xlsx" --dry-run
+python scripts/d6_2_1_excel_import_check.py   # D6.2.1 Excel import alignment
 python scripts/d6_2_pricing_foundation_check.py  # D6.2 pricing foundation smoke
 ```
 

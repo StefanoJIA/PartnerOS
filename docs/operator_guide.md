@@ -214,7 +214,8 @@ python scripts/daily_work_summary.py
 | `quote_handoff_check.py` | Soft quote handoff smoke（D5.18） |
 | `d5_19_quote_input_contract_check.py` | Quote input contract UAT smoke（D5.19） |
 | `seed_quote_catalog.py` | D6.2 demo catalog seed |
-| `import_pricing_excel.py` | D6.2 Excel import (local_data only) |
+| `import_pricing_excel.py` | D6.2 / D6.2.1 Excel import (local_data only) |
+| `d6_2_1_excel_import_check.py` | D6.2.1 Excel import alignment smoke |
 | `d6_2_pricing_foundation_check.py` | D6.2 pricing foundation smoke |
 | `portal_readiness_check.py` | Portal v1 端点 |
 | `portal_consumer_check.py` | 外部 Portal 契约 |
