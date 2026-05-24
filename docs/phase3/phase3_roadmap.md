@@ -1,6 +1,6 @@
 # Phase 3 Roadmap — Order / Production / Shipment
 
-**Status:** D7.2 implemented · **D6 closed** · **Date:** 2026-05-23
+**Status:** D7.5.1 review complete · **D6 closed** · **Date:** 2026-05-24
 
 Phase 3 builds the **Customer Order** module and downstream production/shipment foundations. D6 Quote MVP remains frozen.
 
@@ -26,9 +26,12 @@ Phase 3 builds the **Customer Order** module and downstream production/shipment 
 | **D7.3** | Customer Confirmation Flow | `order_confirmations`, add/list/void, timeline | ✅ **Implemented** |
 | **D7.4** | Partner Split & Supplier Confirmation | `order_partner_splits`, `supplier_confirmations` | ✅ **Implemented** |
 | **D7.5** | Production Milestone Foundation | `order_production_milestones`, milestone API | ✅ **Implemented** |
+| **D7.5.1** | Existing Cloud Portal Integration Review | Mapping, architecture, API boundary (no code) | ✅ **Review complete** |
 | **D7.6** | Shipment Tracking Foundation | `shipment_plans`, shipment API | Planned |
-| **D7.6** | Shipment Tracking Foundation | `shipment_plans`, shipment API | Planned |
-| **D7.7** | Customer Order Status View | Customer portal read-only status | Future |
+| **D7.7** | Customer Portal Bridge | `/api/v1/portal/customer/*` read API + auth | Future |
+| **D7.8** | Feedback / Ticketing | `feedback_tickets`, Portal POST 回流 | Future |
+| **D7.9** | Resource Center | Customer document catalog + signed download | Future |
+| **D8** | Deployment & Integration Hardening | CORS, HTTPS, token rotation, cloud 联调 | Future |
 
 ---
 
@@ -42,16 +45,24 @@ flowchart TD
   D73[D7.3 Customer Confirmation]
   D74[D7.4 Partner Split & Supplier]
   D75[D7.5 Production Milestones]
+  D751[D7.5.1 Cloud Portal Review]
   D76[D7.6 Shipment Tracking]
-  D77[D7.7 Customer Portal · future]
+  D77[D7.7 Portal Bridge]
+  D78[D7.8 Feedback]
+  D79[D7.9 Resource Center]
+  D8[D8 Integration Hardening]
 
   D6 --> D71
   D71 --> D72
   D72 --> D73
   D73 --> D74
   D74 --> D75
-  D75 --> D76
+  D75 --> D751
+  D751 --> D76
   D76 --> D77
+  D77 --> D78
+  D78 --> D79
+  D79 --> D8
 ```
 
 ---
@@ -74,7 +85,7 @@ flowchart TD
 - Automatic email / LinkedIn / Outlook
 - Payment processing
 - Invoice generation
-- Customer portal (until D7.7)
+- Customer portal API (until D7.7; retain existing cloud portal UI)
 - Inventory reservation system
 - Factory MES integration
 - PDF parsing for order creation
@@ -83,6 +94,7 @@ flowchart TD
 
 ## Related Documents
 
+- [D7.5.1 Existing Cloud Portal Integration Review](d7_5_1_existing_cloud_portal_integration_review.md)
 - [D7.2 Order CRUD MVP](d7_2_order_crud_mvp.md)
 - [D7.1 Order Schema & API Design Review](d7_1_order_schema_api_design_review.md)
 - [D7 Order Module Readiness Brief](d7_order_module_readiness_brief.md)

@@ -174,6 +174,20 @@ python scripts/d7_5_production_milestone_check.py
 
 Milestones are internal planning records; they do not create shipments or notify suppliers/customers.
 
+## D7.5.1 Existing Cloud Portal Integration Review
+
+Review-only stage: maps the **already-deployed HOSUN & intelli cloud customer portal** to PartnerOS as source of truth. No new migrations, APIs, or portal UI in this repo.
+
+| Document | Purpose |
+|----------|---------|
+| [d7_5_1_existing_cloud_portal_integration_review.md](phase3/d7_5_1_existing_cloud_portal_integration_review.md) | Capability mapping, architecture, API boundary proposal |
+
+```powershell
+python scripts/d7_5_1_portal_integration_review_check.py
+```
+
+**Judgment:** retain existing cloud portal; integrate via future D7.7 Portal Bridge API.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate
@@ -379,6 +393,7 @@ python scripts/daily_work_summary.py
 | `d6_6_quote_order_readiness_check.py` | D6.6 order readiness smoke |
 | `d6_final_closure_check.py` | D6.7 final closure gate |
 | `d7_5_production_milestone_check.py` | D7.5 production milestone smoke |
+| `d7_5_1_portal_integration_review_check.py` | D7.5.1 cloud portal integration review gate |
 | `d7_4_partner_supplier_check.py` | D7.4 partner split & supplier confirmation smoke |
 | `d7_3_customer_confirmation_check.py` | D7.3 customer confirmation smoke |
 | `d6_2_pricing_foundation_check.py` | D6.2 pricing foundation smoke |
