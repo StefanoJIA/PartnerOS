@@ -26,8 +26,8 @@ REQUIRED_DOCS = (
     ("D6.1 design review", DOCS / "phase2" / "d6_1_quote_schema_api_design_review.md"),
 )
 
-# Post-D6.3 migrations beyond quote PDF export should not exist in D6.1 gate
-EXPECTED_HEAD_PREFIX = "0008_"
+# Post-D6.4 migrations beyond quote send tracking should not exist in D6.1 gate
+EXPECTED_HEAD_PREFIX = "0009_"
 
 # Allowed v1 quote paths during D6.2+ (preview + CRUD)
 ALLOWED_QUOTE_API_PREFIXES = ("/quotes/pricing", "/quotes")
@@ -80,7 +80,7 @@ def _new_migrations_after_d6_1() -> list[str]:
     bad: list[str] = []
     for path in sorted(ALEMBIC.glob("*.py")):
         name = path.name
-        if name.startswith(("0001_", "0002_", "0003_", "0004_", "0005_", "0006_", "0007_", "0008_")):
+        if name.startswith(("0001_", "0002_", "0003_", "0004_", "0005_", "0006_", "0007_", "0008_", "0009_")):
             continue
         bad.append(name)
     return bad

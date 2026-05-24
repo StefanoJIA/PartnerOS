@@ -27,7 +27,7 @@ Phase 2 builds the formal **Customer Quote** system for intelliOffice. It does *
 | **D6.3** | Quote CRUD & Versioning | quotes, lines, totals, versions, mark-sent | **Implemented** ✅ |
 | **D6.3** | Quote Builder MVP | Create from lead, multi-partner lines | DB + API + UI |
 | **D6.4** | Quote PDF Export | Customer PDF, export metadata, download | **Implemented** ✅ |
-| **D6.5** | Quote Versioning & Send Tracking | Revisions, send events, acceptance | Workflow + audit |
+| **D6.5** | Quote Send Tracking & Delivery Log | delivery logs, timeline, follow-up | **Implemented** ✅ |
 | **D6.6** | Quote-to-Order Readiness Gate | Convert readiness check, manual order bridge | Gate only — no auto-convert |
 
 **Out of scope (Phase 2 MVP):** production milestones, shipment tracking, inventory reservation, automatic email/LinkedIn send.

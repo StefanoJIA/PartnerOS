@@ -16,6 +16,7 @@ from app.models.quality import FactoryAudit, QualityDocument
 from app.models.customer_quotes import (
     Quote,
     QuoteAdjustment,
+    QuoteDeliveryLog,
     QuoteLineItem,
     QuotePdfExport,
     QuoteTerms,
@@ -72,6 +73,7 @@ __all__ = [
     "QuoteAdjustment",
     "QuoteLineItem",
     "QuotePdfExport",
+    "QuoteDeliveryLog",
     "QuoteTerms",
     "QuoteVersion",
     "Quotation",

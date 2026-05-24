@@ -24,6 +24,7 @@ from app.schemas.quotes import (
     QuoteUpdateIn,
     QuoteVersionCreateIn,
 )
+from app.services.quotes.quote_delivery_service import mark_sent_with_delivery
 from app.services.quotes.quote_service import (
     add_line_item,
     create_quote,
@@ -32,7 +33,6 @@ from app.services.quotes.quote_service import (
     get_quote,
     mark_expired,
     mark_ready,
-    mark_sent,
     quote_list_item,
     quote_to_dict,
     recalculate_quote,
@@ -348,9 +348,23 @@ def mark_sent_route(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    quote = mark_sent(db, quote_id, user=user, send_channel=body.send_channel)
+    result = mark_sent_with_delivery(
+        db,
+        quote_id,
+        user=user,
+        sent_channel=body.sent_channel,
+        send_channel=body.send_channel,
+        quote_version_id=body.quote_version_id,
+        pdf_export_id=body.pdf_export_id,
+        sent_to_name=body.sent_to_name,
+        sent_to_email=body.sent_to_email,
+        sent_to_company=body.sent_to_company,
+        sent_at=body.sent_at,
+        follow_up_date=body.follow_up_date,
+        note=body.note,
+    )
     rid = get_request_id(request)
-    return success_envelope(quote_to_dict(quote), request_id=rid)
+    return success_envelope(result, request_id=rid)
 
 
 @router.post("/{quote_id}/mark-expired")

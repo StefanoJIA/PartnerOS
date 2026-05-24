@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -104,7 +104,16 @@ class QuoteVersionCreateIn(BaseModel):
 
 
 class MarkSentIn(BaseModel):
+    quote_version_id: UUID | None = None
+    pdf_export_id: UUID | None = None
+    sent_channel: str | None = None
     send_channel: str | None = None
+    sent_to_name: str | None = None
+    sent_to_email: str | None = None
+    sent_to_company: str | None = None
+    sent_at: datetime | None = None
+    follow_up_date: date | None = None
+    note: str | None = None
 
 
 class ExportPdfIn(BaseModel):

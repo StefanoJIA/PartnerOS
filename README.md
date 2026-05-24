@@ -36,10 +36,10 @@
 - [D6.2.1 Excel Import Alignment](docs/phase2/d6_2_1_excel_import_alignment.md)
 - [Phase 2 Roadmap](docs/phase2/phase2_roadmap.md)
 
-Recommended next implementation stage: **D6.5 Quote Versioning & Send Tracking** (when authorized).
+Recommended next implementation stage: **D6.6 Quote-to-Order Readiness Gate** (when authorized).
 
-- [D6.3 Quote CRUD & Versioning](docs/phase2/d6_3_quote_crud_versioning.md)
 - [D6.4 Quote PDF Export](docs/phase2/d6_4_quote_pdf_export.md)
+- [D6.5 Quote Send Tracking & Delivery Log](docs/phase2/d6_5_quote_send_tracking_delivery_log.md)
 
 ---
 
@@ -86,6 +86,7 @@ python scripts/import_pricing_excel.py --file "../local_data/报价模型与格�
 python scripts/d6_2_1_excel_import_check.py   # D6.2.1 Excel import alignment
 python scripts/d6_3_quote_crud_check.py  # D6.3 quote CRUD smoke
 python scripts/d6_4_quote_pdf_export_check.py  # D6.4 quote PDF export smoke
+python scripts/d6_5_quote_send_tracking_check.py  # D6.5 send tracking smoke
 ```
 
 ### Port 8000 (legacy)
@@ -124,7 +125,7 @@ First-time setup: `python scripts/init_local_env.py` → edit `backend/.env` →
 | **Product-aware discovery draft** | **`/lead-intelligence`** · Product-Aware Draft panel (D5.15) |
 | **Soft quote handoff** | **`/lead-intelligence`** · Soft Quote Handoff panel (D5.18) |
 | **Quote input contract** | **`/lead-intelligence`** · Quote Input Contract panel (D5.19) |
-| **Customer quotes (D6.3–D6.4)** | **`/quotes`** · list / detail / new builder · **PDF export (D6.4)** |
+| **Customer quotes (D6.3–D6.5)** | **`/quotes`** · CRUD · PDF export · **delivery log & timeline (D6.5)** |
 | **Quote catalog (D6.2)** | **`/quote-catalog`** · partner/category filters · read-only list |
 | **Pricing preview (D6.2)** | **`/pricing-preview`** · preview only — no quote created |
 | **Daily ops dashboard** | **`/`** · Daily Operations + Recent Activity + End-of-Day Summary (D5.8–D5.10) |

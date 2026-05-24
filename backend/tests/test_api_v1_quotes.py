@@ -83,8 +83,20 @@ def quote_client(monkeypatch):
         lambda db, qid, user: quote,
     )
     monkeypatch.setattr(
-        "app.api.v1.routes.quotes.mark_sent",
-        lambda db, qid, user, send_channel=None: quote,
+        "app.api.v1.routes.quotes.mark_sent_with_delivery",
+        lambda db, qid, user, **kw: {
+            "quote_id": str(quote_id),
+            "status": "sent",
+            "delivery_log": {"id": str(uuid4()), "sent_channel": "email", "manual_sent": True},
+            "warnings": [],
+            "safety": {
+                "automatic_sending_enabled": False,
+                "email_sent_by_system": False,
+                "linkedin_sent_by_system": False,
+                "attachment_sent_by_system": False,
+                "order_created": False,
+            },
+        },
     )
 
     app.dependency_overrides[get_current_user] = lambda: user
@@ -119,6 +131,7 @@ def test_mark_sent_envelope(quote_client):
     body = r.json()
     assert body["ok"] is True
     assert body["data"]["safety"]["automatic_sending_enabled"] is False
+    assert body["data"]["status"] == "sent"
 
 
 def test_quote_safety_no_forbidden_words(quote_client):

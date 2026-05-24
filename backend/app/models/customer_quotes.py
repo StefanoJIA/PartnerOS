@@ -67,6 +67,10 @@ class Quote(Base, TimestampMixin, UserAuditMixin):
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     sent_by_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     send_channel: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    last_delivery_log_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("quote_delivery_logs.id", ondelete="SET NULL"), nullable=True
+    )
+    follow_up_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     line_items: Mapped[list["QuoteLineItem"]] = relationship("QuoteLineItem", back_populates="quote", cascade="all, delete-orphan")
@@ -74,6 +78,12 @@ class Quote(Base, TimestampMixin, UserAuditMixin):
     versions: Mapped[list["QuoteVersion"]] = relationship("QuoteVersion", back_populates="quote", cascade="all, delete-orphan")
     terms: Mapped["QuoteTerms | None"] = relationship("QuoteTerms", back_populates="quote", uselist=False, cascade="all, delete-orphan")
     pdf_exports: Mapped[list["QuotePdfExport"]] = relationship("QuotePdfExport", back_populates="quote", cascade="all, delete-orphan")
+    delivery_logs: Mapped[list["QuoteDeliveryLog"]] = relationship(
+        "QuoteDeliveryLog",
+        back_populates="quote",
+        cascade="all, delete-orphan",
+        foreign_keys="QuoteDeliveryLog.quote_id",
+    )
 
 
 class QuoteVersion(Base):
@@ -184,3 +194,24 @@ class QuotePdfExport(Base, TimestampMixin):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     quote: Mapped["Quote"] = relationship("Quote", back_populates="pdf_exports")
+
+
+class QuoteDeliveryLog(Base, TimestampMixin):
+    __tablename__ = "quote_delivery_logs"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    quote_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("quotes.id", ondelete="CASCADE"), nullable=False, index=True)
+    quote_version_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("quote_versions.id", ondelete="SET NULL"), nullable=True)
+    pdf_export_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("quote_pdf_exports.id", ondelete="SET NULL"), nullable=True)
+    sent_channel: Mapped[str] = mapped_column(String(32), nullable=False)
+    sent_to_name: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    sent_to_email: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    sent_to_company: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    sent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    sent_by_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    manual_sent: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    follow_up_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="recorded")
+
+    quote: Mapped["Quote"] = relationship("Quote", back_populates="delivery_logs", foreign_keys=[quote_id])

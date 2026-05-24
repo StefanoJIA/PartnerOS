@@ -249,6 +249,7 @@ def quote_to_dict(quote: Quote, *, include_internal: bool = True) -> dict[str, A
         "manual_sent": quote.manual_sent,
         "sent_at": quote.sent_at.isoformat() if quote.sent_at else None,
         "send_channel": quote.send_channel,
+        "follow_up_date": str(quote.follow_up_date) if quote.follow_up_date else None,
         "line_items": [_serialize_line(li, include_internal=include_internal) for li in sorted(quote.line_items, key=lambda x: x.line_number)],
         "adjustments": [_serialize_adjustment(a) for a in quote.adjustments],
         "versions_count": len(quote.versions),
@@ -526,21 +527,12 @@ def mark_sent(
     *,
     user: User,
     send_channel: str | None = None,
+    **kwargs: Any,
 ) -> Quote:
-    quote = get_quote(db, quote_id)
-    if quote.status != "ready_to_send":
-        raise ApiError(VALIDATION_ERROR, "quote must be ready_to_send before mark-sent", status_code=400)
-    if derived_expired(quote) or quote.status == "expired":
-        raise ApiError(VALIDATION_ERROR, "expired quote cannot be marked sent", status_code=400)
-    quote.status = "sent"
-    quote.manual_sent = True
-    quote.sent_at = datetime.now(timezone.utc)
-    quote.sent_by_id = user.id
-    quote.send_channel = send_channel
-    quote.updated_by_id = user.id
-    db.commit()
-    db.refresh(quote)
-    return quote
+    from app.services.quotes.quote_delivery_service import mark_sent_with_delivery
+
+    mark_sent_with_delivery(db, quote_id, user=user, send_channel=send_channel, **kwargs)
+    return get_quote(db, quote_id)
 
 
 def mark_expired(db: Session, quote_id: UUID, *, user: User) -> Quote:

@@ -80,6 +80,22 @@ Stop-Process -Id <PID> -Force
 
 Fallback：`$env:BACKEND_BASE_URL="http://127.0.0.1:8013"` 与相同 `VITE_API_PROXY_TARGET`。
 
+## D6.5 Quote Send Tracking & Delivery Log
+
+D6.5 records **manual quote delivery** — mark-sent creates a delivery log; intelliOffice does not send email or attachments.
+
+| URL / API | Purpose |
+|-----------|---------|
+| `/quotes/:id` | Mark as Sent form, delivery logs, timeline |
+| `POST /api/v1/quotes/{id}/mark-sent` | Record manual delivery |
+| `GET /api/v1/quotes/{id}/delivery-logs` | Delivery history |
+| `GET /api/v1/quotes/{id}/timeline` | Quote timeline |
+| `GET /api/v1/quotes/delivery-due` | Follow-up due queue |
+
+```powershell
+python scripts/d6_5_quote_send_tracking_check.py
+```
+
 ## D6.4 Quote PDF Export
 
 D6.4 adds **customer PDF generation and download** — export does not send the quote or create orders.
@@ -249,6 +265,7 @@ python scripts/daily_work_summary.py
 | `d6_2_1_excel_import_check.py` | D6.2.1 Excel import alignment smoke |
 | `d6_3_quote_crud_check.py` | D6.3 quote CRUD smoke |
 | `d6_4_quote_pdf_export_check.py` | D6.4 quote PDF export smoke |
+| `d6_5_quote_send_tracking_check.py` | D6.5 send tracking smoke |
 | `d6_2_pricing_foundation_check.py` | D6.2 pricing foundation smoke |
 | `portal_readiness_check.py` | Portal v1 端点 |
 | `portal_consumer_check.py` | 外部 Portal 契约 |
