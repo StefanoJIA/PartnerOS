@@ -26,5 +26,6 @@ class ApiError(Exception):
 # Stable error codes (extend per domain in future phases)
 NOT_FOUND = "NOT_FOUND"
 VALIDATION_ERROR = "VALIDATION_ERROR"
+CONFLICT = "CONFLICT"
 INTERNAL_ERROR = "INTERNAL_ERROR"
 SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE"

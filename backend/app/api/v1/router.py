@@ -6,6 +6,7 @@ from fastapi import APIRouter
 
 from app.api.v1.routes import (
     fx_rates,
+    orders,
     portal,
     pricing,
     products,
@@ -24,5 +25,6 @@ v1_router.include_router(fx_rates.router)
 v1_router.include_router(pricing.router)
 v1_router.include_router(quote_delivery.router)
 v1_router.include_router(quote_order_readiness.router)
+v1_router.include_router(orders.router)
 v1_router.include_router(quotes.router)
 v1_router.include_router(quote_pdf.router)

@@ -1,6 +1,6 @@
 # Phase 3 Roadmap — Order / Production / Shipment
 
-**Status:** Active planning · **D6 closed** · **D7.1 design complete** · **Date:** 2026-05-23
+**Status:** D7.2 implemented · **D6 closed** · **Date:** 2026-05-23
 
 Phase 3 builds the **Customer Order** module and downstream production/shipment foundations. D6 Quote MVP remains frozen.
 
@@ -22,7 +22,7 @@ Phase 3 builds the **Customer Order** module and downstream production/shipment 
 | Stage | Name | Scope | Status |
 |---|---|---|---|
 | **D7.1** | Order Schema & API Design Review | Data model, lifecycle, API, permissions, safety | ✅ **Design complete** |
-| **D7.2** | Order CRUD MVP | `customer_orders`, `order_line_items`, from-quote API, list/detail/cancel | Planned |
+| **D7.2** | Order CRUD MVP | `customer_orders`, `order_line_items`, from-quote API, list/detail/cancel | ✅ **Implemented** |
 | **D7.3** | Customer Confirmation Flow | `order_confirmations`, confirm-customer API, status transitions | Planned |
 | **D7.4** | Partner Split & Supplier Confirmation | `order_partner_splits`, `supplier_confirmations` | Planned |
 | **D7.5** | Production Milestone Foundation | `production_milestones`, milestone API | Planned |
@@ -55,15 +55,16 @@ flowchart TD
 
 ---
 
-## D7.2 MVP Checklist (planned)
+## D7.2 MVP Checklist
 
-- [ ] Migration: `customer_orders`, `order_line_items`
-- [ ] `POST /api/v1/orders/from-quote`
-- [ ] Order list, detail, patch, cancel
-- [ ] Order timeline
-- [ ] Source quote linkage (read-only)
-- [ ] Safety flags on all responses
-- [ ] No production / shipment / payment
+- [x] Migration: `customer_orders`, `order_line_items`
+- [x] `POST /api/v1/orders/from-quote`
+- [x] Order list, detail, patch, cancel
+- [x] Order timeline
+- [x] Source quote linkage (read-only)
+- [x] Safety flags on all responses
+- [x] Frontend `/orders` pages
+- [x] No production / shipment / payment
 
 ---
 
@@ -81,6 +82,7 @@ flowchart TD
 
 ## Related Documents
 
+- [D7.2 Order CRUD MVP](d7_2_order_crud_mvp.md)
 - [D7.1 Order Schema & API Design Review](d7_1_order_schema_api_design_review.md)
 - [D7 Order Module Readiness Brief](d7_order_module_readiness_brief.md)
 - [D6 Final Release](../releases/d6_final_quote_mvp_release_20260523.md)

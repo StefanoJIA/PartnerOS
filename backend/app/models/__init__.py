@@ -13,6 +13,7 @@ from app.models.orders import Order, OrderItem, ProductionMilestone, ShippingRec
 from app.models.partners import ManufacturingPartner, PartnerCapability, PartnerContact
 from app.models.products import Product, ProductCategory, ProductDocument, ProductPartnerLink
 from app.models.quality import FactoryAudit, QualityDocument
+from app.models.customer_orders import CustomerOrder, OrderLineItem
 from app.models.customer_quotes import (
     Quote,
     QuoteAdjustment,
@@ -40,6 +41,7 @@ __all__ = [
     "CompanyEnrichmentSource",
     "CompanyEnrichmentSuggestion",
     "Contact",
+    "CustomerOrder",
     "FactoryAudit",
     "FxRate",
     "FieldVisitPlan",
@@ -57,6 +59,7 @@ __all__ = [
     "ObjectTag",
     "Order",
     "OrderItem",
+    "OrderLineItem",
     "OutreachTemplate",
     "PartnerCapability",
     "PartnerContact",

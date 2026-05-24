@@ -46,9 +46,9 @@
 
 **D7** is Order / Production / Shipment.
 
-**D7.1 Order Schema & API Design Review** is complete (design only — no order tables or APIs). Next implementation: **D7.2 Order CRUD MVP**.
+**D7.2 Order CRUD MVP** is implemented. Next: **D7.3 Customer Confirmation Flow** polish / **D7.4 Partner Split**.
 
-See [D7.1 Design Review](docs/phase3/d7_1_order_schema_api_design_review.md) · [Phase 3 Roadmap](docs/phase3/phase3_roadmap.md) · [D7 Readiness Brief](docs/phase3/d7_order_module_readiness_brief.md) · [Phase 2 Roadmap](docs/phase2/phase2_roadmap.md).
+See [D7.2 Order CRUD MVP](docs/phase3/d7_2_order_crud_mvp.md) · [D7.1 Design Review](docs/phase3/d7_1_order_schema_api_design_review.md) · [Phase 3 Roadmap](docs/phase3/phase3_roadmap.md).
 
 D6 implementation references:
 
@@ -106,6 +106,7 @@ python scripts/d6_5_quote_send_tracking_check.py  # D6.5 send tracking smoke
 python scripts/d6_6_quote_order_readiness_check.py  # D6.6 order readiness smoke
 python scripts/d6_final_closure_check.py  # D6.7 final closure gate
 python scripts/d7_1_design_readiness_check.py  # D7.1 design gate
+python scripts/d7_2_order_crud_check.py  # D7.2 order CRUD smoke
 ```
 
 ### Port 8000 (legacy)

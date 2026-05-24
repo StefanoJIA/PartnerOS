@@ -8,6 +8,12 @@ import QuoteDetailPage from './QuoteDetailPage.vue'
 
 vi.mock('vue-router', () => ({
   useRoute: () => ({ params: { id: 'q1' } }),
+  useRouter: () => ({ push: vi.fn() }),
+}))
+
+vi.mock('@/api/orders', () => ({
+  fetchOrders: vi.fn().mockResolvedValue({ items: [], total: 0 }),
+  createOrderFromQuote: vi.fn(),
 }))
 
 vi.mock('@/api/quotes', () => ({

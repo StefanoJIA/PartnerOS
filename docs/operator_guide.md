@@ -113,6 +113,21 @@ python scripts/d6_final_closure_check.py
 python scripts/d7_1_design_readiness_check.py
 ```
 
+## D7.2 Customer Orders (from sent quotes)
+
+| URL / API | Purpose |
+|-----------|---------|
+| `/orders` | Customer order list (D7.2) |
+| `/orders/:id` | Order detail, confirm, cancel, timeline |
+| `/quotes/:id` | Create Order button (Order Readiness section) |
+| `POST /api/v1/orders/from-quote` | Manual order creation |
+
+```powershell
+python scripts/d7_2_order_crud_check.py
+```
+
+**Safety:** Creating an order does not start production, notify suppliers, or create shipments.
+
 ## D7.1 Order Design (design only — not implemented)
 
 D7.1 completed the Order schema and API design review. **No order module exists yet.**
@@ -330,7 +345,7 @@ python scripts/daily_work_summary.py
 | `d6_5_quote_send_tracking_check.py` | D6.5 send tracking smoke |
 | `d6_6_quote_order_readiness_check.py` | D6.6 order readiness smoke |
 | `d6_final_closure_check.py` | D6.7 final closure gate |
-| `d7_1_design_readiness_check.py` | D7.1 design gate |
+| `d7_2_order_crud_check.py` | D7.2 order CRUD smoke |
 | `d6_2_pricing_foundation_check.py` | D6.2 pricing foundation smoke |
 | `portal_readiness_check.py` | Portal v1 端点 |
 | `portal_consumer_check.py` | 外部 Portal 契约 |

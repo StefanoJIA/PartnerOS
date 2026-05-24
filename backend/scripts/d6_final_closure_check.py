@@ -74,15 +74,26 @@ def _migration_head_ok() -> tuple[bool, str]:
     return False, f"current={current} head={head}"
 
 
-def _no_d6_order_migration() -> tuple[bool, str]:
+def _order_mvp_migration_ok() -> tuple[bool, str]:
     versions_dir = BACKEND_ROOT / "alembic" / "versions"
+    forbidden_tables = (
+        "supplier_confirmations",
+        "production_milestones",
+        "shipment_plans",
+        "order_partner_splits",
+    )
     for path in sorted(versions_dir.glob("*.py")):
-        if path.name.startswith("0010_"):
-            return False, f"unexpected migration {path.name}"
         text = path.read_text(encoding="utf-8").lower()
-        if "customer_order" in text and "readiness" not in path.name:
-            return False, path.name
-    return True, "head<=0009"
+        for tbl in forbidden_tables:
+            if tbl in text:
+                return False, f"{tbl} in {path.name}"
+        if path.name.startswith("0011_"):
+            return False, f"unexpected migration {path.name}"
+    if (versions_dir / "0010_order_crud_mvp.py").is_file():
+        t = (versions_dir / "0010_order_crud_mvp.py").read_text(encoding="utf-8").lower()
+        if "customer_orders" in t and "order_line_items" in t:
+            return True, "0010 order CRUD MVP only"
+    return True, "no D7 production/shipment tables"
 
 
 def main() -> int:
@@ -95,7 +106,7 @@ def main() -> int:
         Check("closure record"),
         Check("quote APIs"),
         Check("alembic at head"),
-        Check("no order implementation"),
+        Check("order MVP scope"),
         Check("safety boundaries"),
     ]
 
@@ -118,7 +129,7 @@ def main() -> int:
     else:
         checks[5].fail(mig_detail)
 
-    no_order_mig, order_mig_detail = _no_d6_order_migration()
+    no_order_mig, order_mig_detail = _order_mvp_migration_ok()
     if no_order_mig:
         checks[6].pass_(order_mig_detail)
     else:

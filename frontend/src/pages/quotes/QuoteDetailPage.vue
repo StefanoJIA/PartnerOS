@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { createOrderFromQuote, fetchOrders, type OrderSummary } from '@/api/orders'
 import {
   exportQuotePdf,
   fetchDeliveryLogs,
@@ -22,6 +23,7 @@ import {
 } from '@/api/quotes'
 
 const route = useRoute()
+const router = useRouter()
 const loading = ref(true)
 const error = ref('')
 const successMsg = ref('')
@@ -43,6 +45,14 @@ const readiness = ref<OrderReadiness | null>(null)
 const readinessLoading = ref(false)
 const readinessError = ref('')
 const copyMsg = ref('')
+const activeOrder = ref<OrderSummary | null>(null)
+const createOrderLoading = ref(false)
+const showCreateOrderModal = ref(false)
+const createWithConfirmation = ref(false)
+const createOrderNote = ref('')
+
+const CREATE_ORDER_SAFETY =
+  'Creating an order does not start production, notify suppliers, create shipments, or confirm inventory, certifications, or lead times.'
 
 const READINESS_SAFETY =
   'This readiness check does not create an order, start production, create shipment, or confirm customer acceptance. Conversion to order must be a separate manual action in a future stage.'
@@ -72,6 +82,46 @@ const warnings = computed(() => quote.value?.warnings ?? [])
 const canMarkSent = computed(
   () => quote.value && (quote.value.status === 'ready_to_send' || quote.value.status === 'sent') && !quote.value.derived_expired,
 )
+const canCreateOrder = computed(
+  () =>
+    quote.value?.status === 'sent' &&
+    !quote.value.derived_expired &&
+    !activeOrder.value &&
+    readiness.value &&
+    readiness.value.blocking_items.length === 0,
+)
+
+async function loadActiveOrder() {
+  if (!quote.value) return
+  try {
+    const data = await fetchOrders({ quote_id: quote.value.id })
+    activeOrder.value = data.items.find((o) => o.status !== 'cancelled') ?? null
+  } catch {
+    activeOrder.value = null
+  }
+}
+
+async function onCreateOrder() {
+  if (!quote.value) return
+  createOrderLoading.value = true
+  readinessError.value = ''
+  try {
+    const payload: Parameters<typeof createOrderFromQuote>[0] = { quote_id: quote.value.id }
+    if (createWithConfirmation.value) {
+      payload.customer_confirmation = {
+        type: 'email',
+        note: createOrderNote.value || 'Customer confirmed by email.',
+      }
+    }
+    const result = await createOrderFromQuote(payload)
+    showCreateOrderModal.value = false
+    router.push({ name: 'order-detail', params: { orderId: result.order.id } })
+  } catch (e: unknown) {
+    readinessError.value = e instanceof Error ? e.message : 'Create order failed'
+  } finally {
+    createOrderLoading.value = false
+  }
+}
 
 async function loadPdfExports() {
   if (!quote.value) return
@@ -177,7 +227,7 @@ async function load() {
   try {
     quote.value = await fetchQuote(String(route.params.id))
     prefillDeliveryForm()
-    await Promise.all([loadPdfExports(), loadDeliveryLogs(), loadTimeline(), loadVersions(), loadReadiness()])
+    await Promise.all([loadPdfExports(), loadDeliveryLogs(), loadTimeline(), loadVersions(), loadReadiness(), loadActiveOrder()])
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : 'Failed to load quote'
   } finally {
@@ -371,6 +421,32 @@ onMounted(load)
         <el-button :loading="readinessLoading" @click="loadReadiness">Refresh Readiness</el-button>
         <el-button v-if="readiness" @click="copyOrderSummary">Copy Order Input Summary</el-button>
         <el-button v-if="readiness" @click="copyMissingItems">Copy Missing Items</el-button>
+        <el-button v-if="canCreateOrder" type="primary" @click="showCreateOrderModal = true">Create Order</el-button>
+        <el-button
+          v-else-if="activeOrder"
+          type="primary"
+          @click="router.push({ name: 'order-detail', params: { orderId: activeOrder.id } })"
+        >
+          View Order ({{ activeOrder.order_number }})
+        </el-button>
+
+        <el-dialog v-model="showCreateOrderModal" title="Create Order from Quote" width="520px">
+          <el-alert type="warning" :closable="false" show-icon title="Safety" :description="CREATE_ORDER_SAFETY" class="mb" />
+          <el-checkbox v-model="createWithConfirmation">Include customer confirmation (status → confirmed)</el-checkbox>
+          <p v-if="!createWithConfirmation" class="hint">Without confirmation, order status will be pending_customer_confirmation.</p>
+          <el-input
+            v-if="createWithConfirmation"
+            v-model="createOrderNote"
+            class="mt"
+            type="textarea"
+            placeholder="Confirmation note"
+            :rows="2"
+          />
+          <template #footer>
+            <el-button @click="showCreateOrderModal = false">Cancel</el-button>
+            <el-button type="primary" :loading="createOrderLoading" @click="onCreateOrder">Create Order</el-button>
+          </template>
+        </el-dialog>
 
         <div v-if="readinessLoading" v-loading="true" style="min-height: 100px; margin-top: 16px" />
         <template v-else-if="readiness">
@@ -463,6 +539,8 @@ onMounted(load)
 .section { border-top: 1px solid var(--el-border-color); padding-top: 16px; }
 .delivery-form { max-width: 640px; background: var(--el-fill-color-light); padding: 16px; border-radius: 8px; }
 .readiness-header { display: flex; align-items: center; gap: 16px; }
+.hint { font-size: 13px; color: #666; margin-top: 8px; }
+.mt { margin-top: 12px; }
 .score { font-weight: 600; }
 .next-action { margin: 12px 0; color: var(--el-text-color-secondary); }
 </style>
