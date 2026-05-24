@@ -1,4 +1,4 @@
-"""V1 Customer Order CRUD routes (D7.2)."""
+"""V1 Customer Order CRUD routes (D7.2+)."""
 
 from __future__ import annotations
 
@@ -19,11 +19,17 @@ from app.schemas.customer_orders import (
     ConfirmCustomerIn,
     OrderFromQuoteIn,
     OrderUpdateIn,
+    VoidConfirmationIn,
+)
+from app.services.orders.order_confirmation_service import (
+    add_customer_confirmation,
+    confirmation_to_dict,
+    list_customer_confirmations,
+    void_customer_confirmation,
 )
 from app.services.orders.order_service import (
     ORDER_SAFETY_RESPONSE,
     cancel_order,
-    confirm_customer,
     create_order_from_quote,
     get_order,
     order_detail_payload,
@@ -34,6 +40,16 @@ from app.services.orders.order_service import (
 from app.services.orders.order_timeline import build_order_timeline
 
 router = APIRouter(prefix="/orders", tags=["v1-orders"])
+
+
+def _confirmation_response(db: Session, result: dict) -> dict:
+    order = result["order"]
+    payload = order_detail_payload(db, order)
+    payload["confirmation"] = confirmation_to_dict(result["confirmation"])
+    payload["status_changed"] = result.get("status_changed", False)
+    payload["warnings"] = result.get("warnings") or []
+    payload["safety"] = result.get("safety") or payload.get("safety")
+    return payload
 
 
 @router.post("/from-quote")
@@ -58,12 +74,8 @@ def create_order_from_quote_route(
         customer_notes=body.customer_notes,
     )
     rid = get_request_id(request)
-    payload = {
-        "order": order_to_dict(order),
-        "line_items": order_to_dict(order)["line_items"],
-        "source_quote": order_detail_payload(db, order)["source_quote"],
-        "safety": ORDER_SAFETY_RESPONSE,
-    }
+    payload = order_detail_payload(db, order)
+    payload["line_items"] = order_to_dict(order)["line_items"]
     return success_envelope(payload, request_id=rid, status_code=201)
 
 
@@ -140,25 +152,59 @@ def confirm_customer_route(
     body: ConfirmCustomerIn,
     request: Request,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    user: User = Depends(get_current_user),
 ):
-    confirmed_at = None
-    if body.confirmed_at:
-        if isinstance(body.confirmed_at, str):
-            from datetime import datetime
-
-            confirmed_at = datetime.fromisoformat(body.confirmed_at.replace("Z", "+00:00"))
-        else:
-            confirmed_at = body.confirmed_at
-    order = confirm_customer(
+    result = add_customer_confirmation(
         db,
+        user,
         order_id,
         confirmation_type=body.confirmation_type,
-        confirmed_at=confirmed_at,
+        confirmed_at=body.confirmed_at,
+        confirmed_by_name=body.confirmed_by_name,
+        confirmed_by_email=body.confirmed_by_email,
+        confirmed_by_company=body.confirmed_by_company,
+        source_channel=body.source_channel,
+        evidence_reference=body.evidence_reference,
+        evidence_filename=body.evidence_filename,
         note=body.note,
     )
     rid = get_request_id(request)
-    return success_envelope(order_detail_payload(db, order), request_id=rid)
+    return success_envelope(_confirmation_response(db, result), request_id=rid)
+
+
+@router.get("/{order_id}/confirmations")
+def list_confirmations_route(
+    order_id: UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    rows = list_customer_confirmations(db, order_id)
+    rid = get_request_id(request)
+    return success_envelope(
+        {"items": [confirmation_to_dict(r) for r in rows], "total": len(rows)},
+        request_id=rid,
+    )
+
+
+@router.post("/{order_id}/confirmations/{confirmation_id}/void")
+def void_confirmation_route(
+    order_id: UUID,
+    confirmation_id: UUID,
+    body: VoidConfirmationIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    result = void_customer_confirmation(
+        db, user, order_id, confirmation_id, reason=body.reason
+    )
+    rid = get_request_id(request)
+    payload = order_detail_payload(db, result["order"])
+    payload["confirmation"] = confirmation_to_dict(result["confirmation"])
+    payload["warnings"] = result.get("warnings") or []
+    payload["safety"] = result.get("safety")
+    return success_envelope(payload, request_id=rid)
 
 
 @router.post("/{order_id}/cancel")

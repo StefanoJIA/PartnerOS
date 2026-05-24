@@ -87,13 +87,17 @@ def _order_mvp_migration_ok() -> tuple[bool, str]:
         for tbl in forbidden_tables:
             if tbl in text:
                 return False, f"{tbl} in {path.name}"
-        if path.name.startswith("0011_"):
+        if path.name.startswith("0012_"):
             return False, f"unexpected migration {path.name}"
     if (versions_dir / "0010_order_crud_mvp.py").is_file():
-        t = (versions_dir / "0010_order_crud_mvp.py").read_text(encoding="utf-8").lower()
-        if "customer_orders" in t and "order_line_items" in t:
-            return True, "0010 order CRUD MVP only"
-    return True, "no D7 production/shipment tables"
+        t10 = (versions_dir / "0010_order_crud_mvp.py").read_text(encoding="utf-8").lower()
+        if "customer_orders" not in t10:
+            return False, "0010 missing customer_orders"
+    if (versions_dir / "0011_order_customer_confirmations.py").is_file():
+        t11 = (versions_dir / "0011_order_customer_confirmations.py").read_text(encoding="utf-8").lower()
+        if "order_confirmations" not in t11:
+            return False, "0011 missing order_confirmations"
+    return True, "0010-0011 order MVP + confirmations only"
 
 
 def main() -> int:

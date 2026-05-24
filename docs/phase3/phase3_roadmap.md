@@ -23,7 +23,7 @@ Phase 3 builds the **Customer Order** module and downstream production/shipment 
 |---|---|---|---|
 | **D7.1** | Order Schema & API Design Review | Data model, lifecycle, API, permissions, safety | ✅ **Design complete** |
 | **D7.2** | Order CRUD MVP | `customer_orders`, `order_line_items`, from-quote API, list/detail/cancel | ✅ **Implemented** |
-| **D7.3** | Customer Confirmation Flow | `order_confirmations`, confirm-customer API, status transitions | Planned |
+| **D7.3** | Customer Confirmation Flow | `order_confirmations`, add/list/void, timeline | ✅ **Implemented** |
 | **D7.4** | Partner Split & Supplier Confirmation | `order_partner_splits`, `supplier_confirmations` | Planned |
 | **D7.5** | Production Milestone Foundation | `production_milestones`, milestone API | Planned |
 | **D7.6** | Shipment Tracking Foundation | `shipment_plans`, shipment API | Planned |

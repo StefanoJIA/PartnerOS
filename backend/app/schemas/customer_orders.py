@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, field_validator
 
 from app.models.customer_orders import CUSTOMER_CONFIRMATION_TYPES
 
@@ -57,8 +57,14 @@ class OrderUpdateIn(BaseModel):
 
 
 class ConfirmCustomerIn(BaseModel):
-    confirmation_type: str = Field(..., alias="confirmation_type")
+    confirmation_type: str
     confirmed_at: datetime | str | None = None
+    confirmed_by_name: str | None = None
+    confirmed_by_email: str | None = None
+    confirmed_by_company: str | None = None
+    source_channel: str | None = None
+    evidence_reference: str | None = None
+    evidence_filename: str | None = None
     note: str | None = None
 
     @field_validator("confirmation_type")
@@ -68,7 +74,9 @@ class ConfirmCustomerIn(BaseModel):
             raise ValueError(f"confirmation_type must be one of {CUSTOMER_CONFIRMATION_TYPES}")
         return v
 
-    model_config = {"populate_by_name": True}
+
+class VoidConfirmationIn(BaseModel):
+    reason: str | None = None
 
 
 class CancelOrderIn(BaseModel):

@@ -52,6 +52,19 @@ CUSTOMER_CONFIRMATION_TYPES = (
     "other",
 )
 
+CONFIRMATION_STRENGTHS = ("strong", "medium", "weak")
+
+CONFIRMATION_STATUSES = ("active", "voided")
+
+STRENGTH_BY_TYPE = {
+    "purchase_order": "strong",
+    "signed_quote": "strong",
+    "email": "medium",
+    "verbal": "weak",
+    "internal_note": "weak",
+    "other": "weak",
+}
+
 
 class CustomerOrder(Base, TimestampMixin):
     __tablename__ = "customer_orders"
@@ -108,6 +121,37 @@ class CustomerOrder(Base, TimestampMixin):
     line_items: Mapped[list["OrderLineItem"]] = relationship(
         "OrderLineItem", back_populates="order", cascade="all, delete-orphan"
     )
+    confirmations: Mapped[list["OrderConfirmation"]] = relationship(
+        "OrderConfirmation", back_populates="order", cascade="all, delete-orphan"
+    )
+
+
+class OrderConfirmation(Base, TimestampMixin):
+    __tablename__ = "order_confirmations"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    order_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("customer_orders.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    confirmation_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    confirmation_strength: Mapped[str] = mapped_column(String(16), nullable=False)
+    confirmed_by_name: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    confirmed_by_email: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    confirmed_by_company: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    confirmed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    source_channel: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    evidence_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
+    evidence_filename: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    evidence_storage_path: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="active", index=True)
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    voided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    voided_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    order: Mapped["CustomerOrder"] = relationship("CustomerOrder", back_populates="confirmations")
 
 
 class OrderLineItem(Base, TimestampMixin):

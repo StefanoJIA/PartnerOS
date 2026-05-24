@@ -128,20 +128,22 @@ python scripts/d7_2_order_crud_check.py
 
 **Safety:** Creating an order does not start production, notify suppliers, or create shipments.
 
-## D7.1 Order Design (design only — not implemented)
+## D7.3 Customer Confirmations
 
-D7.1 completed the Order schema and API design review. **No order module exists yet.**
+| URL / API | Purpose |
+|-----------|---------|
+| `/orders/:id` | Confirmation list, add, void |
+| `POST /api/v1/orders/{id}/confirm-customer` | Record confirmation |
+| `GET /api/v1/orders/{id}/confirmations` | List confirmations |
+| `POST /api/v1/orders/{id}/confirmations/{id}/void` | Void confirmation |
 
-| Document | Purpose |
-|----------|---------|
-| [D7.1 Design Review](../phase3/d7_1_order_schema_api_design_review.md) | Data model, lifecycle, API, permissions |
-| [Phase 3 Roadmap](../phase3/phase3_roadmap.md) | D7.2–D7.7 stages |
+```powershell
+python scripts/d7_3_customer_confirmation_check.py
+```
 
-**D7 safety (mandatory until implemented):**
+Recording confirmation does not notify suppliers or start production.
 
-- Order creation is **not available** in D6 or D7.1
-- Quote readiness does **not** create orders
-- Production and shipment are **future** D7.5–D7.6 stages
+## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate
 
@@ -345,7 +347,7 @@ python scripts/daily_work_summary.py
 | `d6_5_quote_send_tracking_check.py` | D6.5 send tracking smoke |
 | `d6_6_quote_order_readiness_check.py` | D6.6 order readiness smoke |
 | `d6_final_closure_check.py` | D6.7 final closure gate |
-| `d7_2_order_crud_check.py` | D7.2 order CRUD smoke |
+| `d7_3_customer_confirmation_check.py` | D7.3 customer confirmation smoke |
 | `d6_2_pricing_foundation_check.py` | D6.2 pricing foundation smoke |
 | `portal_readiness_check.py` | Portal v1 端点 |
 | `portal_consumer_check.py` | 外部 Portal 契约 |

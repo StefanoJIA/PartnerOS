@@ -1,4 +1,4 @@
-"""Customer Order timeline builder (D7.2)."""
+"""Customer Order timeline builder (D7.2+)."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.models import User
+from app.models.customer_orders import OrderConfirmation
 from app.services.orders.order_service import get_order
 
 
@@ -35,24 +36,45 @@ def build_order_timeline(db: Session, order_id: UUID) -> dict[str, Any]:
                 "meta": {
                     "order_number": order.order_number,
                     "source_quote_id": str(order.source_quote_id),
-                    "initial_status": order.status if order.status == "pending_customer_confirmation" else "pending_customer_confirmation",
                 },
             }
         )
 
-    if order.customer_confirmed_at and order.status == "confirmed":
-        items.append(
-            {
-                "type": "customer_confirmed",
-                "title": "Customer confirmation recorded",
-                "timestamp": order.customer_confirmed_at.isoformat(),
-                "actor": "",
-                "meta": {
-                    "confirmation_type": order.customer_confirmation_method,
-                    "note": order.customer_confirmation_note,
-                },
-            }
-        )
+    confirmations = (
+        db.query(OrderConfirmation)
+        .filter(OrderConfirmation.order_id == order_id)
+        .order_by(OrderConfirmation.confirmed_at.asc())
+        .all()
+    )
+    for conf in confirmations:
+        if conf.status == "active":
+            items.append(
+                {
+                    "type": "customer_confirmation_added",
+                    "title": "Customer confirmation recorded",
+                    "timestamp": conf.confirmed_at.isoformat() if conf.confirmed_at else None,
+                    "actor": "",
+                    "meta": {
+                        "confirmation_type": conf.confirmation_type,
+                        "confirmation_strength": conf.confirmation_strength,
+                        "confirmed_by_name": conf.confirmed_by_name,
+                        "confirmation_id": str(conf.id),
+                    },
+                }
+            )
+        elif conf.status == "voided" and conf.voided_at:
+            items.append(
+                {
+                    "type": "customer_confirmation_voided",
+                    "title": "Customer confirmation voided",
+                    "timestamp": conf.voided_at.isoformat(),
+                    "actor": "",
+                    "meta": {
+                        "confirmation_id": str(conf.id),
+                        "reason": conf.voided_reason,
+                    },
+                }
+            )
 
     if order.cancelled_at and order.status == "cancelled":
         items.append(

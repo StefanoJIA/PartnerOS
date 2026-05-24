@@ -3,6 +3,8 @@ import type { V1Envelope } from '@/api/quotes'
 
 export interface OrderSafety {
   order_created: boolean
+  order_confirmed: boolean
+  customer_confirmation_recorded: boolean
   production_started: boolean
   shipment_created: boolean
   supplier_notified: boolean
@@ -10,6 +12,24 @@ export interface OrderSafety {
   inventory_promised: boolean
   certification_promised: boolean
   lead_time_promised: boolean
+  payment_received: boolean
+}
+
+export interface OrderConfirmationRecord {
+  id: string
+  order_id: string
+  confirmation_type: string
+  confirmation_strength: string
+  confirmed_by_name: string | null
+  confirmed_by_email: string | null
+  confirmed_by_company: string | null
+  confirmed_at: string | null
+  source_channel: string | null
+  evidence_reference: string | null
+  status: string
+  note: string | null
+  voided_at: string | null
+  voided_reason: string | null
 }
 
 export interface OrderLineItem {
@@ -54,12 +74,15 @@ export interface OrderDetail extends OrderSummary {
   shipping_terms: string | null
   internal_notes: string | null
   customer_notes: string | null
-  customer_confirmation_method: string | null
-  customer_confirmation_note: string | null
-  cancelled_at: string | null
-  cancelled_reason: string | null
   line_items: OrderLineItem[]
   source_quote?: { quote_id: string; quote_number: string; status: string }
+  confirmation_summary?: {
+    active_count: number
+    latest: OrderConfirmationRecord | null
+    warnings: string[]
+  }
+  confirmation?: OrderConfirmationRecord
+  warnings?: string[]
   timeline?: OrderTimelineItem[]
 }
 
@@ -78,6 +101,17 @@ export interface OrderListData {
   limit: number
 }
 
+export interface ConfirmCustomerPayload {
+  confirmation_type: string
+  confirmed_at?: string
+  confirmed_by_name?: string
+  confirmed_by_email?: string
+  confirmed_by_company?: string
+  source_channel?: string
+  evidence_reference?: string
+  note?: string
+}
+
 export interface CreateOrderFromQuotePayload {
   quote_id: string
   customer_confirmation?: {
@@ -87,6 +121,11 @@ export interface CreateOrderFromQuotePayload {
   }
   internal_notes?: string
   customer_notes?: string
+}
+
+export interface ConfirmCustomerResult extends OrderDetail {
+  confirmation?: OrderConfirmationRecord
+  status_changed?: boolean
 }
 
 export async function fetchOrders(params?: {
@@ -112,23 +151,28 @@ export async function fetchOrder(id: string): Promise<OrderDetail> {
   return data.data
 }
 
-export async function createOrderFromQuote(payload: CreateOrderFromQuotePayload): Promise<{
-  order: OrderDetail
-  line_items: OrderLineItem[]
-  safety: OrderSafety
-}> {
-  const { data } = await http.post<V1Envelope<{ order: OrderDetail; line_items: OrderLineItem[]; safety: OrderSafety }>>(
-    '/v1/orders/from-quote',
-    payload,
+export async function fetchOrderConfirmations(orderId: string): Promise<{ items: OrderConfirmationRecord[]; total: number }> {
+  const { data } = await http.get<V1Envelope<{ items: OrderConfirmationRecord[]; total: number }>>(
+    `/v1/orders/${orderId}/confirmations`,
   )
   return data.data
 }
 
-export async function confirmOrderCustomer(
-  orderId: string,
-  payload: { confirmation_type: string; note?: string },
-): Promise<OrderDetail> {
-  const { data } = await http.post<V1Envelope<OrderDetail>>(`/v1/orders/${orderId}/confirm-customer`, payload)
+export async function createOrderFromQuote(payload: CreateOrderFromQuotePayload): Promise<OrderDetail> {
+  const { data } = await http.post<V1Envelope<OrderDetail>>('/v1/orders/from-quote', payload)
+  return data.data
+}
+
+export async function confirmOrderCustomer(orderId: string, payload: ConfirmCustomerPayload): Promise<ConfirmCustomerResult> {
+  const { data } = await http.post<V1Envelope<ConfirmCustomerResult>>(`/v1/orders/${orderId}/confirm-customer`, payload)
+  return data.data
+}
+
+export async function voidOrderConfirmation(orderId: string, confirmationId: string, reason?: string): Promise<OrderDetail> {
+  const { data } = await http.post<V1Envelope<OrderDetail>>(
+    `/v1/orders/${orderId}/confirmations/${confirmationId}/void`,
+    { reason },
+  )
   return data.data
 }
 
@@ -142,4 +186,16 @@ export async function fetchOrderTimeline(orderId: string): Promise<{ items: Orde
     `/v1/orders/${orderId}/timeline`,
   )
   return data.data
+}
+
+export function strengthTagType(strength: string): '' | 'success' | 'warning' | 'danger' {
+  if (strength === 'strong') return 'success'
+  if (strength === 'medium') return 'warning'
+  return 'danger'
+}
+
+export function confirmationTypeWarning(type: string): string | null {
+  if (type === 'verbal') return 'This confirmation type should be reviewed before supplier or production actions.'
+  if (type === 'internal_note') return 'This confirmation type should be reviewed before supplier or production actions.'
+  return null
 }

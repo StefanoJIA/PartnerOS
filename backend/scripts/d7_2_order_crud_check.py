@@ -148,7 +148,7 @@ def main() -> int:
 
             blob = fr.text.lower()
             data = fr.json().get("data", {})
-            order = data.get("order", {})
+            order = data.get("order") or data
             safety = data.get("safety", {})
             order_id = order.get("id")
 
@@ -183,7 +183,9 @@ def main() -> int:
                     checks[9].pass_() if confirmed == "confirmed" else checks[9].fail(confirmed)
                     tr = client.get(f"{base}/api/v1/orders/{order_id}/timeline", headers=headers)
                     types = [i.get("type") for i in tr.json().get("data", {}).get("items", [])]
-                    if "order_created" in types and "customer_confirmed" in types:
+                    if "order_created" in types and (
+                        "customer_confirmed" in types or "customer_confirmation_added" in types
+                    ):
                         checks[10].pass_(",".join(types))
                     else:
                         checks[10].fail(str(types))

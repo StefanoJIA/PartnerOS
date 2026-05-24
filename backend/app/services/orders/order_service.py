@@ -14,7 +14,9 @@ from app.models import User
 from app.models.customer_orders import (
     CUSTOMER_CONFIRMATION_TYPES,
     CustomerOrder,
+    OrderConfirmation,
     OrderLineItem,
+    STRENGTH_BY_TYPE,
 )
 from app.models.customer_quotes import Quote, QuoteLineItem
 from app.services.quotes.order_readiness import build_quote_order_readiness
@@ -22,6 +24,8 @@ from app.services.quotes.quote_service import derived_expired, get_quote
 
 ORDER_SAFETY: dict[str, bool] = {
     "order_created": True,
+    "order_confirmed": False,
+    "customer_confirmation_recorded": False,
     "production_started": False,
     "shipment_created": False,
     "supplier_notified": False,
@@ -29,6 +33,7 @@ ORDER_SAFETY: dict[str, bool] = {
     "inventory_promised": False,
     "certification_promised": False,
     "lead_time_promised": False,
+    "payment_received": False,
 }
 
 ORDER_SAFETY_RESPONSE: dict[str, bool] = dict(ORDER_SAFETY)
@@ -388,6 +393,19 @@ def create_order_from_quote(
         )
         db.add(oli)
 
+    if has_confirmation:
+        conf_row = OrderConfirmation(
+            order_id=order.id,
+            confirmation_type=confirmation_method,
+            confirmation_strength=STRENGTH_BY_TYPE.get(confirmation_method or "other", "weak"),
+            confirmed_at=customer_confirmed_at or datetime.now(timezone.utc),
+            source_channel=confirmation_method,
+            note=confirmation_note,
+            status="active",
+            created_by_id=user.id,
+        )
+        db.add(conf_row)
+
     db.commit()
     db.refresh(order)
     return order
@@ -433,34 +451,17 @@ def update_order(
     return order
 
 
-def confirm_customer(
-    db: Session,
-    order_id: UUID,
-    *,
-    confirmation_type: str,
-    confirmed_at: datetime | None = None,
-    note: str | None = None,
-) -> CustomerOrder:
-    order = get_order(db, order_id)
-    if order.status == "cancelled":
-        raise ApiError(VALIDATION_ERROR, "Cancelled order cannot be confirmed", status_code=400)
-    if order.status == "confirmed":
-        raise ApiError(VALIDATION_ERROR, "Order is already confirmed", status_code=400)
-    if confirmation_type not in CUSTOMER_CONFIRMATION_TYPES:
-        raise ApiError(VALIDATION_ERROR, f"Invalid confirmation type: {confirmation_type}", status_code=400)
+def order_detail_payload(db: Session, order: CustomerOrder) -> dict[str, Any]:
+    from app.services.orders.order_confirmation_service import confirmation_summary, confirmation_safety
 
-    now = confirmed_at or datetime.now(timezone.utc)
-    order.status = "confirmed"
-    order.customer_confirmed_at = now
-    order.customer_confirmation_method = confirmation_type
-    order.customer_confirmation_note = note
-    for li in order.line_items:
-        if li.status == "pending":
-            li.status = "confirmed"
-
-    db.commit()
-    db.refresh(order)
-    return order
+    payload = order_to_dict(order)
+    payload["source_quote"] = _source_quote_summary(db, order.source_quote_id)
+    summary = confirmation_summary(db, order)
+    payload["confirmation_summary"] = summary
+    payload["warnings"] = summary.get("warnings") or []
+    has_active = summary.get("active_count", 0) > 0
+    payload["safety"] = confirmation_safety(order_confirmed=has_active or order.status == "confirmed")
+    return payload
 
 
 def cancel_order(db: Session, order_id: UUID, *, reason: str | None = None) -> CustomerOrder:
@@ -478,9 +479,3 @@ def cancel_order(db: Session, order_id: UUID, *, reason: str | None = None) -> C
     db.commit()
     db.refresh(order)
     return order
-
-
-def order_detail_payload(db: Session, order: CustomerOrder) -> dict[str, Any]:
-    payload = order_to_dict(order)
-    payload["source_quote"] = _source_quote_summary(db, order.source_quote_id)
-    return payload

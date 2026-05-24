@@ -46,9 +46,9 @@
 
 **D7** is Order / Production / Shipment.
 
-**D7.2 Order CRUD MVP** is implemented. Next: **D7.3 Customer Confirmation Flow** polish / **D7.4 Partner Split**.
+**D7.3 Customer Confirmation Flow** is implemented. Next: **D7.4 Partner Split & Supplier Confirmation**.
 
-See [D7.2 Order CRUD MVP](docs/phase3/d7_2_order_crud_mvp.md) · [D7.1 Design Review](docs/phase3/d7_1_order_schema_api_design_review.md) · [Phase 3 Roadmap](docs/phase3/phase3_roadmap.md).
+See [D7.3 Customer Confirmation Flow](docs/phase3/d7_3_customer_confirmation_flow.md) · [D7.2 Order CRUD MVP](docs/phase3/d7_2_order_crud_mvp.md) · [Phase 3 Roadmap](docs/phase3/phase3_roadmap.md).
 
 D6 implementation references:
 
@@ -107,6 +107,7 @@ python scripts/d6_6_quote_order_readiness_check.py  # D6.6 order readiness smoke
 python scripts/d6_final_closure_check.py  # D6.7 final closure gate
 python scripts/d7_1_design_readiness_check.py  # D7.1 design gate
 python scripts/d7_2_order_crud_check.py  # D7.2 order CRUD smoke
+python scripts/d7_3_customer_confirmation_check.py  # D7.3 customer confirmation smoke
 ```
 
 ### Port 8000 (legacy)
