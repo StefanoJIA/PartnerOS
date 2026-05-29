@@ -12,6 +12,7 @@ from app.core.config import Settings, get_settings
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.errors import SERVICE_UNAVAILABLE, VALIDATION_ERROR, ApiError
+from app.core.permissions import PERM_PORTAL_READINESS, require_permission
 from app.core.request_id import get_request_id
 from app.core.responses import success_envelope
 from app.models import User
@@ -86,7 +87,7 @@ def portal_customer_products(
 def portal_customer_readiness(
     request: Request,
     settings: Settings = Depends(get_settings),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_permission(PERM_PORTAL_READINESS)),
 ):
     data = {
         "enabled": settings.PORTAL_CUSTOMER_API_ENABLED,

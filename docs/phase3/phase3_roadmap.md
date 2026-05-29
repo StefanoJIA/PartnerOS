@@ -1,6 +1,6 @@
 # Phase 3 Roadmap — Order / Production / Shipment
 
-**Status:** D7.9 implemented · **D6 closed** · **Date:** 2026-05-29
+**Status:** D8.1 implemented / **D6 closed** / **Date:** 2026-05-29
 
 Phase 3 builds the **Customer Order** module and downstream production/shipment foundations. D6 Quote MVP remains frozen.
 
@@ -31,6 +31,8 @@ Phase 3 builds the **Customer Order** module and downstream production/shipment 
 | **D7.7** | Customer Portal Bridge | `/api/v1/portal/customer/*` read API + auth, `feedback_tickets` MVP | ✅ **Implemented** |
 | **D7.8** | Service Portal UAT & Feedback Operations | consumer contract pack, staging readiness, feedback console | ✅ **Implemented** |
 | **D7.9** | Resource Center | customer document catalog + signed download | ✅ **Implemented** |
+| **D8.1** | RBAC / Scoped Access | role presets, route permission guards, `/auth/me` capabilities | Implemented |
+| **D8.2** | Runtime Hardening | staging/local doctor, token and storage checks | Next |
 | **D8** | Deployment & Integration Hardening | CORS, HTTPS, token rotation, cloud 联调 | Future |
 
 ---
@@ -50,6 +52,8 @@ flowchart TD
   D77[D7.7 Portal Bridge]
   D78[D7.8 Feedback]
   D79[D7.9 Resource Center]
+  D81[D8.1 RBAC]
+  D82[D8.2 Runtime Hardening]
   D8[D8 Integration Hardening]
 
   D6 --> D71
@@ -62,7 +66,9 @@ flowchart TD
   D76 --> D77
   D77 --> D78
   D78 --> D79
-  D79 --> D8
+  D79 --> D81
+  D81 --> D82
+  D82 --> D8
 ```
 
 ---
@@ -98,6 +104,7 @@ flowchart TD
 - [D7.6 Shipment Tracking Foundation](d7_6_shipment_tracking_foundation.md)
 - [D7.7 Customer Portal Bridge API](d7_7_customer_portal_bridge_api.md)
 - [D7.9 Resource Center](d7_9_resource_center.md)
+- [D8.1 RBAC and Scoped Access](d8_1_rbac_scoped_access.md)
 - [D7.2 Order CRUD MVP](d7_2_order_crud_mvp.md)
 - [D7.1 Order Schema & API Design Review](d7_1_order_schema_api_design_review.md)
 - [D7 Order Module Readiness Brief](d7_order_module_readiness_brief.md)

@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
+from app.core.permissions import permission_list
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models import User
 from app.schemas.auth import LoginRequest, TokenResponse, UserMe
@@ -23,7 +24,14 @@ def login(body: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
 
 @router.get("/me", response_model=UserMe)
 def me(user: User = Depends(get_current_user)) -> UserMe:
-    return UserMe.model_validate(user)
+    return UserMe(
+        id=user.id,
+        email=user.email,
+        full_name=user.full_name,
+        role_id=user.role_id,
+        role_name=user.role.name if user.role else None,
+        permissions=permission_list(user),
+    )
 
 
 @router.post("/logout")

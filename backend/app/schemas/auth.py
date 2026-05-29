@@ -18,5 +18,7 @@ class UserMe(BaseModel):
     email: EmailStr
     full_name: str
     role_id: UUID
+    role_name: str | None = None
+    permissions: list[str] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}

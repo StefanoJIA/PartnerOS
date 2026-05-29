@@ -9,7 +9,13 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.permissions import (
+    PERM_ORDERS_READ,
+    PERM_ORDERS_WRITE,
+    PERM_RESOURCES_READ,
+    PERM_RESOURCES_WRITE,
+    require_permission,
+)
 from app.core.request_id import get_request_id
 from app.core.responses import success_envelope
 from app.models import User
@@ -96,7 +102,7 @@ def create_order_from_quote_route(
     body: OrderFromQuoteIn,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission(PERM_ORDERS_WRITE)),
 ):
     order = create_order_from_quote(
         db,
@@ -130,7 +136,7 @@ def list_orders(
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_permission(PERM_ORDERS_READ)),
 ):
     q = db.query(CustomerOrder)
     if status:
@@ -162,7 +168,7 @@ def get_order_route(
     order_id: UUID,
     request: Request,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_permission(PERM_ORDERS_READ)),
 ):
     order = get_order(db, order_id)
     rid = get_request_id(request)
@@ -177,7 +183,7 @@ def patch_order_route(
     body: OrderUpdateIn,
     request: Request,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_permission(PERM_ORDERS_WRITE)),
 ):
     data = body.model_dump(exclude_unset=True)
     order = update_order(db, order_id, **data)
@@ -191,7 +197,7 @@ def confirm_customer_route(
     body: ConfirmCustomerIn,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission(PERM_ORDERS_WRITE)),
 ):
     result = add_customer_confirmation(
         db,
@@ -216,7 +222,7 @@ def list_confirmations_route(
     order_id: UUID,
     request: Request,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_permission(PERM_ORDERS_READ)),
 ):
     rows = list_customer_confirmations(db, order_id)
     rid = get_request_id(request)
@@ -233,7 +239,7 @@ def void_confirmation_route(
     body: VoidConfirmationIn,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission(PERM_ORDERS_WRITE)),
 ):
     result = void_customer_confirmation(
         db, user, order_id, confirmation_id, reason=body.reason
@@ -252,7 +258,7 @@ def cancel_order_route(
     body: CancelOrderIn,
     request: Request,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_permission(PERM_ORDERS_WRITE)),
 ):
     order = cancel_order(db, order_id, reason=body.reason)
     rid = get_request_id(request)
@@ -264,7 +270,7 @@ def order_timeline_route(
     order_id: UUID,
     request: Request,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_permission(PERM_ORDERS_READ)),
 ):
     rid = get_request_id(request)
     return success_envelope(build_order_timeline(db, order_id), request_id=rid)
@@ -275,7 +281,7 @@ def ensure_partner_splits_route(
     order_id: UUID,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission(PERM_ORDERS_WRITE)),
 ):
     result = ensure_partner_splits(db, user.id, order_id)
     rid = get_request_id(request)
@@ -289,7 +295,7 @@ def list_partner_splits_route(
     order_id: UUID,
     request: Request,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_permission(PERM_ORDERS_READ)),
 ):
     rows = get_partner_splits(db, order_id)
     rid = get_request_id(request)
@@ -305,7 +311,7 @@ def get_partner_split_route(
     split_id: UUID,
     request: Request,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_permission(PERM_ORDERS_READ)),
 ):
     rid = get_request_id(request)
     return success_envelope(get_partner_split_detail(db, order_id, split_id), request_id=rid)
@@ -318,7 +324,7 @@ def add_supplier_confirmation_route(
     body: SupplierConfirmationIn,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission(PERM_ORDERS_WRITE)),
 ):
     result = add_supplier_confirmation(
         db,
@@ -353,7 +359,7 @@ def list_supplier_confirmations_route(
     request: Request,
     split_id: UUID | None = None,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_permission(PERM_ORDERS_READ)),
 ):
     rows = list_supplier_confirmations(db, order_id, split_id=split_id)
     rid = get_request_id(request)
@@ -370,7 +376,7 @@ def void_supplier_confirmation_route(
     body: VoidSupplierConfirmationIn,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission(PERM_ORDERS_WRITE)),
 ):
     result = void_supplier_confirmation(
         db, user, order_id, confirmation_id, reason=body.reason
@@ -389,7 +395,7 @@ def ensure_production_milestones_route(
     split_id: UUID,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission(PERM_ORDERS_WRITE)),
 ):
     result = ensure_production_milestones(db, user, order_id, split_id)
     rid = get_request_id(request)
@@ -406,7 +412,7 @@ def list_order_production_milestones_route(
     status: str | None = None,
     milestone_type: str | None = None,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_permission(PERM_ORDERS_READ)),
 ):
     rows = list_production_milestones(
         db, order_id, partner_split_id=partner_split_id, status=status, milestone_type=milestone_type
@@ -424,7 +430,7 @@ def list_split_production_milestones_route(
     split_id: UUID,
     request: Request,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_permission(PERM_ORDERS_READ)),
 ):
     rows = list_production_milestones(db, order_id, partner_split_id=split_id)
     rid = get_request_id(request)
@@ -441,7 +447,7 @@ def update_production_milestone_route(
     body: ProductionMilestoneUpdateIn,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission(PERM_ORDERS_WRITE)),
 ):
     result = update_production_milestone(
         db,
@@ -467,7 +473,7 @@ def create_shipment_plan_route(
     body: ShipmentPlanCreateIn,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission(PERM_ORDERS_WRITE)),
 ):
     row = create_shipment_plan(
         db,
@@ -495,7 +501,7 @@ def list_shipment_plans_route(
     partner_split_id: UUID | None = None,
     status: str | None = None,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_permission(PERM_ORDERS_READ)),
 ):
     rows = list_shipment_plans(db, order_id, partner_split_id=partner_split_id, status=status)
     rid = get_request_id(request)
@@ -516,7 +522,7 @@ def update_shipment_plan_route(
     body: ShipmentPlanUpdateIn,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission(PERM_ORDERS_WRITE)),
 ):
     row = update_shipment_plan(
         db,
@@ -535,7 +541,7 @@ def create_order_resource_route(
     body: OrderResourceCreateIn,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission(PERM_RESOURCES_WRITE)),
 ):
     row = create_order_resource(
         db,
@@ -557,7 +563,7 @@ def list_order_resources_route(
     request: Request,
     include_archived: bool = False,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_permission(PERM_RESOURCES_READ)),
 ):
     return success_envelope(
         list_order_resources(db, order_id, include_archived=include_archived),
@@ -572,7 +578,7 @@ def patch_order_resource_route(
     body: OrderResourceUpdateIn,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission(PERM_RESOURCES_WRITE)),
 ):
     row = update_order_resource(
         db,

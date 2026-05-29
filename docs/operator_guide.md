@@ -257,6 +257,23 @@ python scripts/d7_9_resource_center_check.py
 
 Only resources with `status=published` and `customer_visible=true` appear in the Portal bridge. Resource Center does not send email, notify customers, create permanent public URLs, or expose storage keys/backend paths.
 
+## D8.1 RBAC / Scoped Access
+
+Internal users now resolve to explicit permissions from their role. Admin receives `*`, operator-style roles can write orders/resources/feedback, and Viewer can read but cannot perform operational writes.
+
+| Area | Read | Write |
+|------|------|-------|
+| Orders | `orders:read` | `orders:write` |
+| Order resources | `resources:read` | `resources:write` |
+| Feedback tickets | `feedback:read` | `feedback:write` |
+| Portal readiness | `portal:readiness` | n/a |
+
+```powershell
+python scripts/d8_1_rbac_scoped_access_check.py
+```
+
+`/api/auth/me` returns `role_name` and `permissions` for future UI control hiding. Customer portal bridge routes remain token-scoped and do not expose internal-only fields.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate

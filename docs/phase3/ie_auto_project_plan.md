@@ -86,8 +86,9 @@ As of the current repository state:
 | D7.7 Customer Portal Bridge API | Implemented |
 | D7.8 Service Portal UAT + Feedback Operations | Implemented |
 | D7.9 Resource Center | Implemented |
-| D8.1 RBAC / Scoped Access | Next recommended execution segment |
-| D8 Integration Hardening | Next major stage after D8.1 |
+| D8.1 RBAC / Scoped Access | Implemented |
+| D8.2 Runtime Hardening | Next recommended execution segment |
+| D8 Integration Hardening | Next major stage after D8.2 |
 
 ## 5. Non-Negotiable Safety Rules
 
@@ -134,21 +135,21 @@ The PDF repeats the same safety posture across AI, quote, order, production, shi
 
 ### Segment 2 - D8.1 RBAC and Scoped Access
 
-**Decision:** do this next.
+**Status:** implemented.
 
 **Goal:** move from broad internal authentication toward role and scope aware access.
 
 **Deliverables:**
 
 - Role definitions for internal Operator/Admin/Viewer style users.
-- Portal token scope model.
+- Permission helper and role preset fallback for existing roles.
 - Route-level permission matrix for internal feedback, orders, resources, and portal readiness.
 - Tests proving restricted users cannot access unsafe internal routes.
 
 **Acceptance:**
 
 - Internal users have explicit capabilities.
-- Portal access is scoped and cannot read internal-only fields or operational APIs.
+- Portal bridge access remains token-scoped and cannot read internal-only fields or operational APIs.
 
 ### Segment 3 - D8.2 Runtime Hardening
 
@@ -222,8 +223,8 @@ The recommended order is:
 
 ```text
 D7.9 Resource Center (done)
-  -> D8.1 RBAC / scoped access (next)
-  -> D8.2 Runtime hardening
+  -> D8.1 RBAC / scoped access (done)
+  -> D8.2 Runtime hardening (next)
   -> D8.3 service portal staging integration
   -> D8.4 Multi-partner operations dashboard
   -> D8.5 Market response intelligence
@@ -236,14 +237,14 @@ This keeps the customer portal capability complete before broadening into securi
 The next implementation brief should be:
 
 ```text
-D8.1 RBAC and Scoped Access
+D8.2 Runtime Hardening
 ```
 
 Minimum target:
 
-- Internal role definitions for Admin / Operator / Viewer.
-- Route-level permission matrix for orders, resources, feedback, portal readiness, and system config.
-- Portal token scope model for customer-facing APIs.
-- Tests proving restricted users cannot access unsafe internal routes.
+- Runtime readiness checks for DB, migrations, backend, frontend proxy target, portal config, and storage.
+- Clear local vs staging environment docs.
+- Token and secret check scripts.
+- Safer startup / doctor output for desktop and development modes.
 
-This is the cleanest next step because D7.9 completes the product/order/production/shipment/feedback/resource loop described in the PDF, so the next risk is access control and scoped integration hardening.
+D8.1 now establishes the access-control baseline, so the next risk is repeatable runtime hardening before staging integration.

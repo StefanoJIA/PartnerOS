@@ -5,6 +5,8 @@ import { http } from '@/api/http'
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('partneros_token'))
   const email = ref<string | null>(localStorage.getItem('partneros_email'))
+  const roleName = ref<string | null>(null)
+  const permissions = ref<string[]>([])
 
   function setSession(t: string, userEmail: string) {
     token.value = t
@@ -16,6 +18,8 @@ export const useAuthStore = defineStore('auth', () => {
   function clear() {
     token.value = null
     email.value = null
+    roleName.value = null
+    permissions.value = []
     localStorage.removeItem('partneros_token')
     localStorage.removeItem('partneros_email')
   }
@@ -28,8 +32,14 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchMe() {
     if (!token.value) return null
     const { data } = await http.get('/auth/me')
+    roleName.value = data.role_name ?? null
+    permissions.value = Array.isArray(data.permissions) ? data.permissions : []
     return data
   }
 
-  return { token, email, login, clear, fetchMe }
+  function can(permission: string) {
+    return permissions.value.includes('*') || permissions.value.includes(permission)
+  }
+
+  return { token, email, roleName, permissions, login, clear, fetchMe, can }
 })

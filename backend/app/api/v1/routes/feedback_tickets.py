@@ -8,8 +8,8 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
 from app.core.request_id import get_request_id
+from app.core.permissions import PERM_FEEDBACK_READ, PERM_FEEDBACK_WRITE, require_permission
 from app.core.responses import success_envelope
 from app.models import User
 from app.schemas.feedback_tickets import FeedbackTicketUpdateIn
@@ -33,7 +33,7 @@ def list_feedback_ticket_route(
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_permission(PERM_FEEDBACK_READ)),
 ):
     data = list_feedback_tickets(
         db,
@@ -52,7 +52,7 @@ def get_feedback_ticket_route(
     ticket_id: UUID,
     request: Request,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_permission(PERM_FEEDBACK_READ)),
 ):
     return success_envelope(ticket_to_dict(get_feedback_ticket(db, ticket_id)), request_id=get_request_id(request))
 
@@ -63,7 +63,7 @@ def patch_feedback_ticket_route(
     body: FeedbackTicketUpdateIn,
     request: Request,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_permission(PERM_FEEDBACK_WRITE)),
 ):
     row = update_feedback_ticket(
         db,

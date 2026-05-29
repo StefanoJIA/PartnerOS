@@ -1,17 +1,30 @@
 """Seed roles, admin user, and neutral demo partners/products (no default supplier priority)."""
 
 from app.core.database import SessionLocal
+from app.core.permissions import ROLE_PERMISSION_PRESETS
 from app.core.security import hash_password
 from app.models import ManufacturingPartner, Product, ProductPartnerLink, Role, User
+
+
+ROLE_NAMES = ["Admin", "Sales", "Supplier Manager", "Operations", "Viewer"]
+
+
+def _role_permissions(name: str) -> dict[str, list[str]]:
+    permissions = sorted(ROLE_PERMISSION_PRESETS.get(name.strip().lower(), set()))
+    return {"permissions": permissions}
 
 
 def main() -> None:
     db = SessionLocal()
     try:
         if db.query(Role).count() == 0:
-            for name in ["Admin", "Sales", "Supplier Manager", "Operations", "Viewer"]:
-                db.add(Role(name=name))
+            for name in ROLE_NAMES:
+                db.add(Role(name=name, permissions=_role_permissions(name)))
             db.commit()
+        for role in db.query(Role).all():
+            if not role.permissions:
+                role.permissions = _role_permissions(role.name)
+        db.commit()
         admin_role = db.query(Role).filter(Role.name == "Admin").first()
         if not admin_role:
             raise RuntimeError("Admin role missing")
