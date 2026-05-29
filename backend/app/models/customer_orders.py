@@ -119,6 +119,14 @@ MILESTONE_STATUSES = (
 
 MILESTONE_SOURCES = ("template", "manual", "imported", "system")
 
+SHIPMENT_PLAN_STATUSES = (
+    "draft",
+    "planned",
+    "shipped",
+    "delivered",
+    "cancelled",
+)
+
 
 class CustomerOrder(Base, TimestampMixin):
     __tablename__ = "customer_orders"
@@ -186,6 +194,9 @@ class CustomerOrder(Base, TimestampMixin):
     )
     production_milestones: Mapped[list["OrderProductionMilestone"]] = relationship(
         "OrderProductionMilestone", back_populates="order", cascade="all, delete-orphan"
+    )
+    shipment_plans: Mapped[list["ShipmentPlan"]] = relationship(
+        "ShipmentPlan", back_populates="order", cascade="all, delete-orphan"
     )
 
 
@@ -286,6 +297,9 @@ class OrderPartnerSplit(Base, TimestampMixin):
     production_milestones: Mapped[list["OrderProductionMilestone"]] = relationship(
         "OrderProductionMilestone", back_populates="partner_split", cascade="all, delete-orphan"
     )
+    shipment_plans: Mapped[list["ShipmentPlan"]] = relationship(
+        "ShipmentPlan", back_populates="partner_split"
+    )
 
 
 class SupplierConfirmation(Base, TimestampMixin):
@@ -356,3 +370,47 @@ class OrderProductionMilestone(Base, TimestampMixin):
 
     order: Mapped["CustomerOrder"] = relationship("CustomerOrder", back_populates="production_milestones")
     partner_split: Mapped["OrderPartnerSplit"] = relationship("OrderPartnerSplit", back_populates="production_milestones")
+
+
+class ShipmentPlan(Base, TimestampMixin):
+    __tablename__ = "shipment_plans"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    order_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("customer_orders.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    partner_split_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("order_partner_splits.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    shipment_method: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    incoterm: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    origin: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    destination: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    estimated_ship_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    estimated_arrival_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    tracking_number: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="draft", index=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+
+    order: Mapped["CustomerOrder"] = relationship("CustomerOrder", back_populates="shipment_plans")
+    partner_split: Mapped["OrderPartnerSplit | None"] = relationship("OrderPartnerSplit", back_populates="shipment_plans")
+    tracking_events: Mapped[list["ShipmentTrackingEvent"]] = relationship(
+        "ShipmentTrackingEvent", back_populates="shipment_plan", cascade="all, delete-orphan"
+    )
+
+
+class ShipmentTrackingEvent(Base, TimestampMixin):
+    __tablename__ = "shipment_tracking_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    shipment_plan_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("shipment_plans.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    shipment_plan: Mapped["ShipmentPlan"] = relationship("ShipmentPlan", back_populates="tracking_events")

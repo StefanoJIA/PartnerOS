@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -67,15 +67,16 @@ def test_patch_follow_up_updates_date(monkeypatch):
 
     db.query.side_effect = query
 
+    follow_up_date = date.today() + timedelta(days=5)
     result = apply_follow_up_schedule(
         db,
         user,
         lead_id,
-        next_follow_up_date=date(2026, 5, 28),
+        next_follow_up_date=follow_up_date,
         next_action="Follow up in 5 days",
         status_note="Test schedule",
     )
-    assert lead.next_action_due_date == date(2026, 5, 28)
+    assert lead.next_action_due_date == follow_up_date
     assert lead.next_action == "Follow up in 5 days"
     assert result["due_status"] == "due_soon"
     assert result["interaction_id"]

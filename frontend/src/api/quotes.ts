@@ -1,4 +1,4 @@
-"""Frontend API for D6.3+ Customer Quotes."""
+// Frontend API for D6.3+ Customer Quotes.
 
 import { http } from '@/api/http'
 

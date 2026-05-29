@@ -456,6 +456,7 @@ def order_detail_payload(db: Session, order: CustomerOrder) -> dict[str, Any]:
     from app.services.orders.order_confirmation_service import confirmation_summary, confirmation_safety
     from app.services.orders.partner_split_service import partner_splits_summary, split_safety
     from app.services.orders.production_milestone_service import milestone_safety, production_summary
+    from app.services.orders.shipment_plan_service import shipment_safety, shipment_summary
     from app.services.orders.supplier_confirmation_service import (
         supplier_confirmation_summary,
         supplier_confirmation_safety,
@@ -468,6 +469,7 @@ def order_detail_payload(db: Session, order: CustomerOrder) -> dict[str, Any]:
     payload["partner_splits_summary"] = partner_splits_summary(db, order)
     payload["supplier_confirmation_summary"] = supplier_confirmation_summary(db, order.id)
     payload["production_summary"] = production_summary(db, order.id)
+    payload["shipment_summary"] = shipment_summary(db, order.id)
     payload["warnings"] = list(summary.get("warnings") or [])
     has_active = summary.get("active_count", 0) > 0
     sc_summary = payload["supplier_confirmation_summary"]
@@ -476,6 +478,7 @@ def order_detail_payload(db: Session, order: CustomerOrder) -> dict[str, Any]:
         **split_safety(),
         **supplier_confirmation_safety(recorded=sc_summary.get("active_confirmations", 0) > 0),
         **milestone_safety(),
+        **shipment_safety(),
     }
     return payload
 

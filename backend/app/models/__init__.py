@@ -13,7 +13,16 @@ from app.models.orders import Order, OrderItem, ProductionMilestone, ShippingRec
 from app.models.partners import ManufacturingPartner, PartnerCapability, PartnerContact
 from app.models.products import Product, ProductCategory, ProductDocument, ProductPartnerLink
 from app.models.quality import FactoryAudit, QualityDocument
-from app.models.customer_orders import CustomerOrder, OrderConfirmation, OrderLineItem, OrderPartnerSplit, OrderProductionMilestone, SupplierConfirmation
+from app.models.customer_orders import (
+    CustomerOrder,
+    OrderConfirmation,
+    OrderLineItem,
+    OrderPartnerSplit,
+    OrderProductionMilestone,
+    ShipmentPlan,
+    ShipmentTrackingEvent,
+    SupplierConfirmation,
+)
 from app.models.customer_quotes import (
     Quote,
     QuoteAdjustment,
@@ -91,6 +100,8 @@ __all__ = [
     "Sample",
     "SampleShipment",
     "ShippingRecord",
+    "ShipmentPlan",
+    "ShipmentTrackingEvent",
     "SupplierConfirmation",
     "Tag",
     "Task",

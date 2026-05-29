@@ -20,6 +20,8 @@ from app.schemas.customer_orders import (
     OrderFromQuoteIn,
     OrderUpdateIn,
     ProductionMilestoneUpdateIn,
+    ShipmentPlanCreateIn,
+    ShipmentPlanUpdateIn,
     SupplierConfirmationIn,
     VoidConfirmationIn,
     VoidSupplierConfirmationIn,
@@ -58,6 +60,13 @@ from app.services.orders.production_milestone_service import (
     list_production_milestones,
     milestone_to_dict,
     update_production_milestone,
+)
+from app.services.orders.shipment_plan_service import (
+    create_shipment_plan,
+    list_shipment_plans,
+    shipment_plan_to_dict,
+    shipment_safety,
+    update_shipment_plan,
 )
 
 router = APIRouter(prefix="/orders", tags=["v1-orders"])
@@ -441,3 +450,71 @@ def update_production_milestone_route(
     payload["warnings"] = result.get("warnings") or []
     payload["safety"] = result.get("safety")
     return success_envelope(payload, request_id=rid)
+
+
+@router.post("/{order_id}/shipment-plans")
+def create_shipment_plan_route(
+    order_id: UUID,
+    body: ShipmentPlanCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    row = create_shipment_plan(
+        db,
+        user,
+        order_id,
+        partner_split_id=body.partner_split_id,
+        shipment_method=body.shipment_method,
+        incoterm=body.incoterm,
+        origin=body.origin,
+        destination=body.destination,
+        estimated_ship_date=body.estimated_ship_date,
+        estimated_arrival_date=body.estimated_arrival_date,
+        tracking_number=body.tracking_number,
+        status=body.status,
+        notes=body.notes,
+    )
+    rid = get_request_id(request)
+    return success_envelope(shipment_plan_to_dict(row), request_id=rid, status_code=201)
+
+
+@router.get("/{order_id}/shipment-plans")
+def list_shipment_plans_route(
+    order_id: UUID,
+    request: Request,
+    partner_split_id: UUID | None = None,
+    status: str | None = None,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    rows = list_shipment_plans(db, order_id, partner_split_id=partner_split_id, status=status)
+    rid = get_request_id(request)
+    return success_envelope(
+        {
+            "items": [shipment_plan_to_dict(r) for r in rows],
+            "total": len(rows),
+            "safety": shipment_safety(),
+        },
+        request_id=rid,
+    )
+
+
+@router.patch("/{order_id}/shipment-plans/{plan_id}")
+def update_shipment_plan_route(
+    order_id: UUID,
+    plan_id: UUID,
+    body: ShipmentPlanUpdateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    row = update_shipment_plan(
+        db,
+        user,
+        order_id,
+        plan_id,
+        **body.model_dump(exclude_unset=True),
+    )
+    rid = get_request_id(request)
+    return success_envelope(shipment_plan_to_dict(row), request_id=rid)

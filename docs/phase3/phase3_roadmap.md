@@ -1,6 +1,6 @@
 # Phase 3 Roadmap — Order / Production / Shipment
 
-**Status:** D7.5.1 review complete · **D6 closed** · **Date:** 2026-05-24
+**Status:** D7.6 implemented · **D6 closed** · **Date:** 2026-05-29
 
 Phase 3 builds the **Customer Order** module and downstream production/shipment foundations. D6 Quote MVP remains frozen.
 
@@ -27,7 +27,7 @@ Phase 3 builds the **Customer Order** module and downstream production/shipment 
 | **D7.4** | Partner Split & Supplier Confirmation | `order_partner_splits`, `supplier_confirmations` | ✅ **Implemented** |
 | **D7.5** | Production Milestone Foundation | `order_production_milestones`, milestone API | ✅ **Implemented** |
 | **D7.5.1** | Existing Cloud Portal Integration Review | Mapping, architecture, API boundary (no code) | ✅ **Review complete** |
-| **D7.6** | Shipment Tracking Foundation | `shipment_plans`, shipment API | Planned |
+| **D7.6** | Shipment Tracking Foundation | `shipment_plans`, shipment API | ✅ **Implemented** |
 | **D7.7** | Customer Portal Bridge | `/api/v1/portal/customer/*` read API + auth | Future |
 | **D7.8** | Feedback / Ticketing | `feedback_tickets`, Portal POST 回流 | Future |
 | **D7.9** | Resource Center | Customer document catalog + signed download | Future |
@@ -95,6 +95,7 @@ flowchart TD
 ## Related Documents
 
 - [D7.5.1 Existing Cloud Portal Integration Review](d7_5_1_existing_cloud_portal_integration_review.md)
+- [D7.6 Shipment Tracking Foundation](d7_6_shipment_tracking_foundation.md)
 - [D7.2 Order CRUD MVP](d7_2_order_crud_mvp.md)
 - [D7.1 Order Schema & API Design Review](d7_1_order_schema_api_design_review.md)
 - [D7 Order Module Readiness Brief](d7_order_module_readiness_brief.md)

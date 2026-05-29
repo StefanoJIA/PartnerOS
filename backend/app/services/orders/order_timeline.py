@@ -7,8 +7,14 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.models import User
-from app.models.customer_orders import OrderConfirmation, OrderPartnerSplit, OrderProductionMilestone, SupplierConfirmation
+from app.models import ActivityLog, User
+from app.models.customer_orders import (
+    OrderConfirmation,
+    OrderPartnerSplit,
+    OrderProductionMilestone,
+    ShipmentPlan,
+    SupplierConfirmation,
+)
 from app.services.orders.order_service import get_order
 from app.services.orders.partner_split_service import _partner_name
 
@@ -198,6 +204,59 @@ def build_order_timeline(db: Session, order_id: UUID) -> dict[str, Any]:
                         "milestone_type": pm.milestone_type,
                         "status": pm.status,
                         "milestone_id": str(pm.id),
+                    },
+                }
+            )
+
+    shipment_logs = (
+        db.query(ActivityLog)
+        .filter(
+            ActivityLog.object_type == "customer_order",
+            ActivityLog.object_id == order_id,
+            ActivityLog.action.in_(("shipment_plan_created", "shipment_plan_updated", "shipment_status_changed")),
+        )
+        .order_by(ActivityLog.created_at.asc())
+        .all()
+    )
+    for log in shipment_logs:
+        diff = log.diff or {}
+        title = {
+            "shipment_plan_created": "Shipment plan created",
+            "shipment_plan_updated": "Shipment plan updated",
+            "shipment_status_changed": "Shipment status changed",
+        }.get(log.action, "Shipment plan updated")
+        items.append(
+            {
+                "type": log.action,
+                "title": title,
+                "timestamp": log.created_at.isoformat() if log.created_at else None,
+                "actor": "",
+                "meta": {
+                    "shipment_plan_id": diff.get("shipment_plan_id"),
+                    "previous_status": diff.get("previous_status"),
+                    "status": diff.get("status"),
+                },
+            }
+        )
+
+    if not shipment_logs:
+        shipment_plans = (
+            db.query(ShipmentPlan)
+            .filter(ShipmentPlan.order_id == order_id)
+            .order_by(ShipmentPlan.created_at.asc())
+            .all()
+        )
+        for plan in shipment_plans:
+            items.append(
+                {
+                    "type": "shipment_plan_created",
+                    "title": "Shipment plan created",
+                    "timestamp": plan.created_at.isoformat() if plan.created_at else None,
+                    "actor": "",
+                    "meta": {
+                        "shipment_plan_id": str(plan.id),
+                        "status": plan.status,
+                        "tracking_number": plan.tracking_number,
                     },
                 }
             )

@@ -8,7 +8,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, field_validator
 
-from app.models.customer_orders import CUSTOMER_CONFIRMATION_TYPES, SUPPLIER_CONFIRMATION_STATUSES
+from app.models.customer_orders import CUSTOMER_CONFIRMATION_TYPES, SHIPMENT_PLAN_STATUSES, SUPPLIER_CONFIRMATION_STATUSES
 
 
 class AddressIn(BaseModel):
@@ -116,3 +116,59 @@ class ProductionMilestoneUpdateIn(BaseModel):
     actual_date: date | str | None = None
     responsible_party: str | None = None
     notes: str | None = None
+
+
+class ShipmentPlanCreateIn(BaseModel):
+    partner_split_id: UUID | None = None
+    shipment_method: str | None = None
+    incoterm: str | None = None
+    origin: str | None = None
+    destination: str | None = None
+    estimated_ship_date: date | str | None = None
+    estimated_arrival_date: date | str | None = None
+    tracking_number: str | None = None
+    status: str = "draft"
+    notes: str | None = None
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        if v not in SHIPMENT_PLAN_STATUSES:
+            raise ValueError(f"status must be one of {SHIPMENT_PLAN_STATUSES}")
+        return v
+
+
+class ShipmentPlanUpdateIn(BaseModel):
+    partner_split_id: UUID | None = None
+    shipment_method: str | None = None
+    incoterm: str | None = None
+    origin: str | None = None
+    destination: str | None = None
+    estimated_ship_date: date | str | None = None
+    estimated_arrival_date: date | str | None = None
+    tracking_number: str | None = None
+    status: str | None = None
+    notes: str | None = None
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: str | None) -> str | None:
+        if v is not None and v not in SHIPMENT_PLAN_STATUSES:
+            raise ValueError(f"status must be one of {SHIPMENT_PLAN_STATUSES}")
+        return v
+
+
+class ShipmentSafety(BaseModel):
+    shipment_created: bool = False
+    supplier_notified: bool = False
+    customer_notified: bool = False
+
+
+class PortalShipmentSummary(BaseModel):
+    """D7.7-ready customer-visible shipment summary DTO; no portal route in D7.6."""
+
+    status: str
+    shipment_method: str | None = None
+    estimated_ship_date: date | None = None
+    estimated_arrival_date: date | None = None
+    tracking_number: str | None = None

@@ -17,7 +17,7 @@ from app.core.database_lifecycle import get_migration_revisions
 DOC = REPO_ROOT / "docs" / "phase3" / "d7_5_1_existing_cloud_portal_integration_review.md"
 VERSIONS_DIR = BACKEND_ROOT / "alembic" / "versions"
 
-FORBIDDEN_NEW_TABLES = ("shipment_plans", "feedback_tickets", "portal_customer_sessions")
+FORBIDDEN_NEW_TABLES = ("feedback_tickets", "portal_customer_sessions")
 
 
 class Check:
@@ -45,15 +45,16 @@ def _migration_ok() -> tuple[bool, str]:
     current, head, _ = get_migration_revisions(settings)
     if current != head:
         return False, f"current={current} head={head}"
-    if head != "0013_prod_milestones":
+    if head not in ("0013_prod_milestones", "0014_shipment_plans"):
         return False, f"unexpected head={head}"
     return True, head or "unknown"
 
 
 def _no_new_migrations() -> tuple[bool, str]:
-    if any(p.name.startswith("0014_") for p in VERSIONS_DIR.glob("*.py")):
-        return False, "0014+ migration found"
-    return True, "head remains 0013"
+    unexpected = [p.name for p in VERSIONS_DIR.glob("*.py") if p.name.startswith(("0015_", "0016_", "0017_", "0018_", "0019_"))]
+    if unexpected:
+        return False, f"unexpected migration found: {unexpected[0]}"
+    return True, "no portal/feedback migration beyond D7.6"
 
 
 def _no_forbidden_tables_in_migrations() -> tuple[bool, str]:
@@ -62,7 +63,7 @@ def _no_forbidden_tables_in_migrations() -> tuple[bool, str]:
         for tbl in FORBIDDEN_NEW_TABLES:
             if tbl in text:
                 return False, f"{tbl} in {path.name}"
-    return True, "no shipment/feedback portal tables"
+    return True, "no feedback/portal tables"
 
 
 def main() -> int:
@@ -76,9 +77,9 @@ def main() -> int:
         Check("doc covers resources"),
         Check("doc contains PartnerOS mapping"),
         Check("doc contains D7.6 / D7.7 / D7.8 route"),
-        Check("migration at head 0013"),
-        Check("no new migration 0014+"),
-        Check("no new shipment/feedback tables"),
+        Check("migration at D7.5.1/D7.6 head"),
+        Check("no migration beyond D7.6"),
+        Check("no feedback/portal tables"),
         Check("final judgment A"),
     ]
 

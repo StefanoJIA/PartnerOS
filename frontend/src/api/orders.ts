@@ -105,6 +105,13 @@ export interface OrderDetail extends OrderSummary {
     ready_to_ship_completed: boolean
     shipment_created: boolean
   }
+  shipment_summary?: {
+    total_plans: number
+    active_plans: number
+    shipped_plans: number
+    delivered_plans: number
+    shipment_created: boolean
+  }
   confirmation?: OrderConfirmationRecord
   warnings?: string[]
   timeline?: OrderTimelineItem[]
@@ -132,6 +139,33 @@ export interface ProductionMilestone {
   responsible_party: string | null
   source: string
   notes: string | null
+}
+
+export interface ShipmentPlan {
+  id: string
+  order_id: string
+  partner_split_id: string | null
+  shipment_method: string | null
+  incoterm: string | null
+  origin: string | null
+  destination: string | null
+  estimated_ship_date: string | null
+  estimated_arrival_date: string | null
+  tracking_number: string | null
+  status: string
+  notes: string | null
+  portal_visible_fields?: {
+    status: string
+    shipment_method: string | null
+    estimated_ship_date: string | null
+    estimated_arrival_date: string | null
+    tracking_number: string | null
+  }
+  safety?: {
+    shipment_created: boolean
+    supplier_notified: boolean
+    customer_notified: boolean
+  }
 }
 
 export interface PartnerSplit {
@@ -346,6 +380,9 @@ export const SUPPLIER_SAFETY_NOTE =
 export const PRODUCTION_SAFETY_NOTE =
   'Production milestones are internal planning and tracking records. They do not create shipments, notify suppliers or customers, or guarantee lead time.'
 
+export const SHIPMENT_SAFETY_NOTE =
+  'Shipment plans are manually maintained logistics records. They do not create shipments, notify suppliers or customers, call carrier APIs, or change the order status.'
+
 export async function ensureProductionMilestones(orderId: string, splitId: string): Promise<OrderDetail & { milestones?: ProductionMilestone[] }> {
   const { data } = await http.post<V1Envelope<OrderDetail & { milestones?: ProductionMilestone[] }>>(
     `/v1/orders/${orderId}/partner-splits/${splitId}/production-milestones/ensure`,
@@ -380,6 +417,43 @@ export async function updateProductionMilestone(
 ): Promise<ProductionMilestone & { warnings?: string[] }> {
   const { data } = await http.patch<V1Envelope<ProductionMilestone & { warnings?: string[] }>>(
     `/v1/orders/${orderId}/production-milestones/${milestoneId}`,
+    payload,
+  )
+  return data.data
+}
+
+export interface ShipmentPlanPayload {
+  partner_split_id?: string
+  shipment_method?: string
+  incoterm?: string
+  origin?: string
+  destination?: string
+  estimated_ship_date?: string
+  estimated_arrival_date?: string
+  tracking_number?: string
+  status?: string
+  notes?: string
+}
+
+export async function fetchShipmentPlans(orderId: string): Promise<{ items: ShipmentPlan[]; total: number }> {
+  const { data } = await http.get<V1Envelope<{ items: ShipmentPlan[]; total: number }>>(
+    `/v1/orders/${orderId}/shipment-plans`,
+  )
+  return data.data
+}
+
+export async function createShipmentPlan(orderId: string, payload: ShipmentPlanPayload): Promise<ShipmentPlan> {
+  const { data } = await http.post<V1Envelope<ShipmentPlan>>(`/v1/orders/${orderId}/shipment-plans`, payload)
+  return data.data
+}
+
+export async function updateShipmentPlan(
+  orderId: string,
+  planId: string,
+  payload: ShipmentPlanPayload,
+): Promise<ShipmentPlan> {
+  const { data } = await http.patch<V1Envelope<ShipmentPlan>>(
+    `/v1/orders/${orderId}/shipment-plans/${planId}`,
     payload,
   )
   return data.data

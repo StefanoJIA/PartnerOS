@@ -188,6 +188,21 @@ python scripts/d7_5_1_portal_integration_review_check.py
 
 **Judgment:** retain existing cloud portal; integrate via future D7.7 Portal Bridge API.
 
+## D7.6 Shipment Tracking
+
+| URL / API | Purpose |
+|-----------|---------|
+| `/orders/:id` | Shipment Plans list, create form, status update, customer-visible preview |
+| `POST /api/v1/orders/{id}/shipment-plans` | Create manual shipment plan |
+| `GET /api/v1/orders/{id}/shipment-plans` | List shipment plans |
+| `PATCH /api/v1/orders/{id}/shipment-plans/{plan_id}` | Update fields or status |
+
+```powershell
+python scripts/d7_6_shipment_tracking_check.py
+```
+
+Shipment plans are manual logistics records only. They do not call carriers, send webhooks or email, notify suppliers/customers, or automatically change the order to shipped/delivered.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate
@@ -394,6 +409,7 @@ python scripts/daily_work_summary.py
 | `d6_final_closure_check.py` | D6.7 final closure gate |
 | `d7_5_production_milestone_check.py` | D7.5 production milestone smoke |
 | `d7_5_1_portal_integration_review_check.py` | D7.5.1 cloud portal integration review gate |
+| `d7_6_shipment_tracking_check.py` | D7.6 shipment tracking smoke |
 | `d7_4_partner_supplier_check.py` | D7.4 partner split & supplier confirmation smoke |
 | `d7_3_customer_confirmation_check.py` | D7.3 customer confirmation smoke |
 | `d6_2_pricing_foundation_check.py` | D6.2 pricing foundation smoke |

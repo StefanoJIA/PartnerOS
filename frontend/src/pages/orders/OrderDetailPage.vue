@@ -6,6 +6,7 @@ import {
   cancelOrder,
   confirmOrderCustomer,
   confirmationTypeWarning,
+  createShipmentPlan,
   ensurePartnerSplits,
   ensureProductionMilestones,
   fetchOrder,
@@ -14,17 +15,20 @@ import {
   fetchPartnerSplits,
   fetchPartnerSplitDetail,
   fetchProductionMilestones,
+  fetchShipmentPlans,
   updateProductionMilestone,
+  updateShipmentPlan,
   strengthTagType,
   SUPPLIER_SAFETY_NOTE,
   PRODUCTION_SAFETY_NOTE,
+  SHIPMENT_SAFETY_NOTE,
   voidOrderConfirmation,
   type OrderConfirmationRecord,
   type OrderDetail,
   type OrderTimelineItem,
   type PartnerSplit,
   type ProductionMilestone,
-  type SupplierConfirmationRecord,
+  type ShipmentPlan,
 } from '@/api/orders'
 
 const route = useRoute()
@@ -42,12 +46,25 @@ const successMsg = ref('')
 const showAddForm = ref(false)
 const showSupplierFormFor = ref<string | null>(null)
 const milestonesBySplit = ref<Record<string, ProductionMilestone[]>>({})
+const shipmentPlans = ref<ShipmentPlan[]>([])
 const editingMilestoneId = ref<string | null>(null)
 const milestoneForm = reactive({
   status: 'planned',
   planned_date: '',
   actual_date: '',
   responsible_party: '',
+  notes: '',
+})
+const shipmentForm = reactive({
+  partner_split_id: '',
+  shipment_method: 'sea',
+  incoterm: '',
+  origin: '',
+  destination: '',
+  estimated_ship_date: '',
+  estimated_arrival_date: '',
+  tracking_number: '',
+  status: 'draft',
   notes: '',
 })
 
@@ -85,6 +102,21 @@ const canAddConfirmation = computed(() => order.value?.status !== 'cancelled')
 const canEnsureSplits = computed(() => order.value?.status !== 'cancelled')
 const canAddSupplierConfirmation = computed(() => order.value?.status === 'confirmed')
 const canEnsureMilestones = computed(() => order.value?.status === 'confirmed')
+const canManageShipments = computed(() => {
+  const allowed = [
+    'confirmed',
+    'internal_review',
+    'supplier_confirmation_pending',
+    'supplier_confirmed',
+    'production_pending',
+    'in_production',
+    'ready_to_ship',
+    'shipped',
+    'delivered',
+    'on_hold',
+  ]
+  return !!order.value && allowed.includes(order.value.status)
+})
 const canCancel = computed(() => order.value && ['pending_customer_confirmation', 'confirmed'].includes(order.value.status))
 const typeWarning = computed(() => confirmationTypeWarning(confirmForm.confirmation_type))
 const orderWarnings = computed(() => order.value?.warnings || order.value?.confirmation_summary?.warnings || [])
@@ -93,6 +125,12 @@ async function loadPartnerSplits() {
   if (!order.value) return
   const ps = await fetchPartnerSplits(order.value.id)
   partnerSplits.value = ps.items
+}
+
+async function loadShipmentPlans() {
+  if (!order.value) return
+  const plans = await fetchShipmentPlans(order.value.id)
+  shipmentPlans.value = plans.items
 }
 
 async function load() {
@@ -104,12 +142,60 @@ async function load() {
     const conf = await fetchOrderConfirmations(id)
     confirmations.value = conf.items
     await loadPartnerSplits()
+    await loadShipmentPlans()
     const tl = await fetchOrderTimeline(id)
     timelineItems.value = tl.items
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : 'Failed to load order'
   } finally {
     loading.value = false
+  }
+}
+
+async function onCreateShipmentPlan() {
+  if (!order.value) return
+  actionLoading.value = true
+  error.value = ''
+  try {
+    await createShipmentPlan(order.value.id, {
+      partner_split_id: shipmentForm.partner_split_id || undefined,
+      shipment_method: shipmentForm.shipment_method || undefined,
+      incoterm: shipmentForm.incoterm || undefined,
+      origin: shipmentForm.origin || undefined,
+      destination: shipmentForm.destination || undefined,
+      estimated_ship_date: shipmentForm.estimated_ship_date || undefined,
+      estimated_arrival_date: shipmentForm.estimated_arrival_date || undefined,
+      tracking_number: shipmentForm.tracking_number || undefined,
+      status: shipmentForm.status,
+      notes: shipmentForm.notes || undefined,
+    })
+    await loadShipmentPlans()
+    order.value = await fetchOrder(order.value.id)
+    const tl = await fetchOrderTimeline(order.value.id)
+    timelineItems.value = tl.items
+    successMsg.value = 'Shipment plan created.'
+  } catch (e: unknown) {
+    error.value = e instanceof Error ? e.message : 'Create shipment plan failed'
+  } finally {
+    actionLoading.value = false
+  }
+}
+
+async function onPatchShipmentStatus(plan: ShipmentPlan, status: string) {
+  if (!order.value) return
+  actionLoading.value = true
+  error.value = ''
+  try {
+    await updateShipmentPlan(order.value.id, plan.id, { status })
+    await loadShipmentPlans()
+    order.value = await fetchOrder(order.value.id)
+    const tl = await fetchOrderTimeline(order.value.id)
+    timelineItems.value = tl.items
+    successMsg.value = status === 'cancelled' ? 'Shipment plan cancelled.' : 'Shipment status updated.'
+  } catch (e: unknown) {
+    error.value = e instanceof Error ? e.message : 'Update shipment plan failed'
+  } finally {
+    actionLoading.value = false
   }
 }
 
@@ -559,6 +645,93 @@ onMounted(load)
           <el-descriptions-item label="In Progress">{{ order.production_summary.in_progress_milestones }}</el-descriptions-item>
           <el-descriptions-item label="Shipment Created">{{ order.production_summary.shipment_created ? 'Yes' : 'No' }}</el-descriptions-item>
         </el-descriptions>
+      </section>
+
+      <section class="section mb">
+        <div class="section-head">
+          <h3>Shipment Plans</h3>
+          <el-tag type="info">Manual</el-tag>
+        </div>
+        <el-alert type="info" :closable="false" :description="SHIPMENT_SAFETY_NOTE" class="mb" />
+        <el-table :data="shipmentPlans" stripe class="mb">
+          <el-table-column prop="status" label="Status" width="110" />
+          <el-table-column prop="shipment_method" label="Method" width="110" />
+          <el-table-column prop="origin" label="Origin" />
+          <el-table-column prop="destination" label="Destination" />
+          <el-table-column prop="estimated_ship_date" label="ETD" width="120" />
+          <el-table-column prop="estimated_arrival_date" label="ETA" width="120" />
+          <el-table-column prop="tracking_number" label="Tracking" width="140" />
+          <el-table-column label="" width="180">
+            <template #default="{ row }">
+              <el-select
+                :model-value="row.status"
+                size="small"
+                style="width: 150px"
+                :disabled="!canManageShipments || actionLoading"
+                @change="(status: string) => onPatchShipmentStatus(row, status)"
+              >
+                <el-option label="Draft" value="draft" />
+                <el-option label="Planned" value="planned" />
+                <el-option label="Shipped" value="shipped" />
+                <el-option label="Delivered" value="delivered" />
+                <el-option label="Cancelled" value="cancelled" />
+              </el-select>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-collapse v-if="shipmentPlans.length" class="mb">
+          <el-collapse-item title="Customer visible summary preview" name="shipment-summary">
+            <el-table :data="shipmentPlans.map(p => p.portal_visible_fields || p)" stripe size="small">
+              <el-table-column prop="status" label="Status" width="110" />
+              <el-table-column prop="shipment_method" label="Method" width="110" />
+              <el-table-column prop="estimated_ship_date" label="ETD" width="120" />
+              <el-table-column prop="estimated_arrival_date" label="ETA" width="120" />
+              <el-table-column prop="tracking_number" label="Tracking" />
+            </el-table>
+          </el-collapse-item>
+        </el-collapse>
+        <el-alert
+          v-if="!canManageShipments"
+          type="warning"
+          title="Shipment plans require a customer-confirmed order."
+          show-icon
+          class="mb"
+        />
+        <el-form v-else label-width="150px" class="shipment-form" @submit.prevent="onCreateShipmentPlan">
+          <el-form-item label="Partner Split">
+            <el-select v-model="shipmentForm.partner_split_id" clearable placeholder="Optional" style="width: 260px">
+              <el-option
+                v-for="split in partnerSplits"
+                :key="split.id"
+                :label="`${split.split_number} - ${split.partner_name}`"
+                :value="split.id"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Method">
+            <el-select v-model="shipmentForm.shipment_method" style="width: 180px">
+              <el-option label="Sea" value="sea" />
+              <el-option label="Air" value="air" />
+              <el-option label="Express" value="express" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Status">
+            <el-select v-model="shipmentForm.status" style="width: 180px">
+              <el-option label="Draft" value="draft" />
+              <el-option label="Planned" value="planned" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Incoterm"><el-input v-model="shipmentForm.incoterm" /></el-form-item>
+          <el-form-item label="Origin"><el-input v-model="shipmentForm.origin" /></el-form-item>
+          <el-form-item label="Destination"><el-input v-model="shipmentForm.destination" /></el-form-item>
+          <el-form-item label="ETD"><el-input v-model="shipmentForm.estimated_ship_date" placeholder="YYYY-MM-DD" /></el-form-item>
+          <el-form-item label="ETA"><el-input v-model="shipmentForm.estimated_arrival_date" placeholder="YYYY-MM-DD" /></el-form-item>
+          <el-form-item label="Tracking"><el-input v-model="shipmentForm.tracking_number" /></el-form-item>
+          <el-form-item label="Notes"><el-input v-model="shipmentForm.notes" type="textarea" :rows="2" /></el-form-item>
+          <el-form-item>
+            <el-button type="primary" :loading="actionLoading" @click="onCreateShipmentPlan">Create Plan</el-button>
+          </el-form-item>
+        </el-form>
       </section>
 
       <section v-if="canCancel" class="section mb">

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import socket
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -13,6 +14,14 @@ _spec = importlib.util.spec_from_file_location("import_pricing_excel", SCRIPT_PA
 _mod = importlib.util.module_from_spec(_spec)
 assert _spec and _spec.loader
 _spec.loader.exec_module(_mod)
+
+
+def _local_pricing_db_available() -> bool:
+    try:
+        with socket.create_connection(("127.0.0.1", 5435), timeout=1):
+            return True
+    except OSError:
+        return False
 
 
 def test_import_dry_run_missing_file(capsys):
@@ -27,6 +36,8 @@ def test_import_dry_run_missing_file(capsys):
     reason="local Excel workbook not present",
 )
 def test_import_dry_run_reads_sheets_and_candidates(capsys):
+    if not _local_pricing_db_available():
+        pytest.skip("local pricing database not present")
     xlsx = Path(__file__).resolve().parents[2] / "local_data" / "报价模型与格式.xlsx"
     rc = _mod.run(xlsx, apply=False, overwrite=False)
     out = capsys.readouterr().out
@@ -43,6 +54,8 @@ def test_import_dry_run_reads_sheets_and_candidates(capsys):
     reason="local Excel workbook not present",
 )
 def test_import_dry_run_nonzero_summary(capsys):
+    if not _local_pricing_db_available():
+        pytest.skip("local pricing database not present")
     xlsx = Path(__file__).resolve().parents[2] / "local_data" / "报价模型与格式.xlsx"
     _mod.run(xlsx, apply=False, overwrite=False)
     out = capsys.readouterr().out

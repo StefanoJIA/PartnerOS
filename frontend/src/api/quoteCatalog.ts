@@ -1,4 +1,4 @@
-"""Frontend API for D6.2 quote catalog."""
+// Frontend API for D6.2 quote catalog.
 
 import { http } from '@/api/http'
 
