@@ -1,6 +1,6 @@
 # Phase 3 Roadmap — Order / Production / Shipment
 
-**Status:** D7.7 implemented · **D6 closed** · **Date:** 2026-05-29
+**Status:** D7.8 implemented · **D6 closed** · **Date:** 2026-05-29
 
 Phase 3 builds the **Customer Order** module and downstream production/shipment foundations. D6 Quote MVP remains frozen.
 
@@ -29,7 +29,7 @@ Phase 3 builds the **Customer Order** module and downstream production/shipment 
 | **D7.5.1** | Existing Cloud Portal Integration Review | Mapping, architecture, API boundary (no code) | ✅ **Review complete** |
 | **D7.6** | Shipment Tracking Foundation | `shipment_plans`, shipment API | ✅ **Implemented** |
 | **D7.7** | Customer Portal Bridge | `/api/v1/portal/customer/*` read API + auth, `feedback_tickets` MVP | ✅ **Implemented** |
-| **D7.8** | Feedback / Ticketing | Feedback workflow expansion | Future |
+| **D7.8** | Service Portal UAT & Feedback Operations | consumer contract pack, staging readiness, feedback console | ✅ **Implemented** |
 | **D7.9** | Resource Center | Customer document catalog + signed download | Future |
 | **D8** | Deployment & Integration Hardening | CORS, HTTPS, token rotation, cloud 联调 | Future |
 

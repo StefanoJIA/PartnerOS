@@ -18,7 +18,9 @@ const router = createRouter({
       children: [
         { path: '', name: 'dashboard', component: () => import('@/pages/dashboard/DashboardPage.vue') },
         { path: 'system-health', name: 'system-health', component: () => import('@/pages/system/SystemHealthPage.vue') },
-        { path: 'portal-consumer-mock', name: 'portal-consumer-mock', component: () => import('@/pages/system/PortalConsumerMockPage.vue') },
+        { path: 'portal-consumer-mock', redirect: '/portal-customer-bridge' },
+        { path: 'portal-customer-bridge', name: 'portal-customer-bridge', component: () => import('@/pages/system/PortalConsumerMockPage.vue') },
+        { path: 'feedback-tickets', name: 'feedback-tickets', component: () => import('@/pages/system/FeedbackTicketsPage.vue') },
         { path: 'lead-intelligence', name: 'lead-intelligence', component: () => import('@/pages/leads/LeadIntelligenceWorkbenchPage.vue') },
         { path: 'lead-intake', name: 'lead-intake', component: () => import('@/pages/leads/LeadIntakePage.vue') },
         { path: 'companies', name: 'companies', component: () => import('@/pages/companies/CompaniesPage.vue') },

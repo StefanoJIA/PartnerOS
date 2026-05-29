@@ -223,6 +223,23 @@ python scripts/d7_7_portal_bridge_check.py
 
 Default bridge config is disabled and token-required. Real tokens must live in `.env` only. Portal bridge responses must not expose internal costs, margins, supplier private notes, storage keys, backend paths, or tokens.
 
+## D7.8 Service Portal UAT & Feedback Operations
+
+| URL / API | Purpose |
+|-----------|---------|
+| `/portal-customer-bridge` | Internal Portal API UAT page; masked token entry, endpoint checks, TEST feedback |
+| `/feedback-tickets` | Internal feedback operations console |
+| `GET /api/v1/portal/customer/readiness` | Internal readiness summary; no token value returned |
+| `GET /api/v1/feedback-tickets` | List feedback tickets |
+| `GET /api/v1/feedback-tickets/{id}` | Feedback ticket detail |
+| `PATCH /api/v1/feedback-tickets/{id}` | Update status, priority, owner, response summary |
+
+```powershell
+python scripts/d7_8_portal_live_integration_check.py
+```
+
+Feedback status flow is `new -> in_review -> responded -> resolved -> closed`. The console records internal handling only; it does not send email, notify customers, upload attachments, or promise an SLA. Staging feedback must include `TEST` in the subject or message.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate

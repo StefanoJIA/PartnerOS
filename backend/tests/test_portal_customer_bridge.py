@@ -46,9 +46,14 @@ def test_portal_customer_token_required_and_valid(monkeypatch):
         missing = c.get("/api/v1/portal/customer/products")
         wrong = c.get("/api/v1/portal/customer/products", headers={"Authorization": "Bearer wrong"})
         ok = c.get("/api/v1/portal/customer/products", headers={"Authorization": "Bearer test-token"})
+        x_token_wins = c.get(
+            "/api/v1/portal/customer/products",
+            headers={"Authorization": "Bearer app-user-token", "X-Portal-Customer-Token": "test-token"},
+        )
     assert missing.status_code == 401
     assert wrong.status_code == 403
     assert ok.status_code == 200
+    assert x_token_wins.status_code == 200
     assert ok.json()["data"]["total"] == 0
 
 

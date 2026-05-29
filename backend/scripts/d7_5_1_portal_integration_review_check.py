@@ -45,16 +45,16 @@ def _migration_ok() -> tuple[bool, str]:
     current, head, _ = get_migration_revisions(settings)
     if current != head:
         return False, f"current={current} head={head}"
-    if head not in ("0013_prod_milestones", "0014_shipment_plans", "0015_feedback_tickets"):
+    if head not in ("0013_prod_milestones", "0014_shipment_plans", "0015_feedback_tickets", "0016_feedback_ops"):
         return False, f"unexpected head={head}"
     return True, head or "unknown"
 
 
 def _no_new_migrations() -> tuple[bool, str]:
-    unexpected = [p.name for p in VERSIONS_DIR.glob("*.py") if p.name.startswith(("0016_", "0017_", "0018_", "0019_"))]
+    unexpected = [p.name for p in VERSIONS_DIR.glob("*.py") if p.name.startswith(("0017_", "0018_", "0019_"))]
     if unexpected:
         return False, f"unexpected migration found: {unexpected[0]}"
-    return True, "no migration beyond D7.7"
+    return True, "no migration beyond D7.8"
 
 
 def _no_forbidden_tables_in_migrations() -> tuple[bool, str]:
@@ -77,8 +77,8 @@ def main() -> int:
         Check("doc covers resources"),
         Check("doc contains PartnerOS mapping"),
         Check("doc contains D7.6 / D7.7 / D7.8 route"),
-        Check("migration at D7.5.1/D7.6/D7.7 head"),
-        Check("no migration beyond D7.7"),
+        Check("migration at D7.5.1-D7.8 head"),
+        Check("no migration beyond D7.8"),
         Check("no portal session tables"),
         Check("final judgment A"),
     ]

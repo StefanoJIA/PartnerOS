@@ -46,9 +46,9 @@
 
 **D7** is Order / Production / Shipment.
 
-**D7.7 Customer Portal Bridge API** is implemented. Next: service.intelli-opus.com integration testing, then D7.8 feedback workflow expansion.
+**D7.8 Service Portal Live Integration UAT & Feedback Operations** is implemented. Next: service.intelli-opus.com staging integration testing, then D7.9 resource center hardening.
 
-See [D7.7 Customer Portal Bridge API](docs/phase3/d7_7_customer_portal_bridge_api.md) · [D7.6 Shipment Tracking Foundation](docs/phase3/d7_6_shipment_tracking_foundation.md) · [D7.5.1 Cloud Portal Integration Review](docs/phase3/d7_5_1_existing_cloud_portal_integration_review.md) · [Phase 3 Roadmap](docs/phase3/phase3_roadmap.md).
+See [D7.8 Service Portal Integration UAT](docs/phase3/d7_8_service_portal_integration_uat.md) · [Service Portal API Contract](docs/phase3/service_portal_api_contract_for_frontend.md) · [D7.7 Customer Portal Bridge API](docs/phase3/d7_7_customer_portal_bridge_api.md) · [D7.6 Shipment Tracking Foundation](docs/phase3/d7_6_shipment_tracking_foundation.md) · [D7.5.1 Cloud Portal Integration Review](docs/phase3/d7_5_1_existing_cloud_portal_integration_review.md) · [Phase 3 Roadmap](docs/phase3/phase3_roadmap.md).
 
 D6 implementation references:
 
@@ -111,6 +111,7 @@ python scripts/d7_5_production_milestone_check.py  # D7.5 production milestone s
 python scripts/d7_5_1_portal_integration_review_check.py  # D7.5.1 cloud portal review gate
 python scripts/d7_6_shipment_tracking_check.py  # D7.6 shipment tracking smoke
 python scripts/d7_7_portal_bridge_check.py  # D7.7 customer portal bridge smoke
+python scripts/d7_8_portal_live_integration_check.py  # D7.8 service portal UAT smoke
 python scripts/d7_4_partner_supplier_check.py   # D7.4 partner split & supplier confirmation smoke
 python scripts/d7_3_customer_confirmation_check.py  # D7.3 customer confirmation smoke
 ```

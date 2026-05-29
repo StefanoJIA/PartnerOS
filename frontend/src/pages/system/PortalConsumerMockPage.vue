@@ -1,199 +1,210 @@
 <template>
   <div class="space-y-4">
-    <div>
-      <h2 class="text-xl font-semibold text-slate-800">External Portal Consumer Mock</h2>
-      <p class="mt-1 text-sm text-slate-600">
-        This mock simulates how a future unified Portal can read intelliOffice status. It is read-only.
-      </p>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-xl font-semibold text-slate-800">Portal Customer Bridge UAT</h2>
+        <p class="mt-1 text-sm text-slate-600">Internal staging checks for the service portal consumer contract.</p>
+      </div>
+      <el-button type="primary" :loading="readinessLoading" @click="loadReadiness">Refresh readiness</el-button>
     </div>
 
     <el-alert
-      type="info"
+      type="warning"
       :closable="false"
       show-icon
-      title="Read-only portal integration"
-      description="No automatic sending. Human-reviewed outreach only. This page only calls v1 portal and readiness endpoints — no write APIs, no secrets, no customer email lists."
+      title="Token entry is masked and kept only in this page state. TEST feedback must stay clearly marked as TEST."
     />
-
-    <div class="flex gap-2">
-      <el-button size="small" type="primary" :loading="loading" @click="load">Refresh</el-button>
-      <router-link to="/system-health">
-        <el-button size="small" link>System health</el-button>
-      </router-link>
-    </div>
-
     <el-alert v-if="error" type="error" :closable="false" show-icon :title="error" />
 
-    <template v-else-if="loaded">
-      <el-card shadow="never">
-        <template #header>Service identity</template>
-        <dl class="grid gap-3 text-sm md:grid-cols-2 lg:grid-cols-3">
-          <div>
-            <dt class="text-slate-500">service_id</dt>
-            <dd class="font-medium">{{ summary?.service_id || manifest?.service_id || '—' }}</dd>
-          </div>
-          <div>
-            <dt class="text-slate-500">runtime_mode</dt>
-            <dd>{{ summary?.runtime_mode || manifest?.runtime_mode || '—' }}</dd>
-          </div>
-          <div>
-            <dt class="text-slate-500">api_version</dt>
-            <dd>{{ summary?.api_version || manifest?.api_version || '—' }}</dd>
-          </div>
-        </dl>
-      </el-card>
+    <section class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div class="rounded border border-slate-200 bg-white p-4">
+        <p class="text-sm text-slate-500">Portal API</p>
+        <el-tag class="mt-2" :type="readiness?.enabled ? 'success' : 'danger'">
+          {{ readiness?.enabled ? 'enabled' : 'disabled' }}
+        </el-tag>
+      </div>
+      <div class="rounded border border-slate-200 bg-white p-4">
+        <p class="text-sm text-slate-500">Token</p>
+        <el-tag class="mt-2" :type="readiness?.token_configured ? 'success' : 'warning'">
+          {{ readiness?.token_configured ? 'configured' : 'not configured' }}
+        </el-tag>
+      </div>
+      <div class="rounded border border-slate-200 bg-white p-4">
+        <p class="text-sm text-slate-500">CORS origins</p>
+        <el-tag class="mt-2" :type="readiness?.allowed_origins_configured ? 'success' : 'warning'">
+          {{ readiness?.allowed_origins_configured ? 'configured' : 'not configured' }}
+        </el-tag>
+      </div>
+      <div class="rounded border border-slate-200 bg-white p-4">
+        <p class="text-sm text-slate-500">Forbidden checks</p>
+        <el-tag class="mt-2" :type="forbiddenSummary.length ? 'danger' : 'success'">
+          {{ forbiddenSummary.length ? `${forbiddenSummary.length} hit(s)` : 'clear' }}
+        </el-tag>
+      </div>
+    </section>
 
-      <el-card shadow="never">
-        <template #header>Health &amp; readiness</template>
-        <dl class="grid gap-3 text-sm md:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <dt class="text-slate-500">health status</dt>
-            <dd>
-              <el-tag size="small" :type="summary?.health?.status === 'ok' ? 'success' : 'warning'">
-                {{ summary?.health?.status || '—' }}
-              </el-tag>
-            </dd>
-          </div>
-          <div>
-            <dt class="text-slate-500">database_status</dt>
-            <dd>{{ summary?.health?.database_status || readiness?.database_status || '—' }}</dd>
-          </div>
-          <div>
-            <dt class="text-slate-500">migration_pending</dt>
-            <dd>{{ formatBool(summary?.health?.migration_pending) }}</dd>
-          </div>
-          <div>
-            <dt class="text-slate-500">readiness ok</dt>
-            <dd>{{ formatBool(readiness?.ok) }}</dd>
-          </div>
-        </dl>
-      </el-card>
+    <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+        <el-input v-model="portalToken" type="password" show-password placeholder="Portal staging token" autocomplete="off" />
+        <el-input v-model="orderId" placeholder="Order ID for detail checks" />
+        <el-button :loading="running" type="primary" @click="runCoreChecks">Run checks</el-button>
+      </div>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <el-button size="small" @click="runCheck('products')">Products</el-button>
+        <el-button size="small" @click="runCheck('orders')">Orders</el-button>
+        <el-button size="small" :disabled="!orderId" @click="runOrderChecks">Order views</el-button>
+      </div>
+    </section>
 
-      <el-card shadow="never">
-        <template #header>Daily lead intelligence (aggregated counts only)</template>
-        <dl class="grid gap-3 text-sm md:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <dt class="text-slate-500">total leads</dt>
-            <dd class="text-lg font-semibold">{{ li?.total_leads ?? '—' }}</dd>
-          </div>
-          <div>
-            <dt class="text-slate-500">high priority</dt>
-            <dd class="text-lg font-semibold text-rose-700">{{ li?.high_priority ?? '—' }}</dd>
-          </div>
-          <div>
-            <dt class="text-slate-500">waiting reply</dt>
-            <dd>{{ li?.waiting_for_reply ?? '—' }}</dd>
-          </div>
-          <div>
-            <dt class="text-slate-500">needs first outreach</dt>
-            <dd>{{ li?.needs_first_outreach ?? '—' }}</dd>
-          </div>
-        </dl>
-      </el-card>
+    <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="font-semibold text-slate-800">TEST feedback</h3>
+        <el-button :loading="feedbackLoading" type="primary" @click="submitFeedback">Create TEST ticket</el-button>
+      </div>
+      <div class="grid gap-3 md:grid-cols-2">
+        <el-input v-model="feedback.order_id" placeholder="Order ID optional" />
+        <el-input v-model="feedback.customer_email" placeholder="Customer email optional" />
+        <el-select v-model="feedback.feedback_type">
+          <el-option label="tracking" value="tracking" />
+          <el-option label="resource" value="resource" />
+          <el-option label="general" value="general" />
+        </el-select>
+        <el-select v-model="feedback.priority">
+          <el-option label="normal" value="normal" />
+          <el-option label="high" value="high" />
+          <el-option label="urgent" value="urgent" />
+        </el-select>
+      </div>
+      <el-input v-model="feedback.subject" class="mt-3" />
+      <el-input v-model="feedback.message" class="mt-3" type="textarea" rows="3" />
+    </section>
 
-      <el-card shadow="never">
-        <template #header>Outreach safety flags</template>
-        <dl class="grid gap-3 text-sm md:grid-cols-2">
-          <div>
-            <dt class="text-slate-500">manual_outreach_ready</dt>
-            <dd>
-              <el-tag size="small" :type="aDomain?.manual_outreach_ready ? 'success' : 'warning'">
-                {{ formatBool(aDomain?.manual_outreach_ready) }}
-              </el-tag>
-            </dd>
-          </div>
-          <div>
-            <dt class="text-slate-500">automatic_sending_enabled</dt>
-            <dd>
-              <el-tag size="small" type="success" effect="plain">false (disabled)</el-tag>
-            </dd>
-          </div>
-        </dl>
-      </el-card>
+    <el-table :data="results" class="w-full">
+      <el-table-column prop="name" label="Check" width="180" />
+      <el-table-column prop="status" label="HTTP" width="100" />
+      <el-table-column label="Result" width="120">
+        <template #default="{ row }">
+          <el-tag size="small" :type="row.ok ? 'success' : 'danger'">{{ row.ok ? 'PASS' : 'FAIL' }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="Forbidden fields">
+        <template #default="{ row }">
+          <span v-if="!row.forbiddenHits.length" class="text-slate-500">none</span>
+          <el-tag v-for="hit in row.forbiddenHits" v-else :key="hit" class="mr-1" type="danger" size="small">
+            {{ hit }}
+          </el-tag>
+        </template>
+      </el-table-column>
+    </el-table>
 
-      <el-card v-if="capabilities.length" shadow="never">
-        <template #header>Capabilities</template>
-        <div class="flex flex-wrap gap-1">
-          <el-tag v-for="c in capabilities" :key="c" size="small" effect="plain">{{ c }}</el-tag>
-        </div>
-      </el-card>
-
-      <el-card v-if="warnings.length" shadow="never">
-        <template #header>Warnings</template>
-        <ul class="list-disc space-y-1 pl-5 text-sm text-amber-800">
-          <li v-for="(w, i) in warnings" :key="i">{{ w }}</li>
-        </ul>
-      </el-card>
-    </template>
+    <el-collapse v-if="results.length">
+      <el-collapse-item v-for="row in results" :key="row.name" :title="row.name">
+        <pre class="overflow-auto rounded bg-slate-900 p-3 text-xs text-slate-100">{{ pretty(row.data) }}</pre>
+      </el-collapse-item>
+    </el-collapse>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import {
-  fetchADomainStatus,
-  fetchPortalManifest,
-  fetchPortalSummary,
-  fetchSystemReadiness,
-} from '@/api/system'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { formatApiError } from '@/api/errors'
+import {
+  fetchPortalCustomerReadiness,
+  portalCustomerContract,
+  type PortalReadiness,
+  type PortalResult,
+} from '@/api/portalCustomer'
 
-const loading = ref(false)
+const readiness = ref<PortalReadiness | null>(null)
+const readinessLoading = ref(false)
+const running = ref(false)
+const feedbackLoading = ref(false)
 const error = ref('')
-const loaded = ref(false)
-
-const manifest = ref<Record<string, unknown> | null>(null)
-const summary = ref<Record<string, unknown> | null>(null)
-const aDomain = ref<Record<string, unknown> | null>(null)
-const readiness = ref<Record<string, unknown> | null>(null)
-
-const li = computed(() => summary.value?.lead_intelligence as Record<string, number> | undefined)
-const capabilities = computed(() => {
-  const fromSummary = (summary.value?.capabilities as string[]) || []
-  const fromManifest = (manifest.value?.capabilities as string[]) || []
-  return fromSummary.length ? fromSummary : fromManifest
-})
-const warnings = computed(() => {
-  const sw = (summary.value?.warnings as string[]) || []
-  const rw = (readiness.value?.warnings as string[]) || []
-  return [...sw, ...rw.filter((w) => !sw.includes(w))]
+const portalToken = ref('')
+const orderId = ref('')
+const results = ref<(PortalResult & { name: string })[]>([])
+const feedback = reactive({
+  order_id: '',
+  feedback_type: 'tracking',
+  subject: 'TEST D7.8 portal UAT feedback',
+  message: 'TEST: service portal staging integration feedback. No customer notification expected.',
+  priority: 'normal',
+  customer_name: 'TEST Portal User',
+  customer_email: '',
 })
 
-function formatBool(v: boolean | undefined): string {
-  if (v === true) return 'true'
-  if (v === false) return 'false'
-  return '—'
+const forbiddenSummary = computed(() => Array.from(new Set(results.value.flatMap((r) => r.forbiddenHits))))
+
+function pretty(value: unknown) {
+  return JSON.stringify(value, null, 2)
 }
 
-async function load() {
-  loading.value = true
+async function loadReadiness() {
+  readinessLoading.value = true
   error.value = ''
   try {
-    const [m, s, a, r] = await Promise.all([
-      fetchPortalManifest(),
-      fetchPortalSummary(),
-      fetchADomainStatus(),
-      fetchSystemReadiness(),
-    ])
-    if (a.data?.automatic_sending_enabled !== false) {
-      throw new Error('Unexpected: automatic_sending_enabled is not false')
-    }
-    manifest.value = m.data as Record<string, unknown>
-    summary.value = s.data as Record<string, unknown>
-    aDomain.value = a.data as Record<string, unknown>
-    readiness.value = r.data as Record<string, unknown>
-    loaded.value = true
-  } catch (e: unknown) {
-    error.value = formatApiError(
-      e,
-      'Failed to load portal consumer data. Ensure backend is running and v1 portal endpoints are available.',
-    )
-    loaded.value = false
-    console.error(e)
+    readiness.value = await fetchPortalCustomerReadiness()
+  } catch (e) {
+    error.value = formatApiError(e, 'Failed to load portal readiness.')
   } finally {
-    loading.value = false
+    readinessLoading.value = false
   }
 }
 
-onMounted(load)
+async function pushResult(name: string, promise: Promise<PortalResult>) {
+  const result = await promise
+  results.value = [...results.value.filter((r) => r.name !== name), { name, ...result }]
+}
+
+async function runCheck(name: 'products' | 'orders') {
+  running.value = true
+  try {
+    await pushResult(name, portalCustomerContract[name](portalToken.value))
+  } finally {
+    running.value = false
+  }
+}
+
+async function runOrderChecks() {
+  if (!orderId.value) return
+  running.value = true
+  try {
+    await Promise.all([
+      pushResult('order detail', portalCustomerContract.orderDetail(portalToken.value, orderId.value)),
+      pushResult('production', portalCustomerContract.production(portalToken.value, orderId.value)),
+      pushResult('shipment', portalCustomerContract.shipment(portalToken.value, orderId.value)),
+      pushResult('resources', portalCustomerContract.resources(portalToken.value, orderId.value)),
+    ])
+  } finally {
+    running.value = false
+  }
+}
+
+async function runCoreChecks() {
+  results.value = []
+  await Promise.all([runCheck('products'), runCheck('orders')])
+  if (orderId.value) await runOrderChecks()
+}
+
+async function submitFeedback() {
+  feedbackLoading.value = true
+  try {
+    await pushResult(
+      'feedback',
+      portalCustomerContract.feedback(portalToken.value, {
+        order_id: feedback.order_id || undefined,
+        feedback_type: feedback.feedback_type,
+        subject: feedback.subject.startsWith('TEST') ? feedback.subject : `TEST ${feedback.subject}`,
+        message: feedback.message.includes('TEST') ? feedback.message : `TEST: ${feedback.message}`,
+        priority: feedback.priority,
+        customer_name: feedback.customer_name,
+        customer_email: feedback.customer_email || undefined,
+      }),
+    )
+  } finally {
+    feedbackLoading.value = false
+  }
+}
+
+onMounted(loadReadiness)
 </script>

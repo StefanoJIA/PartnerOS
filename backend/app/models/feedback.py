@@ -29,6 +29,7 @@ class FeedbackTicket(Base, TimestampMixin):
     message: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="new", index=True)
     priority: Mapped[str] = mapped_column(String(32), nullable=False, default="normal")
+    internal_owner: Mapped[str | None] = mapped_column(String(255), nullable=True)
     customer_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     customer_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     response_summary: Mapped[str | None] = mapped_column(Text, nullable=True)

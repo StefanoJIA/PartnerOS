@@ -10,9 +10,11 @@ from sqlalchemy.orm import Session
 
 from app.core.config import Settings, get_settings
 from app.core.database import get_db
+from app.core.deps import get_current_user
 from app.core.errors import SERVICE_UNAVAILABLE, VALIDATION_ERROR, ApiError
 from app.core.request_id import get_request_id
 from app.core.responses import success_envelope
+from app.models import User
 from app.services.portal.customer_portal_bridge import (
     build_customer_order_detail,
     build_customer_order_list,
@@ -58,7 +60,7 @@ def require_portal_customer_access(
             status_code=503,
         )
     supplied = (x_portal_customer_token or "").strip()
-    if authorization and authorization.lower().startswith("bearer "):
+    if not supplied and authorization and authorization.lower().startswith("bearer "):
         supplied = authorization.split(" ", 1)[1].strip()
     if not supplied:
         raise ApiError(VALIDATION_ERROR, "Customer portal token required", status_code=401)
@@ -76,6 +78,27 @@ def portal_customer_products(
     db: Session = Depends(get_db),
 ):
     data = build_customer_product_list(db, category=category, search=search, page=page, limit=limit)
+    return success_envelope(data, request_id=get_request_id(request))
+
+
+@router.get("/readiness")
+def portal_customer_readiness(
+    request: Request,
+    settings: Settings = Depends(get_settings),
+    _: User = Depends(get_current_user),
+):
+    data = {
+        "enabled": settings.PORTAL_CUSTOMER_API_ENABLED,
+        "require_token": settings.PORTAL_CUSTOMER_API_REQUIRE_TOKEN,
+        "token_configured": bool(settings.PORTAL_CUSTOMER_API_TOKEN.strip()),
+        "allowed_origins_configured": bool(settings.PORTAL_CUSTOMER_ALLOWED_ORIGINS.strip()),
+        "cors_origins": settings.cors_origins_list,
+        "safety": {
+            "token_exposed": False,
+            "automatic_customer_notification": False,
+            "forbidden_field_filter_enabled": True,
+        },
+    }
     return success_envelope(data, request_id=get_request_id(request))
 
 

@@ -7,3 +7,8 @@
 - Responses must use explicit customer-facing field whitelists.
 - Feedback intake creates PartnerOS feedback tickets only; no auto-reply, no customer notification, no resolution-time promise.
 - Resources expose customer-safe metadata only, never storage keys or backend file paths.
+- D7.8 staging UAT uses `scripts/d7_8_portal_live_integration_check.py` plus the internal `/portal-customer-bridge` page.
+- Staging tokens must be entered only as masked local page state or deployment secrets; do not persist or print them.
+- UAT feedback must be marked `TEST` until production customer data is explicitly approved.
+- Feedback operations happen in `/feedback-tickets`; status, priority, owner, and response summaries are internal handling records only.
+- Feedback operations must not send email, notify customers, upload attachments, or promise an SLA.
