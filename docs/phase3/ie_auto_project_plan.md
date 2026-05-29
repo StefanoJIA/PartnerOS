@@ -88,8 +88,9 @@ As of the current repository state:
 | D7.9 Resource Center | Implemented |
 | D8.1 RBAC / Scoped Access | Implemented |
 | D8.2 Runtime Hardening | Implemented |
-| D8.3 service.intelli-opus.com Staging Integration | Next recommended execution segment |
-| D8 Integration Hardening | Next major stage after D8.3 |
+| D8.3 service.intelli-opus.com Staging Integration | Contract runner implemented |
+| D8.4 Multi-Partner Operations Dashboard | Next recommended execution segment |
+| D8 Integration Hardening | Next major stage after D8.4 |
 
 ## 5. Non-Negotiable Safety Rules
 
@@ -172,6 +173,8 @@ The PDF repeats the same safety posture across AI, quote, order, production, shi
 
 ### Segment 4 - D8.3 service.intelli-opus.com Staging Integration
 
+**Status:** contract runner implemented.
+
 **Goal:** connect the existing customer portal to PartnerOS staging APIs without replacing the portal.
 
 **Deliverables:**
@@ -228,7 +231,7 @@ The recommended order is:
 D7.9 Resource Center (done)
   -> D8.1 RBAC / scoped access (done)
   -> D8.2 Runtime hardening (done)
-  -> D8.3 service portal staging integration (next)
+  -> D8.3 service portal staging integration (contract runner done)
   -> D8.4 Multi-partner operations dashboard
   -> D8.5 Market response intelligence
 ```
@@ -240,14 +243,15 @@ This keeps the customer portal capability complete before broadening into securi
 The next implementation brief should be:
 
 ```text
-D8.3 service.intelli-opus.com Staging Integration
+D8.4 Multi-Partner Operations Dashboard
 ```
 
 Minimum target:
 
-- Execute the staging hardening gate with strict mode enabled.
-- Verify the real service portal consumer against PartnerOS staging APIs.
-- Confirm CORS, token, HTTPS, and error handling.
-- Inspect browser/network responses for field whitelist leaks.
+- Partner workload and status dashboard.
+- Supplier confirmation coverage by partner.
+- Production milestone delay and bottleneck board.
+- Shipment readiness by partner.
+- Neutral partner ranking signals without hard-coded brand preference.
 
-D8.2 now provides the runtime gate, so the next risk is exercising the existing cloud portal against a staging PartnerOS backend.
+D8.3 now provides the staging contract runner; the next product value is turning partner execution data into an operating view.

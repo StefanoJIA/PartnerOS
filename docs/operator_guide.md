@@ -292,6 +292,20 @@ python scripts/d8_2_runtime_hardening_check.py
 
 The check covers runtime mode, `SECRET_KEY`, `PUBLIC_BASE_URL`, DB connectivity, Alembic head, proxy alignment, portal token/CORS configuration, and gitignore coverage for local storage paths. It never prints secret or token values.
 
+## D8.3 Service Portal Staging Contract
+
+D8.3 adds an HTTP contract runner for the existing service portal staging integration. It checks token rejection, CORS preflight, customer-safe products/orders/production/shipment/resources reads, and forbidden field leakage.
+
+```powershell
+cd backend
+$env:BACKEND_BASE_URL="https://partneros-staging.example.com"
+$env:SERVICE_PORTAL_PARTNEROS_TOKEN="<portal-server-token>"
+$env:SERVICE_PORTAL_ORIGIN="https://service.intelli-opus.com"
+python scripts/d8_3_service_portal_staging_check.py
+```
+
+The runner does not create feedback unless `D8_3_CREATE_TEST_FEEDBACK=true` is set. Keep all staging feedback subjects/messages prefixed with `TEST`.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate

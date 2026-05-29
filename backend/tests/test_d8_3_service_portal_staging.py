@@ -1,0 +1,53 @@
+"""Unit tests for D8.3 service portal staging contract helpers."""
+
+from __future__ import annotations
+
+import importlib.util
+import sys
+from pathlib import Path
+
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+SCRIPT = BACKEND_ROOT / "scripts" / "d8_3_service_portal_staging_check.py"
+if str(BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(BACKEND_ROOT))
+
+
+def _load_script():
+    spec = importlib.util.spec_from_file_location("d8_3_service_portal_staging_check", SCRIPT)
+    mod = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(mod)
+    return mod
+
+
+script = _load_script()
+
+
+def test_no_forbidden_blob_accepts_customer_safe_payload():
+    clean, detail = script.no_forbidden_blob(
+        {
+            "data": {
+                "items": [
+                    {
+                        "order_number": "O-2026-0001",
+                        "status": "confirmed",
+                        "shipment": {"tracking_number": "TEST123"},
+                    }
+                ]
+            }
+        },
+        token="portal-secret",
+    )
+
+    assert clean is True
+    assert detail == "clean"
+
+
+def test_no_forbidden_blob_rejects_internal_fields_and_token():
+    internal, marker = script.no_forbidden_blob({"storage_key": "secret/path"})
+    token, token_marker = script.no_forbidden_blob({"message": "abc portal-secret xyz"}, token="portal-secret")
+
+    assert internal is False
+    assert marker == "storage_key"
+    assert token is False
+    assert token_marker == "portal token leaked"
