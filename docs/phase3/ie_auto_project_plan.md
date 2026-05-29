@@ -1,0 +1,249 @@
+# IE Auto Project Plan
+
+**Source:** `IE Auto.pdf` in the repository root.
+**Date:** 2026-05-29.
+**Purpose:** turn the project overview into a staged execution plan for intelliOffice / PartnerOS.
+
+## 1. Product Positioning
+
+The PDF positions the system as two coordinated products:
+
+- **intelliOffice / PartnerOS**: the internal operating system and source of truth for agency operations.
+- **service.intelli-opus.com**: the customer-facing portal that reads selected customer-visible data from PartnerOS.
+
+PartnerOS is not only a CRM. It is an operating center for product fit, quoting, orders, partner execution, production, shipment, feedback, and market intelligence.
+
+The priority market remains furniture and ergonomic workstation products, especially:
+
+- adjustable desk frames
+- desk legs
+- lifting columns
+- control boxes
+- handsets
+- heavy-duty load capacity projects
+- low-noise and speed-sensitive lifting products
+- BIFMA / certification-sensitive requests
+- OEM / ODM project-based bulk orders
+
+HOSUN, JOOBOO, and future factories should be modeled as equal peer partners. The system must not hard-code brand privilege.
+
+## 2. System Architecture Boundary
+
+The intended architecture is:
+
+```text
+PartnerOS Internal Backend
+  -> Customer Portal API Bridge
+  -> service.intelli-opus.com Customer Portal
+```
+
+PartnerOS owns the internal data lifecycle. The service portal should consume safe, scoped, customer-visible API responses.
+
+The service portal should read from:
+
+- `product_catalog`
+- `customer_orders`
+- `order_production_milestones`
+- `shipment_plans`
+- future `shipment_tracking_events`
+- quote / document resources
+- `feedback_tickets`
+
+## 3. Operating Lifecycle
+
+The full lifecycle described by the PDF is:
+
+```text
+Lead
+  -> Product Fit
+  -> Manual Outreach
+  -> Quote
+  -> Customer Confirmation
+  -> Order
+  -> Partner Split
+  -> Supplier Confirmation
+  -> Production Milestones
+  -> Shipment Tracking
+  -> Feedback
+  -> Market Intelligence
+```
+
+This lifecycle should stay traceable end to end. Each stage should produce structured data for the next stage instead of relying on PDF parsing or unstructured notes.
+
+## 4. Current State Mapping
+
+As of the current repository state:
+
+| Area | State |
+|---|---|
+| D5 Lead Intelligence | Implemented / closed |
+| D6 Quote MVP | Implemented / closed |
+| D7.2 Order CRUD | Implemented |
+| D7.3 Customer Confirmation | Implemented |
+| D7.4 Partner Split + Supplier Confirmation | Implemented |
+| D7.5 Production Milestones | Implemented |
+| D7.6 Shipment Tracking | Implemented |
+| D7.7 Customer Portal Bridge API | Implemented |
+| D7.8 Service Portal UAT + Feedback Operations | Implemented |
+| D7.9 Resource Center | Implemented |
+| D8.1 RBAC / Scoped Access | Next recommended execution segment |
+| D8 Integration Hardening | Next major stage after D8.1 |
+
+## 5. Non-Negotiable Safety Rules
+
+The PDF repeats the same safety posture across AI, quote, order, production, shipment, and portal work:
+
+- No automatic email / LinkedIn / Outlook sending.
+- No automatic supplier or customer notification.
+- No automatic order creation from PDF parsing.
+- No automatic production, shipment, payment, inventory reservation, or delivery promise.
+- No internal cost, margin, pricing breakdown, supplier private note, internal activity log, backend path, storage key, or token in customer-facing APIs.
+- AI can assist classification, product fit, gap detection, drafting, market signal analysis, feedback analysis, and recommendations, but it must not execute irreversible business actions.
+
+## 6. Segment Goals
+
+### Segment 1 - D7.9 Resource Center / Document Center
+
+**Status:** implemented.
+
+**Why:** the PDF and existing portal mapping both identify customer downloadable resources as the next missing customer portal capability after shipment and feedback.
+
+**Goal:** create a customer-safe document catalog and signed download foundation.
+
+**Deliverables:**
+
+- Resource/document model or extension around existing file attachments.
+- Customer-visible resource metadata whitelist.
+- Signed or expiring download endpoint for allowed resources.
+- Operator UI to attach, classify, and publish resources to an order.
+- Portal API bridge endpoint that returns only safe metadata and download capability.
+- Smoke script covering no backend path / storage key leakage.
+
+**Out of scope:**
+
+- Public bucket browsing.
+- Permanent unauthenticated file URLs.
+- Automatic document emailing.
+- Real customer notification.
+
+**Acceptance:**
+
+- Operator can mark a resource customer-visible.
+- service portal can list and download a permitted resource.
+- Forbidden path/token/storage fields are absent from all portal responses.
+
+### Segment 2 - D8.1 RBAC and Scoped Access
+
+**Decision:** do this next.
+
+**Goal:** move from broad internal authentication toward role and scope aware access.
+
+**Deliverables:**
+
+- Role definitions for internal Operator/Admin/Viewer style users.
+- Portal token scope model.
+- Route-level permission matrix for internal feedback, orders, resources, and portal readiness.
+- Tests proving restricted users cannot access unsafe internal routes.
+
+**Acceptance:**
+
+- Internal users have explicit capabilities.
+- Portal access is scoped and cannot read internal-only fields or operational APIs.
+
+### Segment 3 - D8.2 Runtime Hardening
+
+**Goal:** make local and staging runtime safer and easier to verify.
+
+**Deliverables:**
+
+- Runtime readiness checks for DB, migrations, backend, frontend proxy target, portal config, and storage.
+- Clear staging vs local environment docs.
+- Token and secret check scripts.
+- Safer startup / doctor output for desktop and development modes.
+
+**Acceptance:**
+
+- A single documented command set can prove a staging-like environment is ready.
+- Misconfigured token/CORS/storage states fail loudly before integration testing.
+
+### Segment 4 - D8.3 service.intelli-opus.com Staging Integration
+
+**Goal:** connect the existing customer portal to PartnerOS staging APIs without replacing the portal.
+
+**Deliverables:**
+
+- Staging integration checklist executed with the portal team.
+- Contract tests against the real service portal consumer.
+- CORS, token, HTTPS, and error handling verified.
+- Field whitelist inspection in browser/network responses.
+
+**Acceptance:**
+
+- service.intelli-opus.com can display products, orders, production, shipment, resources, and feedback status from PartnerOS staging.
+- No internal fields appear in portal-visible payloads.
+
+### Segment 5 - D8.4 Multi-Partner Operations Dashboard
+
+**Goal:** turn partner execution data into an operating view across HOSUN, JOOBOO, and future partners.
+
+**Deliverables:**
+
+- Partner workload and status dashboard.
+- Supplier confirmation coverage.
+- Production milestone delay / bottleneck board.
+- Shipment readiness by partner.
+- Neutral partner ranking signals based on capability, fit, price, lead time, certification, MOQ, and project match.
+
+**Acceptance:**
+
+- Operators can compare partner execution health without hard-coded brand preference.
+- Delays and missing confirmations are visible before they become customer issues.
+
+### Segment 6 - D8.5 Market Response Intelligence
+
+**Goal:** close the loop from feedback and market signals back into product fit, quote strategy, partner selection, and outreach.
+
+**Deliverables:**
+
+- Feedback tagging and summary extraction.
+- Quote / order win-loss signal capture.
+- Market demand signal board for adjustable frame categories.
+- Product parameter gap analysis.
+- AI-assisted recommendations with human review.
+
+**Acceptance:**
+
+- Feedback and market signals can influence product fit, quote prep, and partner selection.
+- AI suggestions remain advisory and auditable.
+
+## 7. Recommended Execution Order
+
+The recommended order is:
+
+```text
+D7.9 Resource Center (done)
+  -> D8.1 RBAC / scoped access (next)
+  -> D8.2 Runtime hardening
+  -> D8.3 service portal staging integration
+  -> D8.4 Multi-partner operations dashboard
+  -> D8.5 Market response intelligence
+```
+
+This keeps the customer portal capability complete before broadening into security hardening, deployment hardening, operations analytics, and intelligence loops.
+
+## 8. Immediate Next Brief
+
+The next implementation brief should be:
+
+```text
+D8.1 RBAC and Scoped Access
+```
+
+Minimum target:
+
+- Internal role definitions for Admin / Operator / Viewer.
+- Route-level permission matrix for orders, resources, feedback, portal readiness, and system config.
+- Portal token scope model for customer-facing APIs.
+- Tests proving restricted users cannot access unsafe internal routes.
+
+This is the cleanest next step because D7.9 completes the product/order/production/shipment/feedback/resource loop described in the PDF, so the next risk is access control and scoped integration hardening.

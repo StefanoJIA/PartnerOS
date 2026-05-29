@@ -158,6 +158,30 @@ class ShipmentPlanUpdateIn(BaseModel):
         return v
 
 
+class OrderResourceCreateIn(BaseModel):
+    file_id: UUID
+    title: str | None = None
+    category: str = "general"
+    description: str | None = None
+    customer_visible: bool = False
+
+
+class OrderResourceUpdateIn(BaseModel):
+    title: str | None = None
+    category: str | None = None
+    description: str | None = None
+    status: str | None = None
+    customer_visible: bool | None = None
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: str | None) -> str | None:
+        allowed = ("draft", "published", "archived")
+        if v is not None and v not in allowed:
+            raise ValueError(f"status must be one of {allowed}")
+        return v
+
+
 class ShipmentSafety(BaseModel):
     shipment_created: bool = False
     supplier_notified: bool = False

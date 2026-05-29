@@ -24,6 +24,7 @@ from app.services.portal.customer_portal_bridge import (
     build_customer_shipment_view,
     create_feedback_ticket,
 )
+from app.services.portal.order_resource_service import download_customer_resource, list_customer_order_resources
 
 router = APIRouter(prefix="/portal/customer", tags=["v1-portal-customer"])
 
@@ -132,7 +133,17 @@ def portal_customer_order_shipment(order_id: UUID, request: Request, db: Session
 
 @router.get("/orders/{order_id}/resources", dependencies=[Depends(require_portal_customer_access)])
 def portal_customer_order_resources(order_id: UUID, request: Request, db: Session = Depends(get_db)):
-    return success_envelope(build_customer_resource_view(db, order_id), request_id=get_request_id(request))
+    return success_envelope(list_customer_order_resources(db, order_id), request_id=get_request_id(request))
+
+
+@router.get("/resources/{resource_id}/download")
+def portal_customer_resource_download(
+    resource_id: UUID,
+    expires_at: int,
+    token: str,
+    db: Session = Depends(get_db),
+):
+    return download_customer_resource(db, resource_id, expires_at=expires_at, token=token)
 
 
 @router.post("/feedback", dependencies=[Depends(require_portal_customer_access)])

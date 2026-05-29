@@ -136,15 +136,27 @@ Returns the order summary plus billing/shipping terms, customer notes, and custo
       "filename": "packing-list.pdf",
       "mime": "application/pdf",
       "size": 12345,
-      "purpose": "customer_resource",
-      "created_at": "2026-05-29T12:00:00+00:00"
+      "category": "packing_list",
+      "description": "Customer-visible resource",
+      "status": "published",
+      "customer_visible": true,
+      "download_url": "/api/v1/portal/customer/resources/uuid/download?expires_at=1780000000&token=...",
+      "download_expires_at": 1780000000,
+      "created_at": "2026-05-29T12:00:00+00:00",
+      "safety": {
+        "download_link_signed": true,
+        "file_location_exposed": false,
+        "filesystem_path_exposed": false,
+        "customer_notified": false,
+        "automatic_email_sent": false
+      }
     }
   ],
   "total": 1
 }
 ```
 
-No storage key, backend path, or direct signed download is exposed in D7.8.
+No storage key or backend path is exposed. Download URLs are signed and expire.
 
 ## POST /feedback
 

@@ -240,6 +240,23 @@ python scripts/d7_8_portal_live_integration_check.py
 
 Feedback status flow is `new -> in_review -> responded -> resolved -> closed`. The console records internal handling only; it does not send email, notify customers, upload attachments, or promise an SLA. Staging feedback must include `TEST` in the subject or message.
 
+## D7.9 Resource Center / Document Center
+
+| URL / API | Purpose |
+|-----------|---------|
+| `/orders/:id` | Resource Center block for upload, publish, unpublish, archive |
+| `POST /api/v1/orders/{id}/resources` | Create an order resource from an uploaded file |
+| `GET /api/v1/orders/{id}/resources` | Internal resource list |
+| `PATCH /api/v1/orders/{id}/resources/{resource_id}` | Update resource metadata or visibility |
+| `GET /api/v1/portal/customer/orders/{id}/resources` | Customer-visible resource metadata + signed URL |
+| `GET /api/v1/portal/customer/resources/{resource_id}/download` | Signed customer download |
+
+```powershell
+python scripts/d7_9_resource_center_check.py
+```
+
+Only resources with `status=published` and `customer_visible=true` appear in the Portal bridge. Resource Center does not send email, notify customers, create permanent public URLs, or expose storage keys/backend paths.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate

@@ -1,21 +1,26 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import type { UploadRequestOptions } from 'element-plus'
+import { uploadFile } from '@/api/objects'
 import {
   addSupplierConfirmation,
   cancelOrder,
   confirmOrderCustomer,
   confirmationTypeWarning,
+  createOrderResource,
   createShipmentPlan,
   ensurePartnerSplits,
   ensureProductionMilestones,
   fetchOrder,
   fetchOrderConfirmations,
+  fetchOrderResources,
   fetchOrderTimeline,
   fetchPartnerSplits,
   fetchPartnerSplitDetail,
   fetchProductionMilestones,
   fetchShipmentPlans,
+  updateOrderResource,
   updateProductionMilestone,
   updateShipmentPlan,
   strengthTagType,
@@ -25,6 +30,7 @@ import {
   voidOrderConfirmation,
   type OrderConfirmationRecord,
   type OrderDetail,
+  type OrderResource,
   type OrderTimelineItem,
   type PartnerSplit,
   type ProductionMilestone,
@@ -47,6 +53,8 @@ const showAddForm = ref(false)
 const showSupplierFormFor = ref<string | null>(null)
 const milestonesBySplit = ref<Record<string, ProductionMilestone[]>>({})
 const shipmentPlans = ref<ShipmentPlan[]>([])
+const orderResources = ref<OrderResource[]>([])
+const resourceUploading = ref(false)
 const editingMilestoneId = ref<string | null>(null)
 const milestoneForm = reactive({
   status: 'planned',
@@ -67,9 +75,17 @@ const shipmentForm = reactive({
   status: 'draft',
   notes: '',
 })
+const resourceForm = reactive({
+  title: '',
+  category: 'general',
+  description: '',
+  customer_visible: false,
+})
 
 const SAFETY =
   'Recording customer confirmation does not notify suppliers, start production, create shipments, confirm inventory, confirm certifications, or confirm lead time.'
+const RESOURCE_SAFETY_NOTE =
+  'Order resources are manually published customer documents. Publishing creates a signed download URL only; it does not email customers, expose storage paths, or notify the portal automatically.'
 
 const supplierForm = reactive({
   confirmation_status: 'confirmed',
@@ -133,6 +149,12 @@ async function loadShipmentPlans() {
   shipmentPlans.value = plans.items
 }
 
+async function loadOrderResources() {
+  if (!order.value) return
+  const resources = await fetchOrderResources(order.value.id)
+  orderResources.value = resources.items
+}
+
 async function load() {
   loading.value = true
   error.value = ''
@@ -143,12 +165,64 @@ async function load() {
     confirmations.value = conf.items
     await loadPartnerSplits()
     await loadShipmentPlans()
+    await loadOrderResources()
     const tl = await fetchOrderTimeline(id)
     timelineItems.value = tl.items
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : 'Failed to load order'
   } finally {
     loading.value = false
+  }
+}
+
+async function onUploadOrderResource(opt: UploadRequestOptions) {
+  if (!order.value) return
+  resourceUploading.value = true
+  error.value = ''
+  try {
+    const raw = opt.file as File
+    const meta = await uploadFile(raw)
+    await createOrderResource(order.value.id, {
+      file_id: meta.id,
+      title: resourceForm.title || meta.original_filename,
+      category: resourceForm.category,
+      description: resourceForm.description || undefined,
+      customer_visible: resourceForm.customer_visible,
+    })
+    resourceForm.title = ''
+    resourceForm.description = ''
+    resourceForm.customer_visible = false
+    await loadOrderResources()
+    const tl = await fetchOrderTimeline(order.value.id)
+    timelineItems.value = tl.items
+    successMsg.value = 'Order resource created.'
+    opt.onSuccess?.({} as never)
+  } catch (e: unknown) {
+    error.value = e instanceof Error ? e.message : 'Upload order resource failed'
+    opt.onError?.(e as Error)
+  } finally {
+    resourceUploading.value = false
+  }
+}
+
+async function onPatchOrderResource(resource: OrderResource, patch: Partial<OrderResource>) {
+  if (!order.value) return
+  actionLoading.value = true
+  error.value = ''
+  try {
+    await updateOrderResource(order.value.id, resource.id, {
+      title: patch.title,
+      category: patch.category,
+      description: patch.description ?? undefined,
+      status: patch.status,
+      customer_visible: patch.customer_visible,
+    })
+    await loadOrderResources()
+    successMsg.value = 'Order resource updated.'
+  } catch (e: unknown) {
+    error.value = e instanceof Error ? e.message : 'Update order resource failed'
+  } finally {
+    actionLoading.value = false
   }
 }
 
@@ -730,6 +804,107 @@ onMounted(load)
           <el-form-item label="Notes"><el-input v-model="shipmentForm.notes" type="textarea" :rows="2" /></el-form-item>
           <el-form-item>
             <el-button type="primary" :loading="actionLoading" @click="onCreateShipmentPlan">Create Plan</el-button>
+          </el-form-item>
+        </el-form>
+      </section>
+
+      <section class="section mb">
+        <div class="section-head">
+          <h3>Resource Center</h3>
+          <el-tag type="info">Manual publish</el-tag>
+        </div>
+        <el-alert type="info" :closable="false" :description="RESOURCE_SAFETY_NOTE" class="mb" />
+        <el-table :data="orderResources" stripe class="mb">
+          <el-table-column prop="title" label="Title" min-width="180" />
+          <el-table-column prop="filename" label="File" min-width="180" />
+          <el-table-column prop="category" label="Category" width="130" />
+          <el-table-column prop="status" label="Status" width="110">
+            <template #default="{ row }">
+              <el-tag :type="row.status === 'published' ? 'success' : row.status === 'archived' ? 'info' : 'warning'" size="small">
+                {{ row.status }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="Customer" width="120">
+            <template #default="{ row }">
+              <el-tag :type="row.customer_visible ? 'success' : 'info'" size="small">
+                {{ row.customer_visible ? 'Visible' : 'Hidden' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="published_at" label="Published" width="180" />
+          <el-table-column label="" width="220">
+            <template #default="{ row }">
+              <el-button
+                v-if="!(row.status === 'published' && row.customer_visible)"
+                size="small"
+                type="primary"
+                :loading="actionLoading"
+                @click="onPatchOrderResource(row, { status: 'published', customer_visible: true })"
+              >
+                Publish
+              </el-button>
+              <el-button
+                v-else
+                size="small"
+                :loading="actionLoading"
+                @click="onPatchOrderResource(row, { status: 'draft', customer_visible: false })"
+              >
+                Unpublish
+              </el-button>
+              <el-button
+                size="small"
+                type="danger"
+                plain
+                :loading="actionLoading"
+                @click="onPatchOrderResource(row, { status: 'archived', customer_visible: false })"
+              >
+                Archive
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-collapse v-if="orderResources.some(r => r.customer_visible && r.status === 'published')" class="mb">
+          <el-collapse-item title="Customer visible resource preview" name="resource-preview">
+            <el-table :data="orderResources.filter(r => r.customer_visible && r.status === 'published')" stripe size="small">
+              <el-table-column prop="title" label="Title" />
+              <el-table-column prop="category" label="Category" width="130" />
+              <el-table-column prop="filename" label="File" />
+              <el-table-column label="Safety" width="170">
+                <template #default="{ row }">
+                  <el-tag v-if="row.safety?.file_location_exposed === false" size="small" type="success">No path leak</el-tag>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-collapse-item>
+        </el-collapse>
+        <el-form label-width="150px" class="resource-form">
+          <el-form-item label="Title">
+            <el-input v-model="resourceForm.title" placeholder="Defaults to uploaded filename" />
+          </el-form-item>
+          <el-form-item label="Category">
+            <el-select v-model="resourceForm.category" style="width: 220px">
+              <el-option label="General" value="general" />
+              <el-option label="Quote PDF" value="quote_pdf" />
+              <el-option label="Packing List" value="packing_list" />
+              <el-option label="Spec Sheet" value="spec_sheet" />
+              <el-option label="Certificate" value="certificate" />
+              <el-option label="Shipment" value="shipment" />
+              <el-option label="Other" value="other" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Description">
+            <el-input v-model="resourceForm.description" type="textarea" :rows="2" />
+          </el-form-item>
+          <el-form-item label="Publish now">
+            <el-checkbox v-model="resourceForm.customer_visible" />
+          </el-form-item>
+          <el-form-item>
+            <el-upload :show-file-list="false" :http-request="onUploadOrderResource">
+              <template #trigger>
+                <el-button type="primary" :loading="resourceUploading">Upload Resource</el-button>
+              </template>
+            </el-upload>
           </el-form-item>
         </el-form>
       </section>

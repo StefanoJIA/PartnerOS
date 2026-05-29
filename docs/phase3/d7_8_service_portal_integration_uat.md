@@ -82,7 +82,7 @@ Portal responses may include:
 - Order: id, order number, status, order date, company id/name, customer totals, shipping address fields, payment/shipping terms, customer notes, visible line items.
 - Production: milestone type, label, sequence, status, planned date, actual date.
 - Shipment: status, method, estimated dates, tracking number, origin/destination when customer-visible.
-- Resources: file id, filename, mime, size, purpose, created_at.
+- Resources: file id, title, filename, mime, size, category, description, created_at, signed download URL after D7.9.
 - Feedback response: ticket_number, status, safety flags.
 
 Portal responses must not include internal cost, margin, pricing breakdown JSON, cost snapshot JSON, supplier private notes, supplier references, internal activity logs, backend file paths, storage keys, tokens, or secrets.

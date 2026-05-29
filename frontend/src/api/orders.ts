@@ -168,6 +168,33 @@ export interface ShipmentPlan {
   }
 }
 
+export interface OrderResource {
+  id: string
+  order_id: string
+  file_id: string
+  title: string
+  category: string
+  description: string | null
+  status: string
+  customer_visible: boolean
+  published_at: string | null
+  filename: string
+  mime: string | null
+  size: number
+  created_at: string | null
+  updated_at: string | null
+  download_url?: string
+  download_expires_at?: number
+  safety: {
+    customer_visible: boolean
+    download_link_signed: boolean
+    file_location_exposed: boolean
+    filesystem_path_exposed: boolean
+    customer_notified: boolean
+    automatic_email_sent: boolean
+  }
+}
+
 export interface PartnerSplit {
   id: string
   order_id: string
@@ -454,6 +481,39 @@ export async function updateShipmentPlan(
 ): Promise<ShipmentPlan> {
   const { data } = await http.patch<V1Envelope<ShipmentPlan>>(
     `/v1/orders/${orderId}/shipment-plans/${planId}`,
+    payload,
+  )
+  return data.data
+}
+
+export interface OrderResourcePayload {
+  file_id?: string
+  title?: string
+  category?: string
+  description?: string
+  status?: string
+  customer_visible?: boolean
+}
+
+export async function fetchOrderResources(orderId: string): Promise<{ items: OrderResource[]; total: number }> {
+  const { data } = await http.get<V1Envelope<{ items: OrderResource[]; total: number }>>(
+    `/v1/orders/${orderId}/resources`,
+  )
+  return data.data
+}
+
+export async function createOrderResource(orderId: string, payload: OrderResourcePayload): Promise<OrderResource> {
+  const { data } = await http.post<V1Envelope<OrderResource>>(`/v1/orders/${orderId}/resources`, payload)
+  return data.data
+}
+
+export async function updateOrderResource(
+  orderId: string,
+  resourceId: string,
+  payload: OrderResourcePayload,
+): Promise<OrderResource> {
+  const { data } = await http.patch<V1Envelope<OrderResource>>(
+    `/v1/orders/${orderId}/resources/${resourceId}`,
     payload,
   )
   return data.data

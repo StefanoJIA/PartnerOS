@@ -1,6 +1,6 @@
 from app.models.ai_kb import AIOutput, KbChunk, KbDocument
 from app.models.auth import Role, User
-from app.models.common import ActivityLog, File, FileAttachment, Note, ObjectTag, Tag
+from app.models.common import ActivityLog, File, FileAttachment, Note, ObjectTag, OrderResource, Tag
 from app.models.crm import Company, Contact, Interaction, Lead, OutreachTemplate, Task
 from app.models.enrichment import (
     CompanyEnrichmentRun,
@@ -68,6 +68,7 @@ __all__ = [
     "MarketIntelligenceItem",
     "Note",
     "ObjectTag",
+    "OrderResource",
     "Order",
     "OrderConfirmation",
     "OrderItem",

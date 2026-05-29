@@ -13,11 +13,14 @@ from app.core.deps import get_current_user
 from app.core.request_id import get_request_id
 from app.core.responses import success_envelope
 from app.models import User
+from app.models import File as FileModel
 from app.models.customer_orders import CustomerOrder
 from app.schemas.customer_orders import (
     CancelOrderIn,
     ConfirmCustomerIn,
     OrderFromQuoteIn,
+    OrderResourceCreateIn,
+    OrderResourceUpdateIn,
     OrderUpdateIn,
     ProductionMilestoneUpdateIn,
     ShipmentPlanCreateIn,
@@ -67,6 +70,12 @@ from app.services.orders.shipment_plan_service import (
     shipment_plan_to_dict,
     shipment_safety,
     update_shipment_plan,
+)
+from app.services.portal.order_resource_service import (
+    create_order_resource,
+    list_order_resources,
+    resource_to_dict,
+    update_order_resource,
 )
 
 router = APIRouter(prefix="/orders", tags=["v1-orders"])
@@ -518,3 +527,63 @@ def update_shipment_plan_route(
     )
     rid = get_request_id(request)
     return success_envelope(shipment_plan_to_dict(row), request_id=rid)
+
+
+@router.post("/{order_id}/resources")
+def create_order_resource_route(
+    order_id: UUID,
+    body: OrderResourceCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    row = create_order_resource(
+        db,
+        user,
+        order_id,
+        file_id=body.file_id,
+        title=body.title,
+        category=body.category,
+        description=body.description,
+        customer_visible=body.customer_visible,
+    )
+    file = db.query(FileModel).filter(FileModel.id == row.file_id).first()
+    return success_envelope(resource_to_dict(row, file), request_id=get_request_id(request), status_code=201)
+
+
+@router.get("/{order_id}/resources")
+def list_order_resources_route(
+    order_id: UUID,
+    request: Request,
+    include_archived: bool = False,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    return success_envelope(
+        list_order_resources(db, order_id, include_archived=include_archived),
+        request_id=get_request_id(request),
+    )
+
+
+@router.patch("/{order_id}/resources/{resource_id}")
+def patch_order_resource_route(
+    order_id: UUID,
+    resource_id: UUID,
+    body: OrderResourceUpdateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    row = update_order_resource(
+        db,
+        user,
+        order_id,
+        resource_id,
+        title=body.title,
+        category=body.category,
+        description=body.description,
+        status=body.status,
+        customer_visible=body.customer_visible,
+    )
+    file = db.query(FileModel).filter(FileModel.id == row.file_id).first()
+    return success_envelope(resource_to_dict(row, file), request_id=get_request_id(request))
