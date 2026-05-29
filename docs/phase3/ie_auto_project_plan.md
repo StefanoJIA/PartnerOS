@@ -91,7 +91,7 @@ As of the current repository state:
 | D8.3 service.intelli-opus.com Staging Integration | Contract runner implemented |
 | D8.4 Multi-Partner Operations Dashboard | Implemented |
 | D8.5 Market Response Intelligence | Implemented |
-| D8 Integration Hardening | Next recommended execution segment |
+| D8 Integration Hardening | Foundation implemented |
 
 ## 5. Non-Negotiable Safety Rules
 
@@ -237,7 +237,7 @@ D7.9 Resource Center (done)
   -> D8.3 service portal staging integration (contract runner done)
   -> D8.4 Multi-partner operations dashboard (done)
   -> D8.5 Market response intelligence (done)
-  -> D8 Integration hardening (next)
+  -> D8 Integration hardening (foundation done)
 ```
 
 This keeps the customer portal capability complete before broadening into security hardening, deployment hardening, operations analytics, and intelligence loops.
@@ -247,14 +247,14 @@ This keeps the customer portal capability complete before broadening into securi
 The next implementation brief should be:
 
 ```text
-D8 Integration Hardening
+Strict staging/cloud validation
 ```
 
 Minimum target:
 
-- Deployment readiness checks for CORS, HTTPS assumptions, tokens, and storage.
-- Cloud environment validation without modifying `service.intelli-opus.com`.
-- Operational runbook updates for staging and production bridge usage.
-- Regression matrix covering D7.7-D8.5 bridge, operations, and intelligence loops.
+- Run D8 strict staging checks with real environment values.
+- Validate HTTPS, token rotation, CORS, and storage paths in staging.
+- Coordinate service portal bridge calls without changing nginx from this repo.
+- Capture staging evidence and any follow-up D8 hardening gaps.
 
-D8.5 now closes feedback and market signals back into product fit, quoting, partner selection, and outreach. The next product value is integration hardening around deployment, tokens, CORS, and cloud operational readiness.
+D8 integration hardening now provides a local/staging contract gate across D7.7-D8.5. The next product value is strict staging evidence with real cloud environment values.

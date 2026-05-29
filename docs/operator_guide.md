@@ -344,6 +344,17 @@ python scripts/d8_5_market_response_check.py
 
 The board does not execute AI actions, notify customers or suppliers, send email/webhooks, change quote or order status, or mutate partner selection.
 
+## D8 Integration Hardening
+
+D8 adds a bridge/deployment contract gate for D7.7-D8.5.
+
+```powershell
+cd backend
+python scripts/d8_integration_hardening_check.py
+```
+
+Use it before staging or cloud coordination to confirm service portal CORS, no tracked local secrets/storage, portal readiness token safety, D8.4 read-only behavior, D8.5 advisory-only behavior, and forbidden field filtering. It does not deploy to `service.intelli-opus.com`, update nginx, print tokens, send notifications, or mutate business records.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate
