@@ -274,6 +274,24 @@ python scripts/d8_1_rbac_scoped_access_check.py
 
 `/api/auth/me` returns `role_name` and `permissions` for future UI control hiding. Customer portal bridge routes remain token-scoped and do not expose internal-only fields.
 
+## D8.2 Runtime Hardening
+
+D8.2 adds a read-only runtime gate for local and staging-like environments.
+
+```powershell
+cd backend
+python scripts/d8_2_runtime_hardening_check.py
+```
+
+Use strict staging mode before service portal cutover:
+
+```powershell
+$env:D8_2_STRICT_STAGING="true"
+python scripts/d8_2_runtime_hardening_check.py
+```
+
+The check covers runtime mode, `SECRET_KEY`, `PUBLIC_BASE_URL`, DB connectivity, Alembic head, proxy alignment, portal token/CORS configuration, and gitignore coverage for local storage paths. It never prints secret or token values.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate

@@ -1,6 +1,6 @@
 # Phase 3 Roadmap — Order / Production / Shipment
 
-**Status:** D8.1 implemented / **D6 closed** / **Date:** 2026-05-29
+**Status:** D8.2 implemented / **D6 closed** / **Date:** 2026-05-29
 
 Phase 3 builds the **Customer Order** module and downstream production/shipment foundations. D6 Quote MVP remains frozen.
 
@@ -32,7 +32,7 @@ Phase 3 builds the **Customer Order** module and downstream production/shipment 
 | **D7.8** | Service Portal UAT & Feedback Operations | consumer contract pack, staging readiness, feedback console | ✅ **Implemented** |
 | **D7.9** | Resource Center | customer document catalog + signed download | ✅ **Implemented** |
 | **D8.1** | RBAC / Scoped Access | role presets, route permission guards, `/auth/me` capabilities | Implemented |
-| **D8.2** | Runtime Hardening | staging/local doctor, token and storage checks | Next |
+| **D8.2** | Runtime Hardening | staging/local doctor, token and storage checks | Implemented |
 | **D8** | Deployment & Integration Hardening | CORS, HTTPS, token rotation, cloud 联调 | Future |
 
 ---
@@ -105,6 +105,7 @@ flowchart TD
 - [D7.7 Customer Portal Bridge API](d7_7_customer_portal_bridge_api.md)
 - [D7.9 Resource Center](d7_9_resource_center.md)
 - [D8.1 RBAC and Scoped Access](d8_1_rbac_scoped_access.md)
+- [D8.2 Runtime Hardening](d8_2_runtime_hardening.md)
 - [D7.2 Order CRUD MVP](d7_2_order_crud_mvp.md)
 - [D7.1 Order Schema & API Design Review](d7_1_order_schema_api_design_review.md)
 - [D7 Order Module Readiness Brief](d7_order_module_readiness_brief.md)

@@ -87,8 +87,9 @@ As of the current repository state:
 | D7.8 Service Portal UAT + Feedback Operations | Implemented |
 | D7.9 Resource Center | Implemented |
 | D8.1 RBAC / Scoped Access | Implemented |
-| D8.2 Runtime Hardening | Next recommended execution segment |
-| D8 Integration Hardening | Next major stage after D8.2 |
+| D8.2 Runtime Hardening | Implemented |
+| D8.3 service.intelli-opus.com Staging Integration | Next recommended execution segment |
+| D8 Integration Hardening | Next major stage after D8.3 |
 
 ## 5. Non-Negotiable Safety Rules
 
@@ -152,6 +153,8 @@ The PDF repeats the same safety posture across AI, quote, order, production, shi
 - Portal bridge access remains token-scoped and cannot read internal-only fields or operational APIs.
 
 ### Segment 3 - D8.2 Runtime Hardening
+
+**Status:** implemented.
 
 **Goal:** make local and staging runtime safer and easier to verify.
 
@@ -224,8 +227,8 @@ The recommended order is:
 ```text
 D7.9 Resource Center (done)
   -> D8.1 RBAC / scoped access (done)
-  -> D8.2 Runtime hardening (next)
-  -> D8.3 service portal staging integration
+  -> D8.2 Runtime hardening (done)
+  -> D8.3 service portal staging integration (next)
   -> D8.4 Multi-partner operations dashboard
   -> D8.5 Market response intelligence
 ```
@@ -237,14 +240,14 @@ This keeps the customer portal capability complete before broadening into securi
 The next implementation brief should be:
 
 ```text
-D8.2 Runtime Hardening
+D8.3 service.intelli-opus.com Staging Integration
 ```
 
 Minimum target:
 
-- Runtime readiness checks for DB, migrations, backend, frontend proxy target, portal config, and storage.
-- Clear local vs staging environment docs.
-- Token and secret check scripts.
-- Safer startup / doctor output for desktop and development modes.
+- Execute the staging hardening gate with strict mode enabled.
+- Verify the real service portal consumer against PartnerOS staging APIs.
+- Confirm CORS, token, HTTPS, and error handling.
+- Inspect browser/network responses for field whitelist leaks.
 
-D8.1 now establishes the access-control baseline, so the next risk is repeatable runtime hardening before staging integration.
+D8.2 now provides the runtime gate, so the next risk is exercising the existing cloud portal against a staging PartnerOS backend.
