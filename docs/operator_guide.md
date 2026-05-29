@@ -325,6 +325,25 @@ python scripts/d8_4_partner_operations_check.py
 
 The dashboard does not notify suppliers or customers, create shipments, change order status, or rank partners with hard-coded brand preference.
 
+## D8.5 Market Response Intelligence
+
+D8.5 upgrades `/market-intelligence` into a read-only response intelligence board.
+
+| Area | Signal |
+|------|--------|
+| Feedback | inferred tags, short summaries, status and priority counts |
+| Win-loss | quote status, order conversion, category-level wins/losses |
+| Demand | market, feedback, quote, and order signals by product category |
+| Product gaps | missing product parameters weighted by demand signals |
+| Recommendations | advisory AI-assisted actions requiring human review |
+
+```powershell
+cd backend
+python scripts/d8_5_market_response_check.py
+```
+
+The board does not execute AI actions, notify customers or suppliers, send email/webhooks, change quote or order status, or mutate partner selection.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate

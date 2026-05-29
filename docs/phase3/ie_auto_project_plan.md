@@ -90,8 +90,8 @@ As of the current repository state:
 | D8.2 Runtime Hardening | Implemented |
 | D8.3 service.intelli-opus.com Staging Integration | Contract runner implemented |
 | D8.4 Multi-Partner Operations Dashboard | Implemented |
-| D8.5 Market Response Intelligence | Next recommended execution segment |
-| D8 Integration Hardening | Next major stage after D8.5 |
+| D8.5 Market Response Intelligence | Implemented |
+| D8 Integration Hardening | Next recommended execution segment |
 
 ## 5. Non-Negotiable Safety Rules
 
@@ -236,7 +236,8 @@ D7.9 Resource Center (done)
   -> D8.2 Runtime hardening (done)
   -> D8.3 service portal staging integration (contract runner done)
   -> D8.4 Multi-partner operations dashboard (done)
-  -> D8.5 Market response intelligence (next)
+  -> D8.5 Market response intelligence (done)
+  -> D8 Integration hardening (next)
 ```
 
 This keeps the customer portal capability complete before broadening into security hardening, deployment hardening, operations analytics, and intelligence loops.
@@ -246,15 +247,14 @@ This keeps the customer portal capability complete before broadening into securi
 The next implementation brief should be:
 
 ```text
-D8.5 Market Response Intelligence
+D8 Integration Hardening
 ```
 
 Minimum target:
 
-- Feedback tagging and summary extraction.
-- Quote/order win-loss signal capture.
-- Market demand signal board for adjustable frame categories.
-- Product parameter gap analysis.
-- AI-assisted recommendations with human review.
+- Deployment readiness checks for CORS, HTTPS assumptions, tokens, and storage.
+- Cloud environment validation without modifying `service.intelli-opus.com`.
+- Operational runbook updates for staging and production bridge usage.
+- Regression matrix covering D7.7-D8.5 bridge, operations, and intelligence loops.
 
-D8.4 now turns partner execution into an operating view; the next product value is closing feedback and market signals back into product fit, quoting, partner selection, and outreach.
+D8.5 now closes feedback and market signals back into product fit, quoting, partner selection, and outreach. The next product value is integration hardening around deployment, tokens, CORS, and cloud operational readiness.

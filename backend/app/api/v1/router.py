@@ -7,6 +7,7 @@ from fastapi import APIRouter
 from app.api.v1.routes import (
     feedback_tickets,
     fx_rates,
+    market_response,
     orders,
     partner_operations,
     portal,
@@ -27,6 +28,7 @@ v1_router.include_router(portal_customer.router)
 v1_router.include_router(feedback_tickets.router)
 v1_router.include_router(products.router)
 v1_router.include_router(fx_rates.router)
+v1_router.include_router(market_response.router)
 v1_router.include_router(pricing.router)
 v1_router.include_router(quote_delivery.router)
 v1_router.include_router(quote_order_readiness.router)
