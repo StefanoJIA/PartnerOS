@@ -20,6 +20,7 @@
         <el-menu-item index="/tasks">Tasks</el-menu-item>
         <el-menu-item index="/leads">Leads</el-menu-item>
         <el-menu-item index="/manufacturing-partners">Manufacturing partners</el-menu-item>
+        <el-menu-item index="/partner-operations">Partner operations</el-menu-item>
         <el-menu-item index="/products">Products</el-menu-item>
         <el-menu-item index="/rfqs">RFQs</el-menu-item>
         <el-menu-item index="/samples">Samples</el-menu-item>

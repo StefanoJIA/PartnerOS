@@ -89,8 +89,9 @@ As of the current repository state:
 | D8.1 RBAC / Scoped Access | Implemented |
 | D8.2 Runtime Hardening | Implemented |
 | D8.3 service.intelli-opus.com Staging Integration | Contract runner implemented |
-| D8.4 Multi-Partner Operations Dashboard | Next recommended execution segment |
-| D8 Integration Hardening | Next major stage after D8.4 |
+| D8.4 Multi-Partner Operations Dashboard | Implemented |
+| D8.5 Market Response Intelligence | Next recommended execution segment |
+| D8 Integration Hardening | Next major stage after D8.5 |
 
 ## 5. Non-Negotiable Safety Rules
 
@@ -191,6 +192,8 @@ The PDF repeats the same safety posture across AI, quote, order, production, shi
 
 ### Segment 5 - D8.4 Multi-Partner Operations Dashboard
 
+**Status:** implemented.
+
 **Goal:** turn partner execution data into an operating view across HOSUN, JOOBOO, and future partners.
 
 **Deliverables:**
@@ -232,8 +235,8 @@ D7.9 Resource Center (done)
   -> D8.1 RBAC / scoped access (done)
   -> D8.2 Runtime hardening (done)
   -> D8.3 service portal staging integration (contract runner done)
-  -> D8.4 Multi-partner operations dashboard
-  -> D8.5 Market response intelligence
+  -> D8.4 Multi-partner operations dashboard (done)
+  -> D8.5 Market response intelligence (next)
 ```
 
 This keeps the customer portal capability complete before broadening into security hardening, deployment hardening, operations analytics, and intelligence loops.
@@ -243,15 +246,15 @@ This keeps the customer portal capability complete before broadening into securi
 The next implementation brief should be:
 
 ```text
-D8.4 Multi-Partner Operations Dashboard
+D8.5 Market Response Intelligence
 ```
 
 Minimum target:
 
-- Partner workload and status dashboard.
-- Supplier confirmation coverage by partner.
-- Production milestone delay and bottleneck board.
-- Shipment readiness by partner.
-- Neutral partner ranking signals without hard-coded brand preference.
+- Feedback tagging and summary extraction.
+- Quote/order win-loss signal capture.
+- Market demand signal board for adjustable frame categories.
+- Product parameter gap analysis.
+- AI-assisted recommendations with human review.
 
-D8.3 now provides the staging contract runner; the next product value is turning partner execution data into an operating view.
+D8.4 now turns partner execution into an operating view; the next product value is closing feedback and market signals back into product fit, quoting, partner selection, and outreach.

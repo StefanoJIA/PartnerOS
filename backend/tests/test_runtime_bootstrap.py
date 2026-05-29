@@ -40,8 +40,6 @@ def test_settings_jwt_secret_alias_constructor(tmp_path, monkeypatch) -> None:
 
 
 def test_build_health_development_auth_failed(monkeypatch) -> None:
-    from app.core import database_lifecycle as dl
-
     def fake_check(_settings: Settings) -> tuple:
         return (
             "auth_failed",
@@ -51,7 +49,7 @@ def test_build_health_development_auth_failed(monkeypatch) -> None:
             ],
         )
 
-    monkeypatch.setattr(dl, "check_database", fake_check)
+    monkeypatch.setattr("app.core.bootstrap.check_database", fake_check)
     s = Settings(
         APP_RUNTIME_MODE=AppRuntimeMode.development,
         DATABASE_URL="postgresql+psycopg://partneros:bad@127.0.0.1:5432/partneros",

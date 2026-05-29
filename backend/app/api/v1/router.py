@@ -8,6 +8,7 @@ from app.api.v1.routes import (
     feedback_tickets,
     fx_rates,
     orders,
+    partner_operations,
     portal,
     portal_customer,
     pricing,
@@ -30,5 +31,6 @@ v1_router.include_router(pricing.router)
 v1_router.include_router(quote_delivery.router)
 v1_router.include_router(quote_order_readiness.router)
 v1_router.include_router(orders.router)
+v1_router.include_router(partner_operations.router)
 v1_router.include_router(quotes.router)
 v1_router.include_router(quote_pdf.router)

@@ -306,6 +306,25 @@ python scripts/d8_3_service_portal_staging_check.py
 
 The runner does not create feedback unless `D8_3_CREATE_TEST_FEEDBACK=true` is set. Keep all staging feedback subjects/messages prefixed with `TEST`.
 
+## D8.4 Partner Operations Dashboard
+
+D8.4 adds a read-only partner execution view at `/partner-operations`.
+
+| Area | Signal |
+|------|--------|
+| Workload | partner split count, order count, line item count, subtotal by currency |
+| Supplier | confirmation status counts |
+| Production | milestone status counts, delayed and blocked counts |
+| Shipment | shipment status counts, active shipment count |
+| Risk | open supplier confirmation, delayed/blocked production, ready-to-ship without shipment |
+
+```powershell
+cd backend
+python scripts/d8_4_partner_operations_check.py
+```
+
+The dashboard does not notify suppliers or customers, create shipments, change order status, or rank partners with hard-coded brand preference.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate

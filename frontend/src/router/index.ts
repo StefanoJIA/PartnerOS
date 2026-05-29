@@ -49,6 +49,7 @@ const router = createRouter({
         { path: 'samples/:sampleId', name: 'sample-detail', component: () => import('@/pages/samples/SampleDetailPage.vue') },
         { path: 'orders', name: 'orders', component: () => import('@/pages/orders/OrdersPage.vue') },
         { path: 'orders/:orderId', name: 'order-detail', component: () => import('@/pages/orders/OrderDetailPage.vue') },
+        { path: 'partner-operations', name: 'partner-operations', component: () => import('@/pages/operations/PartnerOperationsPage.vue') },
         { path: 'ai-assistant', name: 'ai-assistant', component: () => import('@/pages/ai/AiAssistantPage.vue') },
         { path: 'ai-outputs', name: 'ai-outputs', component: () => import('@/pages/ai/AiOutputsPage.vue') },
         { path: 'knowledge-base', name: 'knowledge', component: () => import('@/pages/knowledge/KnowledgePage.vue') },
