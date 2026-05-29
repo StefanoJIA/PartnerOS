@@ -12,6 +12,8 @@ D8.5 closes the loop from portal feedback, quote outcomes, order conversion, pro
 |---|---|
 | `GET /api/v1/market/response-intelligence` | Read-only market response board with feedback tags, win-loss signals, demand rows, product gaps, and advisory recommendations |
 
+The route requires `market:read`.
+
 The service aggregates existing records only:
 
 - `feedback_tickets`

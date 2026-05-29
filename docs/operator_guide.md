@@ -266,6 +266,7 @@ Internal users now resolve to explicit permissions from their role. Admin receiv
 | Orders | `orders:read` | `orders:write` |
 | Order resources | `resources:read` | `resources:write` |
 | Feedback tickets | `feedback:read` | `feedback:write` |
+| Market response intelligence | `market:read` | n/a |
 | Portal readiness | `portal:readiness` | n/a |
 
 ```powershell

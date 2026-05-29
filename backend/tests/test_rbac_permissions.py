@@ -11,6 +11,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.permissions import (
     PERM_FEEDBACK_WRITE,
+    PERM_MARKET_READ,
     PERM_ORDERS_READ,
     PERM_RESOURCES_WRITE,
     has_permission,
@@ -38,7 +39,9 @@ def test_role_presets_allow_viewer_reads_but_block_writes():
     viewer = _user("Viewer")
 
     assert PERM_ORDERS_READ in user_permissions(viewer)
+    assert PERM_MARKET_READ in user_permissions(viewer)
     assert has_permission(viewer, PERM_ORDERS_READ) is True
+    assert has_permission(viewer, PERM_MARKET_READ) is True
     assert has_permission(viewer, PERM_RESOURCES_WRITE) is False
     assert has_permission(viewer, PERM_FEEDBACK_WRITE) is False
 

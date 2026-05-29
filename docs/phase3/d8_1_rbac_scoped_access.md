@@ -13,8 +13,8 @@ Roles can define explicit JSON permissions in `roles.permissions`. If a role doe
 | Role | Scope |
 |---|---|
 | Admin | `*` |
-| Operations / Operator / Supplier Manager / Sales | order write, resource write, feedback write, portal readiness, system readiness |
-| Viewer | order read, resource read, feedback read, portal readiness, system readiness |
+| Operations / Operator / Supplier Manager / Sales | order write, resource write, feedback write, market read, portal readiness, system readiness |
+| Viewer | order read, resource read, feedback read, market read, portal readiness, system readiness |
 
 The seed script now fills missing role permissions for existing demo roles. Test-only users without a role relationship continue to behave like operators so older smoke scripts do not need fixture churn.
 
@@ -28,6 +28,7 @@ The seed script now fills missing role permissions for existing demo roles. Test
 | `POST/PATCH /api/v1/orders/{id}/resources*` | `resources:write` |
 | `GET /api/v1/feedback-tickets*` | `feedback:read` |
 | `PATCH /api/v1/feedback-tickets/{id}` | `feedback:write` |
+| `GET /api/v1/market/response-intelligence` | `market:read` |
 | `GET /api/v1/portal/customer/readiness` | `portal:readiness` |
 
 `/api/auth/me` now returns `role_name` and `permissions` so the frontend can hide unavailable controls in D8.1+ UI work.
