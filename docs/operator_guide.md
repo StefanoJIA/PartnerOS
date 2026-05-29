@@ -203,6 +203,26 @@ python scripts/d7_6_shipment_tracking_check.py
 
 Shipment plans are manual logistics records only. They do not call carriers, send webhooks or email, notify suppliers/customers, or automatically change the order to shipped/delivered.
 
+## D7.7 Customer Portal Bridge
+
+PartnerOS is the internal source of truth. `service.intelli-opus.com` remains the customer-facing portal.
+
+| URL / API | Purpose |
+|-----------|---------|
+| `GET /api/v1/portal/customer/products` | Customer-visible products |
+| `GET /api/v1/portal/customer/orders` | Customer-visible orders |
+| `GET /api/v1/portal/customer/orders/{id}` | Customer-visible order detail |
+| `GET /api/v1/portal/customer/orders/{id}/production` | Production milestone view |
+| `GET /api/v1/portal/customer/orders/{id}/shipment` | Shipment plan view |
+| `GET /api/v1/portal/customer/orders/{id}/resources` | Customer-safe resource metadata |
+| `POST /api/v1/portal/customer/feedback` | Feedback ticket intake |
+
+```powershell
+python scripts/d7_7_portal_bridge_check.py
+```
+
+Default bridge config is disabled and token-required. Real tokens must live in `.env` only. Portal bridge responses must not expose internal costs, margins, supplier private notes, storage keys, backend paths, or tokens.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate
@@ -410,6 +430,7 @@ python scripts/daily_work_summary.py
 | `d7_5_production_milestone_check.py` | D7.5 production milestone smoke |
 | `d7_5_1_portal_integration_review_check.py` | D7.5.1 cloud portal integration review gate |
 | `d7_6_shipment_tracking_check.py` | D7.6 shipment tracking smoke |
+| `d7_7_portal_bridge_check.py` | D7.7 customer portal bridge smoke |
 | `d7_4_partner_supplier_check.py` | D7.4 partner split & supplier confirmation smoke |
 | `d7_3_customer_confirmation_check.py` | D7.3 customer confirmation smoke |
 | `d6_2_pricing_foundation_check.py` | D6.2 pricing foundation smoke |

@@ -8,6 +8,7 @@ from app.api.v1.routes import (
     fx_rates,
     orders,
     portal,
+    portal_customer,
     pricing,
     products,
     quote_delivery,
@@ -20,6 +21,7 @@ from app.api.v1.routes import (
 v1_router = APIRouter()
 v1_router.include_router(system.router)
 v1_router.include_router(portal.router)
+v1_router.include_router(portal_customer.router)
 v1_router.include_router(products.router)
 v1_router.include_router(fx_rates.router)
 v1_router.include_router(pricing.router)

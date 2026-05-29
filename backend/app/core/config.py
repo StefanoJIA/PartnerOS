@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     APP_NAME: str = "intellioffice"
     PUBLIC_BASE_URL: str = ""
     PORTAL_INTEGRATION_ENABLED: bool = True
+    PORTAL_CUSTOMER_API_ENABLED: bool = False
+    PORTAL_CUSTOMER_API_TOKEN: str = ""
+    PORTAL_CUSTOMER_API_REQUIRE_TOKEN: bool = True
+    PORTAL_CUSTOMER_ALLOWED_ORIGINS: str = ""
     REDIS_URL: str = ""
     STORAGE_BACKEND: str = "local"
     LOCAL_STORAGE_PATH: str = ""
@@ -46,7 +50,9 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> list[str]:
-        return [o.strip() for o in self.BACKEND_CORS_ORIGINS.split(",") if o.strip()]
+        origins = [o.strip() for o in self.BACKEND_CORS_ORIGINS.split(",") if o.strip()]
+        origins.extend(o.strip() for o in self.PORTAL_CUSTOMER_ALLOWED_ORIGINS.split(",") if o.strip())
+        return list(dict.fromkeys(origins))
 
     def model_post_init(self, __context: Any) -> None:  # noqa: ARG002
         pass

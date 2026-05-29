@@ -8,6 +8,7 @@ from app.models.enrichment import (
     CompanyEnrichmentSuggestion,
 )
 from app.models.field_visits import FieldVisitPlan, FieldVisitTarget
+from app.models.feedback import FeedbackTicket
 from app.models.market import MarketIntelligenceItem
 from app.models.orders import Order, OrderItem, ProductionMilestone, ShippingRecord
 from app.models.partners import ManufacturingPartner, PartnerCapability, PartnerContact
@@ -52,6 +53,7 @@ __all__ = [
     "Contact",
     "CustomerOrder",
     "FactoryAudit",
+    "FeedbackTicket",
     "FxRate",
     "FieldVisitPlan",
     "FieldVisitTarget",
