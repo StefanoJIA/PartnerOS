@@ -56,14 +56,20 @@ def _next_action(chain_state: str, readiness: str, coordination: str) -> tuple[s
     if readiness == "READY_FOR_STAGING":
         return (
             "READY_FOR_STAGING_HANDOFF",
-            "Use docs/phase3/d8_staging_handoff_bundle.md, obtain private staging values via d8_staging_access_request.md, then run strict staging evidence.",
+            "Use docs/phase3/d8_staging_handoff_bundle.md and docs/phase3/d8_staging_operator_runbook.md, obtain private staging values via d8_staging_access_request.md, then run strict staging evidence.",
         )
     if readiness == "STAGING_GAPS_OPEN":
         return "STAGING_GAPS_OPEN", "Close the latest strict staging gap register, then rerun strict staging evidence."
     if readiness == "STAGING_VALIDATED" and coordination == "READY_FOR_PRODUCTION_COORDINATION":
-        return "READY_FOR_PRODUCTION_COORDINATION", "Proceed with the D8 production coordination Go / No-Go handoff."
+        return (
+            "READY_FOR_PRODUCTION_COORDINATION",
+            "Proceed with docs/phase3/d8_production_coordination_runbook.md for the D8 production coordination Go / No-Go handoff.",
+        )
     if readiness == "STAGING_VALIDATED":
-        return "STAGING_VALIDATED", "Run production coordination and confirm the Go / No-Go plan."
+        return (
+            "STAGING_VALIDATED",
+            "Run production coordination and confirm the Go / No-Go plan with docs/phase3/d8_production_coordination_runbook.md.",
+        )
     return "LOCAL_ARTIFACTS_INCOMPLETE", "Run the reported failing gate and fix missing local artifacts."
 
 

@@ -87,6 +87,14 @@ Run the PartnerOS D8 strict staging evidence flow against the real deployed stag
 | `SERVICE_PORTAL_PARTNEROS_TOKEN` | Non-default portal server token; do not paste into docs or screenshots |
 | `SERVICE_PORTAL_ORIGIN` | `https://service.intelli-opus.com` unless the portal team confirms another HTTPS origin |
 
+## Operator Runbooks
+
+| Runbook | When to use |
+|---|---|
+| `docs/phase3/d8_staging_handoff_bundle.md` | Confirm the operator-facing package, commands, evidence command, and exclusions |
+| `docs/phase3/d8_staging_operator_runbook.md` | Execute the sequence from `READY_FOR_STAGING_HANDOFF` through input preflight, strict evidence, records review, and next state |
+| `docs/phase3/d8_production_coordination_runbook.md` | Use only after `STAGING_VALIDATED` for the human Go / No-Go and rollback handoff |
+
 ## Preflight
 
 ```powershell

@@ -33,6 +33,7 @@ def test_project_execution_status_reports_staging_handoff(monkeypatch, capsys):
     output = capsys.readouterr().out
     assert "Current Stage: READY_FOR_STAGING_HANDOFF" in output
     assert "d8_staging_handoff_bundle.md" in output
+    assert "d8_staging_operator_runbook.md" in output
     assert "d8_staging_access_request.md" in output
     assert "Result: PASS" in output
 
@@ -53,6 +54,7 @@ def test_project_execution_status_reports_production_coordination(monkeypatch, c
     assert module.main() == 0
     output = capsys.readouterr().out
     assert "Current Stage: READY_FOR_PRODUCTION_COORDINATION" in output
+    assert "d8_production_coordination_runbook.md" in output
     assert "Go / No-Go" in output
 
 
