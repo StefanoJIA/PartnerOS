@@ -10,6 +10,8 @@ from __future__ import annotations
 import json
 import os
 import sys
+from argparse import ArgumentParser
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -56,6 +58,13 @@ class Check:
         status = "PASS" if self.ok else "FAIL"
         suffix = f" ({self.detail})" if self.detail else ""
         return f"[{status}] {self.label}{suffix}"
+
+    def evidence(self) -> dict[str, Any]:
+        return {
+            "label": self.label,
+            "status": "PASS" if self.ok else "FAIL",
+            "detail": self.detail,
+        }
 
 
 def _env(name: str, default: str = "") -> str:
@@ -129,7 +138,89 @@ def _envelope_ok(response: httpx.Response | None) -> bool:
     return isinstance(body, dict) and body.get("ok") is True and isinstance(body.get("data"), dict)
 
 
+def _parse_args() -> Any:
+    parser = ArgumentParser(description="Collect D8 strict staging/cloud validation evidence.")
+    parser.add_argument(
+        "--evidence-json",
+        help="Optional path for redacted JSON evidence. The file must live outside backend/storage and local_data.",
+    )
+    return parser.parse_args()
+
+
+def _safe_evidence_path(raw: str) -> Path:
+    path = Path(raw)
+    if not path.is_absolute():
+        path = BACKEND_ROOT / path
+    resolved = path.resolve()
+    repo_root = BACKEND_ROOT.parent.resolve()
+    forbidden_roots = ((repo_root / "local_data").resolve(), (BACKEND_ROOT / "storage").resolve())
+    for root in forbidden_roots:
+        try:
+            resolved.relative_to(root)
+        except ValueError:
+            continue
+        raise ValueError("evidence path must not be under local_data or backend/storage")
+    return resolved
+
+
+def _write_evidence(raw_path: str | None, *, checks: list[Check], base: str, origin: str, allow_local: bool) -> None:
+    if not raw_path:
+        return
+    path = _safe_evidence_path(raw_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "script": "d8_strict_staging_evidence_check.py",
+        "backend_base_url": _redacted_url(base) or "<missing>",
+        "service_portal_origin": origin,
+        "allow_local_http": allow_local,
+        "write_actions": False,
+        "result": "PASS" if all(check.ok for check in checks) else "FAIL",
+        "checks": [check.evidence() for check in checks],
+        "safety": {
+            "token_redacted": True,
+            "response_bodies_stored": False,
+            "customer_portal_deployed": False,
+            "nginx_changed": False,
+            "business_records_mutated": False,
+        },
+    }
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def _finish(
+    *,
+    checks: list[Check],
+    base: str,
+    origin: str,
+    allow_local: bool,
+    evidence_json: str | None,
+) -> int:
+    print("D8 Strict Staging Evidence Check")
+    print(f"BACKEND_BASE_URL={_redacted_url(base) or '<missing>'}")
+    print(f"SERVICE_PORTAL_ORIGIN={origin}")
+    print(f"allow_local_http={allow_local}")
+    print("write_actions=false")
+    for check in checks:
+        print(check.line())
+    passed = all(check.ok for check in checks)
+    try:
+        _write_evidence(evidence_json, checks=checks, base=base, origin=origin, allow_local=allow_local)
+    except OSError as exc:
+        print(f"[FAIL] evidence json write ({str(exc)[:120]})")
+        passed = False
+    except ValueError as exc:
+        print(f"[FAIL] evidence json path ({exc})")
+        passed = False
+    else:
+        if evidence_json:
+            print(f"evidence_json={_safe_evidence_path(evidence_json)}")
+    print(f"Result: {'PASS' if passed else 'FAIL'}")
+    return 0 if passed else 1
+
+
 def main() -> int:
+    args = _parse_args()
     base = _base_url()
     origin = _origin()
     token = _portal_token()
@@ -178,10 +269,13 @@ def main() -> int:
     if not checks[0].ok:
         for item in checks[4:]:
             item.fail("not attempted; BACKEND_BASE_URL missing")
-        for check in checks:
-            print(check.line())
-        print("Result: FAIL")
-        return 1
+        return _finish(
+            checks=checks,
+            base=base,
+            origin=origin,
+            allow_local=allow_local,
+            evidence_json=args.evidence_json,
+        )
 
     responses: list[httpx.Response | dict[str, Any] | None] = []
     order_items: list[dict[str, Any]] = []
@@ -282,16 +376,13 @@ def main() -> int:
     clean, detail = _no_forbidden_blob(token, *responses)
     checks[13].pass_(detail) if clean else checks[13].fail(detail)
 
-    print("D8 Strict Staging Evidence Check")
-    print(f"BACKEND_BASE_URL={_redacted_url(base) or '<missing>'}")
-    print(f"SERVICE_PORTAL_ORIGIN={origin}")
-    print(f"allow_local_http={allow_local}")
-    print("write_actions=false")
-    for check in checks:
-        print(check.line())
-    passed = all(check.ok for check in checks)
-    print(f"Result: {'PASS' if passed else 'FAIL'}")
-    return 0 if passed else 1
+    return _finish(
+        checks=checks,
+        base=base,
+        origin=origin,
+        allow_local=allow_local,
+        evidence_json=args.evidence_json,
+    )
 
 
 if __name__ == "__main__":

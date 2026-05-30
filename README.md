@@ -121,7 +121,7 @@ python scripts/d8_3_service_portal_staging_check.py  # D8.3 service portal stagi
 python scripts/d8_4_partner_operations_check.py  # D8.4 partner operations dashboard
 python scripts/d8_5_market_response_check.py  # D8.5 market response intelligence
 python scripts/d8_integration_hardening_check.py  # D8 bridge/deployment hardening contract
-python scripts/d8_strict_staging_evidence_check.py  # D8 strict staging/cloud evidence (requires real env)
+python scripts/d8_strict_staging_evidence_check.py  # D8 strict staging/cloud evidence; add --evidence-json to save redacted proof
 python scripts/d7_4_partner_supplier_check.py   # D7.4 partner split & supplier confirmation smoke
 python scripts/d7_3_customer_confirmation_check.py  # D7.3 customer confirmation smoke
 ```

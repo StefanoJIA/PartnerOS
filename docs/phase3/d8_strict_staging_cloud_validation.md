@@ -27,6 +27,14 @@ $env:SERVICE_PORTAL_ORIGIN="https://service.intelli-opus.com"
 python scripts/d8_strict_staging_evidence_check.py
 ```
 
+To preserve a redacted JSON evidence record:
+
+```powershell
+python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/records/d8_strict_staging_evidence_YYYYMMDD.json
+```
+
+The JSON record stores check labels, pass/fail states, sanitized URLs, and safety metadata. It does not store the portal token or response bodies.
+
 For local rehearsal only:
 
 ```powershell

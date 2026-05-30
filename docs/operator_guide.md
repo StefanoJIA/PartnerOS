@@ -367,6 +367,7 @@ python scripts/d8_strict_staging_evidence_check.py
 ```
 
 This strict check validates HTTPS, token rejection, CORS, readiness/manifest envelopes, customer portal product/order reads, optional order subresources, and forbidden-field leakage.
+Add `--evidence-json ../docs/records/d8_strict_staging_evidence_YYYYMMDD.json` when you need a redacted evidence artifact for handoff or audit.
 
 ## D7.1 Order Design Review
 
