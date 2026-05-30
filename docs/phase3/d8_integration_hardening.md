@@ -42,6 +42,20 @@ cd ../frontend
 npm run test -- --run
 ```
 
+## Strict Staging Evidence
+
+After staging environment values are available, run:
+
+```powershell
+cd backend
+$env:BACKEND_BASE_URL="https://partneros-staging.example.com"
+$env:SERVICE_PORTAL_PARTNEROS_TOKEN="<portal-server-token>"
+$env:SERVICE_PORTAL_ORIGIN="https://service.intelli-opus.com"
+python scripts/d8_strict_staging_evidence_check.py
+```
+
+See [D8 Strict Staging / Cloud Validation](d8_strict_staging_cloud_validation.md).
+
 For strict staging environment checks:
 
 ```powershell

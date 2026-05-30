@@ -356,6 +356,18 @@ python scripts/d8_integration_hardening_check.py
 
 Use it before staging or cloud coordination to confirm service portal CORS, no tracked local secrets/storage, portal readiness token safety, D8.4 read-only behavior, D8.5 advisory-only behavior, and forbidden field filtering. It does not deploy to `service.intelli-opus.com`, update nginx, print tokens, send notifications, or mutate business records.
 
+For real staging evidence:
+
+```powershell
+cd backend
+$env:BACKEND_BASE_URL="https://partneros-staging.example.com"
+$env:SERVICE_PORTAL_PARTNEROS_TOKEN="<portal-server-token>"
+$env:SERVICE_PORTAL_ORIGIN="https://service.intelli-opus.com"
+python scripts/d8_strict_staging_evidence_check.py
+```
+
+This strict check validates HTTPS, token rejection, CORS, readiness/manifest envelopes, customer portal product/order reads, optional order subresources, and forbidden-field leakage.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate

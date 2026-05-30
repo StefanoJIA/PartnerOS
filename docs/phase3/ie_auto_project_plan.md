@@ -92,6 +92,7 @@ As of the current repository state:
 | D8.4 Multi-Partner Operations Dashboard | Implemented |
 | D8.5 Market Response Intelligence | Implemented |
 | D8 Integration Hardening | Foundation implemented |
+| Strict Staging / Cloud Validation | Evidence workflow added |
 
 ## 5. Non-Negotiable Safety Rules
 
@@ -238,6 +239,7 @@ D7.9 Resource Center (done)
   -> D8.4 Multi-partner operations dashboard (done)
   -> D8.5 Market response intelligence (done)
   -> D8 Integration hardening (foundation done)
+  -> Strict staging/cloud validation (evidence workflow added)
 ```
 
 This keeps the customer portal capability complete before broadening into security hardening, deployment hardening, operations analytics, and intelligence loops.
@@ -247,14 +249,14 @@ This keeps the customer portal capability complete before broadening into securi
 The next implementation brief should be:
 
 ```text
-Strict staging/cloud validation
+Strict staging evidence run
 ```
 
 Minimum target:
 
-- Run D8 strict staging checks with real environment values.
-- Validate HTTPS, token rotation, CORS, and storage paths in staging.
+- Run `scripts/d8_strict_staging_evidence_check.py` against the real staging URL.
+- Preserve the PASS/FAIL output as staging evidence.
+- Fix any failed HTTPS, token, CORS, readiness, or field-filtering gaps.
 - Coordinate service portal bridge calls without changing nginx from this repo.
-- Capture staging evidence and any follow-up D8 hardening gaps.
 
-D8 integration hardening now provides a local/staging contract gate across D7.7-D8.5. The next product value is strict staging evidence with real cloud environment values.
+D8 integration hardening now provides a local/staging contract gate across D7.7-D8.5, and strict staging/cloud validation has a repeatable evidence collector. The next product value is running it against real cloud environment values and closing any staging gaps it exposes.

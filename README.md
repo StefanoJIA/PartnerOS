@@ -46,9 +46,9 @@
 
 **D7** is Order / Production / Shipment.
 
-**D8 integration hardening foundation** is implemented. Next: strict staging/cloud validation with real environment values.
+**D8 strict staging/cloud validation evidence workflow** is implemented. Next: run it with real staging environment values.
 
-Current D8 docs: [D8 Integration Hardening](docs/phase3/d8_integration_hardening.md), [D8.5 Market Response Intelligence](docs/phase3/d8_5_market_response_intelligence.md), and [D8.4 Multi-Partner Operations Dashboard](docs/phase3/d8_4_multi_partner_operations_dashboard.md).
+Current D8 docs: [D8 Strict Staging / Cloud Validation](docs/phase3/d8_strict_staging_cloud_validation.md), [D8 Integration Hardening](docs/phase3/d8_integration_hardening.md), [D8.5 Market Response Intelligence](docs/phase3/d8_5_market_response_intelligence.md), and [D8.4 Multi-Partner Operations Dashboard](docs/phase3/d8_4_multi_partner_operations_dashboard.md).
 
 See [D7.9 Resource Center](docs/phase3/d7_9_resource_center.md) · [IE Auto Project Plan](docs/phase3/ie_auto_project_plan.md) · [D7.8 Service Portal Integration UAT](docs/phase3/d7_8_service_portal_integration_uat.md) · [Service Portal API Contract](docs/phase3/service_portal_api_contract_for_frontend.md) · [D7.7 Customer Portal Bridge API](docs/phase3/d7_7_customer_portal_bridge_api.md) · [D7.6 Shipment Tracking Foundation](docs/phase3/d7_6_shipment_tracking_foundation.md) · [D7.5.1 Cloud Portal Integration Review](docs/phase3/d7_5_1_existing_cloud_portal_integration_review.md) · [Phase 3 Roadmap](docs/phase3/phase3_roadmap.md).
 
@@ -121,6 +121,7 @@ python scripts/d8_3_service_portal_staging_check.py  # D8.3 service portal stagi
 python scripts/d8_4_partner_operations_check.py  # D8.4 partner operations dashboard
 python scripts/d8_5_market_response_check.py  # D8.5 market response intelligence
 python scripts/d8_integration_hardening_check.py  # D8 bridge/deployment hardening contract
+python scripts/d8_strict_staging_evidence_check.py  # D8 strict staging/cloud evidence (requires real env)
 python scripts/d7_4_partner_supplier_check.py   # D7.4 partner split & supplier confirmation smoke
 python scripts/d7_3_customer_confirmation_check.py  # D7.3 customer confirmation smoke
 ```
