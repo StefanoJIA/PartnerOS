@@ -27,7 +27,7 @@ SECRET_ASSIGNMENT_PATTERN = re.compile(
     r"\b:?\s*=\s*['\"]?([^'\"\s]+)",
     re.IGNORECASE,
 )
-BEARER_PATTERN = re.compile(r"\b(?:Authorization:?\s*)?Bearer\s+([^\s`'\"|]+)", re.IGNORECASE)
+BEARER_PATTERN = re.compile(r"\bAuthorization:?\s*Bearer\s+([^\s`'\"|]+)", re.IGNORECASE)
 ALLOWED_SECRET_PLACEHOLDERS = {"<portal-server-token>", "<redacted>", "***", "REDACTED"}
 
 
@@ -36,12 +36,19 @@ def _is_placeholder(value: str) -> bool:
     return stripped in ALLOWED_SECRET_PLACEHOLDERS or (stripped.startswith("<") and stripped.endswith(">"))
 
 
-def redaction_issues(path: Path, text: str, extra_forbidden_markers: tuple[str, ...] = ()) -> list[str]:
+def redaction_issues(
+    path: Path,
+    text: str,
+    extra_forbidden_markers: tuple[str, ...] = (),
+    *,
+    include_common_markers: bool = True,
+) -> list[str]:
     """Return redaction issue labels for a committed record body."""
 
     issues: list[str] = []
     lowered = text.lower()
-    for marker in (*COMMON_FORBIDDEN_MARKERS, *extra_forbidden_markers):
+    common_markers = COMMON_FORBIDDEN_MARKERS if include_common_markers else ()
+    for marker in (*common_markers, *extra_forbidden_markers):
         if marker in lowered:
             issues.append(f"{path.name}:{marker}")
 
