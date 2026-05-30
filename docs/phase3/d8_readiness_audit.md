@@ -23,6 +23,8 @@ python scripts/d8_readiness_audit.py
 | `READY_FOR_STAGING` | Local D8 artifacts are present, but no strict staging evidence JSON exists | Run strict staging evidence with real env values |
 | `STAGING_GAPS_OPEN` | Latest strict staging evidence failed | Close the generated gap register and rerun evidence |
 | `STAGING_VALIDATED` | Latest strict staging evidence passed | Move to production coordination planning |
+| `STAGING_EVIDENCE_NONCANONICAL` | A strict staging evidence-like file exists but does not use the canonical `YYYYMMDD` name | Rename/regenerate evidence with canonical names before review |
+| `STAGING_EVIDENCE_UNREADABLE` | Latest canonical strict staging evidence cannot be parsed as valid evidence JSON | Regenerate evidence and rerun records/review gates |
 
 ## Evidence Inputs
 

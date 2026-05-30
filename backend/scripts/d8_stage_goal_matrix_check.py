@@ -93,6 +93,8 @@ REQUIRED_MATRIX_MARKERS = (
     "Strict Staging / Cloud Validation",
     "D8 Local Staging Rehearsal",
     "D8 Readiness Audit",
+    "STAGING_EVIDENCE_NONCANONICAL",
+    "STAGING_EVIDENCE_UNREADABLE",
     "D8 Staging Operator Handoff",
     "D8 Staging Handoff Bundle",
     "D8 Staging Operator Runbook",
