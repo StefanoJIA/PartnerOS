@@ -35,6 +35,7 @@ from app.models.customer_orders import (
 from app.models.customer_quotes import Quote, QuoteLineItem
 
 SERVICE_PORTAL_ORIGIN = "https://service.intelli-opus.com"
+INTEGRATION_DOC = REPO_ROOT / "docs" / "phase3" / "d8_integration_hardening.md"
 FORBIDDEN = (
     "internal_cost",
     "estimated_margin",
@@ -58,6 +59,13 @@ REQUIRED_DOCS = (
     "docs/phase3/d8_4_multi_partner_operations_dashboard.md",
     "docs/phase3/d8_5_market_response_intelligence.md",
     "docs/phase3/d8_production_coordination_runbook.md",
+)
+REQUIRED_INTEGRATION_DOC_MARKERS = (
+    "D8 Production Coordination Runbook",
+    "d8_production_coordination_runbook.md",
+    "python scripts/d8_production_coordination_runbook_check.py",
+    "STAGING_VALIDATED",
+    "Go / No-Go handoff",
 )
 
 
@@ -153,9 +161,14 @@ def _configure_safe_env() -> None:
     get_settings.cache_clear()
 
 
+def _integration_doc_text() -> str:
+    return INTEGRATION_DOC.read_text(encoding="utf-8") if INTEGRATION_DOC.exists() else ""
+
+
 def main() -> int:
     checks = [
         Check("required D7-D8 docs present"),
+        Check("integration hardening doc references production runbook"),
         Check("no tracked local secrets or storage"),
         Check("service portal CORS preflight"),
         Check("portal readiness safe"),
@@ -167,8 +180,14 @@ def main() -> int:
     missing_docs = [path for path in REQUIRED_DOCS if not (REPO_ROOT / path).exists()]
     checks[0].pass_("all present") if not missing_docs else checks[0].fail(", ".join(missing_docs))
 
+    integration_doc = _integration_doc_text()
+    missing_doc_markers = [marker for marker in REQUIRED_INTEGRATION_DOC_MARKERS if marker not in integration_doc]
+    checks[1].pass_("production runbook linked") if not missing_doc_markers else checks[1].fail(
+        ", ".join(missing_doc_markers)
+    )
+
     tracked_sensitive = _git_tracked_sensitive_files()
-    checks[1].pass_("clean") if not tracked_sensitive else checks[1].fail(", ".join(tracked_sensitive[:5]))
+    checks[2].pass_("clean") if not tracked_sensitive else checks[2].fail(", ".join(tracked_sensitive[:5]))
 
     _configure_safe_env()
     app = create_app()
@@ -195,16 +214,16 @@ def main() -> int:
 
     allow_origin = preflight.headers.get("access-control-allow-origin")
     if preflight.status_code in (200, 204) and allow_origin == SERVICE_PORTAL_ORIGIN:
-        checks[2].pass_("service.intelli-opus.com allowed")
+        checks[3].pass_("service.intelli-opus.com allowed")
     else:
-        checks[2].fail(f"HTTP {preflight.status_code} allow-origin={allow_origin!r}")
+        checks[3].fail(f"HTTP {preflight.status_code} allow-origin={allow_origin!r}")
 
     portal_data = (_safe_json(portal_readiness).get("data") or {}) if portal_readiness.status_code == 200 else {}
     portal_safety = portal_data.get("safety") or {}
     if portal_readiness.status_code == 200 and portal_safety.get("token_exposed") is False:
-        checks[3].pass_("token not exposed")
+        checks[4].pass_("token not exposed")
     else:
-        checks[3].fail(f"HTTP {portal_readiness.status_code}")
+        checks[4].fail(f"HTTP {portal_readiness.status_code}")
 
     partner_data = (_safe_json(partner_ops).get("data") or {}) if partner_ops.status_code == 200 else {}
     partner_safety = partner_data.get("safety") or {}
@@ -214,9 +233,9 @@ def main() -> int:
         and partner_safety.get("supplier_notified") is False
         and partner_safety.get("order_status_changed") is False
     ):
-        checks[4].pass_("read-only")
+        checks[5].pass_("read-only")
     else:
-        checks[4].fail(f"HTTP {partner_ops.status_code}")
+        checks[5].fail(f"HTTP {partner_ops.status_code}")
 
     market_data = (_safe_json(market_response).get("data") or {}) if market_response.status_code == 200 else {}
     market_safety = market_data.get("safety") or {}
@@ -227,13 +246,13 @@ def main() -> int:
         and market_safety.get("customer_notified") is False
         and market_safety.get("quote_status_changed") is False
     ):
-        checks[5].pass_("advisory only")
+        checks[6].pass_("advisory only")
     else:
-        checks[5].fail(f"HTTP {market_response.status_code}")
+        checks[6].fail(f"HTTP {market_response.status_code}")
 
     blob = json.dumps([_safe_json(response) for response in responses], ensure_ascii=False).lower()
     leaked = next((marker for marker in FORBIDDEN if marker in blob), None)
-    checks[6].pass_("clean") if leaked is None else checks[6].fail(leaked)
+    checks[7].pass_("clean") if leaked is None else checks[7].fail(leaked)
 
     print("D8 Integration Hardening Check")
     for check in checks:
