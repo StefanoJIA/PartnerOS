@@ -29,6 +29,7 @@ REQUIRED_DOCS = (
     "docs/phase3/d9_post_launch_operating_loop.md",
     "docs/phase3/d9_operating_records_policy.md",
     "docs/phase3/project_execution_chain_gate.md",
+    "docs/phase3/project_execution_acceptance_audit.md",
     "docs/phase3/phase3_roadmap.md",
     "docs/phase3/ie_auto_project_plan.md",
 )
@@ -51,6 +52,7 @@ REQUIRED_SCRIPTS = (
     "backend/scripts/phase3_roadmap_check.py",
     "backend/scripts/ie_auto_project_plan_check.py",
     "backend/scripts/project_execution_chain_check.py",
+    "backend/scripts/project_execution_acceptance_audit_check.py",
     "backend/scripts/project_execution_records_check.py",
 )
 SAFETY_MARKERS = (

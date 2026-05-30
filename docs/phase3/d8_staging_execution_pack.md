@@ -25,10 +25,11 @@ It checks that the repository contains:
 - IE Auto project plan consistency checker
 - project execution chain checker
 - project execution status summary
+- project execution acceptance audit
 - project execution records checker
 - matching phase 3 docs
 
-It also runs the staging handoff bundle checker, staging access request checker, staging gap triage checker, staging records checker, production coordination checker, D9 plan checker, D9 records checker, Phase 3 roadmap checker, IE Auto project plan checker, project execution chain checker, and project execution status summary, generates a temporary handoff, and checks that the handoff includes required environment variables, preflight commands, evidence/gap artifact commands, and safety boundaries.
+It also runs the staging handoff bundle checker, staging access request checker, staging gap triage checker, staging records checker, production coordination checker, D9 plan checker, D9 records checker, Phase 3 roadmap checker, IE Auto project plan checker, project execution chain checker, project execution status summary, and project execution acceptance audit, generates a temporary handoff, and checks that the handoff includes required environment variables, preflight commands, evidence/gap artifact commands, and safety boundaries.
 
 The project execution chain gate is documented separately in [Project Execution Chain Gate](project_execution_chain_gate.md). It is the local aggregate proof for `READY_FOR_STAGING_HANDOFF`; it does not replace strict staging evidence or produce `STAGING_VALIDATED`.
 

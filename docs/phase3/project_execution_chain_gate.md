@@ -40,6 +40,7 @@ The report stores gate labels, pass/fail status, and one-line summaries only. It
 | D8 production coordination | Keeps production coordination blocked until strict staging has validated |
 | D9 post-launch plan | Confirms post-launch loop remains planned behind D8 validation |
 | D9 operating records | Confirms D9 record naming and redaction policy |
+| Project execution acceptance audit | Maps the current project-planning objective to evidence and missing external staging proof |
 | Project execution records | Confirms generated execution reports are canonical and redacted |
 
 `project_execution_status.py` is a companion summary, not a replacement gate. It reads the project execution chain, D8 readiness audit, and D8 production coordination check, then prints the current stage and next action.

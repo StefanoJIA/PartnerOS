@@ -27,6 +27,7 @@ REQUIRED_FILES = (
     "backend/scripts/ie_auto_project_plan_check.py",
     "backend/scripts/project_execution_chain_check.py",
     "backend/scripts/project_execution_status.py",
+    "backend/scripts/project_execution_acceptance_audit_check.py",
     "backend/scripts/project_execution_records_check.py",
     "docs/phase3/d8_readiness_audit.md",
     "docs/phase3/d8_delivery_stage_goal_matrix.md",
@@ -40,6 +41,7 @@ REQUIRED_FILES = (
     "docs/phase3/d9_post_launch_operating_loop.md",
     "docs/phase3/d9_operating_records_policy.md",
     "docs/phase3/project_execution_chain_gate.md",
+    "docs/phase3/project_execution_acceptance_audit.md",
     "docs/phase3/phase3_roadmap.md",
     "docs/phase3/ie_auto_project_plan.md",
 )
@@ -61,6 +63,7 @@ HANDOFF_MARKERS = (
     "python scripts/ie_auto_project_plan_check.py",
     "python scripts/project_execution_chain_check.py",
     "python scripts/project_execution_status.py",
+    "python scripts/project_execution_acceptance_audit_check.py",
     "python scripts/project_execution_records_check.py",
     "--evidence-json",
     "--gap-markdown",
@@ -128,6 +131,7 @@ def main() -> int:
         Check("IE Auto project plan check runs"),
         Check("project execution chain check runs"),
         Check("project execution status summary runs"),
+        Check("project execution acceptance audit runs"),
         Check("project execution records check runs"),
         Check("handoff generator runs"),
         Check("handoff contains required commands and safety markers"),
@@ -214,23 +218,29 @@ def main() -> int:
     else:
         checks[13].fail((execution_status.stdout + execution_status.stderr)[:160])
 
-    execution_records = _run_script("scripts/project_execution_records_check.py")
-    if execution_records.returncode == 0 and "Result: PASS" in execution_records.stdout:
+    acceptance_audit = _run_script("scripts/project_execution_acceptance_audit_check.py")
+    if acceptance_audit.returncode == 0 and "Result: PASS" in acceptance_audit.stdout:
         checks[14].pass_("PASS")
     else:
-        checks[14].fail((execution_records.stdout + execution_records.stderr)[:160])
+        checks[14].fail((acceptance_audit.stdout + acceptance_audit.stderr)[:160])
+
+    execution_records = _run_script("scripts/project_execution_records_check.py")
+    if execution_records.returncode == 0 and "Result: PASS" in execution_records.stdout:
+        checks[15].pass_("PASS")
+    else:
+        checks[15].fail((execution_records.stdout + execution_records.stderr)[:160])
 
     handoff_code, handoff_text, handoff_output = _generate_handoff()
     if handoff_code == 0 and handoff_text:
-        checks[15].pass_("generated")
+        checks[16].pass_("generated")
     else:
-        checks[15].fail(handoff_output[:160])
+        checks[16].fail(handoff_output[:160])
 
     missing_markers = [marker for marker in HANDOFF_MARKERS if marker not in handoff_text]
     if not missing_markers:
-        checks[16].pass_("commands and safety boundaries")
+        checks[17].pass_("commands and safety boundaries")
     else:
-        checks[16].fail(", ".join(missing_markers))
+        checks[17].fail(", ".join(missing_markers))
 
     print("D8 Staging Execution Pack Check")
     for check in checks:

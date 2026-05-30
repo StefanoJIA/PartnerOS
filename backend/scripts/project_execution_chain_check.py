@@ -15,6 +15,7 @@ CHAIN = (
     ("IE Auto project plan", "scripts/ie_auto_project_plan_check.py"),
     ("Phase 3 roadmap", "scripts/phase3_roadmap_check.py"),
     ("D8 stage goal matrix", "scripts/d8_stage_goal_matrix_check.py"),
+    ("Project execution acceptance audit", "scripts/project_execution_acceptance_audit_check.py"),
     ("D8 readiness audit", "scripts/d8_readiness_audit.py"),
     ("D8 staging handoff bundle", "scripts/d8_staging_handoff_bundle_check.py"),
     ("D8 staging access request", "scripts/d8_staging_access_request_check.py"),

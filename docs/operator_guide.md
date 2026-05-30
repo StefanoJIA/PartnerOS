@@ -451,6 +451,12 @@ For a concise current-stage summary:
 python scripts/project_execution_status.py
 ```
 
+Before claiming the project-planning objective is complete, run the acceptance audit:
+
+```powershell
+python scripts/project_execution_acceptance_audit_check.py
+```
+
 To preserve a redacted local planning report:
 
 ```powershell

@@ -135,6 +135,7 @@ flowchart TD
 - [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md)
 - [D9 Operating Records Policy](d9_operating_records_policy.md)
 - [Project Execution Chain Gate](project_execution_chain_gate.md)
+- [Project Execution Acceptance Audit](project_execution_acceptance_audit.md)
 - [IE Auto Project Plan](ie_auto_project_plan.md)
 - [D7.2 Order CRUD MVP](d7_2_order_crud_mvp.md)
 - [D7.1 Order Schema & API Design Review](d7_1_order_schema_api_design_review.md)

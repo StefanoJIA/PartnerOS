@@ -32,6 +32,7 @@ The generated document includes:
 - IE Auto project plan consistency check
 - project execution chain check
 - project execution status summary
+- project execution acceptance audit
 - project execution records check
 - expected evidence/gap artifacts
 - safety boundaries

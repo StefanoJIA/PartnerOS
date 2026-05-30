@@ -40,6 +40,7 @@ REQUIRED_STATE_ROWS = (
     "D8 Staging Access Request",
     "D8 Staging Gap Triage",
     "Project Execution Chain Gate",
+    "Project Execution Acceptance Audit",
 )
 REQUIRED_ORDER_MARKERS = (
     "D7.9 Resource Center (done)",
@@ -53,6 +54,7 @@ REQUIRED_ORDER_MARKERS = (
     "D8 staging access request (added)",
     "D8 staging gap triage (added)",
     "project execution chain gate (added)",
+    "project execution acceptance audit (added)",
 )
 REQUIRED_SAFETY = (
     "No automatic email / LinkedIn / Outlook sending",
@@ -85,6 +87,7 @@ REQUIRED_LINKED_DOCS = (
     "docs/phase3/d9_post_launch_operating_loop.md",
     "docs/phase3/d9_operating_records_policy.md",
     "docs/phase3/project_execution_chain_gate.md",
+    "docs/phase3/project_execution_acceptance_audit.md",
 )
 
 
