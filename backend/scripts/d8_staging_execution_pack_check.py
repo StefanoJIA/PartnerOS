@@ -41,6 +41,8 @@ REQUIRED_FILES = (
     "backend/scripts/project_execution_status.py",
     "backend/scripts/project_execution_acceptance_audit_check.py",
     "backend/scripts/project_execution_records_check.py",
+    "backend/scripts/operator_guide_check.py",
+    "docs/operator_guide.md",
     "docs/phase3/d8_readiness_audit.md",
     "docs/phase3/d8_delivery_stage_goal_matrix.md",
     "docs/phase3/d8_strict_staging_cloud_validation.md",
@@ -184,6 +186,7 @@ def main() -> int:
         Check("project execution status summary runs"),
         Check("project execution acceptance audit runs"),
         Check("project execution records check runs"),
+        Check("operator guide check runs"),
         Check("handoff generator runs"),
         Check("handoff contains required commands and safety markers"),
     ]
@@ -353,17 +356,23 @@ def main() -> int:
     else:
         checks[27].fail((execution_records.stdout + execution_records.stderr)[:160])
 
+    operator_guide = _run_script("scripts/operator_guide_check.py")
+    if operator_guide.returncode == 0 and "Result: PASS" in operator_guide.stdout:
+        checks[28].pass_("PASS")
+    else:
+        checks[28].fail((operator_guide.stdout + operator_guide.stderr)[:160])
+
     handoff_code, handoff_text, handoff_output = _generate_handoff()
     if handoff_code == 0 and handoff_text:
-        checks[28].pass_("generated")
+        checks[29].pass_("generated")
     else:
-        checks[28].fail(handoff_output[:160])
+        checks[29].fail(handoff_output[:160])
 
     missing_markers = [marker for marker in HANDOFF_MARKERS if marker not in handoff_text]
     if not missing_markers:
-        checks[29].pass_("commands and safety boundaries")
+        checks[30].pass_("commands and safety boundaries")
     else:
-        checks[29].fail(", ".join(missing_markers))
+        checks[30].fail(", ".join(missing_markers))
 
     print("D8 Staging Execution Pack Check")
     for check in checks:

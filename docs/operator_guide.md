@@ -451,7 +451,7 @@ python scripts/d9_3_market_response_loop_check.py
 python scripts/d9_4_improvement_backlog_check.py
 ```
 
-D9 starts only after `STAGING_VALIDATED` and production coordination. It keeps Portal feedback, order operations, Market response intelligence, and improvement backlog under human review. The execution pack runs the full D9 gate set; the kickoff check defines the first redacted D9 operating review session; D9.1 defines health signals; D9.2 defines order operations follow-up; D9.3 defines advisory market response signals; D9.4 converts repeated gaps into reviewed backlog candidates without automatic ticket creation.
+D9 starts only after `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, and production coordination. It keeps Portal feedback, order operations, Market response intelligence, and improvement backlog under human review. The execution pack runs the full D9 gate set, including the saved evidence review check; the kickoff check defines the first redacted D9 operating review session; D9.1 defines health signals; D9.2 defines order operations follow-up; D9.3 defines advisory market response signals; D9.4 converts repeated gaps into reviewed backlog candidates without automatic ticket creation.
 
 Before committing D9 operating review records, run:
 
@@ -511,6 +511,14 @@ Before committing generated project execution reports, run:
 ```powershell
 python scripts/project_execution_records_check.py
 ```
+
+After changing this operator guide or the D8/D9 handoff gates, run:
+
+```powershell
+python scripts/operator_guide_check.py
+```
+
+This keeps the operator instructions aligned with `READY_FOR_STAGING_HANDOFF`, strict staging evidence review, production coordination, D9 gates, and manual-only safety boundaries.
 
 ## D7.1 Order Design Review
 
