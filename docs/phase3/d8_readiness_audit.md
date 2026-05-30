@@ -6,7 +6,7 @@
 
 The readiness audit summarizes whether D8 is locally complete, ready for real staging evidence, blocked by staging gaps, or validated by a saved staging evidence artifact.
 
-It does not call cloud services. It reads repository artifacts and optional redacted records under `docs/records/`.
+It does not call cloud services. It reads repository artifacts, runs the local staging records gate, and inspects optional redacted records under `docs/records/`.
 
 ## Command
 
@@ -32,6 +32,7 @@ The audit looks for:
 - D8 hardening and strict staging docs
 - D8 smoke/check scripts
 - safety invariants in the stage matrix
+- `scripts/d8_staging_records_check.py` result
 - optional `docs/records/d8_strict_staging_evidence_*.json`
 - optional paired `docs/records/d8_strict_staging_gaps_*.md`
 

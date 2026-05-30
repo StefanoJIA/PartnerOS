@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -97,11 +98,27 @@ def _staging_status() -> tuple[str, str]:
     return "STAGING_EVIDENCE_UNREADABLE", latest.name
 
 
+def _records_gate_status() -> tuple[bool, str]:
+    result = subprocess.run(
+        [sys.executable, "scripts/d8_staging_records_check.py"],
+        cwd=BACKEND_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    output = "\n".join(part for part in (result.stdout.strip(), result.stderr.strip()) if part)
+    if result.returncode == 0 and "Result: PASS" in result.stdout:
+        return True, "PASS"
+    detail = next((line for line in output.splitlines() if line.startswith("[FAIL]")), "")
+    return False, detail or output[:160] or "records gate failed"
+
+
 def main() -> int:
     checks = [
         Check("D8 docs present"),
         Check("D8 scripts present"),
         Check("stage matrix safety invariants"),
+        Check("staging records hygiene"),
         Check("strict staging evidence state"),
     ]
 
@@ -118,13 +135,16 @@ def main() -> int:
     missing_safety = [marker for marker in SAFETY_MARKERS if marker not in text]
     checks[2].pass_("documented") if not missing_safety else checks[2].fail(", ".join(missing_safety))
 
+    records_ok, records_detail = _records_gate_status()
+    checks[3].pass_(records_detail) if records_ok else checks[3].fail(records_detail)
+
     staging_status, staging_detail = _staging_status()
     if staging_status in {"READY_FOR_STAGING", "STAGING_VALIDATED", "STAGING_GAPS_OPEN"}:
-        checks[3].pass_(f"{staging_status}: {staging_detail}")
+        checks[4].pass_(f"{staging_status}: {staging_detail}")
     else:
-        checks[3].fail(f"{staging_status}: {staging_detail}")
+        checks[4].fail(f"{staging_status}: {staging_detail}")
 
-    local_ready = all(check.ok for check in checks[:3])
+    local_ready = all(check.ok for check in checks[:4])
     if not local_ready:
         overall = "LOCAL_ARTIFACTS_INCOMPLETE"
     elif staging_status == "STAGING_VALIDATED":
