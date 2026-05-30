@@ -96,6 +96,7 @@ As of the current repository state:
 | D8 Delivery Stage Goal Matrix | Added |
 | D8 Readiness Audit | Added |
 | D8 Staging Operator Handoff | Added |
+| D8 Staging Execution Pack | Added |
 
 ## 5. Non-Negotiable Safety Rules
 
@@ -246,6 +247,7 @@ D7.9 Resource Center (done)
   -> D8 delivery stage goal matrix (added)
   -> D8 readiness audit (added)
   -> D8 staging operator handoff (added)
+  -> D8 staging execution pack (added)
 ```
 
 This keeps the customer portal capability complete before broadening into security hardening, deployment hardening, operations analytics, and intelligence loops.
@@ -270,3 +272,4 @@ D8 integration hardening now provides a local/staging contract gate across D7.7-
 See [D8 Delivery Stage Goal Matrix](d8_delivery_stage_goal_matrix.md) for the current stage-by-stage artifact, verification, and next-gap map.
 Use [D8 Readiness Audit](d8_readiness_audit.md) to classify the repo as `READY_FOR_STAGING`, `STAGING_GAPS_OPEN`, or `STAGING_VALIDATED` based on saved evidence.
 Use [D8 Staging Operator Handoff](d8_staging_operator_handoff.md) to generate the command sheet for whoever has the real staging backend URL and portal token.
+Use [D8 Staging Execution Pack](d8_staging_execution_pack.md) to verify the local handoff chain before sharing it.
