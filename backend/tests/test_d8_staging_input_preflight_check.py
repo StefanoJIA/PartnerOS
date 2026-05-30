@@ -49,6 +49,34 @@ def test_staging_input_preflight_fails_for_unsafe_values(monkeypatch, capsys):
     assert "INPUTS_UNSAFE" in output
 
 
+def test_staging_input_preflight_allows_explicit_local_http_rehearsal(monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setenv("BACKEND_BASE_URL", "http://127.0.0.1:8014")
+    monkeypatch.setenv("SERVICE_PORTAL_PARTNEROS_TOKEN", "local-rehearsal-token-123")
+    monkeypatch.setenv("SERVICE_PORTAL_ORIGIN", "https://service.intelli-opus.com")
+    monkeypatch.setenv("D8_STRICT_ALLOW_LOCAL_HTTP", "true")
+
+    assert module.main() == 0
+    output = capsys.readouterr().out
+    assert "INPUTS_READY" in output
+    assert "local HTTP rehearsal explicitly allowed" in output
+
+
+def test_staging_input_preflight_rejects_nonlocal_http_even_when_rehearsal_flag_set(
+    monkeypatch, capsys
+):
+    module = _load_module()
+    monkeypatch.setenv("BACKEND_BASE_URL", "http://partneros-staging.example.com")
+    monkeypatch.setenv("SERVICE_PORTAL_PARTNEROS_TOKEN", "local-rehearsal-token-123")
+    monkeypatch.setenv("SERVICE_PORTAL_ORIGIN", "https://service.intelli-opus.com")
+    monkeypatch.setenv("D8_STRICT_ALLOW_LOCAL_HTTP", "true")
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "INPUTS_UNSAFE" in output
+    assert "must be https URL" in output
+
+
 def test_staging_input_preflight_fails_for_short_non_default_token(monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setenv("BACKEND_BASE_URL", "https://partneros-staging.example.com")

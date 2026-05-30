@@ -45,6 +45,15 @@ def _is_https_url(value: str) -> bool:
     return parsed.scheme == "https" and bool(parsed.netloc)
 
 
+def _truthy(value: str | None) -> bool:
+    return (value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _is_localhost_url(value: str) -> bool:
+    parsed = urlparse(value)
+    return parsed.scheme == "http" and (parsed.hostname or "").lower() in {"localhost", "127.0.0.1", "::1"}
+
+
 def _redacted(value: str) -> str:
     if not value:
         return "<missing>"
@@ -66,12 +75,15 @@ def main() -> int:
     backend_base = _env("BACKEND_BASE_URL").rstrip("/")
     token = _env("SERVICE_PORTAL_PARTNEROS_TOKEN") or _env("PORTAL_CUSTOMER_API_TOKEN")
     origin = _env("SERVICE_PORTAL_ORIGIN")
+    allow_local_http = _truthy(os.getenv("D8_STRICT_ALLOW_LOCAL_HTTP"))
 
     checks[0].pass_("provided") if backend_base else checks[0].fail("missing")
     if not backend_base:
         checks[1].pass_("waiting for BACKEND_BASE_URL")
     elif _is_https_url(backend_base):
         checks[1].pass_("https origin")
+    elif allow_local_http and _is_localhost_url(backend_base):
+        checks[1].pass_("local HTTP rehearsal explicitly allowed")
     else:
         checks[1].fail("must be https URL")
 
