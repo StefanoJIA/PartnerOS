@@ -35,6 +35,14 @@ python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/recor
 
 The JSON record stores check labels, pass/fail states, sanitized URLs, and safety metadata. It does not store the portal token or response bodies.
 
+To also create a follow-up register for failed checks:
+
+```powershell
+python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/records/d8_strict_staging_evidence_YYYYMMDD.json --gap-markdown ../docs/records/d8_strict_staging_gaps_YYYYMMDD.md
+```
+
+The gap register lists failing checks, sanitized details, recommended actions, owner placeholders, and open/closed status.
+
 For local rehearsal only:
 
 ```powershell

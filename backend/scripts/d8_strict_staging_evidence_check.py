@@ -144,6 +144,10 @@ def _parse_args() -> Any:
         "--evidence-json",
         help="Optional path for redacted JSON evidence. The file must live outside backend/storage and local_data.",
     )
+    parser.add_argument(
+        "--gap-markdown",
+        help="Optional path for a redacted Markdown follow-up register when checks fail.",
+    )
     return parser.parse_args()
 
 
@@ -161,6 +165,63 @@ def _safe_evidence_path(raw: str) -> Path:
             continue
         raise ValueError("evidence path must not be under local_data or backend/storage")
     return resolved
+
+
+def _safe_output_path(raw: str) -> Path:
+    return _safe_evidence_path(raw)
+
+
+def _recommended_action(check: Check) -> str:
+    label = check.label.lower()
+    if "backend_base_url" in label or "https staging url" in label:
+        return "Set BACKEND_BASE_URL to the deployed HTTPS PartnerOS staging origin."
+    if "portal origin" in label or "cors" in label:
+        return "Align SERVICE_PORTAL_ORIGIN and PORTAL_CUSTOMER_ALLOWED_ORIGINS with the service portal HTTPS origin."
+    if "token" in label:
+        return "Rotate and configure a non-default SERVICE_PORTAL_PARTNEROS_TOKEN without printing it in logs."
+    if "health" in label or "readiness" in label or "manifest" in label:
+        return "Check deployed backend health, database readiness, migrations, PUBLIC_BASE_URL, and reverse proxy routing."
+    if "products" in label or "orders" in label or "subresources" in label:
+        return "Verify portal bridge API enablement, token configuration, database seed/data availability, and route wiring."
+    if "forbidden" in label or "leakage" in label:
+        return "Stop staging handoff and inspect portal field filters before exposing the bridge to the customer portal."
+    return "Investigate the failing staging evidence and record the owner, fix, and rerun date."
+
+
+def _write_gap_markdown(raw_path: str | None, *, checks: list[Check], base: str, origin: str) -> None:
+    if not raw_path:
+        return
+    failing = [check for check in checks if not check.ok]
+    path = _safe_output_path(raw_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lines = [
+        "# D8 Strict Staging Gap Register",
+        "",
+        f"Generated at: {datetime.now(timezone.utc).isoformat()}",
+        f"Backend: `{_redacted_url(base) or '<missing>'}`",
+        f"Service portal origin: `{origin}`",
+        "",
+        "Safety boundary: this register is derived from a read-only evidence run. It does not include tokens, response bodies, customer files, storage paths, or backend secrets.",
+        "",
+    ]
+    if not failing:
+        lines.extend(["## Result", "", "No failing checks were recorded."])
+    else:
+        lines.extend(
+            [
+                "## Follow-Up Items",
+                "",
+                "| Check | Detail | Recommended action | Owner | Status |",
+                "|---|---|---|---|---|",
+            ]
+        )
+        for check in failing:
+            detail = check.detail.replace("|", "\\|") or "n/a"
+            lines.append(
+                f"| {check.label} | {detail} | {_recommended_action(check)} | TBD | open |"
+            )
+    lines.append("")
+    path.write_text("\n".join(lines), encoding="utf-8")
 
 
 def _write_evidence(raw_path: str | None, *, checks: list[Check], base: str, origin: str, allow_local: bool) -> None:
@@ -195,6 +256,7 @@ def _finish(
     origin: str,
     allow_local: bool,
     evidence_json: str | None,
+    gap_markdown: str | None,
 ) -> int:
     print("D8 Strict Staging Evidence Check")
     print(f"BACKEND_BASE_URL={_redacted_url(base) or '<missing>'}")
@@ -206,15 +268,18 @@ def _finish(
     passed = all(check.ok for check in checks)
     try:
         _write_evidence(evidence_json, checks=checks, base=base, origin=origin, allow_local=allow_local)
+        _write_gap_markdown(gap_markdown, checks=checks, base=base, origin=origin)
     except OSError as exc:
-        print(f"[FAIL] evidence json write ({str(exc)[:120]})")
+        print(f"[FAIL] evidence output write ({str(exc)[:120]})")
         passed = False
     except ValueError as exc:
-        print(f"[FAIL] evidence json path ({exc})")
+        print(f"[FAIL] evidence output path ({exc})")
         passed = False
     else:
         if evidence_json:
             print(f"evidence_json={_safe_evidence_path(evidence_json)}")
+        if gap_markdown:
+            print(f"gap_markdown={_safe_output_path(gap_markdown)}")
     print(f"Result: {'PASS' if passed else 'FAIL'}")
     return 0 if passed else 1
 
@@ -275,6 +340,7 @@ def main() -> int:
             origin=origin,
             allow_local=allow_local,
             evidence_json=args.evidence_json,
+            gap_markdown=args.gap_markdown,
         )
 
     responses: list[httpx.Response | dict[str, Any] | None] = []
@@ -382,6 +448,7 @@ def main() -> int:
         origin=origin,
         allow_local=allow_local,
         evidence_json=args.evidence_json,
+        gap_markdown=args.gap_markdown,
     )
 
 
