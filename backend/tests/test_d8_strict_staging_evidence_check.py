@@ -64,3 +64,39 @@ def test_strict_staging_evidence_rejects_backend_storage_output_path():
 
     with pytest.raises(ValueError, match="backend/storage"):
         module._safe_evidence_path("storage/d8_strict_staging_evidence_20260530.json")
+
+
+def test_strict_staging_evidence_rejects_local_data_output_path():
+    module = _load_module()
+
+    with pytest.raises(ValueError, match="local_data"):
+        module._safe_evidence_path("../local_data/d8_strict_staging_evidence_20260530.json")
+
+
+def test_strict_staging_evidence_fails_for_short_token_without_printing_it(
+    tmp_path, monkeypatch, capsys
+):
+    module = _load_module()
+    evidence = tmp_path / "d8_strict_staging_evidence_20260530.json"
+    monkeypatch.delenv("BACKEND_BASE_URL", raising=False)
+    monkeypatch.setenv("SERVICE_PORTAL_PARTNEROS_TOKEN", "short-secret")
+    monkeypatch.setenv("SERVICE_PORTAL_ORIGIN", "https://service.intelli-opus.com")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "d8_strict_staging_evidence_check.py",
+            "--evidence-json",
+            str(evidence),
+        ],
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    payload = json.loads(evidence.read_text(encoding="utf-8"))
+    token_check = next(check for check in payload["checks"] if check["label"] == "portal token safe")
+
+    assert token_check["status"] == "FAIL"
+    assert "set a non-default SERVICE_PORTAL_PARTNEROS_TOKEN" in token_check["detail"]
+    assert "short-secret" not in output
+    assert "short-secret" not in evidence.read_text(encoding="utf-8")
