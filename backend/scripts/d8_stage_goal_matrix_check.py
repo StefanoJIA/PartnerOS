@@ -25,6 +25,7 @@ REQUIRED_DOCS = (
     "docs/phase3/d8_production_coordination_plan.md",
     "docs/phase3/d9_post_launch_operating_loop.md",
     "docs/phase3/d9_operating_records_policy.md",
+    "docs/phase3/project_execution_chain_gate.md",
     "docs/phase3/phase3_roadmap.md",
     "docs/phase3/ie_auto_project_plan.md",
 )
@@ -65,6 +66,7 @@ REQUIRED_MATRIX_MARKERS = (
     "D8 Production Coordination",
     "D9 Post-Launch Operating Loop",
     "D9 Operating Records Policy",
+    "Project Execution Chain Gate",
     "Phase 3 Roadmap Check",
     "IE Auto Project Plan Check",
     "Project Execution Chain Check",

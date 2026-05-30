@@ -425,6 +425,7 @@ python scripts/project_execution_chain_check.py
 ```
 
 This aggregates the IE Auto plan, Phase 3 roadmap, D8 matrix, readiness audit, production coordination, D9 plan, and D9 records checks.
+See [Project Execution Chain Gate](phase3/project_execution_chain_gate.md) for the state meanings and safety boundaries.
 
 To preserve a redacted local planning report:
 

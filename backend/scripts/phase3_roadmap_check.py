@@ -38,6 +38,7 @@ REQUIRED_DOC_LINKS = (
     "d8_production_coordination_plan.md",
     "d9_post_launch_operating_loop.md",
     "d9_operating_records_policy.md",
+    "project_execution_chain_gate.md",
     "ie_auto_project_plan.md",
 )
 REQUIRED_DOCS = tuple(f"docs/phase3/{link}" for link in REQUIRED_DOC_LINKS)

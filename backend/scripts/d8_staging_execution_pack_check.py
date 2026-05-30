@@ -32,6 +32,7 @@ REQUIRED_FILES = (
     "docs/phase3/d8_production_coordination_plan.md",
     "docs/phase3/d9_post_launch_operating_loop.md",
     "docs/phase3/d9_operating_records_policy.md",
+    "docs/phase3/project_execution_chain_gate.md",
     "docs/phase3/phase3_roadmap.md",
     "docs/phase3/ie_auto_project_plan.md",
 )
