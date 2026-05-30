@@ -76,6 +76,13 @@ def _read_json(path: Path) -> dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
+def _display_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
+
 def _token_assignment_issues(path: Path, text: str) -> list[str]:
     issues: list[str] = []
     for line_no, line in enumerate(text.splitlines(), start=1):
@@ -150,7 +157,7 @@ def main() -> int:
     ]
 
     if RECORDS_ROOT.exists() and RECORDS_ROOT.is_dir():
-        checks[0].pass_(str(RECORDS_ROOT.relative_to(REPO_ROOT)))
+        checks[0].pass_(_display_path(RECORDS_ROOT))
     else:
         checks[0].fail("missing docs/records")
 
