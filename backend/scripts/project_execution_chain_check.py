@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import re
 from argparse import ArgumentParser
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,6 +16,7 @@ except ModuleNotFoundError:
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = BACKEND_ROOT.parent
+REPORT_NAME_PATTERN = re.compile(r"^project_execution_chain_\d{8}\.md$")
 
 CHAIN = (
     ("IE Auto project plan", "scripts/ie_auto_project_plan_check.py"),
@@ -111,6 +113,8 @@ def _safe_output_path(raw: str) -> Path:
         except ValueError:
             continue
         raise ValueError("project execution report must not be under local_data or backend/storage")
+    if not REPORT_NAME_PATTERN.match(resolved.name):
+        raise ValueError("project execution report must be named project_execution_chain_YYYYMMDD.md")
     return resolved
 
 

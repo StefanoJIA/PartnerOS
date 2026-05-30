@@ -99,3 +99,17 @@ def test_project_execution_chain_check_rejects_backend_storage_report_path(monke
     assert module.main(["--report-markdown", "storage/project_execution_chain.md"]) == 1
     output = capsys.readouterr().out
     assert "report output path" in output
+
+
+def test_project_execution_chain_check_rejects_noncanonical_report_name(monkeypatch, tmp_path, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "CHAIN", (("one", "one.py"),))
+    monkeypatch.setattr(
+        module,
+        "_run_script",
+        lambda script: SimpleNamespace(returncode=0, stdout="Result: PASS\n", stderr=""),
+    )
+
+    assert module.main(["--report-markdown", str(tmp_path / "project_execution_chain_latest.md")]) == 1
+    output = capsys.readouterr().out
+    assert "project_execution_chain_YYYYMMDD.md" in output
