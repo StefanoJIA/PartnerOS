@@ -16,6 +16,7 @@ This audit maps the current project-planning objective to concrete evidence. It 
 | Local D8 readiness is classified | [D8 Readiness Audit](d8_readiness_audit.md), `python scripts/d8_readiness_audit.py` | `READY_FOR_STAGING` |
 | Local strict staging rehearsal is available | [D8 Local Staging Rehearsal](d8_local_staging_rehearsal.md), `python scripts/d8_local_staging_rehearsal_check.py` | PASS, but not staging proof |
 | Operator handoff bundle is defined | [D8 Staging Handoff Bundle](d8_staging_handoff_bundle.md), `python scripts/d8_staging_handoff_bundle_check.py` | PASS |
+| Operator runbook defines evidence sequence | [D8 Staging Operator Runbook](d8_staging_operator_runbook.md), `python scripts/d8_staging_operator_runbook_check.py` | PASS |
 | Private staging inputs can be preflighted locally | [D8 Staging Input Preflight](d8_staging_input_preflight.md), `python scripts/d8_staging_input_preflight_check.py` | `WAITING_FOR_PRIVATE_VALUES` until values arrive |
 | Private staging inputs are requested safely | [D8 Staging Access Request](d8_staging_access_request.md), `python scripts/d8_staging_access_request_check.py` | PASS |
 | Operator response intake is redaction-gated | [D8 Staging Operator Response Intake](d8_staging_operator_response_intake.md), `python scripts/d8_staging_operator_response_intake_check.py` | PASS |

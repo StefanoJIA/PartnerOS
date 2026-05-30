@@ -15,6 +15,7 @@ It checks that the repository contains:
 - local staging rehearsal runbook and checker
 - operator handoff generator
 - staging handoff bundle manifest and checker
+- staging operator runbook and checker
 - staging input preflight checker
 - staging access request doc and checker
 - staging operator response intake runbook and checker
@@ -23,6 +24,7 @@ It checks that the repository contains:
 - staging evidence review gate
 - production coordination plan checker
 - D9 post-launch operating loop plan checker
+- D9 operating execution pack checker
 - D9 operating records redaction checker
 - project execution chain gate doc
 - Phase 3 roadmap consistency checker
@@ -33,7 +35,7 @@ It checks that the repository contains:
 - project execution records checker
 - matching phase 3 docs
 
-It also runs the local staging rehearsal checker, staging handoff bundle checker, staging input preflight checker, staging access request checker, staging gap triage checker, staging records checker, staging evidence review checker, production coordination checker, D9 plan checker, D9 records checker, Phase 3 roadmap checker, IE Auto project plan checker, project execution chain checker, project execution status summary, and project execution acceptance audit, generates a temporary handoff, and checks that the handoff includes required environment variables, preflight commands, evidence/gap artifact commands, and safety boundaries.
+It also runs the local staging rehearsal checker, staging handoff bundle checker, staging operator runbook checker, staging input preflight checker, staging access request checker, staging gap triage checker, staging records checker, staging evidence review checker, production coordination checker, D9 plan checker, D9 operating execution pack checker, D9 records checker, Phase 3 roadmap checker, IE Auto project plan checker, project execution chain checker, project execution status summary, and project execution acceptance audit, generates a temporary handoff, and checks that the handoff includes required environment variables, preflight commands, evidence/gap artifact commands, and safety boundaries.
 
 The project execution chain gate is documented separately in [Project Execution Chain Gate](project_execution_chain_gate.md). It is the local aggregate proof for `READY_FOR_STAGING_HANDOFF`; it does not replace strict staging evidence or produce `STAGING_VALIDATED`.
 

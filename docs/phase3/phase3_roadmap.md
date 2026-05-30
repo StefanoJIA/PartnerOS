@@ -129,6 +129,7 @@ flowchart TD
 - [D8 Staging Operator Handoff](d8_staging_operator_handoff.md)
 - [D8 Staging Execution Pack](d8_staging_execution_pack.md)
 - [D8 Staging Handoff Bundle](d8_staging_handoff_bundle.md)
+- [D8 Staging Operator Runbook](d8_staging_operator_runbook.md)
 - [D8 Staging Input Preflight](d8_staging_input_preflight.md)
 - [D8 Staging Access Request](d8_staging_access_request.md)
 - [D8 Staging Operator Response Intake](d8_staging_operator_response_intake.md)

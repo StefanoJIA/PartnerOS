@@ -13,6 +13,7 @@ This bundle is the exact local package to hand to the staging operator before re
 | [Project Execution Chain Gate](project_execution_chain_gate.md) | Explains the aggregate local gate and `READY_FOR_STAGING_HANDOFF` state |
 | [D8 Staging Operator Handoff](d8_staging_operator_handoff.md) | Explains how to generate the dated operator handoff |
 | [D8 Local Staging Rehearsal](d8_local_staging_rehearsal.md) | Optional local command-order rehearsal; not staging proof |
+| [D8 Staging Operator Runbook](d8_staging_operator_runbook.md) | Gives the operator sequence from handoff to evidence review |
 | [D8 Staging Input Preflight](d8_staging_input_preflight.md) | Checks private staging values locally before strict evidence |
 | [D8 Staging Access Request](d8_staging_access_request.md) | Lists the private staging values required from operations |
 | [D8 Staging Operator Response Intake](d8_staging_operator_response_intake.md) | Defines what redacted operator response data the repo may accept |
@@ -29,6 +30,7 @@ cd backend
 python scripts/project_execution_status.py
 python scripts/project_execution_chain_check.py
 python scripts/d8_staging_execution_pack_check.py
+python scripts/d8_staging_operator_runbook_check.py
 python scripts/d8_local_staging_rehearsal_check.py
 python scripts/d8_staging_input_preflight_check.py
 python scripts/d8_staging_access_request_check.py

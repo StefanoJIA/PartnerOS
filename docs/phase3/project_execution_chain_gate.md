@@ -36,6 +36,7 @@ The report stores gate labels, pass/fail status, and one-line summaries only. It
 | D8 readiness audit | Classifies local readiness and saved strict staging evidence |
 | D8 local staging rehearsal | Confirms the optional local command-order rehearsal is documented and not treated as staging proof |
 | D8 staging handoff bundle | Confirms the operator-facing handoff manifest is complete and redacted |
+| D8 staging operator runbook | Confirms the operator sequence from handoff through evidence review is complete and redacted |
 | D8 staging input preflight | Confirms provided staging inputs are missing-but-waiting or safe to use |
 | D8 staging access request | Confirms the private staging input request is complete and redacted |
 | D8 staging operator response intake | Confirms operator replies can be accepted without token values, raw payloads, or unsafe artifacts |

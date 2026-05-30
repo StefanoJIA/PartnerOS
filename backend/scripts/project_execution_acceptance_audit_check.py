@@ -20,6 +20,7 @@ REQUIRED_MARKERS = (
     "D8 Delivery Stage Goal Matrix",
     "D8 Local Staging Rehearsal",
     "D8 Staging Handoff Bundle",
+    "D8 Staging Operator Runbook",
     "D8 Staging Input Preflight",
     "D8 Staging Access Request",
     "D8 Staging Operator Response Intake",
