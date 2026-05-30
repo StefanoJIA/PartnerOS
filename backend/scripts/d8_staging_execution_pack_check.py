@@ -42,8 +42,10 @@ REQUIRED_FILES = (
     "backend/scripts/project_execution_acceptance_audit_check.py",
     "backend/scripts/project_execution_records_check.py",
     "backend/scripts/readme_check.py",
+    "backend/scripts/deployment_readiness_checklist_check.py",
     "backend/scripts/operator_guide_check.py",
     "README.md",
+    "docs/deployment_readiness_checklist.md",
     "docs/operator_guide.md",
     "docs/phase3/d8_readiness_audit.md",
     "docs/phase3/d8_delivery_stage_goal_matrix.md",
@@ -105,6 +107,7 @@ HANDOFF_MARKERS = (
     "python scripts/phase3_roadmap_check.py",
     "python scripts/ie_auto_project_plan_check.py",
     "python scripts/readme_check.py",
+    "python scripts/deployment_readiness_checklist_check.py",
     "python scripts/operator_guide_check.py",
     "python scripts/project_execution_chain_check.py",
     "python scripts/project_execution_status.py",
@@ -191,6 +194,7 @@ def main() -> int:
         Check("project execution acceptance audit runs"),
         Check("project execution records check runs"),
         Check("README check runs"),
+        Check("deployment readiness checklist check runs"),
         Check("operator guide check runs"),
         Check("handoff generator runs"),
         Check("handoff contains required commands and safety markers"),
@@ -367,23 +371,29 @@ def main() -> int:
     else:
         checks[28].fail((readme.stdout + readme.stderr)[:160])
 
-    operator_guide = _run_script("scripts/operator_guide_check.py")
-    if operator_guide.returncode == 0 and "Result: PASS" in operator_guide.stdout:
+    deployment_readiness = _run_script("scripts/deployment_readiness_checklist_check.py")
+    if deployment_readiness.returncode == 0 and "Result: PASS" in deployment_readiness.stdout:
         checks[29].pass_("PASS")
     else:
-        checks[29].fail((operator_guide.stdout + operator_guide.stderr)[:160])
+        checks[29].fail((deployment_readiness.stdout + deployment_readiness.stderr)[:160])
+
+    operator_guide = _run_script("scripts/operator_guide_check.py")
+    if operator_guide.returncode == 0 and "Result: PASS" in operator_guide.stdout:
+        checks[30].pass_("PASS")
+    else:
+        checks[30].fail((operator_guide.stdout + operator_guide.stderr)[:160])
 
     handoff_code, handoff_text, handoff_output = _generate_handoff()
     if handoff_code == 0 and handoff_text:
-        checks[30].pass_("generated")
+        checks[31].pass_("generated")
     else:
-        checks[30].fail(handoff_output[:160])
+        checks[31].fail(handoff_output[:160])
 
     missing_markers = [marker for marker in HANDOFF_MARKERS if marker not in handoff_text]
     if not missing_markers:
-        checks[31].pass_("commands and safety boundaries")
+        checks[32].pass_("commands and safety boundaries")
     else:
-        checks[31].fail(", ".join(missing_markers))
+        checks[32].fail(", ".join(missing_markers))
 
     print("D8 Staging Execution Pack Check")
     for check in checks:

@@ -32,6 +32,7 @@ REQUIRED_MARKERS = (
     "d9_operating_records_check.py",
     "project_execution_status.py",
     "project_execution_acceptance_audit_check.py",
+    "deployment_readiness_checklist_check.py",
     "operator_guide_check.py",
     "carrier APIs",
     "service.intelli-opus.com",

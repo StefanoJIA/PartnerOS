@@ -31,6 +31,7 @@ REQUIRED_MARKERS = (
     "python scripts/project_execution_status.py",
     "python scripts/project_execution_acceptance_audit_check.py",
     "python scripts/readme_check.py",
+    "python scripts/deployment_readiness_checklist_check.py",
     "python scripts/operator_guide_check.py",
 )
 FORBIDDEN_MARKERS = (

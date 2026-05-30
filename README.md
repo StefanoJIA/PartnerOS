@@ -155,6 +155,7 @@ python scripts/project_execution_acceptance_audit_check.py  # project objective 
 python scripts/project_execution_chain_check.py --report-markdown ../docs/records/project_execution_chain_YYYYMMDD.md  # redacted local planning report
 python scripts/project_execution_records_check.py  # project execution report naming/redaction check
 python scripts/readme_check.py  # README current-stage and D8/D9 handoff gate check
+python scripts/deployment_readiness_checklist_check.py  # deployment readiness checklist D8/D9 handoff gate check
 python scripts/operator_guide_check.py  # operator guide D8/D9 handoff and safety gate check
 python scripts/d7_4_partner_supplier_check.py   # D7.4 partner split & supplier confirmation smoke
 python scripts/d7_3_customer_confirmation_check.py  # D7.3 customer confirmation smoke

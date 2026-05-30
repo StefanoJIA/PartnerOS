@@ -14,6 +14,7 @@ DOC = REPO_ROOT / "docs" / "phase3" / "d8_staging_handoff_bundle.md"
 
 REQUIRED_LINKS = (
     "../operator_guide.md",
+    "../deployment_readiness_checklist.md",
     "project_execution_chain_gate.md",
     "d8_staging_operator_handoff.md",
     "d8_local_staging_rehearsal.md",
@@ -30,6 +31,7 @@ REQUIRED_LINKS = (
 )
 REQUIRED_COMMANDS = (
     "python scripts/readme_check.py",
+    "python scripts/deployment_readiness_checklist_check.py",
     "python scripts/project_execution_status.py",
     "python scripts/project_execution_chain_check.py",
     "python scripts/operator_guide_check.py",

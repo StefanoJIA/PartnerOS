@@ -31,6 +31,7 @@ The report stores gate labels, pass/fail status, and one-line summaries only. It
 | Gate | Purpose |
 |---|---|
 | README | Confirms the repository entrypoint names the current D8/D9 handoff state and next action |
+| Deployment readiness checklist | Confirms the staging handoff checklist matches D8/D9 evidence gates and no longer carries D5-era deploy steps |
 | IE Auto project plan | Confirms product positioning, lifecycle, safety rules, and current D7-D9 execution order |
 | Phase 3 roadmap | Confirms D7-D9 stages, dependency graph, related docs, and safety boundaries |
 | D8 stage goal matrix | Confirms stage artifacts, smoke commands, evidence state, and next gaps |

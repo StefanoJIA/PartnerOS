@@ -21,6 +21,8 @@ REQUIRED_MARKERS = (
     "d8_staging_evidence_review_check.py",
     "README",
     "readme_check.py",
+    "Deployment Readiness Checklist",
+    "deployment_readiness_checklist_check.py",
     "IE Auto Project Plan",
     "Phase 3 Roadmap",
     "D8 Delivery Stage Goal Matrix",
