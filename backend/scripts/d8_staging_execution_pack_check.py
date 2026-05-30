@@ -17,11 +17,13 @@ REQUIRED_FILES = (
     "backend/scripts/d8_strict_staging_evidence_check.py",
     "backend/scripts/d8_staging_operator_handoff.py",
     "backend/scripts/d8_staging_records_check.py",
+    "backend/scripts/d8_production_coordination_check.py",
     "docs/phase3/d8_readiness_audit.md",
     "docs/phase3/d8_delivery_stage_goal_matrix.md",
     "docs/phase3/d8_strict_staging_cloud_validation.md",
     "docs/phase3/d8_staging_operator_handoff.md",
     "docs/phase3/d8_staging_records_policy.md",
+    "docs/phase3/d8_production_coordination_plan.md",
 )
 HANDOFF_MARKERS = (
     "BACKEND_BASE_URL",
@@ -31,6 +33,7 @@ HANDOFF_MARKERS = (
     "python scripts/d8_stage_goal_matrix_check.py",
     "python scripts/d8_integration_hardening_check.py",
     "python scripts/d8_staging_records_check.py",
+    "python scripts/d8_production_coordination_check.py",
     "--evidence-json",
     "--gap-markdown",
     "Do not deploy or modify `service.intelli-opus.com`",
@@ -87,6 +90,7 @@ def main() -> int:
         Check("readiness audit runs"),
         Check("stage goal matrix check runs"),
         Check("staging records check runs"),
+        Check("production coordination check runs"),
         Check("handoff generator runs"),
         Check("handoff contains required commands and safety markers"),
     ]
@@ -112,17 +116,23 @@ def main() -> int:
     else:
         checks[3].fail((records.stdout + records.stderr)[:160])
 
+    production = _run_script("scripts/d8_production_coordination_check.py")
+    if production.returncode == 0 and "Result: PASS" in production.stdout:
+        checks[4].pass_("PASS")
+    else:
+        checks[4].fail((production.stdout + production.stderr)[:160])
+
     handoff_code, handoff_text, handoff_output = _generate_handoff()
     if handoff_code == 0 and handoff_text:
-        checks[4].pass_("generated")
+        checks[5].pass_("generated")
     else:
-        checks[4].fail(handoff_output[:160])
+        checks[5].fail(handoff_output[:160])
 
     missing_markers = [marker for marker in HANDOFF_MARKERS if marker not in handoff_text]
     if not missing_markers:
-        checks[5].pass_("commands and safety boundaries")
+        checks[6].pass_("commands and safety boundaries")
     else:
-        checks[5].fail(", ".join(missing_markers))
+        checks[6].fail(", ".join(missing_markers))
 
     print("D8 Staging Execution Pack Check")
     for check in checks:

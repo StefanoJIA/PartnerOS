@@ -378,6 +378,14 @@ python scripts/d8_staging_records_check.py
 
 Keep D8 staging artifacts under canonical `docs/records/d8_*_YYYYMMDD` names. The record gate verifies redaction metadata, token placeholders, strict evidence schema, and matching gap registers for failed evidence.
 
+After `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED`, run:
+
+```powershell
+python scripts/d8_production_coordination_check.py
+```
+
+This check keeps production coordination separate from deployment. It confirms the Go / No-Go plan, rollback boundary, redacted evidence policy, and the rule that PartnerOS does not modify `service.intelli-opus.com`, nginx, notifications, carrier APIs, or business statuses from this repository.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate

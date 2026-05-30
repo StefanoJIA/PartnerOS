@@ -95,6 +95,7 @@ python scripts/d8_readiness_audit.py
 python scripts/d8_stage_goal_matrix_check.py
 python scripts/d8_integration_hardening_check.py
 python scripts/d8_staging_records_check.py
+python scripts/d8_production_coordination_check.py
 ```
 
 ## Strict Staging Evidence Run

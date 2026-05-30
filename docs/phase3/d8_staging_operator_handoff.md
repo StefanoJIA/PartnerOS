@@ -22,6 +22,7 @@ The generated document includes:
 - preflight commands
 - strict staging evidence command
 - staging records redaction check
+- production coordination state check
 - expected evidence/gap artifacts
 - safety boundaries
 

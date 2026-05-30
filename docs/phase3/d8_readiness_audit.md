@@ -33,6 +33,7 @@ The audit looks for:
 - D8 smoke/check scripts
 - safety invariants in the stage matrix
 - `scripts/d8_staging_records_check.py` result
+- production coordination plan artifact
 - optional `docs/records/d8_strict_staging_evidence_*.json`
 - optional paired `docs/records/d8_strict_staging_gaps_*.md`
 

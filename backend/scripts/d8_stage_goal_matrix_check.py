@@ -22,6 +22,7 @@ REQUIRED_DOCS = (
     "docs/phase3/d8_staging_operator_handoff.md",
     "docs/phase3/d8_staging_execution_pack.md",
     "docs/phase3/d8_staging_records_policy.md",
+    "docs/phase3/d8_production_coordination_plan.md",
 )
 REQUIRED_SCRIPTS = (
     "backend/scripts/d7_9_resource_center_check.py",
@@ -36,6 +37,7 @@ REQUIRED_SCRIPTS = (
     "backend/scripts/d8_staging_operator_handoff.py",
     "backend/scripts/d8_staging_execution_pack_check.py",
     "backend/scripts/d8_staging_records_check.py",
+    "backend/scripts/d8_production_coordination_check.py",
 )
 REQUIRED_MATRIX_MARKERS = (
     "D7.9 Resource Center",
@@ -50,6 +52,7 @@ REQUIRED_MATRIX_MARKERS = (
     "D8 Staging Operator Handoff",
     "D8 Staging Execution Pack",
     "D8 Staging Records Policy",
+    "D8 Production Coordination",
     "--evidence-json",
     "--gap-markdown",
     "No automatic customer or supplier notification",
