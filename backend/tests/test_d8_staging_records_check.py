@@ -34,6 +34,17 @@ def test_d8_staging_records_check_rejects_noncanonical_name(tmp_path, monkeypatc
     assert "d8_staging_notes.md" in output
 
 
+def test_d8_staging_records_check_rejects_undated_operator_handoff(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d8_staging_operator_handoff.md").write_text("redacted handoff\n", encoding="utf-8")
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "D8 staging record names are canonical" in output
+    assert "d8_staging_operator_handoff.md" in output
+
+
 def test_d8_staging_records_check_requires_gap_register_for_failed_evidence(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
