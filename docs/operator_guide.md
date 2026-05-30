@@ -402,6 +402,14 @@ python scripts/d9_operating_records_check.py
 
 Use canonical `docs/records/d9_*_YYYYMMDD.md` names and store redacted summaries only.
 
+After changing Phase 3 stage docs or gates, run:
+
+```powershell
+python scripts/phase3_roadmap_check.py
+```
+
+This keeps the D7-D9 roadmap, dependency graph, related docs, and manual-action safety boundaries aligned.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate

@@ -17,9 +17,10 @@ It checks that the repository contains:
 - production coordination plan checker
 - D9 post-launch operating loop plan checker
 - D9 operating records redaction checker
+- Phase 3 roadmap consistency checker
 - matching phase 3 docs
 
-It also runs the staging records checker, production coordination checker, D9 plan checker, and D9 records checker, generates a temporary handoff, and checks that the handoff includes required environment variables, preflight commands, evidence/gap artifact commands, and safety boundaries.
+It also runs the staging records checker, production coordination checker, D9 plan checker, D9 records checker, and Phase 3 roadmap checker, generates a temporary handoff, and checks that the handoff includes required environment variables, preflight commands, evidence/gap artifact commands, and safety boundaries.
 
 ## Command
 

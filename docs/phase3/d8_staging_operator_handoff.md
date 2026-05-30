@@ -25,6 +25,7 @@ The generated document includes:
 - production coordination state check
 - D9 post-launch plan check
 - D9 operating records redaction check
+- Phase 3 roadmap consistency check
 - expected evidence/gap artifacts
 - safety boundaries
 

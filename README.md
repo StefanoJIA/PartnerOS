@@ -130,6 +130,7 @@ python scripts/d8_staging_records_check.py  # D8 staging record naming/redaction
 python scripts/d8_production_coordination_check.py  # D8 post-STAGING_VALIDATED production coordination state
 python scripts/d9_post_launch_plan_check.py  # D9 post-launch operating loop plan
 python scripts/d9_operating_records_check.py  # D9 operating record naming/redaction check
+python scripts/phase3_roadmap_check.py  # Phase 3 D7-D9 roadmap consistency
 python scripts/d7_4_partner_supplier_check.py   # D7.4 partner split & supplier confirmation smoke
 python scripts/d7_3_customer_confirmation_check.py  # D7.3 customer confirmation smoke
 ```
