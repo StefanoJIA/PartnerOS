@@ -24,6 +24,7 @@ The generated document includes:
 - staging records redaction check
 - production coordination state check
 - D9 post-launch plan check
+- D9 operating records redaction check
 - expected evidence/gap artifacts
 - safety boundaries
 

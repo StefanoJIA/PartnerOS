@@ -38,6 +38,17 @@ D9 turns the deployed PartnerOS and existing service portal bridge into a monito
 - Order operations gaps become explicit backlog items with owner, evidence, and next action.
 - No D9 artifact requires editing `service.intelli-opus.com`, nginx, or cloud upstreams from this repository.
 
+## Records
+
+D9 operating records follow [D9 Operating Records Policy](d9_operating_records_policy.md).
+
+```powershell
+cd backend
+python scripts/d9_operating_records_check.py
+```
+
+Use canonical `docs/records/d9_*_YYYYMMDD.md` names and store redacted summaries only.
+
 ## Safety Boundaries
 
 - No automatic customer or supplier notification.

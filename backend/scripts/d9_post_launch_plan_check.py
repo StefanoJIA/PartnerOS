@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import subprocess
+import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PLAN_DOC = REPO_ROOT / "docs" / "phase3" / "d9_post_launch_operating_loop.md"
+RECORDS_POLICY_DOC = REPO_ROOT / "docs" / "phase3" / "d9_operating_records_policy.md"
 
 REQUIRED_MARKERS = (
     "D9 Post-Launch Operating Loop",
@@ -23,6 +26,7 @@ REQUIRED_MARKERS = (
     "D9.2",
     "D9.3",
     "D9.4",
+    "D9 Operating Records Policy",
 )
 
 
@@ -57,12 +61,29 @@ def _display_path(path: Path) -> str:
         return str(path)
 
 
+def _records_gate_status() -> tuple[bool, str]:
+    result = subprocess.run(
+        [sys.executable, "scripts/d9_operating_records_check.py"],
+        cwd=REPO_ROOT / "backend",
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    output = "\n".join(part for part in (result.stdout.strip(), result.stderr.strip()) if part)
+    if result.returncode == 0 and "Result: PASS" in result.stdout:
+        return True, "PASS"
+    detail = next((line for line in output.splitlines() if line.startswith("[FAIL]")), "")
+    return False, detail or output[:160] or "records gate failed"
+
+
 def main() -> int:
     checks = [
         Check("D9 plan exists"),
         Check("D9 plan contains stage markers"),
         Check("D9 plan preserves safety boundaries"),
         Check("D9 entry criteria depend on staging validation"),
+        Check("D9 operating records policy exists"),
+        Check("D9 operating records gate runs"),
     ]
 
     text = _read_text()
@@ -86,6 +107,14 @@ def main() -> int:
         checks[3].pass_("after D8 production coordination")
     else:
         checks[3].fail("missing D8/STAGING_VALIDATED dependency")
+
+    if RECORDS_POLICY_DOC.exists():
+        checks[4].pass_(_display_path(RECORDS_POLICY_DOC))
+    else:
+        checks[4].fail(_display_path(RECORDS_POLICY_DOC))
+
+    records_ok, records_detail = _records_gate_status()
+    checks[5].pass_(records_detail) if records_ok else checks[5].fail(records_detail)
 
     missing = [marker for marker in REQUIRED_MARKERS if marker not in text]
     if missing and checks[0].ok:

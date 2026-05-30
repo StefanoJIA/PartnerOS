@@ -1,0 +1,131 @@
+"""Validate D9 post-launch operating review records."""
+
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+RECORDS_ROOT = REPO_ROOT / "docs" / "records"
+
+D9_RECORD_PATTERN = re.compile(
+    r"^d9_(?:operating_health|order_operations|market_response|improvement_backlog)_\d{8}\.md$"
+)
+FORBIDDEN_MARKERS = (
+    "internal_cost",
+    "estimated_margin",
+    "pricing_breakdown_json",
+    "cost_snapshot_json",
+    "supplier_private",
+    "storage_key",
+    "backend/storage",
+    "local_data",
+    "portal_customer_api_token",
+    "secret_key",
+    "password_hash",
+    "database_url",
+    "raw response body",
+)
+TOKEN_ASSIGNMENT_PATTERN = re.compile(
+    r"(SERVICE_PORTAL_PARTNEROS_TOKEN|PORTAL_CUSTOMER_API_TOKEN):?\s*=\s*['\"]?([^'\"\s]+)",
+    re.IGNORECASE,
+)
+ALLOWED_TOKEN_PLACEHOLDERS = {"<portal-server-token>", "<redacted>", "***", "REDACTED"}
+
+
+class Check:
+    def __init__(self, label: str) -> None:
+        self.label = label
+        self.ok = False
+        self.detail = ""
+
+    def pass_(self, detail: str = "") -> None:
+        self.ok = True
+        self.detail = detail
+
+    def fail(self, detail: str) -> None:
+        self.ok = False
+        self.detail = detail
+
+    def line(self) -> str:
+        status = "PASS" if self.ok else "FAIL"
+        suffix = f" ({self.detail})" if self.detail else ""
+        return f"[{status}] {self.label}{suffix}"
+
+
+def _display_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
+
+def _d9_records() -> list[Path]:
+    if not RECORDS_ROOT.exists():
+        return []
+    return sorted(path for path in RECORDS_ROOT.iterdir() if path.is_file() and path.name.startswith("d9_"))
+
+
+def _token_assignment_issues(path: Path, text: str) -> list[str]:
+    issues: list[str] = []
+    for line_no, line in enumerate(text.splitlines(), start=1):
+        match = TOKEN_ASSIGNMENT_PATTERN.search(line)
+        if not match:
+            continue
+        value = match.group(2).strip()
+        if value not in ALLOWED_TOKEN_PLACEHOLDERS and not (value.startswith("<") and value.endswith(">")):
+            issues.append(f"{path.name}:{line_no}")
+    return issues
+
+
+def _naming_issues(records: list[Path]) -> list[str]:
+    return [path.name for path in records if not D9_RECORD_PATTERN.match(path.name)]
+
+
+def _redaction_issues(records: list[Path]) -> list[str]:
+    issues: list[str] = []
+    for path in records:
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            issues.append(f"{path.name}:unreadable")
+            continue
+        lowered = text.lower()
+        for marker in FORBIDDEN_MARKERS:
+            if marker in lowered:
+                issues.append(f"{path.name}:{marker}")
+        issues.extend(_token_assignment_issues(path, text))
+    return issues
+
+
+def main() -> int:
+    checks = [
+        Check("docs/records exists"),
+        Check("D9 operating record names are canonical"),
+        Check("D9 operating records are redacted"),
+    ]
+
+    if RECORDS_ROOT.exists() and RECORDS_ROOT.is_dir():
+        checks[0].pass_(_display_path(RECORDS_ROOT))
+    else:
+        checks[0].fail("missing docs/records")
+
+    records = _d9_records()
+    naming = _naming_issues(records)
+    checks[1].pass_(f"{len(records)} D9 records") if not naming else checks[1].fail(", ".join(naming))
+
+    redaction = _redaction_issues(records)
+    checks[2].pass_("no token assignments or forbidden markers") if not redaction else checks[2].fail(
+        ", ".join(redaction[:8])
+    )
+
+    print("D9 Operating Records Check")
+    for check in checks:
+        print(check.line())
+    passed = all(check.ok for check in checks)
+    print(f"Result: {'PASS' if passed else 'FAIL'}")
+    return 0 if passed else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

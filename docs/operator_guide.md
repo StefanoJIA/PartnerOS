@@ -394,6 +394,14 @@ python scripts/d9_post_launch_plan_check.py
 
 D9 starts only after `STAGING_VALIDATED` and production coordination. It keeps Portal feedback, order operations, Market response intelligence, and improvement backlog under human review.
 
+Before committing D9 operating review records, run:
+
+```powershell
+python scripts/d9_operating_records_check.py
+```
+
+Use canonical `docs/records/d9_*_YYYYMMDD.md` names and store redacted summaries only.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate
