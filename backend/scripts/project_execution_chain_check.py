@@ -8,6 +8,11 @@ from argparse import ArgumentParser
 from datetime import datetime, timezone
 from pathlib import Path
 
+try:
+    from record_redaction import redaction_issues
+except ModuleNotFoundError:
+    from scripts.record_redaction import redaction_issues
+
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = BACKEND_ROOT.parent
 
@@ -60,7 +65,10 @@ class Check:
 
     def markdown_row(self) -> str:
         status = "PASS" if self.ok else "FAIL"
-        detail = self.detail.replace("|", "\\|") or "n/a"
+        if redaction_issues(Path(f"{self.label}.txt"), self.detail):
+            detail = "summary omitted because it contained secret-like or forbidden markers"
+        else:
+            detail = self.detail.replace("|", "\\|") or "n/a"
         return f"| {self.label} | {status} | {detail} |"
 
 

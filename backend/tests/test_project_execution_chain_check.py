@@ -67,6 +67,26 @@ def test_project_execution_chain_check_writes_redacted_report(monkeypatch, tmp_p
     assert "raw body ignored" not in text
 
 
+def test_project_execution_chain_check_omits_secret_like_summary(monkeypatch, tmp_path):
+    module = _load_module()
+    monkeypatch.setattr(module, "CHAIN", (("one", "one.py"),))
+    monkeypatch.setattr(
+        module,
+        "_run_script",
+        lambda script: SimpleNamespace(
+            returncode=0,
+            stdout="Result: PASS SERVICE_PORTAL_API_KEY=actual-secret-value\n",
+            stderr="",
+        ),
+    )
+    report = tmp_path / "project_execution_chain_20260530.md"
+
+    assert module.main(["--report-markdown", str(report)]) == 0
+    text = report.read_text(encoding="utf-8")
+    assert "actual-secret-value" not in text
+    assert "summary omitted because it contained secret-like" in text
+
+
 def test_project_execution_chain_check_rejects_backend_storage_report_path(monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "CHAIN", (("one", "one.py"),))
