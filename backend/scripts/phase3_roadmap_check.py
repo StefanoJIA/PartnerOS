@@ -35,6 +35,7 @@ REQUIRED_DOC_LINKS = (
     "d8_delivery_stage_goal_matrix.md",
     "d8_readiness_audit.md",
     "d8_staging_execution_pack.md",
+    "d8_local_staging_rehearsal.md",
     "d8_staging_handoff_bundle.md",
     "d8_staging_input_preflight.md",
     "d8_staging_access_request.md",

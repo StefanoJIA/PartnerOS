@@ -123,6 +123,7 @@ flowchart TD
 - [D8.5 Market Response Intelligence](d8_5_market_response_intelligence.md)
 - [D8 Integration Hardening](d8_integration_hardening.md)
 - [D8 Strict Staging / Cloud Validation](d8_strict_staging_cloud_validation.md)
+- [D8 Local Staging Rehearsal](d8_local_staging_rehearsal.md)
 - [D8 Delivery Stage Goal Matrix](d8_delivery_stage_goal_matrix.md)
 - [D8 Readiness Audit](d8_readiness_audit.md)
 - [D8 Staging Operator Handoff](d8_staging_operator_handoff.md)

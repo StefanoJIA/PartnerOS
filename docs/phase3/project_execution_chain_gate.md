@@ -34,6 +34,7 @@ The report stores gate labels, pass/fail status, and one-line summaries only. It
 | Phase 3 roadmap | Confirms D7-D9 stages, dependency graph, related docs, and safety boundaries |
 | D8 stage goal matrix | Confirms stage artifacts, smoke commands, evidence state, and next gaps |
 | D8 readiness audit | Classifies local readiness and saved strict staging evidence |
+| D8 local staging rehearsal | Confirms the optional local command-order rehearsal is documented and not treated as staging proof |
 | D8 staging handoff bundle | Confirms the operator-facing handoff manifest is complete and redacted |
 | D8 staging input preflight | Confirms provided staging inputs are missing-but-waiting or safe to use |
 | D8 staging access request | Confirms the private staging input request is complete and redacted |

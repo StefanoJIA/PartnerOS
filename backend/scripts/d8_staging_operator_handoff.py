@@ -94,6 +94,7 @@ cd backend
 python scripts/d8_readiness_audit.py
 python scripts/d8_stage_goal_matrix_check.py
 python scripts/d8_integration_hardening_check.py
+python scripts/d8_local_staging_rehearsal_check.py
 python scripts/d8_staging_handoff_bundle_check.py
 python scripts/d8_staging_input_preflight_check.py
 python scripts/d8_staging_access_request_check.py

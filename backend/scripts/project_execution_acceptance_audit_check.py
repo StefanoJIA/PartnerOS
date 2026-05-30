@@ -18,6 +18,7 @@ REQUIRED_MARKERS = (
     "IE Auto Project Plan",
     "Phase 3 Roadmap",
     "D8 Delivery Stage Goal Matrix",
+    "D8 Local Staging Rehearsal",
     "D8 Staging Handoff Bundle",
     "D8 Staging Input Preflight",
     "D8 Staging Access Request",

@@ -93,6 +93,7 @@ As of the current repository state:
 | D8.5 Market Response Intelligence | Implemented |
 | D8 Integration Hardening | Foundation implemented |
 | Strict Staging / Cloud Validation | Evidence workflow added |
+| D8 Local Staging Rehearsal | Added |
 | D8 Delivery Stage Goal Matrix | Added |
 | D8 Readiness Audit | Added |
 | D8 Staging Operator Handoff | Added |
@@ -254,6 +255,7 @@ D7.9 Resource Center (done)
   -> D8.5 Market response intelligence (done)
   -> D8 Integration hardening (foundation done)
   -> Strict staging/cloud validation (evidence workflow added)
+  -> D8 local staging rehearsal (added)
   -> D8 delivery stage goal matrix (added)
   -> D8 readiness audit (added)
   -> D8 staging operator handoff (added)
@@ -294,6 +296,7 @@ See [D8 Delivery Stage Goal Matrix](d8_delivery_stage_goal_matrix.md) for the cu
 Use [D8 Readiness Audit](d8_readiness_audit.md) to classify the repo as `READY_FOR_STAGING`, `STAGING_GAPS_OPEN`, or `STAGING_VALIDATED` based on saved evidence.
 Use [D8 Staging Operator Handoff](d8_staging_operator_handoff.md) to generate the command sheet for whoever has the real staging backend URL and portal token.
 Use [D8 Staging Execution Pack](d8_staging_execution_pack.md) to verify the local handoff chain before sharing it.
+Use [D8 Local Staging Rehearsal](d8_local_staging_rehearsal.md) only to practice command order against a local backend; it does not prove `STAGING_VALIDATED`.
 Use [D8 Staging Handoff Bundle](d8_staging_handoff_bundle.md) as the operator-facing manifest of docs, commands, generated handoff, evidence command, and exclusions.
 Use [D8 Staging Input Preflight](d8_staging_input_preflight.md) after private values arrive and before strict staging evidence.
 Use [D8 Staging Access Request](d8_staging_access_request.md) when the real staging URL, portal token, portal origin, deployed commit, or TEST fixture scope still need to be provided privately.

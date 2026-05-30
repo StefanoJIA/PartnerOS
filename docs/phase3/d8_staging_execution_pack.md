@@ -12,6 +12,7 @@ It checks that the repository contains:
 - stage goal matrix
 - integration hardening gate
 - strict staging evidence runner
+- local staging rehearsal runbook and checker
 - operator handoff generator
 - staging handoff bundle manifest and checker
 - staging input preflight checker
@@ -30,7 +31,7 @@ It checks that the repository contains:
 - project execution records checker
 - matching phase 3 docs
 
-It also runs the staging handoff bundle checker, staging input preflight checker, staging access request checker, staging gap triage checker, staging records checker, production coordination checker, D9 plan checker, D9 records checker, Phase 3 roadmap checker, IE Auto project plan checker, project execution chain checker, project execution status summary, and project execution acceptance audit, generates a temporary handoff, and checks that the handoff includes required environment variables, preflight commands, evidence/gap artifact commands, and safety boundaries.
+It also runs the local staging rehearsal checker, staging handoff bundle checker, staging input preflight checker, staging access request checker, staging gap triage checker, staging records checker, production coordination checker, D9 plan checker, D9 records checker, Phase 3 roadmap checker, IE Auto project plan checker, project execution chain checker, project execution status summary, and project execution acceptance audit, generates a temporary handoff, and checks that the handoff includes required environment variables, preflight commands, evidence/gap artifact commands, and safety boundaries.
 
 The project execution chain gate is documented separately in [Project Execution Chain Gate](project_execution_chain_gate.md). It is the local aggregate proof for `READY_FOR_STAGING_HANDOFF`; it does not replace strict staging evidence or produce `STAGING_VALIDATED`.
 

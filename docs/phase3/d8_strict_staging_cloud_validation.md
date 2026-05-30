@@ -35,7 +35,7 @@ python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/recor
 
 The JSON record stores check labels, pass/fail states, sanitized URLs, and safety metadata. It does not store the portal token or response bodies.
 
-Before running strict evidence with real values, run `python scripts/d8_staging_input_preflight_check.py`. It performs local-only checks for HTTPS URL shape and non-default token values without calling staging or printing secrets.
+Before running strict evidence with real values, run `python scripts/d8_staging_input_preflight_check.py`. It performs local-only checks for HTTPS URL shape and non-default token values without calling staging or printing secrets. For local command-order practice only, use [D8 Local Staging Rehearsal](d8_local_staging_rehearsal.md); rehearsal output is not staging evidence.
 
 To also create a follow-up register for failed checks:
 

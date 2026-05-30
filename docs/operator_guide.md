@@ -376,6 +376,14 @@ Before sharing the staging package, use [D8 Staging Handoff Bundle](phase3/d8_st
 python scripts/d8_staging_handoff_bundle_check.py
 ```
 
+To rehearse strict staging command order against a local backend only, use [D8 Local Staging Rehearsal](phase3/d8_local_staging_rehearsal.md) and verify it with:
+
+```powershell
+python scripts/d8_local_staging_rehearsal_check.py
+```
+
+Local rehearsal output is not staging proof and must not change readiness to `STAGING_VALIDATED`.
+
 After private staging values are available, but before running strict evidence, run:
 
 ```powershell
@@ -448,7 +456,7 @@ For a single local planning gate, run:
 python scripts/project_execution_chain_check.py
 ```
 
-This aggregates the IE Auto plan, Phase 3 roadmap, D8 matrix, readiness audit, production coordination, D9 plan, and D9 records checks.
+This aggregates the IE Auto plan, Phase 3 roadmap, D8 matrix, readiness audit, local staging rehearsal, production coordination, D9 plan, and D9 records checks.
 See [Project Execution Chain Gate](phase3/project_execution_chain_gate.md) for the state meanings and safety boundaries.
 
 For a concise current-stage summary:

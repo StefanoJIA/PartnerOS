@@ -14,6 +14,7 @@ This audit maps the current project-planning objective to concrete evidence. It 
 | Phase 3 roadmap covers D7-D9 sequence | [Phase 3 Roadmap](phase3_roadmap.md), `python scripts/phase3_roadmap_check.py` | PASS |
 | Stage goals and next gaps are explicit | [D8 Delivery Stage Goal Matrix](d8_delivery_stage_goal_matrix.md), `python scripts/d8_stage_goal_matrix_check.py` | PASS |
 | Local D8 readiness is classified | [D8 Readiness Audit](d8_readiness_audit.md), `python scripts/d8_readiness_audit.py` | `READY_FOR_STAGING` |
+| Local strict staging rehearsal is available | [D8 Local Staging Rehearsal](d8_local_staging_rehearsal.md), `python scripts/d8_local_staging_rehearsal_check.py` | PASS, but not staging proof |
 | Operator handoff bundle is defined | [D8 Staging Handoff Bundle](d8_staging_handoff_bundle.md), `python scripts/d8_staging_handoff_bundle_check.py` | PASS |
 | Private staging inputs can be preflighted locally | [D8 Staging Input Preflight](d8_staging_input_preflight.md), `python scripts/d8_staging_input_preflight_check.py` | `WAITING_FOR_PRIVATE_VALUES` until values arrive |
 | Private staging inputs are requested safely | [D8 Staging Access Request](d8_staging_access_request.md), `python scripts/d8_staging_access_request_check.py` | PASS |
