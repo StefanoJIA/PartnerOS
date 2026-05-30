@@ -439,9 +439,10 @@ python scripts/d9_post_launch_plan_check.py
 python scripts/d9_operating_loop_kickoff_check.py
 python scripts/d9_1_operating_health_review_check.py
 python scripts/d9_2_order_operations_loop_check.py
+python scripts/d9_3_market_response_loop_check.py
 ```
 
-D9 starts only after `STAGING_VALIDATED` and production coordination. It keeps Portal feedback, order operations, Market response intelligence, and improvement backlog under human review. The kickoff check defines the first redacted D9 operating review session; D9.1 defines health signals; D9.2 defines the order operations follow-up signals without automation.
+D9 starts only after `STAGING_VALIDATED` and production coordination. It keeps Portal feedback, order operations, Market response intelligence, and improvement backlog under human review. The kickoff check defines the first redacted D9 operating review session; D9.1 defines health signals; D9.2 defines order operations follow-up; D9.3 defines advisory market response signals without automatic replies or mutations.
 
 Before committing D9 operating review records, run:
 

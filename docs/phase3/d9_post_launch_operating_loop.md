@@ -21,7 +21,7 @@ D9 turns the deployed PartnerOS and existing service portal bridge into a monito
 |---|---|---|
 | [D9.1 Operating Health Review](d9_1_operating_health_review.md) | Track portal bridge health, readiness, CORS, token rejection, and customer-safe reads after production coordination | recurring redacted evidence summary |
 | [D9.2 Order Operations Loop](d9_2_order_operations_loop.md) | Review order confirmation, supplier confirmation, production milestones, shipment plans, resources, and feedback status as one operating queue | operator review record |
-| D9.3 Market Response Loop | Feed Portal feedback, quote outcomes, product gaps, and demand signals into Market response intelligence | advisory recommendation review |
+| [D9.3 Market Response Loop](d9_3_market_response_loop.md) | Feed Portal feedback, quote outcomes, product gaps, and demand signals into Market response intelligence | advisory recommendation review |
 | D9.4 Improvement Backlog | Convert repeated operational gaps into scoped implementation briefs for the next sprint | backlog / planning record |
 
 ## Operating Signals

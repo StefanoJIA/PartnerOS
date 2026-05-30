@@ -140,6 +140,7 @@ flowchart TD
 - [D9 Operating Loop Kickoff](d9_operating_loop_kickoff.md)
 - [D9.1 Operating Health Review](d9_1_operating_health_review.md)
 - [D9.2 Order Operations Loop](d9_2_order_operations_loop.md)
+- [D9.3 Market Response Loop](d9_3_market_response_loop.md)
 - [D9 Operating Records Policy](d9_operating_records_policy.md)
 - [Project Execution Chain Gate](project_execution_chain_gate.md)
 - [Project Execution Acceptance Audit](project_execution_acceptance_audit.md)

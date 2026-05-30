@@ -46,6 +46,7 @@ The report stores gate labels, pass/fail status, and one-line summaries only. It
 | D9 operating loop kickoff | Confirms the first D9 review session remains gated behind D8 production coordination |
 | D9.1 operating health review | Confirms the first D9 health track has redacted signal and record rules |
 | D9.2 order operations loop | Confirms the D9 order execution track has redacted signal and follow-up rules |
+| D9.3 market response loop | Confirms the D9 market response track remains advisory and redacted |
 | D9 operating records | Confirms D9 record naming and redaction policy |
 | Project execution acceptance audit | Maps the current project-planning objective to evidence and missing external staging proof |
 | Project execution records | Confirms generated execution reports are canonical and redacted |

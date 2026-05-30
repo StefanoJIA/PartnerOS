@@ -107,6 +107,7 @@ python scripts/d9_post_launch_plan_check.py
 python scripts/d9_operating_loop_kickoff_check.py
 python scripts/d9_1_operating_health_review_check.py
 python scripts/d9_2_order_operations_loop_check.py
+python scripts/d9_3_market_response_loop_check.py
 python scripts/d9_operating_records_check.py
 python scripts/phase3_roadmap_check.py
 python scripts/ie_auto_project_plan_check.py

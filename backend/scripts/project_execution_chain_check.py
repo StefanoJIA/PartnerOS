@@ -29,6 +29,7 @@ CHAIN = (
     ("D9 operating loop kickoff", "scripts/d9_operating_loop_kickoff_check.py"),
     ("D9.1 operating health review", "scripts/d9_1_operating_health_review_check.py"),
     ("D9.2 order operations loop", "scripts/d9_2_order_operations_loop_check.py"),
+    ("D9.3 market response loop", "scripts/d9_3_market_response_loop_check.py"),
     ("D9 operating records", "scripts/d9_operating_records_check.py"),
     ("Project execution records", "scripts/project_execution_records_check.py"),
 )
