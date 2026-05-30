@@ -109,6 +109,7 @@ As of the current repository state:
 | D9 Post-Launch Operating Loop | Planned |
 | D9 Operating Loop Kickoff | Planned |
 | D9.1 Operating Health Review | Planned |
+| D9.2 Order Operations Loop | Planned |
 | D9 Operating Records Policy | Planned |
 | Project Execution Chain Gate | Added |
 | Project Execution Acceptance Audit | Added |
@@ -275,6 +276,7 @@ D7.9 Resource Center (done)
   -> D9 post-launch operating loop (planned)
   -> D9 operating loop kickoff (planned)
   -> D9.1 operating health review (planned)
+  -> D9.2 order operations loop (planned)
   -> D9 operating records policy (planned)
   -> project execution chain gate (added)
   -> project execution acceptance audit (added)
@@ -316,6 +318,7 @@ Use [D8 Production Coordination Plan](d8_production_coordination_plan.md) after 
 Use [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md) after production coordination to keep health review, order operations, feedback, market intelligence, and improvement backlog under human review.
 Use [D9 Operating Loop Kickoff](d9_operating_loop_kickoff.md) for the first redacted D9 review session after D8 production coordination.
 Use [D9.1 Operating Health Review](d9_1_operating_health_review.md) to review readiness, manifest, auth rejection, CORS, customer-safe reads, and forbidden-field safety.
+Use [D9.2 Order Operations Loop](d9_2_order_operations_loop.md) to review customer confirmation, partner split, supplier confirmation, production, shipment, resources, and feedback follow-up signals without automation.
 Use [D9 Operating Records Policy](d9_operating_records_policy.md) to keep D9 review records canonical, redacted, and commit-safe.
 Use [Project Execution Chain Gate](project_execution_chain_gate.md) as the local aggregate gate before handing strict staging commands to the operator with real environment values.
 Use [Project Execution Acceptance Audit](project_execution_acceptance_audit.md) to distinguish proven local completion from missing real staging evidence before claiming the overall goal is complete.

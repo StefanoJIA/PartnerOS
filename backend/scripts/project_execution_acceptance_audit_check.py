@@ -29,6 +29,7 @@ REQUIRED_MARKERS = (
     "D9 Post-Launch Operating Loop",
     "D9 Operating Loop Kickoff",
     "D9.1 Operating Health Review",
+    "D9.2 Order Operations Loop",
     "Project Execution Chain Gate",
     "project_execution_status.py",
     "project_execution_acceptance_audit_check.py",

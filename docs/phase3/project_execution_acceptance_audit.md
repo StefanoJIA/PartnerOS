@@ -26,6 +26,7 @@ This audit maps the current project-planning objective to concrete evidence. It 
 | D9 is planned but gated | [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md), `python scripts/d9_post_launch_plan_check.py` | PASS |
 | D9 kickoff is planned but gated | [D9 Operating Loop Kickoff](d9_operating_loop_kickoff.md), `python scripts/d9_operating_loop_kickoff_check.py` | PASS |
 | D9.1 health review is planned but gated | [D9.1 Operating Health Review](d9_1_operating_health_review.md), `python scripts/d9_1_operating_health_review_check.py` | PASS |
+| D9.2 order operations loop is planned but gated | [D9.2 Order Operations Loop](d9_2_order_operations_loop.md), `python scripts/d9_2_order_operations_loop_check.py` | PASS |
 | D9 records policy is redaction-gated | [D9 Operating Records Policy](d9_operating_records_policy.md), `python scripts/d9_operating_records_check.py` | PASS |
 | Aggregate local execution chain is ready | [Project Execution Chain Gate](project_execution_chain_gate.md), `python scripts/project_execution_chain_check.py` | `READY_FOR_STAGING_HANDOFF` |
 | Current stage and next action are summarized | `python scripts/project_execution_status.py` | `READY_FOR_STAGING_HANDOFF` |
