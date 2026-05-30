@@ -18,6 +18,7 @@ def _load_module():
 def test_production_coordination_waits_for_staging_validation(monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "_readiness_status", lambda: (True, "READY_FOR_STAGING"))
+    monkeypatch.setattr(module, "_evidence_review_status", lambda: (True, "WAITING_FOR_STAGING_EVIDENCE"))
 
     assert module.main() == 0
     output = capsys.readouterr().out
@@ -28,6 +29,11 @@ def test_production_coordination_waits_for_staging_validation(monkeypatch, capsy
 def test_production_coordination_ready_after_staging_validated(monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "_readiness_status", lambda: (True, "STAGING_VALIDATED"))
+    monkeypatch.setattr(
+        module,
+        "_evidence_review_status",
+        lambda: (True, "READY_FOR_PRODUCTION_COORDINATION_REVIEW"),
+    )
 
     assert module.main() == 0
     output = capsys.readouterr().out
@@ -39,9 +45,25 @@ def test_production_coordination_fails_on_missing_plan_marker(monkeypatch, tmp_p
     module = _load_module()
     monkeypatch.setattr(module, "PLAN_DOC", tmp_path / "d8_production_coordination_plan.md")
     monkeypatch.setattr(module, "_readiness_status", lambda: (True, "STAGING_VALIDATED"))
+    monkeypatch.setattr(
+        module,
+        "_evidence_review_status",
+        lambda: (True, "READY_FOR_PRODUCTION_COORDINATION_REVIEW"),
+    )
     module.PLAN_DOC.write_text("STAGING_VALIDATED\n", encoding="utf-8")
 
     assert module.main() == 1
     output = capsys.readouterr().out
     assert "production coordination safety markers" in output
+    assert "Result: FAIL" in output
+
+
+def test_production_coordination_blocks_when_evidence_review_not_ready(monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "_readiness_status", lambda: (True, "STAGING_VALIDATED"))
+    monkeypatch.setattr(module, "_evidence_review_status", lambda: (True, "STAGING_GAPS_REQUIRE_TRIAGE"))
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "BLOCKED_BY_EVIDENCE_REVIEW" in output
     assert "Result: FAIL" in output
