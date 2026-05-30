@@ -8,6 +8,11 @@ from argparse import ArgumentParser
 from datetime import datetime, timezone
 from pathlib import Path
 
+try:
+    from record_redaction import redaction_issues
+except ModuleNotFoundError:
+    from scripts.record_redaction import redaction_issues
+
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = BACKEND_ROOT.parent
 
@@ -66,9 +71,17 @@ def _git_head() -> str:
     return (result.stdout or "unknown").strip() if result.returncode == 0 else "unknown"
 
 
+def _safe_audit_output(audit_output: str) -> str:
+    issues = redaction_issues(Path("d8_readiness_audit_output.txt"), audit_output)
+    if issues:
+        return "Readiness audit output omitted because it contained secret-like or forbidden markers. Rerun the audit locally and inspect logs without committing them."
+    return audit_output
+
+
 def _handoff_text(status: str, audit_output: str) -> str:
     generated = datetime.now(timezone.utc).isoformat()
     head = _git_head()
+    safe_audit_output = _safe_audit_output(audit_output)
     return f"""# D8 Strict Staging Operator Handoff
 
 Generated at: {generated}
@@ -157,7 +170,7 @@ python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/recor
 ## Current Readiness Audit
 
 ```text
-{audit_output or 'No audit output captured.'}
+{safe_audit_output or 'No audit output captured.'}
 ```
 """
 

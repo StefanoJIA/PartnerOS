@@ -34,8 +34,25 @@ def test_handoff_text_contains_runbooks_commands_and_boundaries(monkeypatch):
     assert "SERVICE_PORTAL_PARTNEROS_TOKEN=<" not in text
 
 
+def test_handoff_text_omits_secret_like_audit_output(monkeypatch):
+    module = _load_module()
+    monkeypatch.setattr(module, "_git_head", lambda: "abc1234")
+
+    text = module._handoff_text("READY_FOR_STAGING", "SERVICE_PORTAL_API_KEY=actual-secret-value")
+
+    assert "actual-secret-value" not in text
+    assert "Readiness audit output omitted" in text
+
+
 def test_handoff_rejects_backend_storage_output_path():
     module = _load_module()
 
     with pytest.raises(ValueError, match="backend/storage"):
         module._safe_output_path("storage/d8_staging_operator_handoff_20260530.md")
+
+
+def test_handoff_rejects_local_data_output_path():
+    module = _load_module()
+
+    with pytest.raises(ValueError, match="local_data"):
+        module._safe_output_path("../local_data/d8_staging_operator_handoff_20260530.md")
