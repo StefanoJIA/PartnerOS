@@ -17,6 +17,8 @@ REQUIRED_MARKERS = (
     "READY_FOR_STAGING",
     "WAITING_FOR_STAGING_VALIDATION",
     "STAGING_VALIDATED",
+    "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
+    "d8_staging_evidence_review_check.py",
     "IE Auto Project Plan",
     "Phase 3 Roadmap",
     "D8 Delivery Stage Goal Matrix",
