@@ -1,6 +1,6 @@
 # D9 Post-Launch Operating Loop
 
-**Status:** planned on 2026-05-30; starts only after D8 `STAGING_VALIDATED` and production coordination.
+**Status:** planned on 2026-05-30; starts only after D8 `STAGING_VALIDATED`, production coordination, and evidence review.
 
 ## Purpose
 
@@ -12,6 +12,7 @@ D9 turns the deployed PartnerOS and existing service portal bridge into a monito
 |---|---|
 | D8 staging | `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED` |
 | D8 production handoff | [D8 Production Coordination Plan](d8_production_coordination_plan.md) Go / No-Go completed |
+| D8 evidence review | `python scripts/d8_staging_evidence_review_check.py` reports `READY_FOR_PRODUCTION_COORDINATION_REVIEW` |
 | Records | Redacted D8 evidence and any gap register are saved under canonical `docs/records/d8_*_YYYYMMDD` names |
 | Safety | Portal bridge still hides internal cost, margin, pricing breakdown, supplier private notes, backend paths, storage keys, tokens, and secrets |
 

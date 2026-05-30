@@ -23,6 +23,8 @@ IMPROVEMENT_BACKLOG_DOC = REPO_ROOT / "docs" / "phase3" / "d9_4_improvement_back
 REQUIRED_MARKERS = (
     "D9 Post-Launch Operating Loop",
     "STAGING_VALIDATED",
+    "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
+    "python scripts/d8_staging_evidence_review_check.py",
     "Portal feedback",
     "Order operations",
     "Market response intelligence",
@@ -127,10 +129,14 @@ def main() -> int:
     redaction = redaction_issues(PLAN_DOC, text, include_common_markers=False)
     checks[3].pass_("no secret-like markers") if not redaction else checks[3].fail(", ".join(redaction[:8]))
 
-    if "STAGING_VALIDATED" in text and "D8 Production Coordination Plan" in text:
-        checks[4].pass_("after D8 production coordination")
+    if (
+        "STAGING_VALIDATED" in text
+        and "D8 Production Coordination Plan" in text
+        and "READY_FOR_PRODUCTION_COORDINATION_REVIEW" in text
+    ):
+        checks[4].pass_("after D8 production coordination and evidence review")
     else:
-        checks[4].fail("missing D8/STAGING_VALIDATED dependency")
+        checks[4].fail("missing D8/STAGING_VALIDATED/evidence review dependency")
 
     if RECORDS_POLICY_DOC.exists():
         checks[5].pass_(_display_path(RECORDS_POLICY_DOC))

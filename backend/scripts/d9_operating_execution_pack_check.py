@@ -24,6 +24,7 @@ REQUIRED_FILES = (
     "docs/phase3/d9_3_market_response_loop.md",
     "docs/phase3/d9_4_improvement_backlog.md",
     "docs/phase3/d9_operating_records_policy.md",
+    "backend/scripts/d8_staging_evidence_review_check.py",
     "backend/scripts/d9_operating_execution_pack_check.py",
     "backend/scripts/d9_post_launch_plan_check.py",
     "backend/scripts/d9_operating_loop_kickoff_check.py",
@@ -35,6 +36,8 @@ REQUIRED_FILES = (
 )
 REQUIRED_DOC_MARKERS = (
     "D9 Operating Execution Pack",
+    "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
+    "python scripts/d8_staging_evidence_review_check.py",
     "python scripts/d9_post_launch_plan_check.py",
     "python scripts/d9_operating_loop_kickoff_check.py",
     "python scripts/d9_1_operating_health_review_check.py",
@@ -46,6 +49,7 @@ REQUIRED_DOC_MARKERS = (
     "No automatic ticket creation",
 )
 SCRIPTS = (
+    "scripts/d8_staging_evidence_review_check.py",
     "scripts/d9_post_launch_plan_check.py",
     "scripts/d9_operating_loop_kickoff_check.py",
     "scripts/d9_1_operating_health_review_check.py",

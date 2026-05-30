@@ -1,6 +1,6 @@
 # D9 Operating Execution Pack
 
-**Status:** planned on 2026-05-30; run after D8 production coordination and before the first D9 operating review.
+**Status:** planned on 2026-05-30; run after D8 production coordination and evidence review, before the first D9 operating review.
 
 ## Purpose
 
@@ -20,6 +20,7 @@ python scripts/d9_operating_execution_pack_check.py
 ```powershell
 python scripts/d9_post_launch_plan_check.py
 python scripts/d9_operating_loop_kickoff_check.py
+python scripts/d8_staging_evidence_review_check.py
 python scripts/d9_1_operating_health_review_check.py
 python scripts/d9_2_order_operations_loop_check.py
 python scripts/d9_3_market_response_loop_check.py
@@ -31,7 +32,7 @@ python scripts/d9_operating_records_check.py
 
 | Result | Meaning |
 |---|---|
-| `PASS` | D9 operating plans, review templates, and redaction gates are ready for a human operator after D8 validation |
+| `PASS` | D9 operating plans, review templates, and redaction gates are ready for a human operator after D8 validation and `READY_FOR_PRODUCTION_COORDINATION_REVIEW` evidence review |
 | `FAIL` | A D9 plan, command, record policy, or safety boundary is missing |
 
 ## Boundaries
