@@ -69,7 +69,7 @@ This demo shows that intelliOffice can support a daily manual lead development w
 
 - [D5.2 Internal MVP Release](../releases/d5_2_internal_mvp_release_20260523.md)
 - [Operator Guide](../operator_guide.md)
-- [Deployment Readiness Checklist](../deployment_readiness_checklist.md)
+- [Deployment Readiness Checklist](../deployment_readiness_checklist.md) (current D8/D9 handoff checklist; historical D5.2 deployment checklist has been superseded)
 - [Screenshot README](screenshots/20260523/README.md)
 
 ## Verification (no logic changes)

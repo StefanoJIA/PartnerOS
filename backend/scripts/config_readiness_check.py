@@ -1,5 +1,6 @@
 # D5.2.11 local/server config readiness check (warnings + critical failures).
-# See docs/deployment_readiness_checklist.md and docs/testing_summary_d5_2.md.
+# Historical D5.2 baseline; current D8/D9 staging handoff is checked by
+# deployment_readiness_checklist_check.py.
 
 from __future__ import annotations
 

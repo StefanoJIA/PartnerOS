@@ -79,7 +79,7 @@
 | 文档 | 用途 |
 |------|------|
 | [operator_guide.md](../operator_guide.md) | 日常操作 |
-| [deployment_readiness_checklist.md](../deployment_readiness_checklist.md) | 部署前检查 |
+| [deployment_readiness_checklist.md](../deployment_readiness_checklist.md) | Current D8/D9 staging handoff checklist; supersedes the original D5.2 deployment checklist |
 | [testing_summary_d5_2.md](../testing_summary_d5_2.md) | 测试基线 |
 | [demo_script_20260523.md](../records/demo_script_20260523.md) | 演示脚本 |
 

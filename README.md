@@ -71,7 +71,7 @@ D6 implementation references:
 - **No automatic sending** · **No LinkedIn scraping** · **No Outlook API**
 - **Superseded by later stages** — see D5/D6 closure, D7 implementation, and current D8/D9 staging handoff docs.
 
-**Release pack（D5.2.11）：** [Release Note](docs/releases/d5_2_internal_mvp_release_20260523.md) · [Operator Guide](docs/operator_guide.md) · [Deployment Checklist](docs/deployment_readiness_checklist.md) · [Testing Summary](docs/testing_summary_d5_2.md)
+**Historical release pack（D5.2.11）：** [Release Note](docs/releases/d5_2_internal_mvp_release_20260523.md) · [Testing Summary](docs/testing_summary_d5_2.md). Current deployment readiness has moved to the D8/D9 [Deployment Readiness Checklist](docs/deployment_readiness_checklist.md) and [Operator Guide](docs/operator_guide.md).
 
 ## Quick Start
 
