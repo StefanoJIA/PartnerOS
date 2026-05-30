@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
@@ -9,6 +10,7 @@ from pathlib import Path
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = BACKEND_ROOT.parent
 DOC = REPO_ROOT / "docs" / "phase3" / "project_execution_acceptance_audit.md"
+STATUS_SCRIPT = BACKEND_ROOT / "scripts" / "project_execution_status.py"
 
 REQUIRED_MARKERS = (
     "READY_FOR_STAGING_HANDOFF",
@@ -38,6 +40,9 @@ REQUIRED_MARKERS = (
     "Project Execution Chain Gate",
     "project_execution_status.py",
     "project_execution_acceptance_audit_check.py",
+    "d8_staging_handoff_bundle.md",
+    "d8_staging_operator_runbook.md",
+    "d8_staging_access_request.md",
     "WAITING_FOR_PRIVATE_VALUES",
     "real `BACKEND_BASE_URL`",
     "real `SERVICE_PORTAL_PARTNEROS_TOKEN`",
@@ -103,6 +108,15 @@ def _extract(output: str, prefix: str) -> str:
     return "UNKNOWN"
 
 
+def _status_next_action(chain_state: str, readiness_state: str, coordination_state: str) -> tuple[str, str]:
+    spec = importlib.util.spec_from_file_location("project_execution_status_for_acceptance", STATUS_SCRIPT)
+    if not spec or not spec.loader:
+        return "UNKNOWN", "project_execution_status.py could not be loaded"
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module._next_action(chain_state, readiness_state, coordination_state)
+
+
 def main() -> int:
     checks = [
         Check("acceptance audit doc exists"),
@@ -110,6 +124,7 @@ def main() -> int:
         Check("acceptance audit is redacted"),
         Check("D8 readiness remains pre-staging"),
         Check("production coordination remains gated"),
+        Check("current next action points to staging handoff runbook"),
     ]
 
     text = _text()
@@ -136,6 +151,24 @@ def main() -> int:
         checks[4].pass_(coordination_state)
     else:
         checks[4].fail(coordination_state)
+
+    current_stage, next_action = _status_next_action(
+        "READY_FOR_STAGING_HANDOFF",
+        readiness_state,
+        coordination_state,
+    )
+    status_output = f"Current Stage: {current_stage}\nNext Action: {next_action}"
+    next_action_markers = (
+        "Current Stage: READY_FOR_STAGING_HANDOFF",
+        "d8_staging_handoff_bundle.md",
+        "d8_staging_operator_runbook.md",
+        "d8_staging_access_request.md",
+    )
+    missing_next_action = [marker for marker in next_action_markers if marker not in status_output]
+    if not missing_next_action:
+        checks[5].pass_("staging handoff runbook path")
+    else:
+        checks[5].fail(", ".join(missing_next_action))
 
     print("Project Execution Acceptance Audit Check")
     for check in checks:
