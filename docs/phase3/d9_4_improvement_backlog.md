@@ -1,6 +1,6 @@
 # D9.4 Improvement Backlog
 
-**Status:** planned on 2026-05-30; starts only after D8 production coordination and D9 kickoff.
+**Status:** planned on 2026-05-30; starts only after D8 production coordination, evidence review, and D9 kickoff.
 
 ## Purpose
 
@@ -14,6 +14,7 @@ It is a planning loop, not an automatic ticket creator or product-change workflo
 |---|---|
 | D8 staging validation | `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED` |
 | D8 production coordination | `python scripts/d8_production_coordination_check.py` reports `READY_FOR_PRODUCTION_COORDINATION` |
+| D8 evidence review | `python scripts/d8_staging_evidence_review_check.py` reports `READY_FOR_PRODUCTION_COORDINATION_REVIEW` |
 | D9 kickoff | `python scripts/d9_operating_loop_kickoff_check.py` passes |
 | D9.1 health review | `python scripts/d9_1_operating_health_review_check.py` passes |
 | D9.2 order operations loop | `python scripts/d9_2_order_operations_loop_check.py` passes |

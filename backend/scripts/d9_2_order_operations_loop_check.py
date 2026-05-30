@@ -16,6 +16,7 @@ REQUIRED_MARKERS = (
     "D9.2 Order Operations Loop",
     "STAGING_VALIDATED",
     "READY_FOR_PRODUCTION_COORDINATION",
+    "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "python scripts/d9_2_order_operations_loop_check.py",
     "python scripts/d9_operating_loop_kickoff_check.py",
     "python scripts/d9_operating_records_check.py",

@@ -16,6 +16,7 @@ REQUIRED_MARKERS = (
     "D9.1 Operating Health Review",
     "STAGING_VALIDATED",
     "READY_FOR_PRODUCTION_COORDINATION",
+    "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "python scripts/d9_1_operating_health_review_check.py",
     "python scripts/d9_operating_loop_kickoff_check.py",
     "python scripts/d9_operating_records_check.py",
