@@ -93,6 +93,7 @@ As of the current repository state:
 | D8.5 Market Response Intelligence | Implemented |
 | D8 Integration Hardening | Foundation implemented |
 | Strict Staging / Cloud Validation | Evidence workflow added |
+| D8 Delivery Stage Goal Matrix | Added |
 
 ## 5. Non-Negotiable Safety Rules
 
@@ -240,6 +241,7 @@ D7.9 Resource Center (done)
   -> D8.5 Market response intelligence (done)
   -> D8 Integration hardening (foundation done)
   -> Strict staging/cloud validation (evidence workflow added)
+  -> D8 delivery stage goal matrix (added)
 ```
 
 This keeps the customer portal capability complete before broadening into security hardening, deployment hardening, operations analytics, and intelligence loops.
@@ -260,3 +262,5 @@ Minimum target:
 - Coordinate service portal bridge calls without changing nginx from this repo.
 
 D8 integration hardening now provides a local/staging contract gate across D7.7-D8.5, and strict staging/cloud validation has a repeatable evidence collector. The next product value is running it against real cloud environment values and closing any staging gaps it exposes.
+
+See [D8 Delivery Stage Goal Matrix](d8_delivery_stage_goal_matrix.md) for the current stage-by-stage artifact, verification, and next-gap map.

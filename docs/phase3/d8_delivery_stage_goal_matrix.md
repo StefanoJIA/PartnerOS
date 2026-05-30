@@ -1,0 +1,45 @@
+# D8 Delivery Stage Goal Matrix
+
+**Status:** maintained on 2026-05-30.
+
+This matrix turns the D7.9-D8 work into a compact execution and evidence map. It is meant to answer four questions before the next sprint:
+
+1. What is the stage goal?
+2. What artifact proves the stage exists?
+3. What command proves the stage still works?
+4. What remains before production coordination?
+
+## Matrix
+
+| Stage | Stage goal | Primary artifact | Verification command | Evidence status | Next gap |
+|---|---|---|---|---|---|
+| D7.9 Resource Center | Customer-safe order resources and signed downloads | `docs/phase3/d7_9_resource_center.md` | `python scripts/d7_9_resource_center_check.py` | Implemented | Run in staging with real customer-safe sample resources |
+| D8.1 RBAC / Scoped Access | Internal permission presets and guarded v1 routes | `docs/phase3/d8_1_rbac_scoped_access.md` | `python scripts/d8_1_rbac_scoped_access_check.py` | Implemented | Confirm role assignments in staging seed/admin data |
+| D8.2 Runtime Hardening | Staging/local readiness, token, CORS, storage checks | `docs/phase3/d8_2_runtime_hardening.md` | `python scripts/d8_2_runtime_hardening_check.py` | Implemented | Run strict mode with real staging env values |
+| D8.3 Service Portal Staging | HTTP contract runner for existing service portal bridge | `docs/phase3/d8_3_service_portal_staging_integration.md` | `python scripts/d8_3_service_portal_staging_check.py` | Contract runner implemented | Execute against deployed staging backend and real portal token |
+| D8.4 Partner Operations | Read-only multi-partner execution and risk board | `docs/phase3/d8_4_multi_partner_operations_dashboard.md` | `python scripts/d8_4_partner_operations_check.py` | Implemented | Browser/UAT review with representative partner split data |
+| D8.5 Market Response | Feedback, win-loss, demand, product-gap, advisory board | `docs/phase3/d8_5_market_response_intelligence.md` | `python scripts/d8_5_market_response_check.py` | Implemented | Validate signal usefulness with real feedback and market notes |
+| D8 Integration Hardening | Local bridge/deployment contract gate | `docs/phase3/d8_integration_hardening.md` | `python scripts/d8_integration_hardening_check.py` | Foundation implemented | Keep as preflight before every staging run |
+| Strict Staging / Cloud Validation | Real staging evidence and gap register | `docs/phase3/d8_strict_staging_cloud_validation.md` | `python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/records/d8_strict_staging_evidence_YYYYMMDD.json --gap-markdown ../docs/records/d8_strict_staging_gaps_YYYYMMDD.md` | Evidence workflow added | Needs real `BACKEND_BASE_URL`, `SERVICE_PORTAL_PARTNEROS_TOKEN`, and portal origin |
+
+## Safety Invariants
+
+- No automatic customer or supplier notification.
+- No email, webhook, carrier API, nginx, or customer portal deployment from this repository.
+- No automatic order, shipment, delivery, payment, or partner-selection mutation.
+- No customer-facing internal cost, margin, pricing breakdown, supplier private note, storage key, backend path, token, or secret.
+- AI remains advisory and human-reviewed.
+
+## Immediate Stage Goal
+
+Run the strict staging evidence command with real staging values and save both artifacts:
+
+```powershell
+cd backend
+$env:BACKEND_BASE_URL="https://partneros-staging.example.com"
+$env:SERVICE_PORTAL_PARTNEROS_TOKEN="<portal-server-token>"
+$env:SERVICE_PORTAL_ORIGIN="https://service.intelli-opus.com"
+python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/records/d8_strict_staging_evidence_YYYYMMDD.json --gap-markdown ../docs/records/d8_strict_staging_gaps_YYYYMMDD.md
+```
+
+If the evidence result is `FAIL`, the gap register becomes the next sprint input. If the result is `PASS`, the next sprint can move to production coordination planning without changing `service.intelli-opus.com` from PartnerOS.
