@@ -33,6 +33,7 @@ The report stores gate labels, pass/fail status, and one-line summaries only. It
 | IE Auto project plan | Confirms product positioning, lifecycle, safety rules, and current D7-D9 execution order |
 | Phase 3 roadmap | Confirms D7-D9 stages, dependency graph, related docs, and safety boundaries |
 | D8 stage goal matrix | Confirms stage artifacts, smoke commands, evidence state, and next gaps |
+| Operator guide | Confirms operator-facing D8/D9 handoff instructions, evidence gates, and safety boundaries |
 | D8 readiness audit | Classifies local readiness and saved strict staging evidence |
 | D8 local staging rehearsal | Confirms the optional local command-order rehearsal is documented and not treated as staging proof |
 | D8 staging handoff bundle | Confirms the operator-facing handoff manifest is complete and redacted |

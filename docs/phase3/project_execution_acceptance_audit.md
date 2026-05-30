@@ -13,6 +13,7 @@ This audit maps the current project-planning objective to concrete evidence. It 
 | Source-derived project plan exists | [IE Auto Project Plan](ie_auto_project_plan.md), `python scripts/ie_auto_project_plan_check.py` | PASS |
 | Phase 3 roadmap covers D7-D9 sequence | [Phase 3 Roadmap](phase3_roadmap.md), `python scripts/phase3_roadmap_check.py` | PASS |
 | Stage goals and next gaps are explicit | [D8 Delivery Stage Goal Matrix](d8_delivery_stage_goal_matrix.md), `python scripts/d8_stage_goal_matrix_check.py` | PASS |
+| Operator guide matches D8/D9 gates | [Operator Guide](../operator_guide.md), `python scripts/operator_guide_check.py` | PASS |
 | Local D8 readiness is classified | [D8 Readiness Audit](d8_readiness_audit.md), `python scripts/d8_readiness_audit.py` | `READY_FOR_STAGING` |
 | Local strict staging rehearsal is available | [D8 Local Staging Rehearsal](d8_local_staging_rehearsal.md), `python scripts/d8_local_staging_rehearsal_check.py` | PASS, but not staging proof |
 | Operator handoff bundle is defined | [D8 Staging Handoff Bundle](d8_staging_handoff_bundle.md), `python scripts/d8_staging_handoff_bundle_check.py` | PASS |
