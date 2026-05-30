@@ -27,6 +27,7 @@ REQUIRED_MARKERS = (
     "D8 Staging Gap Triage",
     "D8 Staging Evidence Review",
     "D8 Production Coordination Plan",
+    "D8 Production Coordination Runbook",
     "D9 Post-Launch Operating Loop",
     "D9 Operating Loop Kickoff",
     "D9 Operating Execution Pack",

@@ -10,8 +10,10 @@ BACKEND_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = BACKEND_ROOT.parent
 
 PLAN_DOC = REPO_ROOT / "docs" / "phase3" / "d8_production_coordination_plan.md"
+RUNBOOK_DOC = REPO_ROOT / "docs" / "phase3" / "d8_production_coordination_runbook.md"
 REQUIRED_PLAN_MARKERS = (
     "STAGING_VALIDATED",
+    "D8 Production Coordination Runbook",
     "service.intelli-opus.com",
     "No nginx or upstream change from this repository",
     "No customer or supplier notification",
@@ -63,6 +65,10 @@ def _plan_text() -> str:
     return PLAN_DOC.read_text(encoding="utf-8") if PLAN_DOC.exists() else ""
 
 
+def _runbook_text() -> str:
+    return RUNBOOK_DOC.read_text(encoding="utf-8") if RUNBOOK_DOC.exists() else ""
+
+
 def _display_path(path: Path) -> str:
     try:
         return str(path.relative_to(REPO_ROOT))
@@ -74,6 +80,7 @@ def main() -> int:
     checks = [
         Check("production coordination plan exists"),
         Check("production coordination safety markers"),
+        Check("production coordination runbook exists"),
         Check("D8 readiness audit available"),
         Check("production coordination state"),
     ]
@@ -87,24 +94,30 @@ def main() -> int:
     missing = [marker for marker in REQUIRED_PLAN_MARKERS if marker not in text]
     checks[1].pass_("required gates and boundaries") if not missing else checks[1].fail(", ".join(missing))
 
+    runbook_text = _runbook_text()
+    if runbook_text:
+        checks[2].pass_(_display_path(RUNBOOK_DOC))
+    else:
+        checks[2].fail(_display_path(RUNBOOK_DOC))
+
     audit_ok, status = _readiness_status()
-    checks[2].pass_(status) if audit_ok else checks[2].fail(status)
+    checks[3].pass_(status) if audit_ok else checks[3].fail(status)
 
     if status == "STAGING_VALIDATED":
-        checks[3].pass_("READY_FOR_PRODUCTION_COORDINATION")
+        checks[4].pass_("READY_FOR_PRODUCTION_COORDINATION")
         coordination_state = "READY_FOR_PRODUCTION_COORDINATION"
     elif status in {"READY_FOR_STAGING", "STAGING_GAPS_OPEN"}:
-        checks[3].pass_(f"WAITING_FOR_STAGING_VALIDATION: {status}")
+        checks[4].pass_(f"WAITING_FOR_STAGING_VALIDATION: {status}")
         coordination_state = "WAITING_FOR_STAGING_VALIDATION"
     else:
-        checks[3].fail(f"BLOCKED_BY_READINESS_AUDIT: {status}")
+        checks[4].fail(f"BLOCKED_BY_READINESS_AUDIT: {status}")
         coordination_state = "BLOCKED_BY_READINESS_AUDIT"
 
     print("D8 Production Coordination Check")
     for check in checks:
         print(check.line())
-    local_plan_ok = all(check.ok for check in checks[:3])
-    passed = local_plan_ok and checks[3].ok
+    local_plan_ok = all(check.ok for check in checks[:4])
+    passed = local_plan_ok and checks[4].ok
     print(f"Coordination State: {coordination_state}")
     print(f"Result: {'PASS' if passed else 'FAIL'}")
     return 0 if passed else 1

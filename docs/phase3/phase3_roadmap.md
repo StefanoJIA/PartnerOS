@@ -137,6 +137,7 @@ flowchart TD
 - [D8 Staging Records Policy](d8_staging_records_policy.md)
 - [D8 Staging Evidence Review](d8_staging_evidence_review.md)
 - [D8 Production Coordination Plan](d8_production_coordination_plan.md)
+- [D8 Production Coordination Runbook](d8_production_coordination_runbook.md)
 - [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md)
 - [D9 Operating Execution Pack](d9_operating_execution_pack.md)
 - [D9 Operating Loop Kickoff](d9_operating_loop_kickoff.md)

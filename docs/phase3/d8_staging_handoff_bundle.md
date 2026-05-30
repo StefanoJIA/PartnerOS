@@ -22,6 +22,7 @@ This bundle is the exact local package to hand to the staging operator before re
 | [D8 Staging Records Policy](d8_staging_records_policy.md) | Defines canonical record names and redaction rules |
 | [D8 Staging Evidence Review](d8_staging_evidence_review.md) | Defines how to interpret saved PASS/FAIL evidence before production coordination |
 | [D8 Production Coordination Plan](d8_production_coordination_plan.md) | Defines the path after `STAGING_VALIDATED` |
+| [D8 Production Coordination Runbook](d8_production_coordination_runbook.md) | Defines the human Go / No-Go and rollback handoff after staging validation |
 
 ## Preflight Commands
 
@@ -38,6 +39,7 @@ python scripts/d8_staging_operator_response_intake_check.py
 python scripts/d8_staging_gap_triage_check.py
 python scripts/d8_staging_records_check.py
 python scripts/d8_staging_evidence_review_check.py
+python scripts/d8_production_coordination_runbook_check.py
 ```
 
 ## Generated Handoff

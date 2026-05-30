@@ -24,6 +24,7 @@ This audit maps the current project-planning objective to concrete evidence. It 
 | Staging records are canonical and redacted | [D8 Staging Records Policy](d8_staging_records_policy.md), `python scripts/d8_staging_records_check.py` | PASS |
 | Saved staging evidence has a review gate | [D8 Staging Evidence Review](d8_staging_evidence_review.md), `python scripts/d8_staging_evidence_review_check.py` | `WAITING_FOR_STAGING_EVIDENCE` until evidence arrives |
 | Production coordination is gated behind staging | [D8 Production Coordination Plan](d8_production_coordination_plan.md), `python scripts/d8_production_coordination_check.py` | `WAITING_FOR_STAGING_VALIDATION` |
+| Production coordination runbook is ready | [D8 Production Coordination Runbook](d8_production_coordination_runbook.md), `python scripts/d8_production_coordination_runbook_check.py` | PASS, but gated behind `STAGING_VALIDATED` |
 | D9 is planned but gated | [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md), `python scripts/d9_post_launch_plan_check.py` | PASS |
 | D9 operating execution pack is planned but gated | [D9 Operating Execution Pack](d9_operating_execution_pack.md), `python scripts/d9_operating_execution_pack_check.py` | PASS |
 | D9 kickoff is planned but gated | [D9 Operating Loop Kickoff](d9_operating_loop_kickoff.md), `python scripts/d9_operating_loop_kickoff_check.py` | PASS |

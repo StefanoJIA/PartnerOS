@@ -26,6 +26,7 @@ REQUIRED_FILES = (
     "backend/scripts/d8_staging_records_check.py",
     "backend/scripts/d8_staging_evidence_review_check.py",
     "backend/scripts/d8_production_coordination_check.py",
+    "backend/scripts/d8_production_coordination_runbook_check.py",
     "backend/scripts/d9_post_launch_plan_check.py",
     "backend/scripts/d9_operating_execution_pack_check.py",
     "backend/scripts/d9_operating_loop_kickoff_check.py",
@@ -54,6 +55,7 @@ REQUIRED_FILES = (
     "docs/phase3/d8_staging_records_policy.md",
     "docs/phase3/d8_staging_evidence_review.md",
     "docs/phase3/d8_production_coordination_plan.md",
+    "docs/phase3/d8_production_coordination_runbook.md",
     "docs/phase3/d9_post_launch_operating_loop.md",
     "docs/phase3/d9_operating_execution_pack.md",
     "docs/phase3/d9_operating_loop_kickoff.md",
@@ -84,6 +86,7 @@ HANDOFF_MARKERS = (
     "python scripts/d8_staging_records_check.py",
     "python scripts/d8_staging_evidence_review_check.py",
     "python scripts/d8_production_coordination_check.py",
+    "python scripts/d8_production_coordination_runbook_check.py",
     "python scripts/d9_post_launch_plan_check.py",
     "python scripts/d9_operating_execution_pack_check.py",
     "python scripts/d9_operating_loop_kickoff_check.py",
@@ -163,6 +166,7 @@ def main() -> int:
         Check("staging records check runs"),
         Check("staging evidence review check runs"),
         Check("production coordination check runs"),
+        Check("production coordination runbook check runs"),
         Check("D9 post-launch plan check runs"),
         Check("D9 operating execution pack check runs"),
         Check("D9 operating loop kickoff check runs"),
@@ -256,101 +260,107 @@ def main() -> int:
     else:
         checks[12].fail((production.stdout + production.stderr)[:160])
 
-    d9 = _run_script("scripts/d9_post_launch_plan_check.py")
-    if d9.returncode == 0 and "Result: PASS" in d9.stdout:
+    production_runbook = _run_script("scripts/d8_production_coordination_runbook_check.py")
+    if production_runbook.returncode == 0 and "Result: PASS" in production_runbook.stdout:
         checks[13].pass_("PASS")
     else:
-        checks[13].fail((d9.stdout + d9.stderr)[:160])
+        checks[13].fail((production_runbook.stdout + production_runbook.stderr)[:160])
+
+    d9 = _run_script("scripts/d9_post_launch_plan_check.py")
+    if d9.returncode == 0 and "Result: PASS" in d9.stdout:
+        checks[14].pass_("PASS")
+    else:
+        checks[14].fail((d9.stdout + d9.stderr)[:160])
 
     d9_pack = _run_script("scripts/d9_operating_execution_pack_check.py")
     if d9_pack.returncode == 0 and "Result: PASS" in d9_pack.stdout:
-        checks[14].pass_("PASS")
+        checks[15].pass_("PASS")
     else:
-        checks[14].fail((d9_pack.stdout + d9_pack.stderr)[:160])
+        checks[15].fail((d9_pack.stdout + d9_pack.stderr)[:160])
 
     d9_kickoff = _run_script("scripts/d9_operating_loop_kickoff_check.py")
     if d9_kickoff.returncode == 0 and "Result: PASS" in d9_kickoff.stdout:
-        checks[15].pass_("PASS")
+        checks[16].pass_("PASS")
     else:
-        checks[15].fail((d9_kickoff.stdout + d9_kickoff.stderr)[:160])
+        checks[16].fail((d9_kickoff.stdout + d9_kickoff.stderr)[:160])
 
     d9_health = _run_script("scripts/d9_1_operating_health_review_check.py")
     if d9_health.returncode == 0 and "Result: PASS" in d9_health.stdout:
-        checks[16].pass_("PASS")
+        checks[17].pass_("PASS")
     else:
-        checks[16].fail((d9_health.stdout + d9_health.stderr)[:160])
+        checks[17].fail((d9_health.stdout + d9_health.stderr)[:160])
 
     d9_orders = _run_script("scripts/d9_2_order_operations_loop_check.py")
     if d9_orders.returncode == 0 and "Result: PASS" in d9_orders.stdout:
-        checks[17].pass_("PASS")
+        checks[18].pass_("PASS")
     else:
-        checks[17].fail((d9_orders.stdout + d9_orders.stderr)[:160])
+        checks[18].fail((d9_orders.stdout + d9_orders.stderr)[:160])
 
     d9_market = _run_script("scripts/d9_3_market_response_loop_check.py")
     if d9_market.returncode == 0 and "Result: PASS" in d9_market.stdout:
-        checks[18].pass_("PASS")
+        checks[19].pass_("PASS")
     else:
-        checks[18].fail((d9_market.stdout + d9_market.stderr)[:160])
+        checks[19].fail((d9_market.stdout + d9_market.stderr)[:160])
 
     d9_backlog = _run_script("scripts/d9_4_improvement_backlog_check.py")
     if d9_backlog.returncode == 0 and "Result: PASS" in d9_backlog.stdout:
-        checks[19].pass_("PASS")
+        checks[20].pass_("PASS")
     else:
-        checks[19].fail((d9_backlog.stdout + d9_backlog.stderr)[:160])
+        checks[20].fail((d9_backlog.stdout + d9_backlog.stderr)[:160])
 
     d9_records = _run_script("scripts/d9_operating_records_check.py")
     if d9_records.returncode == 0 and "Result: PASS" in d9_records.stdout:
-        checks[20].pass_("PASS")
+        checks[21].pass_("PASS")
     else:
-        checks[20].fail((d9_records.stdout + d9_records.stderr)[:160])
+        checks[21].fail((d9_records.stdout + d9_records.stderr)[:160])
 
     roadmap = _run_script("scripts/phase3_roadmap_check.py")
     if roadmap.returncode == 0 and "Result: PASS" in roadmap.stdout:
-        checks[21].pass_("PASS")
+        checks[22].pass_("PASS")
     else:
-        checks[21].fail((roadmap.stdout + roadmap.stderr)[:160])
+        checks[22].fail((roadmap.stdout + roadmap.stderr)[:160])
 
     project_plan = _run_script("scripts/ie_auto_project_plan_check.py")
     if project_plan.returncode == 0 and "Result: PASS" in project_plan.stdout:
-        checks[22].pass_("PASS")
+        checks[23].pass_("PASS")
     else:
-        checks[22].fail((project_plan.stdout + project_plan.stderr)[:160])
+        checks[23].fail((project_plan.stdout + project_plan.stderr)[:160])
 
     execution_chain = _run_script("scripts/project_execution_chain_check.py")
     if execution_chain.returncode == 0 and "Result: PASS" in execution_chain.stdout:
-        checks[23].pass_("PASS")
+        checks[24].pass_("PASS")
     else:
-        checks[23].fail((execution_chain.stdout + execution_chain.stderr)[:160])
+        checks[24].fail((execution_chain.stdout + execution_chain.stderr)[:160])
 
     execution_status = _run_script("scripts/project_execution_status.py")
     if execution_status.returncode == 0 and "Result: PASS" in execution_status.stdout:
-        checks[24].pass_("PASS")
+        checks[25].pass_("PASS")
     else:
-        checks[24].fail((execution_status.stdout + execution_status.stderr)[:160])
+        checks[25].fail((execution_status.stdout + execution_status.stderr)[:160])
 
     acceptance_audit = _run_script("scripts/project_execution_acceptance_audit_check.py")
     if acceptance_audit.returncode == 0 and "Result: PASS" in acceptance_audit.stdout:
-        checks[25].pass_("PASS")
+        checks[26].pass_("PASS")
     else:
-        checks[25].fail((acceptance_audit.stdout + acceptance_audit.stderr)[:160])
+        checks[26].fail((acceptance_audit.stdout + acceptance_audit.stderr)[:160])
 
     execution_records = _run_script("scripts/project_execution_records_check.py")
     if execution_records.returncode == 0 and "Result: PASS" in execution_records.stdout:
-        checks[26].pass_("PASS")
+        checks[27].pass_("PASS")
     else:
-        checks[26].fail((execution_records.stdout + execution_records.stderr)[:160])
+        checks[27].fail((execution_records.stdout + execution_records.stderr)[:160])
 
     handoff_code, handoff_text, handoff_output = _generate_handoff()
     if handoff_code == 0 and handoff_text:
-        checks[27].pass_("generated")
+        checks[28].pass_("generated")
     else:
-        checks[27].fail(handoff_output[:160])
+        checks[28].fail(handoff_output[:160])
 
     missing_markers = [marker for marker in HANDOFF_MARKERS if marker not in handoff_text]
     if not missing_markers:
-        checks[28].pass_("commands and safety boundaries")
+        checks[29].pass_("commands and safety boundaries")
     else:
-        checks[28].fail(", ".join(missing_markers))
+        checks[29].fail(", ".join(missing_markers))
 
     print("D8 Staging Execution Pack Check")
     for check in checks:

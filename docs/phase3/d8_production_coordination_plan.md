@@ -6,6 +6,8 @@
 
 This plan defines the narrow production coordination path after D8 strict staging evidence passes. It does not authorize deployment from this repository and does not change `service.intelli-opus.com`.
 
+Use [D8 Production Coordination Runbook](d8_production_coordination_runbook.md) for the human Go / No-Go sequence after this plan is ready.
+
 ## Entry Criteria
 
 | Gate | Required evidence |

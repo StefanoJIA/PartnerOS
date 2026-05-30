@@ -43,6 +43,7 @@ The report stores gate labels, pass/fail status, and one-line summaries only. It
 | D8 staging gap triage | Confirms failed staging evidence has an owner/status/rerun loop |
 | D8 staging evidence review | Interprets saved strict staging evidence as waiting, production-coordination-ready, or requiring triage |
 | D8 production coordination | Keeps production coordination blocked until strict staging has validated |
+| D8 production coordination runbook | Confirms the human Go / No-Go and rollback handoff sequence is complete and redacted |
 | D9 post-launch plan | Confirms post-launch loop remains planned behind D8 validation |
 | D9 operating execution pack | Confirms the full D9 local operating gate set runs together |
 | D9 operating loop kickoff | Confirms the first D9 review session remains gated behind D8 production coordination |

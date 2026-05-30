@@ -20,6 +20,7 @@ REQUIRED_LINKS = (
     "d8_staging_records_policy.md",
     "d8_staging_evidence_review.md",
     "d8_production_coordination_plan.md",
+    "d8_production_coordination_runbook.md",
 )
 REQUIRED_COMMANDS = (
     "python scripts/project_execution_status.py",
@@ -35,6 +36,7 @@ REQUIRED_COMMANDS = (
     "python scripts/d8_staging_evidence_review_check.py",
     "python scripts/d8_staging_operator_handoff.py --output ../docs/records/d8_staging_operator_handoff_YYYYMMDD.md",
     "python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/records/d8_strict_staging_evidence_YYYYMMDD.json --gap-markdown ../docs/records/d8_strict_staging_gaps_YYYYMMDD.md",
+    "python scripts/d8_production_coordination_runbook_check.py",
     "python scripts/d8_readiness_audit.py",
 )
 REQUIRED_MARKERS = (
