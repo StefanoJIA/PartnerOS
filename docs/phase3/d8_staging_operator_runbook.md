@@ -12,7 +12,7 @@ This runbook gives the staging operator the exact execution order for moving fro
 |---|---|---|
 | `READY_FOR_STAGING_HANDOFF` | Local planning, docs, and checks agree | Request private staging values and generate a dated handoff |
 | `WAITING_FOR_PRIVATE_VALUES` | Required staging values are unavailable or placeholders | Obtain values privately; do not commit them |
-| `INPUTS_UNSAFE` | Staging inputs are missing, non-HTTPS, placeholder, or otherwise unsafe | Fix values before strict evidence |
+| `INPUTS_UNSAFE` | Provided staging inputs are non-HTTPS, placeholder, known-default, too short, or otherwise unsafe | Fix values before strict evidence |
 | `WAITING_FOR_STAGING_EVIDENCE` | Inputs may be ready but no saved strict evidence exists | Run strict evidence and save redacted artifacts |
 | `STAGING_GAPS_OPEN` | Strict evidence failed and a gap register exists | Triage owners, close gaps, rerun evidence |
 | `STAGING_VALIDATED` | Latest strict evidence is PASS | Proceed to production coordination review |

@@ -47,7 +47,7 @@ The audit looks for:
 - IE Auto project plan artifact
 - project execution chain artifact
 - project execution records checker
-- optional `docs/records/d8_strict_staging_evidence_*.json`
-- optional paired `docs/records/d8_strict_staging_gaps_*.md`
+- optional canonical `docs/records/d8_strict_staging_evidence_YYYYMMDD.json`
+- optional paired canonical `docs/records/d8_strict_staging_gaps_YYYYMMDD.md`
 
 The audit never reads or prints portal tokens, response bodies, `.env`, `local_data/`, or `backend/storage/`.
