@@ -36,3 +36,17 @@ def test_d9_post_launch_plan_check_fails_without_safety_markers(tmp_path, monkey
     output = capsys.readouterr().out
     assert "D9 plan preserves safety boundaries" in output
     assert "Result: FAIL" in output
+
+
+def test_d9_post_launch_plan_check_fails_for_generic_api_key(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "PLAN_DOC", tmp_path / "d9_post_launch_operating_loop.md")
+    module.PLAN_DOC.write_text(
+        "\n".join([*module.REQUIRED_MARKERS, "SERVICE_PORTAL_API_KEY=actual-secret-value"]),
+        encoding="utf-8",
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "D9 plan is redacted" in output
+    assert "d9_post_launch_operating_loop.md" in output

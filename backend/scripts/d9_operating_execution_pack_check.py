@@ -6,6 +6,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+try:
+    from record_redaction import redaction_issues
+except ModuleNotFoundError:
+    from scripts.record_redaction import redaction_issues
+
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = BACKEND_ROOT.parent
 DOC = REPO_ROOT / "docs" / "phase3" / "d9_operating_execution_pack.md"
@@ -96,6 +101,7 @@ def main() -> int:
     checks = [
         Check("D9 execution pack files present"),
         Check("D9 execution pack doc is actionable"),
+        Check("D9 execution pack doc is redacted"),
         *(Check(f"{script} runs") for script in SCRIPTS),
     ]
 
@@ -110,7 +116,10 @@ def main() -> int:
         ", ".join(missing_markers)
     )
 
-    for index, script in enumerate(SCRIPTS, start=2):
+    redaction = redaction_issues(DOC, text, include_common_markers=False)
+    checks[2].pass_("no secret-like markers") if not redaction else checks[2].fail(", ".join(redaction[:8]))
+
+    for index, script in enumerate(SCRIPTS, start=3):
         result = _run_script(script)
         if result.returncode == 0 and "Result: PASS" in result.stdout:
             checks[index].pass_("PASS")

@@ -6,6 +6,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+try:
+    from record_redaction import redaction_issues
+except ModuleNotFoundError:
+    from scripts.record_redaction import redaction_issues
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PLAN_DOC = REPO_ROOT / "docs" / "phase3" / "d9_post_launch_operating_loop.md"
 RECORDS_POLICY_DOC = REPO_ROOT / "docs" / "phase3" / "d9_operating_records_policy.md"
@@ -91,6 +96,7 @@ def main() -> int:
         Check("D9 plan exists"),
         Check("D9 plan contains stage markers"),
         Check("D9 plan preserves safety boundaries"),
+        Check("D9 plan is redacted"),
         Check("D9 entry criteria depend on staging validation"),
         Check("D9 operating records policy exists"),
         Check("D9 operating records gate runs"),
@@ -118,43 +124,46 @@ def main() -> int:
     missing_safety = [marker for marker in safety_markers if marker not in text]
     checks[2].pass_("safety invariants") if not missing_safety else checks[2].fail(", ".join(missing_safety))
 
+    redaction = redaction_issues(PLAN_DOC, text, include_common_markers=False)
+    checks[3].pass_("no secret-like markers") if not redaction else checks[3].fail(", ".join(redaction[:8]))
+
     if "STAGING_VALIDATED" in text and "D8 Production Coordination Plan" in text:
-        checks[3].pass_("after D8 production coordination")
+        checks[4].pass_("after D8 production coordination")
     else:
-        checks[3].fail("missing D8/STAGING_VALIDATED dependency")
+        checks[4].fail("missing D8/STAGING_VALIDATED dependency")
 
     if RECORDS_POLICY_DOC.exists():
-        checks[4].pass_(_display_path(RECORDS_POLICY_DOC))
+        checks[5].pass_(_display_path(RECORDS_POLICY_DOC))
     else:
-        checks[4].fail(_display_path(RECORDS_POLICY_DOC))
+        checks[5].fail(_display_path(RECORDS_POLICY_DOC))
 
     records_ok, records_detail = _records_gate_status()
-    checks[5].pass_(records_detail) if records_ok else checks[5].fail(records_detail)
+    checks[6].pass_(records_detail) if records_ok else checks[6].fail(records_detail)
 
     if KICKOFF_DOC.exists():
-        checks[6].pass_(_display_path(KICKOFF_DOC))
+        checks[7].pass_(_display_path(KICKOFF_DOC))
     else:
-        checks[6].fail(_display_path(KICKOFF_DOC))
+        checks[7].fail(_display_path(KICKOFF_DOC))
 
     if HEALTH_REVIEW_DOC.exists():
-        checks[7].pass_(_display_path(HEALTH_REVIEW_DOC))
+        checks[8].pass_(_display_path(HEALTH_REVIEW_DOC))
     else:
-        checks[7].fail(_display_path(HEALTH_REVIEW_DOC))
+        checks[8].fail(_display_path(HEALTH_REVIEW_DOC))
 
     if ORDER_OPERATIONS_DOC.exists():
-        checks[8].pass_(_display_path(ORDER_OPERATIONS_DOC))
+        checks[9].pass_(_display_path(ORDER_OPERATIONS_DOC))
     else:
-        checks[8].fail(_display_path(ORDER_OPERATIONS_DOC))
+        checks[9].fail(_display_path(ORDER_OPERATIONS_DOC))
 
     if MARKET_RESPONSE_DOC.exists():
-        checks[9].pass_(_display_path(MARKET_RESPONSE_DOC))
+        checks[10].pass_(_display_path(MARKET_RESPONSE_DOC))
     else:
-        checks[9].fail(_display_path(MARKET_RESPONSE_DOC))
+        checks[10].fail(_display_path(MARKET_RESPONSE_DOC))
 
     if IMPROVEMENT_BACKLOG_DOC.exists():
-        checks[10].pass_(_display_path(IMPROVEMENT_BACKLOG_DOC))
+        checks[11].pass_(_display_path(IMPROVEMENT_BACKLOG_DOC))
     else:
-        checks[10].fail(_display_path(IMPROVEMENT_BACKLOG_DOC))
+        checks[11].fail(_display_path(IMPROVEMENT_BACKLOG_DOC))
 
     missing = [marker for marker in REQUIRED_MARKERS if marker not in text]
     if missing and checks[0].ok:

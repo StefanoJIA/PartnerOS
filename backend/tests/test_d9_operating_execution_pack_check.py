@@ -33,3 +33,19 @@ def test_d9_operating_execution_pack_check_flags_missing_doc_marker(monkeypatch,
     assert module.main() == 1
     output = capsys.readouterr().out
     assert "D9 execution pack doc is actionable" in output
+
+
+def test_d9_operating_execution_pack_check_flags_generic_secret(monkeypatch, tmp_path, capsys):
+    module = _load_module()
+    doc = tmp_path / "pack.md"
+    doc.write_text(
+        "\n".join([*module.REQUIRED_DOC_MARKERS, "SERVICE_PORTAL_SECRET=actual-secret-value"]),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "DOC", doc)
+    monkeypatch.setattr(module, "_run_script", lambda script: type("Result", (), {"returncode": 0, "stdout": "Result: PASS", "stderr": ""})())
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "D9 execution pack doc is redacted" in output
+    assert "pack.md" in output
