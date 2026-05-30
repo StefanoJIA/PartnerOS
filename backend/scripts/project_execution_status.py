@@ -65,6 +65,11 @@ def _next_action(chain_state: str, readiness: str, coordination: str) -> tuple[s
             "READY_FOR_PRODUCTION_COORDINATION",
             "Proceed with docs/phase3/d8_production_coordination_runbook.md for the D8 production coordination Go / No-Go handoff.",
         )
+    if readiness == "STAGING_VALIDATED" and coordination == "BLOCKED_BY_EVIDENCE_REVIEW":
+        return (
+            "BLOCKED_BY_EVIDENCE_REVIEW",
+            "Run scripts/d8_staging_evidence_review_check.py, fix the reviewed evidence/gap state, then rerun production coordination.",
+        )
     if readiness == "STAGING_VALIDATED":
         return (
             "STAGING_VALIDATED",

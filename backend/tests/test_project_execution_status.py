@@ -98,6 +98,26 @@ def test_project_execution_status_reports_staging_validated_before_coordination(
     assert "Run production coordination" in output
 
 
+def test_project_execution_status_reports_evidence_review_block(monkeypatch, capsys):
+    module = _load_module()
+
+    def fake_run(script: str):
+        outputs = {
+            "scripts/project_execution_chain_check.py": "State: READY_FOR_STAGING_HANDOFF\nResult: PASS\n",
+            "scripts/d8_readiness_audit.py": "Overall: STAGING_VALIDATED\n",
+            "scripts/d8_production_coordination_check.py": "Coordination State: BLOCKED_BY_EVIDENCE_REVIEW\n",
+        }
+        return SimpleNamespace(returncode=0, stdout=outputs[script], stderr="")
+
+    monkeypatch.setattr(module, "_run_script", fake_run)
+
+    assert module.main() == 0
+    output = capsys.readouterr().out
+    assert "Current Stage: BLOCKED_BY_EVIDENCE_REVIEW" in output
+    assert "d8_staging_evidence_review_check.py" in output
+    assert "rerun production coordination" in output
+
+
 def test_project_execution_status_fails_when_chain_fails(monkeypatch, capsys):
     module = _load_module()
 
