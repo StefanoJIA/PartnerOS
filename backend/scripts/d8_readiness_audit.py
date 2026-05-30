@@ -20,6 +20,7 @@ REQUIRED_DOCS = (
     "docs/phase3/d8_3_service_portal_staging_integration.md",
     "docs/phase3/d8_4_multi_partner_operations_dashboard.md",
     "docs/phase3/d8_5_market_response_intelligence.md",
+    "docs/phase3/d8_staging_records_policy.md",
 )
 REQUIRED_SCRIPTS = (
     "backend/scripts/d8_stage_goal_matrix_check.py",
@@ -30,6 +31,7 @@ REQUIRED_SCRIPTS = (
     "backend/scripts/d8_3_service_portal_staging_check.py",
     "backend/scripts/d8_4_partner_operations_check.py",
     "backend/scripts/d8_5_market_response_check.py",
+    "backend/scripts/d8_staging_records_check.py",
 )
 SAFETY_MARKERS = (
     "No automatic customer or supplier notification",

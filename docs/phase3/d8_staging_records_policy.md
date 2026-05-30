@@ -1,0 +1,49 @@
+# D8 Staging Records Policy
+
+**Status:** added on 2026-05-30.
+
+## Purpose
+
+D8 staging evidence must be durable enough for handoff, but narrow enough to avoid leaking tokens, customer data, supplier notes, storage paths, or internal pricing signals.
+
+Use `docs/records` for redacted staging artifacts only. Do not store `.env`, screenshots containing secrets, raw response bodies, uploads, `local_data`, or files from `backend/storage`.
+
+## Canonical Names
+
+| Artifact | Path |
+|---|---|
+| Operator handoff | `docs/records/d8_staging_operator_handoff_YYYYMMDD.md` |
+| Strict staging evidence | `docs/records/d8_strict_staging_evidence_YYYYMMDD.json` |
+| Strict staging gaps | `docs/records/d8_strict_staging_gaps_YYYYMMDD.md` |
+
+The evidence JSON should come from:
+
+```powershell
+cd backend
+python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/records/d8_strict_staging_evidence_YYYYMMDD.json --gap-markdown ../docs/records/d8_strict_staging_gaps_YYYYMMDD.md
+```
+
+The operator handoff should come from:
+
+```powershell
+cd backend
+python scripts/d8_staging_operator_handoff.py --output ../docs/records/d8_staging_operator_handoff_YYYYMMDD.md
+```
+
+## Record Gate
+
+Run this before committing any D8 staging evidence:
+
+```powershell
+cd backend
+python scripts/d8_staging_records_check.py
+```
+
+The check verifies canonical names, redaction markers, strict evidence safety metadata, and the matching gap register for failed evidence.
+
+## Boundaries
+
+- Do not paste real `SERVICE_PORTAL_PARTNEROS_TOKEN` or `PORTAL_CUSTOMER_API_TOKEN` values into records.
+- Do not store raw API response bodies.
+- Do not store internal cost, margin, pricing breakdown, supplier private note, backend path, storage key, database URL, password hash, or secret key values.
+- Do not use staging records as deployment instructions for `service.intelli-opus.com`; that portal stays outside this repo.

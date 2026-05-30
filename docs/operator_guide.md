@@ -370,6 +370,14 @@ This strict check validates HTTPS, token rejection, CORS, readiness/manifest env
 Add `--evidence-json ../docs/records/d8_strict_staging_evidence_YYYYMMDD.json` when you need a redacted evidence artifact for handoff or audit.
 Add `--gap-markdown ../docs/records/d8_strict_staging_gaps_YYYYMMDD.md` to generate a follow-up register for failed checks.
 
+Before committing staging records, run:
+
+```powershell
+python scripts/d8_staging_records_check.py
+```
+
+Keep D8 staging artifacts under canonical `docs/records/d8_*_YYYYMMDD` names. The record gate verifies redaction metadata, token placeholders, strict evidence schema, and matching gap registers for failed evidence.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate

@@ -21,6 +21,7 @@ The generated document includes:
 - required environment variables
 - preflight commands
 - strict staging evidence command
+- staging records redaction check
 - expected evidence/gap artifacts
 - safety boundaries
 

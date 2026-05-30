@@ -24,6 +24,7 @@ This matrix turns the D7.9-D8 work into a compact execution and evidence map. It
 | D8 Readiness Audit | Summarize local readiness vs staging evidence state | `docs/phase3/d8_readiness_audit.md` | `python scripts/d8_readiness_audit.py` | Added | Use before and after each strict staging evidence run |
 | D8 Staging Operator Handoff | Generate an executable handoff for the staging operator | `docs/phase3/d8_staging_operator_handoff.md` | `python scripts/d8_staging_operator_handoff.py --output ../docs/records/d8_staging_operator_handoff_YYYYMMDD.md` | Added | Send to the operator who owns real staging values |
 | D8 Staging Execution Pack | Verify the handoff chain is internally consistent | `docs/phase3/d8_staging_execution_pack.md` | `python scripts/d8_staging_execution_pack_check.py` | Added | Run before sharing the staging handoff |
+| D8 Staging Records Policy | Keep real staging records canonical and redacted | `docs/phase3/d8_staging_records_policy.md` | `python scripts/d8_staging_records_check.py` | Added | Run before committing staging evidence artifacts |
 
 ## Safety Invariants
 

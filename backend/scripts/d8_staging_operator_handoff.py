@@ -16,8 +16,7 @@ def _parse_args():
     parser = ArgumentParser(description="Generate the D8 strict staging operator handoff markdown.")
     parser.add_argument(
         "--output",
-        default="../docs/records/d8_staging_operator_handoff.md",
-        help="Output markdown path. Relative paths are resolved from backend/.",
+        help="Output markdown path. Relative paths are resolved from backend/. Defaults to a dated docs/records handoff.",
     )
     return parser.parse_args()
 
@@ -95,6 +94,7 @@ cd backend
 python scripts/d8_readiness_audit.py
 python scripts/d8_stage_goal_matrix_check.py
 python scripts/d8_integration_hardening_check.py
+python scripts/d8_staging_records_check.py
 ```
 
 ## Strict Staging Evidence Run
@@ -133,7 +133,8 @@ python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/recor
 def main() -> int:
     args = _parse_args()
     status, audit_output = _run_readiness_audit()
-    output = _safe_output_path(args.output)
+    output_arg = args.output or f"../docs/records/d8_staging_operator_handoff_{datetime.now(timezone.utc):%Y%m%d}.md"
+    output = _safe_output_path(output_arg)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(_handoff_text(status, audit_output), encoding="utf-8")
     print("D8 Staging Operator Handoff")

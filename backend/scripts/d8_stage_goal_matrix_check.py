@@ -21,6 +21,7 @@ REQUIRED_DOCS = (
     "docs/phase3/d8_readiness_audit.md",
     "docs/phase3/d8_staging_operator_handoff.md",
     "docs/phase3/d8_staging_execution_pack.md",
+    "docs/phase3/d8_staging_records_policy.md",
 )
 REQUIRED_SCRIPTS = (
     "backend/scripts/d7_9_resource_center_check.py",
@@ -34,6 +35,7 @@ REQUIRED_SCRIPTS = (
     "backend/scripts/d8_readiness_audit.py",
     "backend/scripts/d8_staging_operator_handoff.py",
     "backend/scripts/d8_staging_execution_pack_check.py",
+    "backend/scripts/d8_staging_records_check.py",
 )
 REQUIRED_MATRIX_MARKERS = (
     "D7.9 Resource Center",
@@ -47,6 +49,7 @@ REQUIRED_MATRIX_MARKERS = (
     "D8 Readiness Audit",
     "D8 Staging Operator Handoff",
     "D8 Staging Execution Pack",
+    "D8 Staging Records Policy",
     "--evidence-json",
     "--gap-markdown",
     "No automatic customer or supplier notification",
@@ -96,7 +99,7 @@ def main() -> int:
 
     matrix_path = REPO_ROOT / "docs/phase3/d8_delivery_stage_goal_matrix.md"
     text = matrix_path.read_text(encoding="utf-8") if matrix_path.exists() else ""
-    missing_markers = [marker for marker in REQUIRED_MATRIX_MARKERS[:8] if marker not in text]
+    missing_markers = [marker for marker in REQUIRED_MATRIX_MARKERS if marker not in text]
     checks[2].pass_("all stages") if not missing_markers else checks[2].fail(", ".join(missing_markers))
 
     safety_terms = ("No automatic", "No email", "No customer-facing internal cost", "AI remains advisory")

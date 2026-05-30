@@ -13,9 +13,10 @@ It checks that the repository contains:
 - integration hardening gate
 - strict staging evidence runner
 - operator handoff generator
+- staging records policy and redaction checker
 - matching phase 3 docs
 
-It also generates a temporary handoff and checks that the handoff includes required environment variables, preflight commands, evidence/gap artifact commands, and safety boundaries.
+It also runs the staging records checker, generates a temporary handoff, and checks that the handoff includes required environment variables, preflight commands, evidence/gap artifact commands, and safety boundaries.
 
 ## Command
 
