@@ -26,6 +26,7 @@ CHAIN = (
     ("D8 staging evidence review", "scripts/d8_staging_evidence_review_check.py"),
     ("D8 production coordination", "scripts/d8_production_coordination_check.py"),
     ("D9 post-launch plan", "scripts/d9_post_launch_plan_check.py"),
+    ("D9 operating loop kickoff", "scripts/d9_operating_loop_kickoff_check.py"),
     ("D9 operating records", "scripts/d9_operating_records_check.py"),
     ("Project execution records", "scripts/project_execution_records_check.py"),
 )

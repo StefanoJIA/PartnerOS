@@ -9,6 +9,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PLAN_DOC = REPO_ROOT / "docs" / "phase3" / "d9_post_launch_operating_loop.md"
 RECORDS_POLICY_DOC = REPO_ROOT / "docs" / "phase3" / "d9_operating_records_policy.md"
+KICKOFF_DOC = REPO_ROOT / "docs" / "phase3" / "d9_operating_loop_kickoff.md"
 
 REQUIRED_MARKERS = (
     "D9 Post-Launch Operating Loop",
@@ -27,6 +28,7 @@ REQUIRED_MARKERS = (
     "D9.3",
     "D9.4",
     "D9 Operating Records Policy",
+    "D9 Operating Loop Kickoff",
 )
 
 
@@ -84,6 +86,7 @@ def main() -> int:
         Check("D9 entry criteria depend on staging validation"),
         Check("D9 operating records policy exists"),
         Check("D9 operating records gate runs"),
+        Check("D9 kickoff checklist exists"),
     ]
 
     text = _read_text()
@@ -115,6 +118,11 @@ def main() -> int:
 
     records_ok, records_detail = _records_gate_status()
     checks[5].pass_(records_detail) if records_ok else checks[5].fail(records_detail)
+
+    if KICKOFF_DOC.exists():
+        checks[6].pass_(_display_path(KICKOFF_DOC))
+    else:
+        checks[6].fail(_display_path(KICKOFF_DOC))
 
     missing = [marker for marker in REQUIRED_MARKERS if marker not in text]
     if missing and checks[0].ok:

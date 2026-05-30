@@ -6,6 +6,8 @@
 
 D9 records preserve post-launch operating evidence without storing secrets, raw API payloads, customer files, internal cost, supplier private notes, or deployment instructions.
 
+Use [D9 Operating Loop Kickoff](d9_operating_loop_kickoff.md) before creating the first D9 operating review record.
+
 Use `docs/records` only for redacted summaries. Do not store `.env`, raw response bodies, screenshots containing tokens, uploads, `local_data`, or files from `backend/storage`.
 
 ## Canonical Names

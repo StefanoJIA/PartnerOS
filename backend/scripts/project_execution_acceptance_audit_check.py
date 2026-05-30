@@ -27,6 +27,7 @@ REQUIRED_MARKERS = (
     "D8 Staging Evidence Review",
     "D8 Production Coordination Plan",
     "D9 Post-Launch Operating Loop",
+    "D9 Operating Loop Kickoff",
     "Project Execution Chain Gate",
     "project_execution_status.py",
     "project_execution_acceptance_audit_check.py",
