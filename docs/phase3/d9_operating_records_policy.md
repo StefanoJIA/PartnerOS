@@ -6,7 +6,7 @@
 
 D9 records preserve post-launch operating evidence without storing secrets, raw API payloads, customer files, internal cost, supplier private notes, or deployment instructions.
 
-Use [D9 Operating Loop Kickoff](d9_operating_loop_kickoff.md) before creating the first D9 operating review record.
+Use [D9 Operating Execution Pack](d9_operating_execution_pack.md) and [D9 Operating Loop Kickoff](d9_operating_loop_kickoff.md) before creating the first D9 operating review record.
 
 Use [D9.1 Operating Health Review](d9_1_operating_health_review.md) for the `d9_operating_health_YYYYMMDD.md` signal set.
 

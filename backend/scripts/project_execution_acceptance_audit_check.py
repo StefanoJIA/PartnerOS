@@ -28,6 +28,7 @@ REQUIRED_MARKERS = (
     "D8 Production Coordination Plan",
     "D9 Post-Launch Operating Loop",
     "D9 Operating Loop Kickoff",
+    "D9 Operating Execution Pack",
     "D9.1 Operating Health Review",
     "D9.2 Order Operations Loop",
     "D9.3 Market Response Loop",

@@ -137,6 +137,7 @@ flowchart TD
 - [D8 Staging Evidence Review](d8_staging_evidence_review.md)
 - [D8 Production Coordination Plan](d8_production_coordination_plan.md)
 - [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md)
+- [D9 Operating Execution Pack](d9_operating_execution_pack.md)
 - [D9 Operating Loop Kickoff](d9_operating_loop_kickoff.md)
 - [D9.1 Operating Health Review](d9_1_operating_health_review.md)
 - [D9.2 Order Operations Loop](d9_2_order_operations_loop.md)

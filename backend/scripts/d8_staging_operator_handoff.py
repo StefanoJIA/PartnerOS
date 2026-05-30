@@ -104,6 +104,7 @@ python scripts/d8_staging_records_check.py
 python scripts/d8_staging_evidence_review_check.py
 python scripts/d8_production_coordination_check.py
 python scripts/d9_post_launch_plan_check.py
+python scripts/d9_operating_execution_pack_check.py
 python scripts/d9_operating_loop_kickoff_check.py
 python scripts/d9_1_operating_health_review_check.py
 python scripts/d9_2_order_operations_loop_check.py

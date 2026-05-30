@@ -40,10 +40,11 @@ D9 turns the deployed PartnerOS and existing service portal bridge into a monito
 
 ## Records
 
-D9 begins with [D9 Operating Loop Kickoff](d9_operating_loop_kickoff.md), then records follow [D9 Operating Records Policy](d9_operating_records_policy.md).
+D9 begins with [D9 Operating Execution Pack](d9_operating_execution_pack.md) and [D9 Operating Loop Kickoff](d9_operating_loop_kickoff.md), then records follow [D9 Operating Records Policy](d9_operating_records_policy.md).
 
 ```powershell
 cd backend
+python scripts/d9_operating_execution_pack_check.py
 python scripts/d9_operating_loop_kickoff_check.py
 python scripts/d9_operating_records_check.py
 ```

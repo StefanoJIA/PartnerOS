@@ -107,6 +107,7 @@ As of the current repository state:
 | D8 Staging Evidence Review | Added |
 | D8 Production Coordination Plan | Added |
 | D9 Post-Launch Operating Loop | Planned |
+| D9 Operating Execution Pack | Planned |
 | D9 Operating Loop Kickoff | Planned |
 | D9.1 Operating Health Review | Planned |
 | D9.2 Order Operations Loop | Planned |
@@ -276,6 +277,7 @@ D7.9 Resource Center (done)
   -> D8 staging evidence review (added)
   -> D8 production coordination plan (added)
   -> D9 post-launch operating loop (planned)
+  -> D9 operating execution pack (planned)
   -> D9 operating loop kickoff (planned)
   -> D9.1 operating health review (planned)
   -> D9.2 order operations loop (planned)
@@ -320,6 +322,7 @@ Use [D8 Staging Records Policy](d8_staging_records_policy.md) to keep saved stag
 Use [D8 Staging Evidence Review](d8_staging_evidence_review.md) after records pass to interpret the latest evidence before production coordination.
 Use [D8 Production Coordination Plan](d8_production_coordination_plan.md) after `STAGING_VALIDATED` for the Go / No-Go and rollback handoff.
 Use [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md) after production coordination to keep health review, order operations, feedback, market intelligence, and improvement backlog under human review.
+Use [D9 Operating Execution Pack](d9_operating_execution_pack.md) to verify all D9 review tracks and record gates before the first operating review.
 Use [D9 Operating Loop Kickoff](d9_operating_loop_kickoff.md) for the first redacted D9 review session after D8 production coordination.
 Use [D9.1 Operating Health Review](d9_1_operating_health_review.md) to review readiness, manifest, auth rejection, CORS, customer-safe reads, and forbidden-field safety.
 Use [D9.2 Order Operations Loop](d9_2_order_operations_loop.md) to review customer confirmation, partner split, supplier confirmation, production, shipment, resources, and feedback follow-up signals without automation.
