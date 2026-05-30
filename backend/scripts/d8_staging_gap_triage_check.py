@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 try:
@@ -12,6 +13,7 @@ except ModuleNotFoundError:
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC = REPO_ROOT / "docs" / "phase3" / "d8_staging_gap_triage.md"
 RECORDS_ROOT = REPO_ROOT / "docs" / "records"
+GAP_REGISTER_PATTERN = re.compile(r"^d8_strict_staging_gaps_\d{8}\.md$")
 
 REQUIRED_DOC_MARKERS = (
     "D8 Staging Gap Triage",
@@ -87,6 +89,8 @@ def _gap_records() -> list[Path]:
 def _gap_issues(records: list[Path]) -> list[str]:
     issues: list[str] = []
     for path in records:
+        if not GAP_REGISTER_PATTERN.match(path.name):
+            issues.append(f"{path.name}:noncanonical name")
         text = _text(path)
         missing = _missing(text, REQUIRED_GAP_MARKERS)
         if missing:
