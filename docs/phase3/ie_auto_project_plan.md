@@ -94,6 +94,7 @@ As of the current repository state:
 | D8 Integration Hardening | Foundation implemented |
 | Strict Staging / Cloud Validation | Evidence workflow added |
 | D8 Delivery Stage Goal Matrix | Added |
+| D8 Readiness Audit | Added |
 
 ## 5. Non-Negotiable Safety Rules
 
@@ -242,6 +243,7 @@ D7.9 Resource Center (done)
   -> D8 Integration hardening (foundation done)
   -> Strict staging/cloud validation (evidence workflow added)
   -> D8 delivery stage goal matrix (added)
+  -> D8 readiness audit (added)
 ```
 
 This keeps the customer portal capability complete before broadening into security hardening, deployment hardening, operations analytics, and intelligence loops.
@@ -264,3 +266,4 @@ Minimum target:
 D8 integration hardening now provides a local/staging contract gate across D7.7-D8.5, and strict staging/cloud validation has a repeatable evidence collector. The next product value is running it against real cloud environment values and closing any staging gaps it exposes.
 
 See [D8 Delivery Stage Goal Matrix](d8_delivery_stage_goal_matrix.md) for the current stage-by-stage artifact, verification, and next-gap map.
+Use [D8 Readiness Audit](d8_readiness_audit.md) to classify the repo as `READY_FOR_STAGING`, `STAGING_GAPS_OPEN`, or `STAGING_VALIDATED` based on saved evidence.

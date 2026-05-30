@@ -121,6 +121,7 @@ flowchart TD
 - [D8 Integration Hardening](d8_integration_hardening.md)
 - [D8 Strict Staging / Cloud Validation](d8_strict_staging_cloud_validation.md)
 - [D8 Delivery Stage Goal Matrix](d8_delivery_stage_goal_matrix.md)
+- [D8 Readiness Audit](d8_readiness_audit.md)
 - [D7.2 Order CRUD MVP](d7_2_order_crud_mvp.md)
 - [D7.1 Order Schema & API Design Review](d7_1_order_schema_api_design_review.md)
 - [D7 Order Module Readiness Brief](d7_order_module_readiness_brief.md)

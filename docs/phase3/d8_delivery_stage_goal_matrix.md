@@ -21,6 +21,7 @@ This matrix turns the D7.9-D8 work into a compact execution and evidence map. It
 | D8.5 Market Response | Feedback, win-loss, demand, product-gap, advisory board | `docs/phase3/d8_5_market_response_intelligence.md` | `python scripts/d8_5_market_response_check.py` | Implemented | Validate signal usefulness with real feedback and market notes |
 | D8 Integration Hardening | Local bridge/deployment contract gate | `docs/phase3/d8_integration_hardening.md` | `python scripts/d8_integration_hardening_check.py` | Foundation implemented | Keep as preflight before every staging run |
 | Strict Staging / Cloud Validation | Real staging evidence and gap register | `docs/phase3/d8_strict_staging_cloud_validation.md` | `python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/records/d8_strict_staging_evidence_YYYYMMDD.json --gap-markdown ../docs/records/d8_strict_staging_gaps_YYYYMMDD.md` | Evidence workflow added | Needs real `BACKEND_BASE_URL`, `SERVICE_PORTAL_PARTNEROS_TOKEN`, and portal origin |
+| D8 Readiness Audit | Summarize local readiness vs staging evidence state | `docs/phase3/d8_readiness_audit.md` | `python scripts/d8_readiness_audit.py` | Added | Use before and after each strict staging evidence run |
 
 ## Safety Invariants
 
