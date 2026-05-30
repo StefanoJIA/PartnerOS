@@ -29,6 +29,7 @@ This bundle is the exact local package to hand to the staging operator before re
 
 ```powershell
 cd backend
+python scripts/readme_check.py
 python scripts/project_execution_status.py
 python scripts/project_execution_chain_check.py
 python scripts/operator_guide_check.py

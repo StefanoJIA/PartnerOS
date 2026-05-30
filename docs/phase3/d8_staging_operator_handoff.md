@@ -18,6 +18,7 @@ python scripts/d8_staging_operator_handoff.py --output ../docs/records/d8_stagin
 The generated document includes:
 
 - current `d8_readiness_audit.py` output
+- README current-stage check
 - required environment variables
 - preflight commands
 - strict staging evidence command

@@ -117,6 +117,7 @@ Run the PartnerOS D8 strict staging evidence flow against the real deployed stag
 
 ```powershell
 cd backend
+python scripts/readme_check.py
 python scripts/d8_readiness_audit.py
 python scripts/d8_stage_goal_matrix_check.py
 python scripts/d8_integration_hardening_check.py

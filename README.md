@@ -38,15 +38,17 @@
 
 | Stage | Scope |
 |---|---|
-| **D5** | Lead Intelligence and Pre-Quote Preparation |
+| **D5** | Lead Intelligence and Pre-Quote Preparation (closed) |
 | **D6** | Quote MVP (closed) |
-| **D7** | Order / Production / Shipment (D7.1 design complete) |
+| **D7** | Order / Production / Shipment / Portal bridge / Resource Center (closed through D7.9) |
+| **D8** | Runtime hardening, staging handoff, and production-coordination readiness (local gates ready) |
+| **D9** | Post-launch operating loop (planned behind staging evidence review and production coordination) |
 
 ## Next Major Stage
 
-**D7** is Order / Production / Shipment.
+**Current stage:** `READY_FOR_STAGING_HANDOFF`.
 
-**D8 strict staging/cloud validation evidence workflow** is implemented. Next: run it with real staging environment values.
+**Next action:** run the D8 strict staging/cloud validation evidence workflow with real staging environment values, then review the saved evidence before production coordination and D9 kickoff.
 
 Current D8/D9 docs: [Project Execution Acceptance Audit](docs/phase3/project_execution_acceptance_audit.md), [Project Execution Chain Gate](docs/phase3/project_execution_chain_gate.md), [D9 Operating Records Policy](docs/phase3/d9_operating_records_policy.md), [D9 Operating Execution Pack](docs/phase3/d9_operating_execution_pack.md), [D9.4 Improvement Backlog](docs/phase3/d9_4_improvement_backlog.md), [D9.3 Market Response Loop](docs/phase3/d9_3_market_response_loop.md), [D9.2 Order Operations Loop](docs/phase3/d9_2_order_operations_loop.md), [D9.1 Operating Health Review](docs/phase3/d9_1_operating_health_review.md), [D9 Operating Loop Kickoff](docs/phase3/d9_operating_loop_kickoff.md), [D9 Post-Launch Operating Loop](docs/phase3/d9_post_launch_operating_loop.md), [D8 Production Coordination Runbook](docs/phase3/d8_production_coordination_runbook.md), [D8 Production Coordination Plan](docs/phase3/d8_production_coordination_plan.md), [D8 Staging Evidence Review](docs/phase3/d8_staging_evidence_review.md), [D8 Staging Records Policy](docs/phase3/d8_staging_records_policy.md), [D8 Staging Gap Triage](docs/phase3/d8_staging_gap_triage.md), [D8 Staging Operator Response Intake](docs/phase3/d8_staging_operator_response_intake.md), [D8 Staging Access Request](docs/phase3/d8_staging_access_request.md), [D8 Staging Operator Runbook](docs/phase3/d8_staging_operator_runbook.md), [D8 Staging Handoff Bundle](docs/phase3/d8_staging_handoff_bundle.md), [D8 Staging Execution Pack](docs/phase3/d8_staging_execution_pack.md), [D8 Local Staging Rehearsal](docs/phase3/d8_local_staging_rehearsal.md), [D8 Staging Operator Handoff](docs/phase3/d8_staging_operator_handoff.md), [D8 Readiness Audit](docs/phase3/d8_readiness_audit.md), [D8 Delivery Stage Goal Matrix](docs/phase3/d8_delivery_stage_goal_matrix.md), [D8 Strict Staging / Cloud Validation](docs/phase3/d8_strict_staging_cloud_validation.md), [D8 Integration Hardening](docs/phase3/d8_integration_hardening.md), [D8.5 Market Response Intelligence](docs/phase3/d8_5_market_response_intelligence.md), and [D8.4 Multi-Partner Operations Dashboard](docs/phase3/d8_4_multi_partner_operations_dashboard.md).
 
@@ -67,7 +69,7 @@ D6 implementation references:
 - **Manual outreach only** — Generate Draft → Copy → 系统外发送 → Mark as Sent
 - **Portal read-only integration ready** — `/api/v1/portal/*` · `/system-health` · `/portal-consumer-mock`
 - **No automatic sending** · **No LinkedIn scraping** · **No Outlook API**
-- **No Phase 2 yet** — 见 [docs/releases/d5_2_internal_mvp_release_20260523.md](docs/releases/d5_2_internal_mvp_release_20260523.md)
+- **Superseded by later stages** — see D5/D6 closure, D7 implementation, and current D8/D9 staging handoff docs.
 
 **Release pack（D5.2.11）：** [Release Note](docs/releases/d5_2_internal_mvp_release_20260523.md) · [Operator Guide](docs/operator_guide.md) · [Deployment Checklist](docs/deployment_readiness_checklist.md) · [Testing Summary](docs/testing_summary_d5_2.md)
 
@@ -152,6 +154,7 @@ python scripts/project_execution_status.py  # local current stage / next action 
 python scripts/project_execution_acceptance_audit_check.py  # project objective evidence/missing-staging audit
 python scripts/project_execution_chain_check.py --report-markdown ../docs/records/project_execution_chain_YYYYMMDD.md  # redacted local planning report
 python scripts/project_execution_records_check.py  # project execution report naming/redaction check
+python scripts/readme_check.py  # README current-stage and D8/D9 handoff gate check
 python scripts/operator_guide_check.py  # operator guide D8/D9 handoff and safety gate check
 python scripts/d7_4_partner_supplier_check.py   # D7.4 partner split & supplier confirmation smoke
 python scripts/d7_3_customer_confirmation_check.py  # D7.3 customer confirmation smoke

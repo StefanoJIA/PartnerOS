@@ -29,6 +29,7 @@ REQUIRED_LINKS = (
     "d8_production_coordination_runbook.md",
 )
 REQUIRED_COMMANDS = (
+    "python scripts/readme_check.py",
     "python scripts/project_execution_status.py",
     "python scripts/project_execution_chain_check.py",
     "python scripts/operator_guide_check.py",

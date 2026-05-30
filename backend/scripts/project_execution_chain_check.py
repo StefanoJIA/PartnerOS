@@ -19,6 +19,7 @@ REPO_ROOT = BACKEND_ROOT.parent
 REPORT_NAME_PATTERN = re.compile(r"^project_execution_chain_\d{8}\.md$")
 
 CHAIN = (
+    ("README", "scripts/readme_check.py"),
     ("IE Auto project plan", "scripts/ie_auto_project_plan_check.py"),
     ("Phase 3 roadmap", "scripts/phase3_roadmap_check.py"),
     ("D8 stage goal matrix", "scripts/d8_stage_goal_matrix_check.py"),
