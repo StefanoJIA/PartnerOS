@@ -22,6 +22,7 @@ Use `docs/records` only for redacted summaries. Do not store `.env`, raw respons
 
 | D9 loop | Path |
 |---|---|
+| Aggregate operating review | `docs/records/d9_operating_review_YYYYMMDD.md` |
 | Operating health | `docs/records/d9_operating_health_YYYYMMDD.md` |
 | Order operations | `docs/records/d9_order_operations_YYYYMMDD.md` |
 | Market response | `docs/records/d9_market_response_YYYYMMDD.md` |

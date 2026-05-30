@@ -23,6 +23,17 @@ def test_d9_operating_records_check_passes_without_d9_records(tmp_path, monkeypa
     assert "Result: PASS" in capsys.readouterr().out
 
 
+def test_d9_operating_records_check_accepts_aggregate_review_record(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d9_operating_review_20260530.md").write_text("redacted summary\n", encoding="utf-8")
+
+    assert module.main() == 0
+    output = capsys.readouterr().out
+    assert "D9 operating record names are canonical" in output
+    assert "Result: PASS" in output
+
+
 def test_d9_operating_records_check_rejects_noncanonical_name(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)

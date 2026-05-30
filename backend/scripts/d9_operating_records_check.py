@@ -14,7 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 RECORDS_ROOT = REPO_ROOT / "docs" / "records"
 
 D9_RECORD_PATTERN = re.compile(
-    r"^d9_(?:operating_health|order_operations|market_response|improvement_backlog)_\d{8}\.md$"
+    r"^d9_(?:operating_review|operating_health|order_operations|market_response|improvement_backlog)_\d{8}\.md$"
 )
 class Check:
     def __init__(self, label: str) -> None:
