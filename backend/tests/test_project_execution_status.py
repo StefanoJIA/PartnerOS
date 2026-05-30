@@ -58,6 +58,46 @@ def test_project_execution_status_reports_production_coordination(monkeypatch, c
     assert "Go / No-Go" in output
 
 
+def test_project_execution_status_reports_staging_gaps_open(monkeypatch, capsys):
+    module = _load_module()
+
+    def fake_run(script: str):
+        outputs = {
+            "scripts/project_execution_chain_check.py": "State: READY_FOR_STAGING_HANDOFF\nResult: PASS\n",
+            "scripts/d8_readiness_audit.py": "Overall: STAGING_GAPS_OPEN\n",
+            "scripts/d8_production_coordination_check.py": "Coordination State: WAITING_FOR_STAGING_VALIDATION\n",
+        }
+        return SimpleNamespace(returncode=0, stdout=outputs[script], stderr="")
+
+    monkeypatch.setattr(module, "_run_script", fake_run)
+
+    assert module.main() == 0
+    output = capsys.readouterr().out
+    assert "Current Stage: STAGING_GAPS_OPEN" in output
+    assert "Close the latest strict staging gap register" in output
+    assert "rerun strict staging evidence" in output
+
+
+def test_project_execution_status_reports_staging_validated_before_coordination(monkeypatch, capsys):
+    module = _load_module()
+
+    def fake_run(script: str):
+        outputs = {
+            "scripts/project_execution_chain_check.py": "State: READY_FOR_STAGING_HANDOFF\nResult: PASS\n",
+            "scripts/d8_readiness_audit.py": "Overall: STAGING_VALIDATED\n",
+            "scripts/d8_production_coordination_check.py": "Coordination State: WAITING_FOR_STAGING_VALIDATION\n",
+        }
+        return SimpleNamespace(returncode=0, stdout=outputs[script], stderr="")
+
+    monkeypatch.setattr(module, "_run_script", fake_run)
+
+    assert module.main() == 0
+    output = capsys.readouterr().out
+    assert "Current Stage: STAGING_VALIDATED" in output
+    assert "d8_production_coordination_runbook.md" in output
+    assert "Run production coordination" in output
+
+
 def test_project_execution_status_fails_when_chain_fails(monkeypatch, capsys):
     module = _load_module()
 
