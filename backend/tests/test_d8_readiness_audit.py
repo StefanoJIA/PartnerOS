@@ -33,6 +33,20 @@ def test_readiness_audit_reports_staging_validated_for_pass_evidence(tmp_path, m
     assert module._staging_status() == ("STAGING_VALIDATED", "d8_strict_staging_evidence_20260530.json")
 
 
+def test_readiness_audit_rejects_noncanonical_evidence_name(tmp_path, monkeypatch):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d8_strict_staging_evidence_latest.json").write_text(
+        '{"result":"PASS","checks":[],"safety":{"token_redacted":true,"response_bodies_stored":false}}\n',
+        encoding="utf-8",
+    )
+
+    assert module._staging_status() == (
+        "STAGING_EVIDENCE_NONCANONICAL",
+        "d8_strict_staging_evidence_latest.json",
+    )
+
+
 def test_readiness_audit_reports_open_gaps_for_failed_evidence(tmp_path, monkeypatch):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)

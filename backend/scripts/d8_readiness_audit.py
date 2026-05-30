@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -11,6 +12,7 @@ from typing import Any
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = BACKEND_ROOT.parent
 RECORDS_ROOT = REPO_ROOT / "docs" / "records"
+STRICT_EVIDENCE_NAME_PATTERN = re.compile(r"^d8_strict_staging_evidence_\d{8}\.json$")
 
 REQUIRED_DOCS = (
     "docs/phase3/d8_delivery_stage_goal_matrix.md",
@@ -114,7 +116,20 @@ def _missing(paths: tuple[str, ...]) -> list[str]:
 def _strict_evidence_files() -> list[Path]:
     if not RECORDS_ROOT.exists():
         return []
-    return sorted(RECORDS_ROOT.glob("d8_strict_staging_evidence_*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+    return sorted(
+        (path for path in RECORDS_ROOT.glob("d8_strict_staging_evidence_*.json") if STRICT_EVIDENCE_NAME_PATTERN.match(path.name)),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+
+
+def _noncanonical_strict_evidence_files() -> list[Path]:
+    if not RECORDS_ROOT.exists():
+        return []
+    return sorted(
+        path for path in RECORDS_ROOT.glob("d8_strict_staging_evidence_*.json")
+        if not STRICT_EVIDENCE_NAME_PATTERN.match(path.name)
+    )
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -126,6 +141,11 @@ def _read_json(path: Path) -> dict[str, Any]:
 
 
 def _staging_status() -> tuple[str, str]:
+    noncanonical = _noncanonical_strict_evidence_files()
+    if noncanonical:
+        names = ", ".join(path.name for path in noncanonical[:3])
+        return "STAGING_EVIDENCE_NONCANONICAL", names
+
     files = _strict_evidence_files()
     if not files:
         return "READY_FOR_STAGING", "no strict staging evidence JSON found"
@@ -210,7 +230,7 @@ def main() -> int:
     elif overall == "STAGING_VALIDATED":
         print("Next: proceed to production coordination planning without changing service.intelli-opus.com from this repo.")
 
-    return 0 if local_ready and staging_status != "STAGING_EVIDENCE_UNREADABLE" else 1
+    return 0 if local_ready and staging_status not in {"STAGING_EVIDENCE_UNREADABLE", "STAGING_EVIDENCE_NONCANONICAL"} else 1
 
 
 if __name__ == "__main__":

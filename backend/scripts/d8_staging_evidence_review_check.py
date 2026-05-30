@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +15,7 @@ except ModuleNotFoundError:
 REPO_ROOT = Path(__file__).resolve().parents[2]
 RECORDS_ROOT = REPO_ROOT / "docs" / "records"
 DOC = REPO_ROOT / "docs" / "phase3" / "d8_staging_evidence_review.md"
+EVIDENCE_NAME_PATTERN = re.compile(r"^d8_strict_staging_evidence_\d{8}\.json$")
 
 REQUIRED_DOC_MARKERS = (
     "D8 Staging Evidence Review",
@@ -68,9 +70,17 @@ def _evidence_files() -> list[Path]:
     if not RECORDS_ROOT.exists():
         return []
     return sorted(
-        RECORDS_ROOT.glob("d8_strict_staging_evidence_*.json"),
+        (path for path in RECORDS_ROOT.glob("d8_strict_staging_evidence_*.json") if EVIDENCE_NAME_PATTERN.match(path.name)),
         key=lambda path: path.stat().st_mtime,
         reverse=True,
+    )
+
+
+def _noncanonical_evidence_files() -> list[Path]:
+    if not RECORDS_ROOT.exists():
+        return []
+    return sorted(
+        path for path in RECORDS_ROOT.glob("d8_strict_staging_evidence_*.json") if not EVIDENCE_NAME_PATTERN.match(path.name)
     )
 
 
@@ -83,6 +93,11 @@ def _read_json(path: Path) -> dict[str, Any]:
 
 
 def _evidence_state() -> tuple[str, str]:
+    noncanonical = _noncanonical_evidence_files()
+    if noncanonical:
+        names = ", ".join(path.name for path in noncanonical[:3])
+        return "EVIDENCE_NONCANONICAL", names
+
     files = _evidence_files()
     if not files:
         return "WAITING_FOR_STAGING_EVIDENCE", "no strict staging evidence JSON found"

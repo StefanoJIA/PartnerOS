@@ -48,6 +48,30 @@ def test_d8_staging_evidence_review_accepts_pass_evidence(tmp_path, monkeypatch,
     assert "Review State: READY_FOR_PRODUCTION_COORDINATION_REVIEW" in output
 
 
+def test_d8_staging_evidence_review_rejects_noncanonical_evidence_name(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d8_strict_staging_evidence_latest.json").write_text(
+        """
+{
+  "result": "PASS",
+  "checks": [],
+  "safety": {
+    "token_redacted": true,
+    "response_bodies_stored": false
+  }
+}
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "Review State: EVIDENCE_NONCANONICAL" in output
+    assert "d8_strict_staging_evidence_latest.json" in output
+
+
 def test_d8_staging_evidence_review_rejects_unsafe_evidence(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
