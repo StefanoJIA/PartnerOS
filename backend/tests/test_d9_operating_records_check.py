@@ -46,3 +46,17 @@ def test_d9_operating_records_check_rejects_token_assignment(tmp_path, monkeypat
     output = capsys.readouterr().out
     assert "D9 operating records are redacted" in output
     assert "d9_operating_health_20260530.md:1" in output
+
+
+def test_d9_operating_records_check_rejects_generic_private_key(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d9_market_response_20260530.md").write_text(
+        "SERVICE_PORTAL_PRIVATE_KEY=actual-secret-value\n",
+        encoding="utf-8",
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "D9 operating records are redacted" in output
+    assert "d9_market_response_20260530.md:1" in output

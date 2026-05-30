@@ -55,3 +55,17 @@ def test_d8_staging_records_check_requires_gap_register_for_failed_evidence(tmp_
     assert module.main() == 1
     output = capsys.readouterr().out
     assert "missing d8_strict_staging_gaps_20260530.md" in output
+
+
+def test_d8_staging_records_check_rejects_bearer_token(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d8_staging_operator_handoff_20260530.md").write_text(
+        "Authorization: Bearer actual-secret-value\n",
+        encoding="utf-8",
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "D8 staging records are redacted" in output
+    assert "d8_staging_operator_handoff_20260530.md:1" in output

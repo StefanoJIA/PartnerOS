@@ -7,6 +7,11 @@ import re
 from pathlib import Path
 from typing import Any
 
+try:
+    from record_redaction import redaction_issues
+except ModuleNotFoundError:
+    from scripts.record_redaction import redaction_issues
+
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = BACKEND_ROOT.parent
 RECORDS_ROOT = REPO_ROOT / "docs" / "records"
@@ -15,31 +20,7 @@ EVIDENCE_PATTERN = re.compile(r"^d8_strict_staging_evidence_\d{8}\.json$")
 STAGING_RECORD_PATTERN = re.compile(
     r"^d8_(?:strict_staging_(?:evidence|gaps)_\d{8}|staging_operator_handoff(?:_\d{8})?)\.(?:json|md)$"
 )
-FORBIDDEN_RECORD_MARKERS = (
-    "backend/storage",
-    "local_data",
-    "internal_cost",
-    "estimated_margin",
-    "pricing_breakdown_json",
-    "cost_snapshot_json",
-    "supplier_private",
-    "supplier_reference",
-    "storage_key",
-    "portal_customer_api_token",
-    "secret_key",
-    "password_hash",
-    "database_url",
-)
-TOKEN_ASSIGNMENT_PATTERN = re.compile(
-    r"(SERVICE_PORTAL_PARTNEROS_TOKEN|PORTAL_CUSTOMER_API_TOKEN):?\s*=\s*['\"]?([^'\"\s]+)",
-    re.IGNORECASE,
-)
-ALLOWED_TOKEN_PLACEHOLDERS = {
-    "<portal-server-token>",
-    "<redacted>",
-    "***",
-    "REDACTED",
-}
+EXTRA_FORBIDDEN_RECORD_MARKERS = ("supplier_reference",)
 
 
 class Check:
@@ -83,18 +64,6 @@ def _display_path(path: Path) -> str:
         return str(path)
 
 
-def _token_assignment_issues(path: Path, text: str) -> list[str]:
-    issues: list[str] = []
-    for line_no, line in enumerate(text.splitlines(), start=1):
-        match = TOKEN_ASSIGNMENT_PATTERN.search(line)
-        if not match:
-            continue
-        value = match.group(2).strip()
-        if value not in ALLOWED_TOKEN_PLACEHOLDERS and not (value.startswith("<") and value.endswith(">")):
-            issues.append(f"{path.name}:{line_no}")
-    return issues
-
-
 def _sensitive_marker_issues(records: list[Path]) -> list[str]:
     issues: list[str] = []
     for path in records:
@@ -103,11 +72,7 @@ def _sensitive_marker_issues(records: list[Path]) -> list[str]:
         except OSError:
             issues.append(f"{path.name}:unreadable")
             continue
-        lowered = text.lower()
-        for marker in FORBIDDEN_RECORD_MARKERS:
-            if marker in lowered:
-                issues.append(f"{path.name}:{marker}")
-        issues.extend(_token_assignment_issues(path, text))
+        issues.extend(redaction_issues(path, text, EXTRA_FORBIDDEN_RECORD_MARKERS))
     return issues
 
 

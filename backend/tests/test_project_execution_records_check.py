@@ -53,3 +53,24 @@ SERVICE_PORTAL_PARTNEROS_TOKEN=actual-secret-value
     output = capsys.readouterr().out
     assert "project execution reports are redacted" in output
     assert "project_execution_chain_20260530.md:5" in output
+
+
+def test_project_execution_records_check_rejects_generic_secret_assignment(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "project_execution_chain_20260530.md").write_text(
+        """
+# Project Execution Chain Report
+State: `READY_FOR_STAGING_HANDOFF`
+| Gate | Status | Summary |
+|---|---|---|
+SERVICE_PORTAL_API_KEY=actual-secret-value
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "project execution reports are redacted" in output
+    assert "project_execution_chain_20260530.md:5" in output
