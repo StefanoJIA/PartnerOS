@@ -23,6 +23,7 @@ This matrix turns the D7.9-D8 work into a compact execution and evidence map. It
 | Strict Staging / Cloud Validation | Real staging evidence and gap register | `docs/phase3/d8_strict_staging_cloud_validation.md` | `python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/records/d8_strict_staging_evidence_YYYYMMDD.json --gap-markdown ../docs/records/d8_strict_staging_gaps_YYYYMMDD.md` | Evidence workflow added | Needs real `BACKEND_BASE_URL`, `SERVICE_PORTAL_PARTNEROS_TOKEN`, and portal origin |
 | D8 Readiness Audit | Summarize local readiness vs staging evidence state | `docs/phase3/d8_readiness_audit.md` | `python scripts/d8_readiness_audit.py` | Added | Use before and after each strict staging evidence run |
 | D8 Staging Operator Handoff | Generate an executable handoff for the staging operator | `docs/phase3/d8_staging_operator_handoff.md` | `python scripts/d8_staging_operator_handoff.py --output ../docs/records/d8_staging_operator_handoff_YYYYMMDD.md` | Added | Send to the operator who owns real staging values |
+| D8 Staging Access Request | Define the exact private staging inputs needed without storing secrets | `docs/phase3/d8_staging_access_request.md` | `python scripts/d8_staging_access_request_check.py` | Added | Send before strict staging when real URL/token/origin are missing |
 | D8 Staging Execution Pack | Verify the handoff chain is internally consistent | `docs/phase3/d8_staging_execution_pack.md` | `python scripts/d8_staging_execution_pack_check.py` | Added | Run before sharing the staging handoff |
 | D8 Staging Records Policy | Keep real staging records canonical and redacted | `docs/phase3/d8_staging_records_policy.md` | `python scripts/d8_staging_records_check.py` | Added | Run before committing staging evidence artifacts |
 | D8 Production Coordination | Define the post-`STAGING_VALIDATED` handoff and Go / No-Go path | `docs/phase3/d8_production_coordination_plan.md` | `python scripts/d8_production_coordination_check.py` | Added | Wait for strict staging evidence to report `STAGING_VALIDATED` |
@@ -55,3 +56,5 @@ python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/recor
 ```
 
 If the evidence result is `FAIL`, the gap register becomes the next sprint input. If the result is `PASS`, the next sprint can move to production coordination using [D8 Production Coordination Plan](d8_production_coordination_plan.md) without changing `service.intelli-opus.com` from PartnerOS.
+
+If the staging values are not available yet, use [D8 Staging Access Request](d8_staging_access_request.md) to ask the staging operator for the private inputs without committing token values.

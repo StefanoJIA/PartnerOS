@@ -31,6 +31,7 @@ The audit looks for:
 - D8 delivery stage matrix
 - D8 hardening and strict staging docs
 - D8 smoke/check scripts
+- D8 staging access request
 - safety invariants in the stage matrix
 - `scripts/d8_staging_records_check.py` result
 - production coordination plan artifact

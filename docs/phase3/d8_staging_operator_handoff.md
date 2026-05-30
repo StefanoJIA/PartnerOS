@@ -21,6 +21,7 @@ The generated document includes:
 - required environment variables
 - preflight commands
 - strict staging evidence command
+- staging access request check
 - staging records redaction check
 - production coordination state check
 - D9 post-launch plan check
