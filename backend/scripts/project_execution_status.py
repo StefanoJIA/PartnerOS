@@ -56,7 +56,7 @@ def _next_action(chain_state: str, readiness: str, coordination: str) -> tuple[s
     if readiness == "READY_FOR_STAGING":
         return (
             "READY_FOR_STAGING_HANDOFF",
-            "Use docs/phase3/d8_staging_access_request.md to obtain private staging values, then run strict staging evidence.",
+            "Use docs/phase3/d8_staging_handoff_bundle.md, obtain private staging values via d8_staging_access_request.md, then run strict staging evidence.",
         )
     if readiness == "STAGING_GAPS_OPEN":
         return "STAGING_GAPS_OPEN", "Close the latest strict staging gap register, then rerun strict staging evidence."

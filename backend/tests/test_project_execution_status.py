@@ -32,6 +32,7 @@ def test_project_execution_status_reports_staging_handoff(monkeypatch, capsys):
     assert module.main() == 0
     output = capsys.readouterr().out
     assert "Current Stage: READY_FOR_STAGING_HANDOFF" in output
+    assert "d8_staging_handoff_bundle.md" in output
     assert "d8_staging_access_request.md" in output
     assert "Result: PASS" in output
 

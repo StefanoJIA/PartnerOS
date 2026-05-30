@@ -370,6 +370,12 @@ This strict check validates HTTPS, token rejection, CORS, readiness/manifest env
 Add `--evidence-json ../docs/records/d8_strict_staging_evidence_YYYYMMDD.json` when you need a redacted evidence artifact for handoff or audit.
 Add `--gap-markdown ../docs/records/d8_strict_staging_gaps_YYYYMMDD.md` to generate a follow-up register for failed checks.
 
+Before sharing the staging package, use [D8 Staging Handoff Bundle](phase3/d8_staging_handoff_bundle.md) and verify it with:
+
+```powershell
+python scripts/d8_staging_handoff_bundle_check.py
+```
+
 If the real staging URL, portal token, portal origin, deployed commit, or TEST fixture scope is not available yet, use [D8 Staging Access Request](phase3/d8_staging_access_request.md) and verify it with:
 
 ```powershell

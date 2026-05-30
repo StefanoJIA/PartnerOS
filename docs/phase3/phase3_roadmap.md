@@ -127,6 +127,7 @@ flowchart TD
 - [D8 Readiness Audit](d8_readiness_audit.md)
 - [D8 Staging Operator Handoff](d8_staging_operator_handoff.md)
 - [D8 Staging Execution Pack](d8_staging_execution_pack.md)
+- [D8 Staging Handoff Bundle](d8_staging_handoff_bundle.md)
 - [D8 Staging Access Request](d8_staging_access_request.md)
 - [D8 Staging Gap Triage](d8_staging_gap_triage.md)
 - [D8 Staging Records Policy](d8_staging_records_policy.md)

@@ -31,6 +31,7 @@ The audit looks for:
 - D8 delivery stage matrix
 - D8 hardening and strict staging docs
 - D8 smoke/check scripts
+- D8 staging handoff bundle
 - D8 staging access request
 - D8 staging gap triage runbook
 - safety invariants in the stage matrix

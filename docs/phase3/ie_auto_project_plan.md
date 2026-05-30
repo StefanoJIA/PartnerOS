@@ -97,6 +97,7 @@ As of the current repository state:
 | D8 Readiness Audit | Added |
 | D8 Staging Operator Handoff | Added |
 | D8 Staging Execution Pack | Added |
+| D8 Staging Handoff Bundle | Added |
 | D8 Staging Access Request | Added |
 | D8 Staging Gap Triage | Added |
 | D8 Staging Records Policy | Added |
@@ -255,6 +256,7 @@ D7.9 Resource Center (done)
   -> D8 readiness audit (added)
   -> D8 staging operator handoff (added)
   -> D8 staging execution pack (added)
+  -> D8 staging handoff bundle (added)
   -> D8 staging access request (added)
   -> D8 staging gap triage (added)
   -> D8 staging records policy (added)
@@ -288,6 +290,7 @@ See [D8 Delivery Stage Goal Matrix](d8_delivery_stage_goal_matrix.md) for the cu
 Use [D8 Readiness Audit](d8_readiness_audit.md) to classify the repo as `READY_FOR_STAGING`, `STAGING_GAPS_OPEN`, or `STAGING_VALIDATED` based on saved evidence.
 Use [D8 Staging Operator Handoff](d8_staging_operator_handoff.md) to generate the command sheet for whoever has the real staging backend URL and portal token.
 Use [D8 Staging Execution Pack](d8_staging_execution_pack.md) to verify the local handoff chain before sharing it.
+Use [D8 Staging Handoff Bundle](d8_staging_handoff_bundle.md) as the operator-facing manifest of docs, commands, generated handoff, evidence command, and exclusions.
 Use [D8 Staging Access Request](d8_staging_access_request.md) when the real staging URL, portal token, portal origin, deployed commit, or TEST fixture scope still need to be provided privately.
 Use [D8 Staging Gap Triage](d8_staging_gap_triage.md) when strict staging evidence fails and the gap register needs owner/status/rerun tracking.
 Use [D8 Staging Records Policy](d8_staging_records_policy.md) to keep saved staging evidence canonical, redacted, and commit-safe.

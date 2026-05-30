@@ -21,6 +21,7 @@ The generated document includes:
 - required environment variables
 - preflight commands
 - strict staging evidence command
+- staging handoff bundle check
 - staging access request check
 - staging gap triage check
 - staging records redaction check
