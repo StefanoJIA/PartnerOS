@@ -37,6 +37,7 @@ The audit looks for:
 - D9 post-launch operating loop plan artifact
 - D9 operating records policy artifact
 - Phase 3 roadmap artifact
+- IE Auto project plan artifact
 - optional `docs/records/d8_strict_staging_evidence_*.json`
 - optional paired `docs/records/d8_strict_staging_gaps_*.md`
 

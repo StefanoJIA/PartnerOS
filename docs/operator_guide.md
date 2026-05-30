@@ -410,6 +410,14 @@ python scripts/phase3_roadmap_check.py
 
 This keeps the D7-D9 roadmap, dependency graph, related docs, and manual-action safety boundaries aligned.
 
+For the source-derived project plan, run:
+
+```powershell
+python scripts/ie_auto_project_plan_check.py
+```
+
+This keeps product positioning, partner neutrality, operating lifecycle, current state mapping, immediate staging brief, and D8/D9 references aligned with `docs/phase3/ie_auto_project_plan.md`.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate

@@ -271,6 +271,7 @@ Strict staging evidence run
 Minimum target:
 
 - Run `scripts/d8_strict_staging_evidence_check.py` against the real staging URL.
+- Set `BACKEND_BASE_URL`, `SERVICE_PORTAL_PARTNEROS_TOKEN`, and `SERVICE_PORTAL_ORIGIN` from the real staging environment without committing or printing token values.
 - Preserve the PASS/FAIL output as staging evidence.
 - Fix any failed HTTPS, token, CORS, readiness, or field-filtering gaps.
 - Coordinate service portal bridge calls without changing nginx from this repo.

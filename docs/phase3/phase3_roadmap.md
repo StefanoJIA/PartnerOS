@@ -131,6 +131,7 @@ flowchart TD
 - [D8 Production Coordination Plan](d8_production_coordination_plan.md)
 - [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md)
 - [D9 Operating Records Policy](d9_operating_records_policy.md)
+- [IE Auto Project Plan](ie_auto_project_plan.md)
 - [D7.2 Order CRUD MVP](d7_2_order_crud_mvp.md)
 - [D7.1 Order Schema & API Design Review](d7_1_order_schema_api_design_review.md)
 - [D7 Order Module Readiness Brief](d7_order_module_readiness_brief.md)

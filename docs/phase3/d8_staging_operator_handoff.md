@@ -26,6 +26,7 @@ The generated document includes:
 - D9 post-launch plan check
 - D9 operating records redaction check
 - Phase 3 roadmap consistency check
+- IE Auto project plan consistency check
 - expected evidence/gap artifacts
 - safety boundaries
 

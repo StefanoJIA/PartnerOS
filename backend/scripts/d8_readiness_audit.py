@@ -26,6 +26,7 @@ REQUIRED_DOCS = (
     "docs/phase3/d9_post_launch_operating_loop.md",
     "docs/phase3/d9_operating_records_policy.md",
     "docs/phase3/phase3_roadmap.md",
+    "docs/phase3/ie_auto_project_plan.md",
 )
 REQUIRED_SCRIPTS = (
     "backend/scripts/d8_stage_goal_matrix_check.py",
@@ -41,6 +42,7 @@ REQUIRED_SCRIPTS = (
     "backend/scripts/d9_post_launch_plan_check.py",
     "backend/scripts/d9_operating_records_check.py",
     "backend/scripts/phase3_roadmap_check.py",
+    "backend/scripts/ie_auto_project_plan_check.py",
 )
 SAFETY_MARKERS = (
     "No automatic customer or supplier notification",
