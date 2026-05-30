@@ -37,6 +37,7 @@ python scripts/d8_4_partner_operations_check.py
 python scripts/d8_5_market_response_check.py
 python scripts/d8_2_runtime_hardening_check.py
 python scripts/d8_production_coordination_check.py
+python scripts/d8_production_coordination_runbook_check.py
 python -m pytest -q
 
 cd ../frontend
@@ -56,7 +57,7 @@ python scripts/d8_strict_staging_evidence_check.py
 ```
 
 See [D8 Strict Staging / Cloud Validation](d8_strict_staging_cloud_validation.md).
-After `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED`, use [D8 Production Coordination Plan](d8_production_coordination_plan.md) and `python scripts/d8_production_coordination_check.py` for the Go / No-Go handoff.
+After `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED`, use [D8 Production Coordination Plan](d8_production_coordination_plan.md), [D8 Production Coordination Runbook](d8_production_coordination_runbook.md), `python scripts/d8_production_coordination_check.py`, and `python scripts/d8_production_coordination_runbook_check.py` for the Go / No-Go handoff.
 
 For strict staging environment checks:
 

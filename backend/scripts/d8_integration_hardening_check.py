@@ -57,6 +57,7 @@ REQUIRED_DOCS = (
     "docs/phase3/d8_3_service_portal_staging_integration.md",
     "docs/phase3/d8_4_multi_partner_operations_dashboard.md",
     "docs/phase3/d8_5_market_response_intelligence.md",
+    "docs/phase3/d8_production_coordination_runbook.md",
 )
 
 
