@@ -138,6 +138,7 @@ flowchart TD
 - [D8 Production Coordination Plan](d8_production_coordination_plan.md)
 - [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md)
 - [D9 Operating Loop Kickoff](d9_operating_loop_kickoff.md)
+- [D9.1 Operating Health Review](d9_1_operating_health_review.md)
 - [D9 Operating Records Policy](d9_operating_records_policy.md)
 - [Project Execution Chain Gate](project_execution_chain_gate.md)
 - [Project Execution Acceptance Audit](project_execution_acceptance_audit.md)

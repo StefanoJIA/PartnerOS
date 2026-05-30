@@ -45,6 +45,7 @@ REQUIRED_DOC_LINKS = (
     "d8_production_coordination_plan.md",
     "d9_post_launch_operating_loop.md",
     "d9_operating_loop_kickoff.md",
+    "d9_1_operating_health_review.md",
     "d9_operating_records_policy.md",
     "project_execution_chain_gate.md",
     "project_execution_acceptance_audit.md",

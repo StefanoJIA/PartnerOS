@@ -1,30 +1,27 @@
-"""Validate the D9 operating loop kickoff checklist."""
+"""Validate the D9.1 operating health review plan."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DOC = REPO_ROOT / "docs" / "phase3" / "d9_operating_loop_kickoff.md"
+DOC = REPO_ROOT / "docs" / "phase3" / "d9_1_operating_health_review.md"
 
 REQUIRED_MARKERS = (
-    "D9 Operating Loop Kickoff",
-    "D8 production coordination",
+    "D9.1 Operating Health Review",
     "STAGING_VALIDATED",
     "READY_FOR_PRODUCTION_COORDINATION",
-    "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
-    "D9.1 Operating Health Review",
-    "d9_1_operating_health_review.md",
     "python scripts/d9_1_operating_health_review_check.py",
-    "D9.2 Order Operations Loop",
-    "D9.3 Market Response Loop",
-    "D9.4 Improvement Backlog",
     "python scripts/d9_operating_loop_kickoff_check.py",
-    "python scripts/d9_post_launch_plan_check.py",
     "python scripts/d9_operating_records_check.py",
-    "docs/records/d9_operating_review_YYYYMMDD.md",
-    "Owner:",
-    "Next action:",
+    "docs/records/d9_operating_health_YYYYMMDD.md",
+    "Readiness summary",
+    "Manifest summary",
+    "Auth summary",
+    "CORS summary",
+    "Portal read summary",
+    "Safety summary",
+    "products, orders, production, shipment, resources, and feedback-status",
     "No `.env`",
     "No email, webhook, carrier API",
 )
@@ -72,13 +69,13 @@ def _missing(text: str, markers: tuple[str, ...]) -> list[str]:
 
 def main() -> int:
     checks = [
-        Check("D9 kickoff doc exists"),
-        Check("D9 kickoff is actionable"),
-        Check("D9 kickoff is redacted"),
+        Check("D9.1 operating health doc exists"),
+        Check("D9.1 operating health review is actionable"),
+        Check("D9.1 operating health review is redacted"),
     ]
 
     text = _text()
-    checks[0].pass_("docs/phase3/d9_operating_loop_kickoff.md") if text else checks[0].fail(str(DOC))
+    checks[0].pass_("docs/phase3/d9_1_operating_health_review.md") if text else checks[0].fail(str(DOC))
 
     missing = _missing(text, REQUIRED_MARKERS)
     checks[1].pass_(f"{len(REQUIRED_MARKERS)} markers") if not missing else checks[1].fail(", ".join(missing))
@@ -86,7 +83,7 @@ def main() -> int:
     forbidden = [marker for marker in FORBIDDEN_MARKERS if marker in text]
     checks[2].pass_("no secret-like markers") if not forbidden else checks[2].fail(", ".join(forbidden))
 
-    print("D9 Operating Loop Kickoff Check")
+    print("D9.1 Operating Health Review Check")
     for check in checks:
         print(check.line())
     passed = all(check.ok for check in checks)

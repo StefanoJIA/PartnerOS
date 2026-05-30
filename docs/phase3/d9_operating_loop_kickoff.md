@@ -21,7 +21,7 @@ It does not authorize service portal deployment, nginx edits, notifications, ext
 
 | Track | Review prompt | Output |
 |---|---|---|
-| D9.1 Operating Health Review | Are readiness, CORS, token rejection, and customer-safe portal reads healthy after coordination? | Redacted health summary |
+| [D9.1 Operating Health Review](d9_1_operating_health_review.md) | Are readiness, CORS, token rejection, and customer-safe portal reads healthy after coordination? | Redacted health summary |
 | D9.2 Order Operations Loop | Which confirmed orders need production, shipment, resource, or feedback follow-up? | Owner/action list |
 | D9.3 Market Response Loop | Which feedback, quote outcomes, product gaps, or demand signals should feed advisory review? | Advisory notes |
 | D9.4 Improvement Backlog | Which repeated gaps deserve scoped implementation briefs? | Backlog candidate list |
@@ -31,6 +31,7 @@ It does not authorize service portal deployment, nginx edits, notifications, ext
 ```powershell
 cd backend
 python scripts/d9_operating_loop_kickoff_check.py
+python scripts/d9_1_operating_health_review_check.py
 python scripts/d9_post_launch_plan_check.py
 python scripts/d9_operating_records_check.py
 ```

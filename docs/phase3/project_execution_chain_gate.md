@@ -44,6 +44,7 @@ The report stores gate labels, pass/fail status, and one-line summaries only. It
 | D8 production coordination | Keeps production coordination blocked until strict staging has validated |
 | D9 post-launch plan | Confirms post-launch loop remains planned behind D8 validation |
 | D9 operating loop kickoff | Confirms the first D9 review session remains gated behind D8 production coordination |
+| D9.1 operating health review | Confirms the first D9 health track has redacted signal and record rules |
 | D9 operating records | Confirms D9 record naming and redaction policy |
 | Project execution acceptance audit | Maps the current project-planning objective to evidence and missing external staging proof |
 | Project execution records | Confirms generated execution reports are canonical and redacted |

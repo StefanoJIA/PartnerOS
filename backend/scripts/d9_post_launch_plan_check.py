@@ -10,6 +10,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 PLAN_DOC = REPO_ROOT / "docs" / "phase3" / "d9_post_launch_operating_loop.md"
 RECORDS_POLICY_DOC = REPO_ROOT / "docs" / "phase3" / "d9_operating_records_policy.md"
 KICKOFF_DOC = REPO_ROOT / "docs" / "phase3" / "d9_operating_loop_kickoff.md"
+HEALTH_REVIEW_DOC = REPO_ROOT / "docs" / "phase3" / "d9_1_operating_health_review.md"
 
 REQUIRED_MARKERS = (
     "D9 Post-Launch Operating Loop",
@@ -24,6 +25,7 @@ REQUIRED_MARKERS = (
     "No internal cost, margin, pricing breakdown",
     "No nginx or service portal deployment from this repository",
     "D9.1",
+    "D9.1 Operating Health Review",
     "D9.2",
     "D9.3",
     "D9.4",
@@ -87,6 +89,7 @@ def main() -> int:
         Check("D9 operating records policy exists"),
         Check("D9 operating records gate runs"),
         Check("D9 kickoff checklist exists"),
+        Check("D9.1 operating health review exists"),
     ]
 
     text = _read_text()
@@ -123,6 +126,11 @@ def main() -> int:
         checks[6].pass_(_display_path(KICKOFF_DOC))
     else:
         checks[6].fail(_display_path(KICKOFF_DOC))
+
+    if HEALTH_REVIEW_DOC.exists():
+        checks[7].pass_(_display_path(HEALTH_REVIEW_DOC))
+    else:
+        checks[7].fail(_display_path(HEALTH_REVIEW_DOC))
 
     missing = [marker for marker in REQUIRED_MARKERS if marker not in text]
     if missing and checks[0].ok:

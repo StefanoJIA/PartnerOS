@@ -437,9 +437,10 @@ The next planned operating loop is D9:
 ```powershell
 python scripts/d9_post_launch_plan_check.py
 python scripts/d9_operating_loop_kickoff_check.py
+python scripts/d9_1_operating_health_review_check.py
 ```
 
-D9 starts only after `STAGING_VALIDATED` and production coordination. It keeps Portal feedback, order operations, Market response intelligence, and improvement backlog under human review. The kickoff check defines the first redacted D9 operating review session.
+D9 starts only after `STAGING_VALIDATED` and production coordination. It keeps Portal feedback, order operations, Market response intelligence, and improvement backlog under human review. The kickoff check defines the first redacted D9 operating review session; D9.1 defines the health review signals for readiness, manifest, auth rejection, CORS, customer-safe reads, and forbidden-field safety.
 
 Before committing D9 operating review records, run:
 
