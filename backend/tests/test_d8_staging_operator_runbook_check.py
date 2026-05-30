@@ -43,3 +43,26 @@ def test_d8_staging_operator_runbook_check_fails_for_token_assignment(monkeypatc
     output = capsys.readouterr().out
     assert "runbook avoids secret-like markers" in output
     assert "SERVICE_PORTAL_PARTNEROS_TOKEN=<non-placeholder>" in output
+
+
+def test_d8_staging_operator_runbook_check_fails_for_generic_api_key(
+    monkeypatch, tmp_path, capsys
+):
+    module = _load_module()
+    doc = tmp_path / "runbook.md"
+    doc.write_text(
+        "\n".join(
+            [
+                *module.REQUIRED_MARKERS,
+                *module.REQUIRED_BOUNDARIES,
+                "SERVICE_PORTAL_API_KEY=actual-secret-value",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "DOC", doc)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "runbook avoids secret-like markers" in output
+    assert "runbook.md" in output
