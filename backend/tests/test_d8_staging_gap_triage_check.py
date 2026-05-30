@@ -38,3 +38,21 @@ def test_d8_staging_gap_triage_check_flags_bad_gap_register(monkeypatch, tmp_pat
     output = capsys.readouterr().out
     assert "existing D8 gap registers are triage-ready" in output
     assert "Recommended action" in output
+
+
+def test_d8_staging_gap_triage_check_flags_generic_api_key(monkeypatch, tmp_path, capsys):
+    module = _load_module()
+    records = tmp_path / "records"
+    records.mkdir()
+    (records / "d8_strict_staging_gaps_20260530.md").write_text(
+        "| Check | Recommended action | Owner | Status |\n"
+        "|---|---|---|---|\n"
+        "| token | rotate SERVICE_PORTAL_API_KEY=actual-secret-value | TBD | open |\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "RECORDS_ROOT", records)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "existing D8 gap registers are triage-ready" in output
+    assert "d8_strict_staging_gaps_20260530.md:3" in output

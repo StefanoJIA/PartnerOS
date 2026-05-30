@@ -6,6 +6,11 @@ import json
 from pathlib import Path
 from typing import Any
 
+try:
+    from record_redaction import redaction_issues
+except ModuleNotFoundError:
+    from scripts.record_redaction import redaction_issues
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 RECORDS_ROOT = REPO_ROOT / "docs" / "records"
 DOC = REPO_ROOT / "docs" / "phase3" / "d8_staging_evidence_review.md"
@@ -117,6 +122,7 @@ def main() -> int:
     checks[1].pass_(f"{len(REQUIRED_DOC_MARKERS)} markers") if not missing else checks[1].fail(", ".join(missing))
 
     forbidden = [marker for marker in FORBIDDEN_MARKERS if marker in text]
+    forbidden.extend(redaction_issues(DOC, text, include_common_markers=False))
     checks[2].pass_("no secret-like markers") if not forbidden else checks[2].fail(", ".join(forbidden))
 
     state, detail = _evidence_state()

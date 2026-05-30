@@ -69,3 +69,19 @@ def test_d8_staging_evidence_review_rejects_unsafe_evidence(tmp_path, monkeypatc
     assert module.main() == 1
     output = capsys.readouterr().out
     assert "EVIDENCE_UNSAFE" in output
+
+
+def test_d8_staging_evidence_review_flags_generic_private_key_in_doc(monkeypatch, tmp_path, capsys):
+    module = _load_module()
+    doc = tmp_path / "review.md"
+    doc.write_text(
+        "\n".join([*module.REQUIRED_DOC_MARKERS, "SERVICE_PORTAL_PRIVATE_KEY=actual-secret-value"]),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "DOC", doc)
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "evidence review doc is redacted" in output
+    assert "review.md" in output

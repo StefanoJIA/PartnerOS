@@ -4,6 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+try:
+    from record_redaction import redaction_issues
+except ModuleNotFoundError:
+    from scripts.record_redaction import redaction_issues
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC = REPO_ROOT / "docs" / "phase3" / "d8_staging_gap_triage.md"
 RECORDS_ROOT = REPO_ROOT / "docs" / "records"
@@ -90,6 +95,7 @@ def _gap_issues(records: list[Path]) -> list[str]:
         for marker in FORBIDDEN_MARKERS:
             if marker.lower() in lowered:
                 issues.append(f"{path.name}:{marker}")
+        issues.extend(redaction_issues(path, text, include_common_markers=False))
     return issues
 
 
