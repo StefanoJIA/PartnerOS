@@ -4,7 +4,7 @@
 
 ## Purpose
 
-D9.1 is the first post-launch operating review track. It checks whether the PartnerOS backend and existing service portal bridge remain healthy after production coordination, without exposing tokens, raw API payloads, customer files, or deployment details.
+D9.1 is the first post-launch operating review track. It checks whether the PartnerOS backend and existing service portal bridge remain healthy after production coordination and evidence review, without exposing tokens, raw API payloads, customer files, or deployment details.
 
 It is a review loop, not a deployment or remediation mechanism.
 
