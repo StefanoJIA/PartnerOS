@@ -36,8 +36,8 @@ Phase 3 builds the **Customer Order** module and downstream production/shipment 
 | **D8.3** | Service Portal Staging | HTTP contract runner for service.intelli-opus.com integration | Contract runner implemented |
 | **D8.4** | Multi-Partner Operations Dashboard | read-only partner workload, supplier, production, shipment risk view | Implemented |
 | **D8.5** | Market Response Intelligence | feedback tags, win-loss signals, demand board, product gaps, advisory recommendations | Implemented |
-| **D8** | Deployment & Integration Hardening | CORS, HTTPS, token/storage safety, cloud readiness gate, record redaction gate, production coordination plan | Evidence workflow added |
-| **D9** | Post-Launch Operating Loop | production health review, order operations loop, market response loop, improvement backlog | Planned |
+| **D8** | Deployment & Integration Hardening | CORS, HTTPS, token/storage safety, cloud readiness gate, evidence review, production coordination plan | Evidence workflow added |
+| **D9** | Post-Launch Operating Loop | production health review, order operations loop, market response loop, improvement backlog after coordination evidence review | Planned |
 
 ---
 

@@ -71,6 +71,11 @@ REQUIRED_GRAPH_MARKERS = (
     "D85 --> D8",
     "D8 --> D9",
 )
+REQUIRED_GATE_MARKERS = (
+    "evidence review",
+    "production coordination plan",
+    "coordination evidence review",
+)
 
 
 class Check:
@@ -116,6 +121,7 @@ def main() -> int:
         Check("linked phase3 docs exist"),
         Check("roadmap dependency graph is continuous"),
         Check("roadmap preserves safety boundaries"),
+        Check("roadmap preserves D8/D9 gate language"),
     ]
 
     text = _roadmap_text()
@@ -140,6 +146,11 @@ def main() -> int:
     missing_safety = [marker for marker in REQUIRED_SAFETY_MARKERS if marker not in text]
     checks[5].pass_("manual-action boundaries") if not missing_safety else checks[5].fail(
         ", ".join(missing_safety)
+    )
+
+    missing_gates = [marker for marker in REQUIRED_GATE_MARKERS if marker not in text]
+    checks[6].pass_("production coordination and evidence review") if not missing_gates else checks[6].fail(
+        ", ".join(missing_gates)
     )
 
     print("Phase 3 Roadmap Check")
