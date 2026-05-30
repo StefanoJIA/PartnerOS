@@ -14,6 +14,7 @@ It does not deploy, route, notify, mutate orders, or modify `service.intelli-opu
 |---|---|---|
 | `WAITING_FOR_STAGING_VALIDATION` | Strict staging evidence is missing or failed | Do not start production coordination |
 | `STAGING_VALIDATED` | Latest strict staging evidence is PASS and records hygiene passed | Prepare Go / No-Go materials |
+| `BLOCKED_BY_EVIDENCE_REVIEW` | Readiness says staging passed, but evidence review does not report `READY_FOR_PRODUCTION_COORDINATION_REVIEW` | Return to evidence review or gap triage before Go / No-Go |
 | `READY_FOR_PRODUCTION_COORDINATION` | `python scripts/d8_production_coordination_check.py` confirms the local coordination gate | Share redacted evidence and plan with the portal/cloud operator |
 | `READY_FOR_PRODUCTION_GO_NO_GO` | Portal/cloud operator has reviewed the redacted package and target ownership | Hold the human Go / No-Go review outside PartnerOS automation |
 | `PRODUCTION_COORDINATION_PAUSED` | Any safety, evidence, routing, token, CORS, readiness, or forbidden-field concern appears | Pause and return to gap triage |
@@ -30,7 +31,7 @@ python scripts/d8_readiness_audit.py
 python scripts/d8_production_coordination_check.py
 ```
 
-Proceed only when readiness is `STAGING_VALIDATED` and coordination state is `READY_FOR_PRODUCTION_COORDINATION`.
+Proceed only when readiness is `STAGING_VALIDATED`, evidence review is `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, and coordination state is `READY_FOR_PRODUCTION_COORDINATION`.
 
 ## Go / No-Go Sequence
 
