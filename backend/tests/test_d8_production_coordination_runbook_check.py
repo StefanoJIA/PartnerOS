@@ -43,3 +43,26 @@ def test_d8_production_coordination_runbook_check_fails_for_token_assignment(mon
     output = capsys.readouterr().out
     assert "runbook avoids secret-like markers" in output
     assert "SERVICE_PORTAL_PARTNEROS_TOKEN=" in output
+
+
+def test_d8_production_coordination_runbook_check_fails_for_generic_private_key(
+    monkeypatch, tmp_path, capsys
+):
+    module = _load_module()
+    doc = tmp_path / "runbook.md"
+    doc.write_text(
+        "\n".join(
+            [
+                *module.REQUIRED_MARKERS,
+                *module.REQUIRED_BOUNDARIES,
+                "SERVICE_PORTAL_PRIVATE_KEY=actual-secret-value",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "DOC", doc)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "runbook avoids secret-like markers" in output
+    assert "runbook.md" in output
