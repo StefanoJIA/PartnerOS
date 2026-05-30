@@ -47,3 +47,16 @@ def test_staging_input_preflight_fails_for_unsafe_values(monkeypatch, capsys):
     assert module.main() == 1
     output = capsys.readouterr().out
     assert "INPUTS_UNSAFE" in output
+
+
+def test_staging_input_preflight_fails_for_short_non_default_token(monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setenv("BACKEND_BASE_URL", "https://partneros-staging.example.com")
+    monkeypatch.setenv("SERVICE_PORTAL_PARTNEROS_TOKEN", "short-secret")
+    monkeypatch.setenv("SERVICE_PORTAL_ORIGIN", "https://service.intelli-opus.com")
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "INPUTS_UNSAFE" in output
+    assert "shorter than 24 characters" in output
+    assert "short-secret" not in output

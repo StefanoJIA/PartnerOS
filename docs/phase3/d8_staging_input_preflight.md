@@ -21,8 +21,8 @@ python scripts/d8_staging_input_preflight_check.py
 | State | Meaning | Next action |
 |---|---|---|
 | `WAITING_FOR_PRIVATE_VALUES` | One or more required values are missing, but no unsafe provided value was found | Use [D8 Staging Access Request](d8_staging_access_request.md) |
-| `INPUTS_UNSAFE` | A provided value is unsafe, such as HTTP URL, placeholder token, or known default token | Fix private configuration before evidence |
-| `INPUTS_READY` | Required values are present, HTTPS, and non-default | Run strict staging evidence |
+| `INPUTS_UNSAFE` | A provided value is unsafe, such as HTTP URL, placeholder token, known default token, or token shorter than 24 characters | Fix private configuration before evidence |
+| `INPUTS_READY` | Required values are present, HTTPS, non-default, and token length is at least 24 characters | Run strict staging evidence |
 
 ## Safety Boundaries
 

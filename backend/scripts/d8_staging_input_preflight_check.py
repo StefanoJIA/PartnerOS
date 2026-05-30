@@ -13,6 +13,7 @@ UNSAFE_TOKENS = {
     "change-me",
     "d8-integration-hardening-local-token",
 }
+MIN_TOKEN_LENGTH = 24
 
 
 class Check:
@@ -57,7 +58,7 @@ def main() -> int:
         Check("BACKEND_BASE_URL provided"),
         Check("BACKEND_BASE_URL is HTTPS"),
         Check("SERVICE_PORTAL_PARTNEROS_TOKEN provided"),
-        Check("SERVICE_PORTAL_PARTNEROS_TOKEN is non-default"),
+        Check("SERVICE_PORTAL_PARTNEROS_TOKEN is non-default and long enough"),
         Check("SERVICE_PORTAL_ORIGIN provided"),
         Check("SERVICE_PORTAL_ORIGIN is HTTPS"),
     ]
@@ -77,10 +78,10 @@ def main() -> int:
     checks[2].pass_("provided") if token else checks[2].fail("missing")
     if not token:
         checks[3].pass_("waiting for SERVICE_PORTAL_PARTNEROS_TOKEN")
-    elif token not in UNSAFE_TOKENS:
+    elif token not in UNSAFE_TOKENS and len(token) >= MIN_TOKEN_LENGTH:
         checks[3].pass_(f"redacted={_redacted(token)}")
     else:
-        checks[3].fail("placeholder or known default")
+        checks[3].fail(f"placeholder, known default, or shorter than {MIN_TOKEN_LENGTH} characters")
 
     checks[4].pass_("provided") if origin else checks[4].fail("missing")
     if not origin:
