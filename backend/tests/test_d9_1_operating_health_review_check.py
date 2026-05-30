@@ -33,3 +33,17 @@ def test_d9_1_operating_health_review_check_flags_cookie(monkeypatch, tmp_path, 
     assert module.main() == 1
     output = capsys.readouterr().out
     assert "Cookie:" in output
+
+
+def test_d9_1_operating_health_review_check_flags_generic_secret(monkeypatch, tmp_path, capsys):
+    module = _load_module()
+    doc = tmp_path / "health.md"
+    doc.write_text(
+        "\n".join([*module.REQUIRED_MARKERS, "SERVICE_PORTAL_SECRET=actual-secret-value"]),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "DOC", doc)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "health.md" in output

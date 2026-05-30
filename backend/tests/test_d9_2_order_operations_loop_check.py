@@ -33,3 +33,17 @@ def test_d9_2_order_operations_loop_check_flags_raw_body(monkeypatch, tmp_path, 
     assert module.main() == 1
     output = capsys.readouterr().out
     assert "raw response body" in output
+
+
+def test_d9_2_order_operations_loop_check_flags_generic_private_key(monkeypatch, tmp_path, capsys):
+    module = _load_module()
+    doc = tmp_path / "orders.md"
+    doc.write_text(
+        "\n".join([*module.REQUIRED_MARKERS, "SERVICE_PORTAL_PRIVATE_KEY=actual-secret-value"]),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "DOC", doc)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "orders.md" in output

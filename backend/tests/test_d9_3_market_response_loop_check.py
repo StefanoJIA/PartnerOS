@@ -36,3 +36,17 @@ def test_d9_3_market_response_loop_check_flags_token(monkeypatch, tmp_path, caps
     assert module.main() == 1
     output = capsys.readouterr().out
     assert "SERVICE_PORTAL_PARTNEROS_TOKEN" in output
+
+
+def test_d9_3_market_response_loop_check_flags_generic_api_key(monkeypatch, tmp_path, capsys):
+    module = _load_module()
+    doc = tmp_path / "market.md"
+    doc.write_text(
+        "\n".join([*module.REQUIRED_MARKERS, "SERVICE_PORTAL_API_KEY=actual-secret-value"]),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "DOC", doc)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "market.md" in output

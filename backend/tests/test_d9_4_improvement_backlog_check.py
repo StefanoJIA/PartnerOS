@@ -33,3 +33,17 @@ def test_d9_4_improvement_backlog_check_flags_bearer(monkeypatch, tmp_path, caps
     assert module.main() == 1
     output = capsys.readouterr().out
     assert "Bearer" in output
+
+
+def test_d9_4_improvement_backlog_check_flags_generic_password(monkeypatch, tmp_path, capsys):
+    module = _load_module()
+    doc = tmp_path / "backlog.md"
+    doc.write_text(
+        "\n".join([*module.REQUIRED_MARKERS, "SERVICE_PORTAL_PASSWORD=actual-secret-value"]),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "DOC", doc)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "backlog.md" in output
