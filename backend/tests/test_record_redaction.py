@@ -54,3 +54,10 @@ def test_record_redaction_can_skip_common_markers_for_runbook_boundary_text():
         "record.md:local_data",
         "record.md:raw response body",
     ]
+
+
+def test_record_redaction_allows_plural_safety_statement():
+    module = _load_module()
+    text = "No tokens or raw response bodies included.\n"
+
+    assert module.redaction_issues(Path("record.md"), text) == []

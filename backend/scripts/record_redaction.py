@@ -10,7 +10,6 @@ COMMON_FORBIDDEN_MARKERS = (
     "local_data",
     "raw command output",
     "raw response body",
-    "response bodies",
     "internal_cost",
     "estimated_margin",
     "pricing_breakdown_json",
