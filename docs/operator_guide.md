@@ -426,6 +426,14 @@ python scripts/project_execution_chain_check.py
 
 This aggregates the IE Auto plan, Phase 3 roadmap, D8 matrix, readiness audit, production coordination, D9 plan, and D9 records checks.
 
+To preserve a redacted local planning report:
+
+```powershell
+python scripts/project_execution_chain_check.py --report-markdown ../docs/records/project_execution_chain_YYYYMMDD.md
+```
+
+The report records only gate names, pass/fail state, and one-line summaries.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate

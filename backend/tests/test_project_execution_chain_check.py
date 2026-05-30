@@ -46,3 +46,36 @@ def test_project_execution_chain_check_fails_when_any_gate_fails(monkeypatch, ca
     output = capsys.readouterr().out
     assert "LOCAL_EXECUTION_CHAIN_INCOMPLETE" in output
     assert "[FAIL] two" in output
+
+
+def test_project_execution_chain_check_writes_redacted_report(monkeypatch, tmp_path, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "CHAIN", (("one", "one.py"),))
+    monkeypatch.setattr(
+        module,
+        "_run_script",
+        lambda script: SimpleNamespace(returncode=0, stdout="Overall: READY_FOR_STAGING\nraw body ignored\n", stderr=""),
+    )
+    report = tmp_path / "project_execution_chain_20260530.md"
+
+    assert module.main(["--report-markdown", str(report)]) == 0
+    output = capsys.readouterr().out
+    text = report.read_text(encoding="utf-8")
+    assert "READY_FOR_STAGING_HANDOFF" in output
+    assert "Project Execution Chain Report" in text
+    assert "Overall: READY_FOR_STAGING" in text
+    assert "raw body ignored" not in text
+
+
+def test_project_execution_chain_check_rejects_backend_storage_report_path(monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "CHAIN", (("one", "one.py"),))
+    monkeypatch.setattr(
+        module,
+        "_run_script",
+        lambda script: SimpleNamespace(returncode=0, stdout="Result: PASS\n", stderr=""),
+    )
+
+    assert module.main(["--report-markdown", "storage/project_execution_chain.md"]) == 1
+    output = capsys.readouterr().out
+    assert "report output path" in output

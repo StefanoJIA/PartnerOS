@@ -31,6 +31,15 @@ cd backend
 python scripts/d8_staging_execution_pack_check.py
 ```
 
+For a redacted top-level execution-chain report:
+
+```powershell
+cd backend
+python scripts/project_execution_chain_check.py --report-markdown ../docs/records/project_execution_chain_YYYYMMDD.md
+```
+
+The report stores gate labels, status, and one-line summaries only. It does not store raw command output, response bodies, tokens, customer files, or backend storage paths.
+
 ## Result Meaning
 
 | Result | Meaning |

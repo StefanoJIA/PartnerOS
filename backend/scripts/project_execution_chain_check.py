@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import subprocess
 import sys
+from argparse import ArgumentParser
+from datetime import datetime, timezone
 from pathlib import Path
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = BACKEND_ROOT.parent
 
 CHAIN = (
     ("IE Auto project plan", "scripts/ie_auto_project_plan_check.py"),
@@ -38,6 +41,20 @@ class Check:
         suffix = f" ({self.detail})" if self.detail else ""
         return f"[{status}] {self.label}{suffix}"
 
+    def markdown_row(self) -> str:
+        status = "PASS" if self.ok else "FAIL"
+        detail = self.detail.replace("|", "\\|") or "n/a"
+        return f"| {self.label} | {status} | {detail} |"
+
+
+def _parse_args(argv: list[str] | None = None):
+    parser = ArgumentParser(description="Run the local project execution planning gate chain.")
+    parser.add_argument(
+        "--report-markdown",
+        help="Optional redacted Markdown report path, for example ../docs/records/project_execution_chain_YYYYMMDD.md. Relative paths are resolved from backend/.",
+    )
+    return parser.parse_args(argv or [])
+
 
 def _run_script(script: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
@@ -57,7 +74,55 @@ def _summary(output: str) -> str:
     return output.splitlines()[-1].strip() if output.splitlines() else "no output"
 
 
-def main() -> int:
+def _safe_output_path(raw: str) -> Path:
+    path = Path(raw)
+    if not path.is_absolute():
+        path = BACKEND_ROOT / path
+    resolved = path.resolve()
+    forbidden_roots = ((REPO_ROOT / "local_data").resolve(), (BACKEND_ROOT / "storage").resolve())
+    for root in forbidden_roots:
+        try:
+            resolved.relative_to(root)
+        except ValueError:
+            continue
+        raise ValueError("project execution report must not be under local_data or backend/storage")
+    return resolved
+
+
+def _write_report(raw_path: str | None, checks: list[Check], state: str) -> None:
+    if not raw_path:
+        return
+    path = _safe_output_path(raw_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    generated = datetime.now(timezone.utc).isoformat()
+    lines = [
+        "# Project Execution Chain Report",
+        "",
+        f"Generated at: {generated}",
+        f"State: `{state}`",
+        "",
+        "This report stores gate labels, pass/fail status, and redacted one-line summaries only. It does not store raw command output, response bodies, portal tokens, customer files, backend storage paths, or secrets.",
+        "",
+        "| Gate | Status | Summary |",
+        "|---|---|---|",
+    ]
+    lines.extend(check.markdown_row() for check in checks)
+    lines.extend(
+        [
+            "",
+            "## Boundaries",
+            "",
+            "- No staging or cloud endpoint is called by this aggregate gate.",
+            "- No email, webhook, carrier API, customer notification, supplier notification, order mutation, shipment mutation, payment action, nginx edit, or service portal deployment is performed.",
+            "- Run strict staging evidence separately with real environment values when the staging operator is ready.",
+            "",
+        ]
+    )
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
     checks: list[Check] = []
     for label, script in CHAIN:
         check = Check(label)
@@ -74,13 +139,21 @@ def main() -> int:
     for check in checks:
         print(check.line())
     passed = all(check.ok for check in checks)
+    state = "READY_FOR_STAGING_HANDOFF" if passed else "LOCAL_EXECUTION_CHAIN_INCOMPLETE"
+    try:
+        _write_report(args.report_markdown, checks, state)
+    except OSError as exc:
+        print(f"[FAIL] report output write ({str(exc)[:120]})")
+        passed = False
+        state = "LOCAL_EXECUTION_CHAIN_INCOMPLETE"
+    except ValueError as exc:
+        print(f"[FAIL] report output path ({exc})")
+        passed = False
+        state = "LOCAL_EXECUTION_CHAIN_INCOMPLETE"
     print(f"Result: {'PASS' if passed else 'FAIL'}")
-    if passed:
-        print("State: READY_FOR_STAGING_HANDOFF")
-    else:
-        print("State: LOCAL_EXECUTION_CHAIN_INCOMPLETE")
+    print(f"State: {state}")
     return 0 if passed else 1
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))
