@@ -38,6 +38,7 @@ The report stores gate labels, pass/fail status, and one-line summaries only. It
 | D8 staging handoff bundle | Confirms the operator-facing handoff manifest is complete and redacted |
 | D8 staging input preflight | Confirms provided staging inputs are missing-but-waiting or safe to use |
 | D8 staging access request | Confirms the private staging input request is complete and redacted |
+| D8 staging operator response intake | Confirms operator replies can be accepted without token values, raw payloads, or unsafe artifacts |
 | D8 staging gap triage | Confirms failed staging evidence has an owner/status/rerun loop |
 | D8 staging evidence review | Interprets saved strict staging evidence as waiting, production-coordination-ready, or requiring triage |
 | D8 production coordination | Keeps production coordination blocked until strict staging has validated |

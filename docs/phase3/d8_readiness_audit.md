@@ -35,6 +35,7 @@ The audit looks for:
 - D8 staging handoff bundle
 - D8 staging input preflight
 - D8 staging access request
+- D8 staging operator response intake
 - D8 staging gap triage runbook
 - safety invariants in the stage matrix
 - `scripts/d8_staging_records_check.py` result

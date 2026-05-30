@@ -30,6 +30,8 @@ DEPLOYED_COMMIT: <short-sha-or-release>
 TEST_DATA_SCOPE: TEST customer/order/product/resource/feedback fixtures only
 ```
 
+After the operator replies, validate the allowed response shape with [D8 Staging Operator Response Intake](d8_staging_operator_response_intake.md) and `python scripts/d8_staging_operator_response_intake_check.py`.
+
 ## Evidence Command
 
 ```powershell

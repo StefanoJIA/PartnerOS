@@ -396,6 +396,12 @@ If the real staging URL, portal token, portal origin, deployed commit, or TEST f
 python scripts/d8_staging_access_request_check.py
 ```
 
+When operations replies, use [D8 Staging Operator Response Intake](phase3/d8_staging_operator_response_intake.md) to keep token values, raw payloads, customer files, and unsafe artifacts out of the repo:
+
+```powershell
+python scripts/d8_staging_operator_response_intake_check.py
+```
+
 If strict staging evidence fails, use [D8 Staging Gap Triage](phase3/d8_staging_gap_triage.md) and verify the owner/status/rerun loop with:
 
 ```powershell

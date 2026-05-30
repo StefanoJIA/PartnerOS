@@ -131,6 +131,7 @@ flowchart TD
 - [D8 Staging Handoff Bundle](d8_staging_handoff_bundle.md)
 - [D8 Staging Input Preflight](d8_staging_input_preflight.md)
 - [D8 Staging Access Request](d8_staging_access_request.md)
+- [D8 Staging Operator Response Intake](d8_staging_operator_response_intake.md)
 - [D8 Staging Gap Triage](d8_staging_gap_triage.md)
 - [D8 Staging Records Policy](d8_staging_records_policy.md)
 - [D8 Staging Evidence Review](d8_staging_evidence_review.md)

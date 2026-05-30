@@ -22,6 +22,7 @@ REQUIRED_MARKERS = (
     "D8 Staging Handoff Bundle",
     "D8 Staging Input Preflight",
     "D8 Staging Access Request",
+    "D8 Staging Operator Response Intake",
     "D8 Staging Gap Triage",
     "D8 Staging Evidence Review",
     "D8 Production Coordination Plan",

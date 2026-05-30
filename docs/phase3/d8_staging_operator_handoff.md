@@ -25,6 +25,7 @@ The generated document includes:
 - staging handoff bundle check
 - staging input preflight check
 - staging access request check
+- staging operator response intake check
 - staging gap triage check
 - staging records redaction check
 - staging evidence review check

@@ -39,6 +39,7 @@ REQUIRED_DOC_LINKS = (
     "d8_staging_handoff_bundle.md",
     "d8_staging_input_preflight.md",
     "d8_staging_access_request.md",
+    "d8_staging_operator_response_intake.md",
     "d8_staging_gap_triage.md",
     "d8_staging_evidence_review.md",
     "d8_production_coordination_plan.md",

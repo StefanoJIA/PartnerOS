@@ -21,6 +21,7 @@ CHAIN = (
     ("D8 staging handoff bundle", "scripts/d8_staging_handoff_bundle_check.py"),
     ("D8 staging input preflight", "scripts/d8_staging_input_preflight_check.py"),
     ("D8 staging access request", "scripts/d8_staging_access_request_check.py"),
+    ("D8 staging operator response intake", "scripts/d8_staging_operator_response_intake_check.py"),
     ("D8 staging gap triage", "scripts/d8_staging_gap_triage_check.py"),
     ("D8 staging evidence review", "scripts/d8_staging_evidence_review_check.py"),
     ("D8 production coordination", "scripts/d8_production_coordination_check.py"),

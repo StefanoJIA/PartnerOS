@@ -98,6 +98,7 @@ python scripts/d8_local_staging_rehearsal_check.py
 python scripts/d8_staging_handoff_bundle_check.py
 python scripts/d8_staging_input_preflight_check.py
 python scripts/d8_staging_access_request_check.py
+python scripts/d8_staging_operator_response_intake_check.py
 python scripts/d8_staging_gap_triage_check.py
 python scripts/d8_staging_records_check.py
 python scripts/d8_staging_evidence_review_check.py

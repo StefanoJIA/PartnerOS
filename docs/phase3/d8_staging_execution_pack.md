@@ -17,6 +17,7 @@ It checks that the repository contains:
 - staging handoff bundle manifest and checker
 - staging input preflight checker
 - staging access request doc and checker
+- staging operator response intake runbook and checker
 - staging gap triage runbook and checker
 - staging records policy and redaction checker
 - staging evidence review gate

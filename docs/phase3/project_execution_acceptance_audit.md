@@ -18,6 +18,7 @@ This audit maps the current project-planning objective to concrete evidence. It 
 | Operator handoff bundle is defined | [D8 Staging Handoff Bundle](d8_staging_handoff_bundle.md), `python scripts/d8_staging_handoff_bundle_check.py` | PASS |
 | Private staging inputs can be preflighted locally | [D8 Staging Input Preflight](d8_staging_input_preflight.md), `python scripts/d8_staging_input_preflight_check.py` | `WAITING_FOR_PRIVATE_VALUES` until values arrive |
 | Private staging inputs are requested safely | [D8 Staging Access Request](d8_staging_access_request.md), `python scripts/d8_staging_access_request_check.py` | PASS |
+| Operator response intake is redaction-gated | [D8 Staging Operator Response Intake](d8_staging_operator_response_intake.md), `python scripts/d8_staging_operator_response_intake_check.py` | PASS |
 | Failed staging evidence has a triage loop | [D8 Staging Gap Triage](d8_staging_gap_triage.md), `python scripts/d8_staging_gap_triage_check.py` | PASS |
 | Staging records are canonical and redacted | [D8 Staging Records Policy](d8_staging_records_policy.md), `python scripts/d8_staging_records_check.py` | PASS |
 | Saved staging evidence has a review gate | [D8 Staging Evidence Review](d8_staging_evidence_review.md), `python scripts/d8_staging_evidence_review_check.py` | `WAITING_FOR_STAGING_EVIDENCE` until evidence arrives |

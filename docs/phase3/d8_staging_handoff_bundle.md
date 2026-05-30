@@ -15,6 +15,7 @@ This bundle is the exact local package to hand to the staging operator before re
 | [D8 Local Staging Rehearsal](d8_local_staging_rehearsal.md) | Optional local command-order rehearsal; not staging proof |
 | [D8 Staging Input Preflight](d8_staging_input_preflight.md) | Checks private staging values locally before strict evidence |
 | [D8 Staging Access Request](d8_staging_access_request.md) | Lists the private staging values required from operations |
+| [D8 Staging Operator Response Intake](d8_staging_operator_response_intake.md) | Defines what redacted operator response data the repo may accept |
 | [D8 Strict Staging / Cloud Validation](d8_strict_staging_cloud_validation.md) | Defines the evidence command and pass criteria |
 | [D8 Staging Gap Triage](d8_staging_gap_triage.md) | Defines the owner/status/rerun loop if evidence fails |
 | [D8 Staging Records Policy](d8_staging_records_policy.md) | Defines canonical record names and redaction rules |
@@ -31,6 +32,7 @@ python scripts/d8_staging_execution_pack_check.py
 python scripts/d8_local_staging_rehearsal_check.py
 python scripts/d8_staging_input_preflight_check.py
 python scripts/d8_staging_access_request_check.py
+python scripts/d8_staging_operator_response_intake_check.py
 python scripts/d8_staging_gap_triage_check.py
 python scripts/d8_staging_records_check.py
 python scripts/d8_staging_evidence_review_check.py
@@ -47,6 +49,8 @@ python scripts/d8_staging_records_check.py
 The generated handoff may be shared only after records check passes and the content contains no token values, raw response bodies, customer files, backend storage paths, or `local_data` references.
 
 When private staging values are available, run [D8 Staging Input Preflight](d8_staging_input_preflight.md) before the strict evidence command. `WAITING_FOR_PRIVATE_VALUES` is acceptable before credentials arrive; `INPUTS_UNSAFE` must be fixed before evidence.
+
+When operations replies, use [D8 Staging Operator Response Intake](d8_staging_operator_response_intake.md) to accept only redacted confirmation fields and canonical evidence artifact names.
 
 [D8 Local Staging Rehearsal](d8_local_staging_rehearsal.md) is optional for command-order practice against local `127.0.0.1:8014`. It is not staging proof and must not be committed as `STAGING_VALIDATED` evidence.
 
