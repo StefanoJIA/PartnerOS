@@ -376,6 +376,12 @@ Before sharing the staging package, use [D8 Staging Handoff Bundle](phase3/d8_st
 python scripts/d8_staging_handoff_bundle_check.py
 ```
 
+After private staging values are available, but before running strict evidence, run:
+
+```powershell
+python scripts/d8_staging_input_preflight_check.py
+```
+
 If the real staging URL, portal token, portal origin, deployed commit, or TEST fixture scope is not available yet, use [D8 Staging Access Request](phase3/d8_staging_access_request.md) and verify it with:
 
 ```powershell

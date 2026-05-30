@@ -10,6 +10,7 @@ DOC = REPO_ROOT / "docs" / "phase3" / "d8_staging_handoff_bundle.md"
 REQUIRED_LINKS = (
     "project_execution_chain_gate.md",
     "d8_staging_operator_handoff.md",
+    "d8_staging_input_preflight.md",
     "d8_staging_access_request.md",
     "d8_strict_staging_cloud_validation.md",
     "d8_staging_gap_triage.md",
@@ -20,6 +21,7 @@ REQUIRED_COMMANDS = (
     "python scripts/project_execution_status.py",
     "python scripts/project_execution_chain_check.py",
     "python scripts/d8_staging_execution_pack_check.py",
+    "python scripts/d8_staging_input_preflight_check.py",
     "python scripts/d8_staging_access_request_check.py",
     "python scripts/d8_staging_gap_triage_check.py",
     "python scripts/d8_staging_records_check.py",

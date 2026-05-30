@@ -15,6 +15,7 @@ This audit maps the current project-planning objective to concrete evidence. It 
 | Stage goals and next gaps are explicit | [D8 Delivery Stage Goal Matrix](d8_delivery_stage_goal_matrix.md), `python scripts/d8_stage_goal_matrix_check.py` | PASS |
 | Local D8 readiness is classified | [D8 Readiness Audit](d8_readiness_audit.md), `python scripts/d8_readiness_audit.py` | `READY_FOR_STAGING` |
 | Operator handoff bundle is defined | [D8 Staging Handoff Bundle](d8_staging_handoff_bundle.md), `python scripts/d8_staging_handoff_bundle_check.py` | PASS |
+| Private staging inputs can be preflighted locally | [D8 Staging Input Preflight](d8_staging_input_preflight.md), `python scripts/d8_staging_input_preflight_check.py` | `WAITING_FOR_PRIVATE_VALUES` until values arrive |
 | Private staging inputs are requested safely | [D8 Staging Access Request](d8_staging_access_request.md), `python scripts/d8_staging_access_request_check.py` | PASS |
 | Failed staging evidence has a triage loop | [D8 Staging Gap Triage](d8_staging_gap_triage.md), `python scripts/d8_staging_gap_triage_check.py` | PASS |
 | Staging records are canonical and redacted | [D8 Staging Records Policy](d8_staging_records_policy.md), `python scripts/d8_staging_records_check.py` | PASS |

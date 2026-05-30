@@ -35,6 +35,7 @@ The report stores gate labels, pass/fail status, and one-line summaries only. It
 | D8 stage goal matrix | Confirms stage artifacts, smoke commands, evidence state, and next gaps |
 | D8 readiness audit | Classifies local readiness and saved strict staging evidence |
 | D8 staging handoff bundle | Confirms the operator-facing handoff manifest is complete and redacted |
+| D8 staging input preflight | Confirms provided staging inputs are missing-but-waiting or safe to use |
 | D8 staging access request | Confirms the private staging input request is complete and redacted |
 | D8 staging gap triage | Confirms failed staging evidence has an owner/status/rerun loop |
 | D8 production coordination | Keeps production coordination blocked until strict staging has validated |

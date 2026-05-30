@@ -22,6 +22,7 @@ The generated document includes:
 - preflight commands
 - strict staging evidence command
 - staging handoff bundle check
+- staging input preflight check
 - staging access request check
 - staging gap triage check
 - staging records redaction check

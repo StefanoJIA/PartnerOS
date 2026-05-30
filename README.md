@@ -126,6 +126,7 @@ python scripts/d8_stage_goal_matrix_check.py  # D8 stage goal / artifact matrix
 python scripts/d8_readiness_audit.py  # D8 local/staging readiness status
 python scripts/d8_staging_operator_handoff.py  # D8 staging operator handoff markdown
 python scripts/d8_staging_handoff_bundle_check.py  # D8 staging operator bundle manifest check
+python scripts/d8_staging_input_preflight_check.py  # D8 local-only staging input safety check
 python scripts/d8_staging_access_request_check.py  # D8 staging private-input request check
 python scripts/d8_staging_gap_triage_check.py  # D8 failed-evidence triage loop check
 python scripts/d8_staging_execution_pack_check.py  # D8 staging handoff chain check

@@ -42,6 +42,8 @@ python scripts/d8_staging_records_check.py
 python scripts/d8_readiness_audit.py
 ```
 
+Before the evidence command, run `python scripts/d8_staging_input_preflight_check.py` to catch missing, placeholder, non-HTTPS, or known default input values without calling staging.
+
 ## Safety Boundaries
 
 - Do not commit `.env`, token values, cookies, raw headers, screenshots with secrets, customer files, uploads, `local_data`, or `backend/storage`.
