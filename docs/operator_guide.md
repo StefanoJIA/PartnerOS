@@ -5,7 +5,30 @@
 
 ## Daily Startup
 
-### Recommended — port 8010 (D5.11 default)
+### Recommended - port 8014 (D7.6+ validation default)
+
+Use `8014` for D7.6+ shipment/portal/staging validation and current D8 handoff checks:
+
+```powershell
+cd backend
+$env:BACKEND_BASE_URL="http://127.0.0.1:8014"
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8014
+```
+
+Align scripts and frontend proxy:
+
+```powershell
+$env:BACKEND_BASE_URL="http://127.0.0.1:8014"
+$env:VITE_API_PROXY_TARGET="http://127.0.0.1:8014"
+```
+
+Or set `frontend/.env.local` (gitignored):
+
+```env
+VITE_API_PROXY_TARGET=http://127.0.0.1:8014
+```
+
+### Legacy - port 8010 (D5/D6 local dev)
 
 ```powershell
 # Optional: set env in one shot
@@ -34,7 +57,7 @@ Or set `frontend/.env.local` (gitignored):
 VITE_API_PROXY_TARGET=http://127.0.0.1:8010
 ```
 
-**Do not run multiple uvicorn instances with different code versions.** If 8010 is occupied but `/health` fails, see [Runtime Startup Routine](#runtime-startup-routine).
+**Do not run multiple uvicorn instances with different code versions.** If 8014 or 8010 is occupied but `/health` fails, see [Runtime Startup Routine](#runtime-startup-routine).
 
 ### Legacy — port 8000
 
@@ -64,15 +87,16 @@ python scripts/dev_runtime_doctor.py
 ## Runtime Startup Routine
 
 1. 启动 Docker DB：`docker compose up -d db`
-2. 设置环境：`.\scripts\dev_env_8010.ps1`（或手动 `BACKEND_BASE_URL` / `VITE_API_PROXY_TARGET`）
-3. 启动 backend **8010**（单一实例，最新代码）
+2. Set `BACKEND_BASE_URL` / `VITE_API_PROXY_TARGET` to `http://127.0.0.1:8014` for D7.6+ and D8 validation.
+3. Start backend **8014** as a single instance on the latest code.
 4. 启动 frontend：`cd frontend; npm run dev`
 5. 运行 `python scripts/dev_runtime_doctor.py`
 6. 运行 `python scripts/smoke_all_d5.py`
 
-**Stale port 8010**（占用但 `/health` 失败）：
+**Stale port 8014 or 8010** (occupied but `/health` fails):
 
 ```powershell
+netstat -ano | findstr :8014
 netstat -ano | findstr :8010
 tasklist /FI "PID eq <PID>"
 Stop-Process -Id <PID> -Force

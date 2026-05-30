@@ -75,15 +75,31 @@ D6 implementation references:
 
 ## Quick Start
 
-### Port 8010 (recommended default — D5.11)
+### Port 8014 (D7.6+ validation default)
+
+Use `8014` for D7.6+ shipment/portal/staging validation and current D8 handoff checks:
 
 ```powershell
-# Terminal 1 — backend
+# Terminal 1 - backend
+cd backend
+$env:BACKEND_BASE_URL="http://127.0.0.1:8014"
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8014
+
+# Terminal 2 - frontend
+cd frontend
+$env:VITE_API_PROXY_TARGET="http://127.0.0.1:8014"
+npm run dev
+```
+
+### Port 8010 (legacy D5/D6 local dev)
+
+```powershell
+# Terminal 1 - backend
 .\scripts\dev_env_8010.ps1
 cd backend
 python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8010
 
-# Terminal 2 — frontend
+# Terminal 2 - frontend
 cd frontend
 npm run dev
 ```
@@ -92,7 +108,7 @@ npm run dev
 
 ```powershell
 cd backend
-$env:BACKEND_BASE_URL="http://127.0.0.1:8010"
+$env:BACKEND_BASE_URL="http://127.0.0.1:8014"
 python scripts/dev_runtime_doctor.py
 python scripts/smoke_all_d5.py
 python scripts/d5_16_real_lead_uat_check.py   # D5.16 real lead UAT (read-only)
