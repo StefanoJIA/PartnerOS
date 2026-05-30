@@ -418,6 +418,14 @@ python scripts/ie_auto_project_plan_check.py
 
 This keeps product positioning, partner neutrality, operating lifecycle, current state mapping, immediate staging brief, and D8/D9 references aligned with `docs/phase3/ie_auto_project_plan.md`.
 
+For a single local planning gate, run:
+
+```powershell
+python scripts/project_execution_chain_check.py
+```
+
+This aggregates the IE Auto plan, Phase 3 roadmap, D8 matrix, readiness audit, production coordination, D9 plan, and D9 records checks.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate

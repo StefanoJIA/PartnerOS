@@ -19,9 +19,10 @@ It checks that the repository contains:
 - D9 operating records redaction checker
 - Phase 3 roadmap consistency checker
 - IE Auto project plan consistency checker
+- project execution chain checker
 - matching phase 3 docs
 
-It also runs the staging records checker, production coordination checker, D9 plan checker, D9 records checker, Phase 3 roadmap checker, and IE Auto project plan checker, generates a temporary handoff, and checks that the handoff includes required environment variables, preflight commands, evidence/gap artifact commands, and safety boundaries.
+It also runs the staging records checker, production coordination checker, D9 plan checker, D9 records checker, Phase 3 roadmap checker, IE Auto project plan checker, and project execution chain checker, generates a temporary handoff, and checks that the handoff includes required environment variables, preflight commands, evidence/gap artifact commands, and safety boundaries.
 
 ## Command
 

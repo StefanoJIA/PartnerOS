@@ -30,6 +30,7 @@ This matrix turns the D7.9-D8 work into a compact execution and evidence map. It
 | D9 Operating Records Policy | Keep post-launch operating records canonical and redacted | `docs/phase3/d9_operating_records_policy.md` | `python scripts/d9_operating_records_check.py` | Planned | Run before committing D9 operating records |
 | Phase 3 Roadmap Check | Keep the D7-D9 roadmap, dependency graph, docs, and safety principles aligned | `docs/phase3/phase3_roadmap.md` | `python scripts/phase3_roadmap_check.py` | Added | Run after stage/doc changes |
 | IE Auto Project Plan Check | Keep the source-derived project plan aligned with current D7-D9 execution gates | `docs/phase3/ie_auto_project_plan.md` | `python scripts/ie_auto_project_plan_check.py` | Added | Run after project-plan or stage changes |
+| Project Execution Chain Check | Run the local planning and staging-readiness gate chain from one entry point | `backend/scripts/project_execution_chain_check.py` | `python scripts/project_execution_chain_check.py` | Added | Use as the top-level local plan gate |
 
 ## Safety Invariants
 
