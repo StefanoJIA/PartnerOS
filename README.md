@@ -134,6 +134,7 @@ python scripts/d9_operating_records_check.py  # D9 operating record naming/redac
 python scripts/phase3_roadmap_check.py  # Phase 3 D7-D9 roadmap consistency
 python scripts/ie_auto_project_plan_check.py  # IE Auto source-plan consistency
 python scripts/project_execution_chain_check.py  # local project execution gate chain
+python scripts/project_execution_status.py  # local current stage / next action summary
 python scripts/project_execution_chain_check.py --report-markdown ../docs/records/project_execution_chain_YYYYMMDD.md  # redacted local planning report
 python scripts/project_execution_records_check.py  # project execution report naming/redaction check
 python scripts/d7_4_partner_supplier_check.py   # D7.4 partner split & supplier confirmation smoke

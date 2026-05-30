@@ -102,6 +102,7 @@ python scripts/d9_operating_records_check.py
 python scripts/phase3_roadmap_check.py
 python scripts/ie_auto_project_plan_check.py
 python scripts/project_execution_chain_check.py
+python scripts/project_execution_status.py
 python scripts/project_execution_records_check.py
 ```
 

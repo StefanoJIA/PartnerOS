@@ -13,6 +13,7 @@ It is intentionally local and read-only. It does not call staging, read `.env`, 
 ```powershell
 cd backend
 python scripts/project_execution_chain_check.py
+python scripts/project_execution_status.py
 ```
 
 For a redacted handoff report:
@@ -38,6 +39,8 @@ The report stores gate labels, pass/fail status, and one-line summaries only. It
 | D9 post-launch plan | Confirms post-launch loop remains planned behind D8 validation |
 | D9 operating records | Confirms D9 record naming and redaction policy |
 | Project execution records | Confirms generated execution reports are canonical and redacted |
+
+`project_execution_status.py` is a companion summary, not a replacement gate. It reads the project execution chain, D8 readiness audit, and D8 production coordination check, then prints the current stage and next action.
 
 ## States
 

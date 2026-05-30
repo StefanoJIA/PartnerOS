@@ -29,6 +29,7 @@ The generated document includes:
 - Phase 3 roadmap consistency check
 - IE Auto project plan consistency check
 - project execution chain check
+- project execution status summary
 - project execution records check
 - expected evidence/gap artifacts
 - safety boundaries
