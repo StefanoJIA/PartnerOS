@@ -12,6 +12,7 @@ This plan defines the narrow production coordination path after D8 strict stagin
 |---|---|
 | Local D8 package | `python scripts/d8_staging_execution_pack_check.py` passes |
 | Records hygiene | `python scripts/d8_staging_records_check.py` passes |
+| Evidence review | `python scripts/d8_staging_evidence_review_check.py` reports `READY_FOR_PRODUCTION_COORDINATION_REVIEW` |
 | Staging evidence | `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED` |
 | Gap register | No open D8 strict staging gap register remains for the latest evidence run |
 
@@ -27,12 +28,13 @@ This plan defines the narrow production coordination path after D8 strict stagin
 ## Coordination Steps
 
 1. Generate the final operator handoff with `python scripts/d8_staging_operator_handoff.py`.
-2. Confirm `python scripts/d8_readiness_audit.py` returns `STAGING_VALIDATED`.
-3. Share only redacted evidence and the production coordination plan with the portal/cloud operator.
-4. The portal/cloud operator coordinates any production routing outside this repository.
-5. Re-run strict evidence against the production-like endpoint only after the operator confirms the target and token.
-6. Record the final PASS/FAIL evidence under `docs/records` using canonical names.
-7. After production coordination succeeds, use [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md) to monitor operating health, order operations, feedback, market response, and improvement backlog.
+2. Confirm `python scripts/d8_staging_evidence_review_check.py` reports `READY_FOR_PRODUCTION_COORDINATION_REVIEW`.
+3. Confirm `python scripts/d8_readiness_audit.py` returns `STAGING_VALIDATED`.
+4. Share only redacted evidence and the production coordination plan with the portal/cloud operator.
+5. The portal/cloud operator coordinates any production routing outside this repository.
+6. Re-run strict evidence against the production-like endpoint only after the operator confirms the target and token.
+7. Record the final PASS/FAIL evidence under `docs/records` using canonical names.
+8. After production coordination succeeds, use [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md) to monitor operating health, order operations, feedback, market response, and improvement backlog.
 
 ## Rollback
 

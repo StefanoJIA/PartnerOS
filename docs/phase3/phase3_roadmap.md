@@ -133,6 +133,7 @@ flowchart TD
 - [D8 Staging Access Request](d8_staging_access_request.md)
 - [D8 Staging Gap Triage](d8_staging_gap_triage.md)
 - [D8 Staging Records Policy](d8_staging_records_policy.md)
+- [D8 Staging Evidence Review](d8_staging_evidence_review.md)
 - [D8 Production Coordination Plan](d8_production_coordination_plan.md)
 - [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md)
 - [D9 Operating Records Policy](d9_operating_records_policy.md)

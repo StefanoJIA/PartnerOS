@@ -18,6 +18,7 @@ This bundle is the exact local package to hand to the staging operator before re
 | [D8 Strict Staging / Cloud Validation](d8_strict_staging_cloud_validation.md) | Defines the evidence command and pass criteria |
 | [D8 Staging Gap Triage](d8_staging_gap_triage.md) | Defines the owner/status/rerun loop if evidence fails |
 | [D8 Staging Records Policy](d8_staging_records_policy.md) | Defines canonical record names and redaction rules |
+| [D8 Staging Evidence Review](d8_staging_evidence_review.md) | Defines how to interpret saved PASS/FAIL evidence before production coordination |
 | [D8 Production Coordination Plan](d8_production_coordination_plan.md) | Defines the path after `STAGING_VALIDATED` |
 
 ## Preflight Commands
@@ -32,6 +33,7 @@ python scripts/d8_staging_input_preflight_check.py
 python scripts/d8_staging_access_request_check.py
 python scripts/d8_staging_gap_triage_check.py
 python scripts/d8_staging_records_check.py
+python scripts/d8_staging_evidence_review_check.py
 ```
 
 ## Generated Handoff
@@ -57,6 +59,7 @@ $env:SERVICE_PORTAL_PARTNEROS_TOKEN="<portal-server-token>"
 $env:SERVICE_PORTAL_ORIGIN="https://service.intelli-opus.com"
 python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/records/d8_strict_staging_evidence_YYYYMMDD.json --gap-markdown ../docs/records/d8_strict_staging_gaps_YYYYMMDD.md
 python scripts/d8_staging_records_check.py
+python scripts/d8_staging_evidence_review_check.py
 python scripts/d8_readiness_audit.py
 ```
 

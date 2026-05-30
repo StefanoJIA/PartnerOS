@@ -38,6 +38,7 @@ The audit looks for:
 - D8 staging gap triage runbook
 - safety invariants in the stage matrix
 - `scripts/d8_staging_records_check.py` result
+- D8 staging evidence review artifact
 - production coordination plan artifact
 - D9 post-launch operating loop plan artifact
 - D9 operating records policy artifact

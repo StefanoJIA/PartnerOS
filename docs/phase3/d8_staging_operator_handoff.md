@@ -27,6 +27,7 @@ The generated document includes:
 - staging access request check
 - staging gap triage check
 - staging records redaction check
+- staging evidence review check
 - production coordination state check
 - D9 post-launch plan check
 - D9 operating records redaction check

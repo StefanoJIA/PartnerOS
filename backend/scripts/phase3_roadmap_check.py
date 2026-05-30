@@ -40,6 +40,7 @@ REQUIRED_DOC_LINKS = (
     "d8_staging_input_preflight.md",
     "d8_staging_access_request.md",
     "d8_staging_gap_triage.md",
+    "d8_staging_evidence_review.md",
     "d8_production_coordination_plan.md",
     "d9_post_launch_operating_loop.md",
     "d9_operating_records_policy.md",

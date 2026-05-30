@@ -41,6 +41,7 @@ REQUIRED_STATE_ROWS = (
     "D8 Staging Input Preflight",
     "D8 Staging Access Request",
     "D8 Staging Gap Triage",
+    "D8 Staging Evidence Review",
     "Project Execution Chain Gate",
     "Project Execution Acceptance Audit",
 )
@@ -57,6 +58,7 @@ REQUIRED_ORDER_MARKERS = (
     "D8 staging input preflight (added)",
     "D8 staging access request (added)",
     "D8 staging gap triage (added)",
+    "D8 staging evidence review (added)",
     "project execution chain gate (added)",
     "project execution acceptance audit (added)",
 )
@@ -89,6 +91,7 @@ REQUIRED_LINKED_DOCS = (
     "docs/phase3/d8_staging_access_request.md",
     "docs/phase3/d8_staging_gap_triage.md",
     "docs/phase3/d8_staging_records_policy.md",
+    "docs/phase3/d8_staging_evidence_review.md",
     "docs/phase3/d8_production_coordination_plan.md",
     "docs/phase3/d9_post_launch_operating_loop.md",
     "docs/phase3/d9_operating_records_policy.md",

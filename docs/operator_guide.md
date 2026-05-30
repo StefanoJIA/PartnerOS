@@ -410,6 +410,14 @@ python scripts/d8_staging_records_check.py
 
 Keep D8 staging artifacts under canonical `docs/records/d8_*_YYYYMMDD` names. The record gate verifies redaction metadata, token placeholders, strict evidence schema, and matching gap registers for failed evidence.
 
+After records pass, review the saved evidence state with:
+
+```powershell
+python scripts/d8_staging_evidence_review_check.py
+```
+
+This reports `WAITING_FOR_STAGING_EVIDENCE`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, or `STAGING_GAPS_REQUIRE_TRIAGE`. It is a review gate only; it does not call staging or authorize deployment.
+
 After `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED`, run:
 
 ```powershell
@@ -456,7 +464,7 @@ For a single local planning gate, run:
 python scripts/project_execution_chain_check.py
 ```
 
-This aggregates the IE Auto plan, Phase 3 roadmap, D8 matrix, readiness audit, local staging rehearsal, production coordination, D9 plan, and D9 records checks.
+This aggregates the IE Auto plan, Phase 3 roadmap, D8 matrix, readiness audit, local staging rehearsal, evidence review, production coordination, D9 plan, and D9 records checks.
 See [Project Execution Chain Gate](phase3/project_execution_chain_gate.md) for the state meanings and safety boundaries.
 
 For a concise current-stage summary:

@@ -23,6 +23,7 @@ REQUIRED_MARKERS = (
     "D8 Staging Input Preflight",
     "D8 Staging Access Request",
     "D8 Staging Gap Triage",
+    "D8 Staging Evidence Review",
     "D8 Production Coordination Plan",
     "D9 Post-Launch Operating Loop",
     "Project Execution Chain Gate",

@@ -100,6 +100,7 @@ python scripts/d8_staging_input_preflight_check.py
 python scripts/d8_staging_access_request_check.py
 python scripts/d8_staging_gap_triage_check.py
 python scripts/d8_staging_records_check.py
+python scripts/d8_staging_evidence_review_check.py
 python scripts/d8_production_coordination_check.py
 python scripts/d9_post_launch_plan_check.py
 python scripts/d9_operating_records_check.py
