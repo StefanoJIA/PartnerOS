@@ -10,6 +10,7 @@ This bundle is the exact local package to hand to the staging operator before re
 
 | Artifact | Purpose |
 |---|---|
+| [Operator Guide](../operator_guide.md) | Operator-facing guide for D8/D9 handoff gates and manual-only safety boundaries |
 | [Project Execution Chain Gate](project_execution_chain_gate.md) | Explains the aggregate local gate and `READY_FOR_STAGING_HANDOFF` state |
 | [D8 Staging Operator Handoff](d8_staging_operator_handoff.md) | Explains how to generate the dated operator handoff |
 | [D8 Local Staging Rehearsal](d8_local_staging_rehearsal.md) | Optional local command-order rehearsal; not staging proof |
@@ -30,6 +31,7 @@ This bundle is the exact local package to hand to the staging operator before re
 cd backend
 python scripts/project_execution_status.py
 python scripts/project_execution_chain_check.py
+python scripts/operator_guide_check.py
 python scripts/d8_staging_execution_pack_check.py
 python scripts/d8_staging_operator_runbook_check.py
 python scripts/d8_local_staging_rehearsal_check.py

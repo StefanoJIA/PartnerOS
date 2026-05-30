@@ -13,6 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC = REPO_ROOT / "docs" / "phase3" / "d8_staging_handoff_bundle.md"
 
 REQUIRED_LINKS = (
+    "../operator_guide.md",
     "project_execution_chain_gate.md",
     "d8_staging_operator_handoff.md",
     "d8_local_staging_rehearsal.md",
@@ -30,6 +31,7 @@ REQUIRED_LINKS = (
 REQUIRED_COMMANDS = (
     "python scripts/project_execution_status.py",
     "python scripts/project_execution_chain_check.py",
+    "python scripts/operator_guide_check.py",
     "python scripts/d8_staging_execution_pack_check.py",
     "python scripts/d8_staging_operator_runbook_check.py",
     "python scripts/d8_local_staging_rehearsal_check.py",
@@ -46,6 +48,7 @@ REQUIRED_COMMANDS = (
 )
 REQUIRED_MARKERS = (
     "READY_FOR_STAGING_HANDOFF",
+    "Operator Guide",
     "STAGING_VALIDATED",
     "BACKEND_BASE_URL",
     "SERVICE_PORTAL_PARTNEROS_TOKEN",

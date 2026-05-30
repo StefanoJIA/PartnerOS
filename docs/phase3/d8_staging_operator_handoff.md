@@ -34,6 +34,7 @@ The generated document includes:
 - D9 operating records redaction check
 - Phase 3 roadmap consistency check
 - IE Auto project plan consistency check
+- operator guide handoff gate check
 - project execution chain check
 - project execution status summary
 - project execution acceptance audit

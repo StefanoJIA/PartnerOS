@@ -108,6 +108,7 @@ Run the PartnerOS D8 strict staging evidence flow against the real deployed stag
 
 | Runbook | When to use |
 |---|---|
+| `docs/operator_guide.md` | Review the operator-facing D8/D9 handoff gates and manual-only safety boundaries |
 | `docs/phase3/d8_staging_handoff_bundle.md` | Confirm the operator-facing package, commands, evidence command, and exclusions |
 | `docs/phase3/d8_staging_operator_runbook.md` | Execute the sequence from `READY_FOR_STAGING_HANDOFF` through input preflight, strict evidence, records review, and next state |
 | `docs/phase3/d8_production_coordination_runbook.md` | Use only after `STAGING_VALIDATED` for the human Go / No-Go and rollback handoff |
@@ -140,6 +141,7 @@ python scripts/d9_4_improvement_backlog_check.py
 python scripts/d9_operating_records_check.py
 python scripts/phase3_roadmap_check.py
 python scripts/ie_auto_project_plan_check.py
+python scripts/operator_guide_check.py
 python scripts/project_execution_chain_check.py
 python scripts/project_execution_status.py
 python scripts/project_execution_acceptance_audit_check.py
