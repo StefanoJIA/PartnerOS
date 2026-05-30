@@ -47,6 +47,7 @@ REQUIRED_SCRIPTS = (
     "backend/scripts/phase3_roadmap_check.py",
     "backend/scripts/ie_auto_project_plan_check.py",
     "backend/scripts/project_execution_chain_check.py",
+    "backend/scripts/project_execution_records_check.py",
 )
 REQUIRED_MATRIX_MARKERS = (
     "D7.9 Resource Center",
@@ -67,6 +68,7 @@ REQUIRED_MATRIX_MARKERS = (
     "Phase 3 Roadmap Check",
     "IE Auto Project Plan Check",
     "Project Execution Chain Check",
+    "Project Execution Records Check",
     "--evidence-json",
     "--gap-markdown",
     "No automatic customer or supplier notification",

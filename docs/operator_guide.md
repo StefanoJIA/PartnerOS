@@ -434,6 +434,12 @@ python scripts/project_execution_chain_check.py --report-markdown ../docs/record
 
 The report records only gate names, pass/fail state, and one-line summaries.
 
+Before committing generated project execution reports, run:
+
+```powershell
+python scripts/project_execution_records_check.py
+```
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate

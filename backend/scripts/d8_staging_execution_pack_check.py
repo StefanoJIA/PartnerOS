@@ -23,6 +23,7 @@ REQUIRED_FILES = (
     "backend/scripts/phase3_roadmap_check.py",
     "backend/scripts/ie_auto_project_plan_check.py",
     "backend/scripts/project_execution_chain_check.py",
+    "backend/scripts/project_execution_records_check.py",
     "docs/phase3/d8_readiness_audit.md",
     "docs/phase3/d8_delivery_stage_goal_matrix.md",
     "docs/phase3/d8_strict_staging_cloud_validation.md",
@@ -48,6 +49,7 @@ HANDOFF_MARKERS = (
     "python scripts/phase3_roadmap_check.py",
     "python scripts/ie_auto_project_plan_check.py",
     "python scripts/project_execution_chain_check.py",
+    "python scripts/project_execution_records_check.py",
     "--evidence-json",
     "--gap-markdown",
     "Do not deploy or modify `service.intelli-opus.com`",
@@ -110,6 +112,7 @@ def main() -> int:
         Check("Phase 3 roadmap check runs"),
         Check("IE Auto project plan check runs"),
         Check("project execution chain check runs"),
+        Check("project execution records check runs"),
         Check("handoff generator runs"),
         Check("handoff contains required commands and safety markers"),
     ]
@@ -171,17 +174,23 @@ def main() -> int:
     else:
         checks[9].fail((execution_chain.stdout + execution_chain.stderr)[:160])
 
+    execution_records = _run_script("scripts/project_execution_records_check.py")
+    if execution_records.returncode == 0 and "Result: PASS" in execution_records.stdout:
+        checks[10].pass_("PASS")
+    else:
+        checks[10].fail((execution_records.stdout + execution_records.stderr)[:160])
+
     handoff_code, handoff_text, handoff_output = _generate_handoff()
     if handoff_code == 0 and handoff_text:
-        checks[10].pass_("generated")
+        checks[11].pass_("generated")
     else:
-        checks[10].fail(handoff_output[:160])
+        checks[11].fail(handoff_output[:160])
 
     missing_markers = [marker for marker in HANDOFF_MARKERS if marker not in handoff_text]
     if not missing_markers:
-        checks[11].pass_("commands and safety boundaries")
+        checks[12].pass_("commands and safety boundaries")
     else:
-        checks[11].fail(", ".join(missing_markers))
+        checks[12].fail(", ".join(missing_markers))
 
     print("D8 Staging Execution Pack Check")
     for check in checks:

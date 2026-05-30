@@ -20,6 +20,7 @@ It checks that the repository contains:
 - Phase 3 roadmap consistency checker
 - IE Auto project plan consistency checker
 - project execution chain checker
+- project execution records checker
 - matching phase 3 docs
 
 It also runs the staging records checker, production coordination checker, D9 plan checker, D9 records checker, Phase 3 roadmap checker, IE Auto project plan checker, and project execution chain checker, generates a temporary handoff, and checks that the handoff includes required environment variables, preflight commands, evidence/gap artifact commands, and safety boundaries.
@@ -38,7 +39,7 @@ cd backend
 python scripts/project_execution_chain_check.py --report-markdown ../docs/records/project_execution_chain_YYYYMMDD.md
 ```
 
-The report stores gate labels, status, and one-line summaries only. It does not store raw command output, response bodies, tokens, customer files, or backend storage paths.
+The report stores gate labels, status, and one-line summaries only. It does not store raw command output, response bodies, tokens, customer files, or backend storage paths. Before committing generated reports, run `python scripts/project_execution_records_check.py`.
 
 ## Result Meaning
 

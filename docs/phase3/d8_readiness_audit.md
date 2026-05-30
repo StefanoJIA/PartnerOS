@@ -39,6 +39,7 @@ The audit looks for:
 - Phase 3 roadmap artifact
 - IE Auto project plan artifact
 - project execution chain artifact
+- project execution records checker
 - optional `docs/records/d8_strict_staging_evidence_*.json`
 - optional paired `docs/records/d8_strict_staging_gaps_*.md`
 
