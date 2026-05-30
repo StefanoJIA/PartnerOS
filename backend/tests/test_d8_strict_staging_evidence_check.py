@@ -73,6 +73,28 @@ def test_strict_staging_evidence_rejects_local_data_output_path():
         module._safe_evidence_path("../local_data/d8_strict_staging_evidence_20260530.json")
 
 
+def test_strict_staging_evidence_rejects_noncanonical_evidence_name(tmp_path):
+    module = _load_module()
+
+    with pytest.raises(ValueError, match="d8_strict_staging_evidence_YYYYMMDD.json"):
+        module._safe_evidence_path(str(tmp_path / "d8_strict_staging_evidence_latest.json"))
+
+
+def test_strict_staging_evidence_rejects_noncanonical_gap_name(tmp_path):
+    module = _load_module()
+
+    with pytest.raises(ValueError, match="d8_strict_staging_gaps_YYYYMMDD.md"):
+        module._safe_output_path(str(tmp_path / "d8_strict_staging_gaps_latest.md"))
+
+
+def test_strict_staging_evidence_accepts_canonical_gap_name(tmp_path):
+    module = _load_module()
+
+    assert module._safe_output_path(str(tmp_path / "d8_strict_staging_gaps_20260530.md")).name == (
+        "d8_strict_staging_gaps_20260530.md"
+    )
+
+
 def test_strict_staging_evidence_fails_for_short_token_without_printing_it(
     tmp_path, monkeypatch, capsys
 ):

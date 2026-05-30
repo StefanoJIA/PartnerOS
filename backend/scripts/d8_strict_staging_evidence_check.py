@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from argparse import ArgumentParser
 from datetime import datetime, timezone
@@ -38,6 +39,8 @@ FORBIDDEN = (
     "database_url",
 )
 UNSAFE_TOKENS = {"", "test-portal-token", "dev-portal-token", "change-me", "d8-integration-hardening-local-token"}
+EVIDENCE_NAME_PATTERN = re.compile(r"^d8_strict_staging_evidence_\d{8}\.json$")
+GAP_NAME_PATTERN = re.compile(r"^d8_strict_staging_gaps_\d{8}\.md$")
 
 
 class Check:
@@ -164,11 +167,27 @@ def _safe_evidence_path(raw: str) -> Path:
         except ValueError:
             continue
         raise ValueError("evidence path must not be under local_data or backend/storage")
+    if not EVIDENCE_NAME_PATTERN.match(resolved.name):
+        raise ValueError("evidence JSON must be named d8_strict_staging_evidence_YYYYMMDD.json")
     return resolved
 
 
 def _safe_output_path(raw: str) -> Path:
-    return _safe_evidence_path(raw)
+    path = Path(raw)
+    if not path.is_absolute():
+        path = BACKEND_ROOT / path
+    resolved = path.resolve()
+    repo_root = BACKEND_ROOT.parent.resolve()
+    forbidden_roots = ((repo_root / "local_data").resolve(), (BACKEND_ROOT / "storage").resolve())
+    for root in forbidden_roots:
+        try:
+            resolved.relative_to(root)
+        except ValueError:
+            continue
+        raise ValueError("gap register path must not be under local_data or backend/storage")
+    if not GAP_NAME_PATTERN.match(resolved.name):
+        raise ValueError("gap register must be named d8_strict_staging_gaps_YYYYMMDD.md")
+    return resolved
 
 
 def _recommended_action(check: Check) -> str:
