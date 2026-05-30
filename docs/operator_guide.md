@@ -386,6 +386,14 @@ python scripts/d8_production_coordination_check.py
 
 This check keeps production coordination separate from deployment. It confirms the Go / No-Go plan, rollback boundary, redacted evidence policy, and the rule that PartnerOS does not modify `service.intelli-opus.com`, nginx, notifications, carrier APIs, or business statuses from this repository.
 
+The next planned operating loop is D9:
+
+```powershell
+python scripts/d9_post_launch_plan_check.py
+```
+
+D9 starts only after `STAGING_VALIDATED` and production coordination. It keeps Portal feedback, order operations, Market response intelligence, and improvement backlog under human review.
+
 ## D7.1 Order Design Review
 
 ## D6.6 Quote-to-Order Readiness Gate

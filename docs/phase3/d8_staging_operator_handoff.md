@@ -23,6 +23,7 @@ The generated document includes:
 - strict staging evidence command
 - staging records redaction check
 - production coordination state check
+- D9 post-launch plan check
 - expected evidence/gap artifacts
 - safety boundaries
 

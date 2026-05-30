@@ -48,7 +48,7 @@
 
 **D8 strict staging/cloud validation evidence workflow** is implemented. Next: run it with real staging environment values.
 
-Current D8 docs: [D8 Production Coordination Plan](docs/phase3/d8_production_coordination_plan.md), [D8 Staging Records Policy](docs/phase3/d8_staging_records_policy.md), [D8 Staging Execution Pack](docs/phase3/d8_staging_execution_pack.md), [D8 Staging Operator Handoff](docs/phase3/d8_staging_operator_handoff.md), [D8 Readiness Audit](docs/phase3/d8_readiness_audit.md), [D8 Delivery Stage Goal Matrix](docs/phase3/d8_delivery_stage_goal_matrix.md), [D8 Strict Staging / Cloud Validation](docs/phase3/d8_strict_staging_cloud_validation.md), [D8 Integration Hardening](docs/phase3/d8_integration_hardening.md), [D8.5 Market Response Intelligence](docs/phase3/d8_5_market_response_intelligence.md), and [D8.4 Multi-Partner Operations Dashboard](docs/phase3/d8_4_multi_partner_operations_dashboard.md).
+Current D8/D9 docs: [D9 Post-Launch Operating Loop](docs/phase3/d9_post_launch_operating_loop.md), [D8 Production Coordination Plan](docs/phase3/d8_production_coordination_plan.md), [D8 Staging Records Policy](docs/phase3/d8_staging_records_policy.md), [D8 Staging Execution Pack](docs/phase3/d8_staging_execution_pack.md), [D8 Staging Operator Handoff](docs/phase3/d8_staging_operator_handoff.md), [D8 Readiness Audit](docs/phase3/d8_readiness_audit.md), [D8 Delivery Stage Goal Matrix](docs/phase3/d8_delivery_stage_goal_matrix.md), [D8 Strict Staging / Cloud Validation](docs/phase3/d8_strict_staging_cloud_validation.md), [D8 Integration Hardening](docs/phase3/d8_integration_hardening.md), [D8.5 Market Response Intelligence](docs/phase3/d8_5_market_response_intelligence.md), and [D8.4 Multi-Partner Operations Dashboard](docs/phase3/d8_4_multi_partner_operations_dashboard.md).
 
 See [D7.9 Resource Center](docs/phase3/d7_9_resource_center.md) · [IE Auto Project Plan](docs/phase3/ie_auto_project_plan.md) · [D7.8 Service Portal Integration UAT](docs/phase3/d7_8_service_portal_integration_uat.md) · [Service Portal API Contract](docs/phase3/service_portal_api_contract_for_frontend.md) · [D7.7 Customer Portal Bridge API](docs/phase3/d7_7_customer_portal_bridge_api.md) · [D7.6 Shipment Tracking Foundation](docs/phase3/d7_6_shipment_tracking_foundation.md) · [D7.5.1 Cloud Portal Integration Review](docs/phase3/d7_5_1_existing_cloud_portal_integration_review.md) · [Phase 3 Roadmap](docs/phase3/phase3_roadmap.md).
 
@@ -128,6 +128,7 @@ python scripts/d8_staging_operator_handoff.py  # D8 staging operator handoff mar
 python scripts/d8_staging_execution_pack_check.py  # D8 staging handoff chain check
 python scripts/d8_staging_records_check.py  # D8 staging record naming/redaction check
 python scripts/d8_production_coordination_check.py  # D8 post-STAGING_VALIDATED production coordination state
+python scripts/d9_post_launch_plan_check.py  # D9 post-launch operating loop plan
 python scripts/d7_4_partner_supplier_check.py   # D7.4 partner split & supplier confirmation smoke
 python scripts/d7_3_customer_confirmation_check.py  # D7.3 customer confirmation smoke
 ```

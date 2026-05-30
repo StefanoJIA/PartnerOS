@@ -1,0 +1,47 @@
+# D9 Post-Launch Operating Loop
+
+**Status:** planned on 2026-05-30; starts only after D8 `STAGING_VALIDATED` and production coordination.
+
+## Purpose
+
+D9 turns the deployed PartnerOS and existing service portal bridge into a monitored operating loop. It focuses on learning from real order operations, Portal feedback, shipment/production follow-through, and Market response intelligence without introducing automatic business actions.
+
+## Entry Criteria
+
+| Gate | Required evidence |
+|---|---|
+| D8 staging | `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED` |
+| D8 production handoff | [D8 Production Coordination Plan](d8_production_coordination_plan.md) Go / No-Go completed |
+| Records | Redacted D8 evidence and any gap register are saved under canonical `docs/records/d8_*_YYYYMMDD` names |
+| Safety | Portal bridge still hides internal cost, margin, pricing breakdown, supplier private notes, backend paths, storage keys, tokens, and secrets |
+
+## Stage Goals
+
+| Stage | Goal | Primary evidence |
+|---|---|---|
+| D9.1 Operating Health Review | Track portal bridge health, readiness, CORS, token rejection, and customer-safe reads after production coordination | recurring redacted evidence summary |
+| D9.2 Order Operations Loop | Review order confirmation, supplier confirmation, production milestones, shipment plans, resources, and feedback status as one operating queue | operator review record |
+| D9.3 Market Response Loop | Feed Portal feedback, quote outcomes, product gaps, and demand signals into Market response intelligence | advisory recommendation review |
+| D9.4 Improvement Backlog | Convert repeated operational gaps into scoped implementation briefs for the next sprint | backlog / planning record |
+
+## Operating Signals
+
+- Portal feedback: customer-facing questions, complaints, product requests, resource requests, shipment questions.
+- Order operations: missing confirmations, delayed production milestones, ready-to-ship orders without shipment plans, blocked resources.
+- Market response intelligence: recurring product parameter gaps, win-loss reasons, category demand, partner capability fit.
+- Human review: every recommended follow-up remains advisory until an operator accepts and acts outside automation.
+
+## Acceptance
+
+- Operators can see whether the production bridge is healthy without exposing tokens or raw response bodies.
+- Feedback and market signals produce reviewed recommendations, not automatic customer replies.
+- Order operations gaps become explicit backlog items with owner, evidence, and next action.
+- No D9 artifact requires editing `service.intelli-opus.com`, nginx, or cloud upstreams from this repository.
+
+## Safety Boundaries
+
+- No automatic customer or supplier notification.
+- No email, webhook, carrier API, LinkedIn, Outlook, or external send action.
+- No automatic order, shipment, delivery, payment, or partner-selection mutation.
+- No internal cost, margin, pricing breakdown, supplier private note, backend path, storage key, database URL, token, or secret in customer-visible payloads or evidence records.
+- No nginx or service portal deployment from this repository.

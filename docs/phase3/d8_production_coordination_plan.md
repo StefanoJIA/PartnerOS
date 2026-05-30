@@ -32,6 +32,7 @@ This plan defines the narrow production coordination path after D8 strict stagin
 4. The portal/cloud operator coordinates any production routing outside this repository.
 5. Re-run strict evidence against the production-like endpoint only after the operator confirms the target and token.
 6. Record the final PASS/FAIL evidence under `docs/records` using canonical names.
+7. After production coordination succeeds, use [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md) to monitor operating health, order operations, feedback, market response, and improvement backlog.
 
 ## Rollback
 

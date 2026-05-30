@@ -34,6 +34,7 @@ The audit looks for:
 - safety invariants in the stage matrix
 - `scripts/d8_staging_records_check.py` result
 - production coordination plan artifact
+- D9 post-launch operating loop plan artifact
 - optional `docs/records/d8_strict_staging_evidence_*.json`
 - optional paired `docs/records/d8_strict_staging_gaps_*.md`
 
