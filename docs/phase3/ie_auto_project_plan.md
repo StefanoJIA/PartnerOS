@@ -98,6 +98,7 @@ As of the current repository state:
 | D8 Staging Operator Handoff | Added |
 | D8 Staging Execution Pack | Added |
 | D8 Staging Access Request | Added |
+| D8 Staging Gap Triage | Added |
 | D8 Staging Records Policy | Added |
 | D8 Production Coordination Plan | Added |
 | D9 Post-Launch Operating Loop | Planned |
@@ -255,6 +256,7 @@ D7.9 Resource Center (done)
   -> D8 staging operator handoff (added)
   -> D8 staging execution pack (added)
   -> D8 staging access request (added)
+  -> D8 staging gap triage (added)
   -> D8 staging records policy (added)
   -> D8 production coordination plan (added)
   -> D9 post-launch operating loop (planned)
@@ -287,6 +289,7 @@ Use [D8 Readiness Audit](d8_readiness_audit.md) to classify the repo as `READY_F
 Use [D8 Staging Operator Handoff](d8_staging_operator_handoff.md) to generate the command sheet for whoever has the real staging backend URL and portal token.
 Use [D8 Staging Execution Pack](d8_staging_execution_pack.md) to verify the local handoff chain before sharing it.
 Use [D8 Staging Access Request](d8_staging_access_request.md) when the real staging URL, portal token, portal origin, deployed commit, or TEST fixture scope still need to be provided privately.
+Use [D8 Staging Gap Triage](d8_staging_gap_triage.md) when strict staging evidence fails and the gap register needs owner/status/rerun tracking.
 Use [D8 Staging Records Policy](d8_staging_records_policy.md) to keep saved staging evidence canonical, redacted, and commit-safe.
 Use [D8 Production Coordination Plan](d8_production_coordination_plan.md) after `STAGING_VALIDATED` for the Go / No-Go and rollback handoff.
 Use [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md) after production coordination to keep health review, order operations, feedback, market intelligence, and improvement backlog under human review.

@@ -41,6 +41,8 @@ python scripts/d8_staging_records_check.py
 
 The check verifies canonical names, redaction markers, strict evidence safety metadata, and the matching gap register for failed evidence.
 
+For failed evidence, use [D8 Staging Gap Triage](d8_staging_gap_triage.md) before production coordination. Each gap row should retain a recommended action, owner, and status until a rerun proves it fixed or superseded.
+
 ## Boundaries
 
 - Do not paste real `SERVICE_PORTAL_PARTNEROS_TOKEN` or `PORTAL_CUSTOMER_API_TOKEN` values into records.

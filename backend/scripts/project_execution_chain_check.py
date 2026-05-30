@@ -17,6 +17,7 @@ CHAIN = (
     ("D8 stage goal matrix", "scripts/d8_stage_goal_matrix_check.py"),
     ("D8 readiness audit", "scripts/d8_readiness_audit.py"),
     ("D8 staging access request", "scripts/d8_staging_access_request_check.py"),
+    ("D8 staging gap triage", "scripts/d8_staging_gap_triage_check.py"),
     ("D8 production coordination", "scripts/d8_production_coordination_check.py"),
     ("D9 post-launch plan", "scripts/d9_post_launch_plan_check.py"),
     ("D9 operating records", "scripts/d9_operating_records_check.py"),

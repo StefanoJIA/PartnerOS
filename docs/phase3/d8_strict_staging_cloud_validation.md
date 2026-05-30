@@ -43,6 +43,8 @@ python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/recor
 
 The gap register lists failing checks, sanitized details, recommended actions, owner placeholders, and open/closed status.
 
+When a gap register is produced, use [D8 Staging Gap Triage](d8_staging_gap_triage.md) and `python scripts/d8_staging_gap_triage_check.py` to keep ownership, status, and rerun criteria explicit.
+
 For local rehearsal only:
 
 ```powershell

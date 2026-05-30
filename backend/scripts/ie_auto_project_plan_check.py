@@ -37,6 +37,7 @@ REQUIRED_STATE_ROWS = (
     "D9 Post-Launch Operating Loop",
     "D9 Operating Records Policy",
     "D8 Staging Access Request",
+    "D8 Staging Gap Triage",
     "Project Execution Chain Gate",
 )
 REQUIRED_ORDER_MARKERS = (
@@ -48,6 +49,7 @@ REQUIRED_ORDER_MARKERS = (
     "D9 post-launch operating loop (planned)",
     "D9 operating records policy (planned)",
     "D8 staging access request (added)",
+    "D8 staging gap triage (added)",
     "project execution chain gate (added)",
 )
 REQUIRED_SAFETY = (
@@ -74,6 +76,7 @@ REQUIRED_LINKED_DOCS = (
     "docs/phase3/d8_staging_operator_handoff.md",
     "docs/phase3/d8_staging_execution_pack.md",
     "docs/phase3/d8_staging_access_request.md",
+    "docs/phase3/d8_staging_gap_triage.md",
     "docs/phase3/d8_staging_records_policy.md",
     "docs/phase3/d8_production_coordination_plan.md",
     "docs/phase3/d9_post_launch_operating_loop.md",

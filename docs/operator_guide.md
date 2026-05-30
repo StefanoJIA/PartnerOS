@@ -376,6 +376,12 @@ If the real staging URL, portal token, portal origin, deployed commit, or TEST f
 python scripts/d8_staging_access_request_check.py
 ```
 
+If strict staging evidence fails, use [D8 Staging Gap Triage](phase3/d8_staging_gap_triage.md) and verify the owner/status/rerun loop with:
+
+```powershell
+python scripts/d8_staging_gap_triage_check.py
+```
+
 Before committing staging records, run:
 
 ```powershell

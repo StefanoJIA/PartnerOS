@@ -128,6 +128,7 @@ flowchart TD
 - [D8 Staging Operator Handoff](d8_staging_operator_handoff.md)
 - [D8 Staging Execution Pack](d8_staging_execution_pack.md)
 - [D8 Staging Access Request](d8_staging_access_request.md)
+- [D8 Staging Gap Triage](d8_staging_gap_triage.md)
 - [D8 Staging Records Policy](d8_staging_records_policy.md)
 - [D8 Production Coordination Plan](d8_production_coordination_plan.md)
 - [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md)
