@@ -19,6 +19,7 @@ REQUIRED_DOCS = (
     "docs/phase3/d8_integration_hardening.md",
     "docs/phase3/d8_strict_staging_cloud_validation.md",
     "docs/phase3/d8_readiness_audit.md",
+    "docs/phase3/d8_staging_operator_handoff.md",
 )
 REQUIRED_SCRIPTS = (
     "backend/scripts/d7_9_resource_center_check.py",
@@ -30,6 +31,7 @@ REQUIRED_SCRIPTS = (
     "backend/scripts/d8_integration_hardening_check.py",
     "backend/scripts/d8_strict_staging_evidence_check.py",
     "backend/scripts/d8_readiness_audit.py",
+    "backend/scripts/d8_staging_operator_handoff.py",
 )
 REQUIRED_MATRIX_MARKERS = (
     "D7.9 Resource Center",
@@ -41,6 +43,7 @@ REQUIRED_MATRIX_MARKERS = (
     "D8 Integration Hardening",
     "Strict Staging / Cloud Validation",
     "D8 Readiness Audit",
+    "D8 Staging Operator Handoff",
     "--evidence-json",
     "--gap-markdown",
     "No automatic customer or supplier notification",
