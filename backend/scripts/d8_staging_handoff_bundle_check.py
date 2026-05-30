@@ -4,6 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+try:
+    from record_redaction import redaction_issues
+except ModuleNotFoundError:
+    from scripts.record_redaction import redaction_issues
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC = REPO_ROOT / "docs" / "phase3" / "d8_staging_handoff_bundle.md"
 
@@ -97,6 +102,7 @@ def _forbidden(text: str) -> list[str]:
     for marker in FORBIDDEN_MARKERS:
         if marker in text:
             issues.append(marker)
+    issues.extend(redaction_issues(DOC, text, include_common_markers=False))
     for line in text.splitlines():
         if "SERVICE_PORTAL_PARTNEROS_TOKEN" in line and "=" in line and "<portal-server-token>" not in line:
             issues.append("SERVICE_PORTAL_PARTNEROS_TOKEN=<non-placeholder>")

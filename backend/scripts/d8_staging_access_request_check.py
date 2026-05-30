@@ -5,6 +5,11 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+try:
+    from record_redaction import redaction_issues
+except ModuleNotFoundError:
+    from scripts.record_redaction import redaction_issues
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC = REPO_ROOT / "docs" / "phase3" / "d8_staging_access_request.md"
 
@@ -70,6 +75,7 @@ def _missing(text: str, markers: tuple[str, ...]) -> list[str]:
 def _forbidden(text: str) -> list[str]:
     allowed = "SERVICE_PORTAL_PARTNEROS_TOKEN: provided privately"
     forbidden = [marker for marker in FORBIDDEN_MARKERS if marker in text and marker not in allowed]
+    forbidden.extend(redaction_issues(DOC, text, include_common_markers=False))
     for line in text.splitlines():
         if TOKEN_ASSIGNMENT.search(line) and "<portal-server-token>" not in line:
             forbidden.append("SERVICE_PORTAL_PARTNEROS_TOKEN=<non-placeholder>")

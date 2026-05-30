@@ -44,3 +44,27 @@ def test_d8_staging_handoff_bundle_check_flags_token_assignment(monkeypatch, tmp
     output = capsys.readouterr().out
     assert "bundle avoids secret-like markers" in output
     assert "SERVICE_PORTAL_PARTNEROS_TOKEN=" in output
+
+
+def test_d8_staging_handoff_bundle_check_flags_authorization_bearer(
+    monkeypatch, tmp_path, capsys
+):
+    module = _load_module()
+    doc = tmp_path / "bundle.md"
+    doc.write_text(
+        "\n".join(
+            [
+                *module.REQUIRED_LINKS,
+                *module.REQUIRED_COMMANDS,
+                *module.REQUIRED_MARKERS,
+                "Authorization: Bearer actual-secret-value",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "DOC", doc)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "bundle avoids secret-like markers" in output
+    assert "bundle.md" in output
