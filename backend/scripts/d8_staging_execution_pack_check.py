@@ -147,7 +147,7 @@ def _run_script(script: str, *args: str) -> subprocess.CompletedProcess[str]:
 
 def _generate_handoff() -> tuple[int, str, str]:
     with tempfile.TemporaryDirectory(prefix="d8_handoff_") as tmp:
-        output = Path(tmp) / "handoff.md"
+        output = Path(tmp) / "d8_staging_operator_handoff_20990101.md"
         result = _run_script("scripts/d8_staging_operator_handoff.py", "--output", str(output))
         text = output.read_text(encoding="utf-8") if output.exists() else ""
         combined_output = "\n".join(part for part in (result.stdout.strip(), result.stderr.strip()) if part)

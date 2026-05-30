@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 from argparse import ArgumentParser
@@ -15,6 +16,7 @@ except ModuleNotFoundError:
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = BACKEND_ROOT.parent
+HANDOFF_NAME_PATTERN = re.compile(r"^d8_staging_operator_handoff_\d{8}\.md$")
 
 
 def _parse_args():
@@ -38,6 +40,8 @@ def _safe_output_path(raw: str) -> Path:
         except ValueError:
             continue
         raise ValueError("handoff output must not be under local_data or backend/storage")
+    if not HANDOFF_NAME_PATTERN.match(resolved.name):
+        raise ValueError("handoff output must be named d8_staging_operator_handoff_YYYYMMDD.md")
     return resolved
 
 

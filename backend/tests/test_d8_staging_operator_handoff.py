@@ -56,3 +56,18 @@ def test_handoff_rejects_local_data_output_path():
 
     with pytest.raises(ValueError, match="local_data"):
         module._safe_output_path("../local_data/d8_staging_operator_handoff_20260530.md")
+
+
+def test_handoff_rejects_noncanonical_output_name(tmp_path):
+    module = _load_module()
+
+    with pytest.raises(ValueError, match="d8_staging_operator_handoff_YYYYMMDD.md"):
+        module._safe_output_path(str(tmp_path / "d8_staging_operator_handoff_latest.md"))
+
+
+def test_handoff_accepts_canonical_output_name(tmp_path):
+    module = _load_module()
+
+    assert module._safe_output_path(str(tmp_path / "d8_staging_operator_handoff_20260530.md")).name == (
+        "d8_staging_operator_handoff_20260530.md"
+    )
