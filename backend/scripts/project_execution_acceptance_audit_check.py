@@ -31,6 +31,7 @@ REQUIRED_MARKERS = (
     "D9.1 Operating Health Review",
     "D9.2 Order Operations Loop",
     "D9.3 Market Response Loop",
+    "D9.4 Improvement Backlog",
     "Project Execution Chain Gate",
     "project_execution_status.py",
     "project_execution_acceptance_audit_check.py",

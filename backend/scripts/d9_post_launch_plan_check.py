@@ -13,6 +13,7 @@ KICKOFF_DOC = REPO_ROOT / "docs" / "phase3" / "d9_operating_loop_kickoff.md"
 HEALTH_REVIEW_DOC = REPO_ROOT / "docs" / "phase3" / "d9_1_operating_health_review.md"
 ORDER_OPERATIONS_DOC = REPO_ROOT / "docs" / "phase3" / "d9_2_order_operations_loop.md"
 MARKET_RESPONSE_DOC = REPO_ROOT / "docs" / "phase3" / "d9_3_market_response_loop.md"
+IMPROVEMENT_BACKLOG_DOC = REPO_ROOT / "docs" / "phase3" / "d9_4_improvement_backlog.md"
 
 REQUIRED_MARKERS = (
     "D9 Post-Launch Operating Loop",
@@ -33,6 +34,7 @@ REQUIRED_MARKERS = (
     "D9.3",
     "D9.3 Market Response Loop",
     "D9.4",
+    "D9.4 Improvement Backlog",
     "D9 Operating Records Policy",
     "D9 Operating Loop Kickoff",
 )
@@ -96,6 +98,7 @@ def main() -> int:
         Check("D9.1 operating health review exists"),
         Check("D9.2 order operations loop exists"),
         Check("D9.3 market response loop exists"),
+        Check("D9.4 improvement backlog exists"),
     ]
 
     text = _read_text()
@@ -147,6 +150,11 @@ def main() -> int:
         checks[9].pass_(_display_path(MARKET_RESPONSE_DOC))
     else:
         checks[9].fail(_display_path(MARKET_RESPONSE_DOC))
+
+    if IMPROVEMENT_BACKLOG_DOC.exists():
+        checks[10].pass_(_display_path(IMPROVEMENT_BACKLOG_DOC))
+    else:
+        checks[10].fail(_display_path(IMPROVEMENT_BACKLOG_DOC))
 
     missing = [marker for marker in REQUIRED_MARKERS if marker not in text]
     if missing and checks[0].ok:

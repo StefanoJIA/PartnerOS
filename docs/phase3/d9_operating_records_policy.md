@@ -14,6 +14,8 @@ Use [D9.2 Order Operations Loop](d9_2_order_operations_loop.md) for the `d9_orde
 
 Use [D9.3 Market Response Loop](d9_3_market_response_loop.md) for the `d9_market_response_YYYYMMDD.md` signal set.
 
+Use [D9.4 Improvement Backlog](d9_4_improvement_backlog.md) for the `d9_improvement_backlog_YYYYMMDD.md` signal set.
+
 Use `docs/records` only for redacted summaries. Do not store `.env`, raw response bodies, screenshots containing tokens, uploads, `local_data`, or files from `backend/storage`.
 
 ## Canonical Names
