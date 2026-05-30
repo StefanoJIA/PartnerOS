@@ -1,6 +1,6 @@
 # D9 Operating Loop Kickoff
 
-**Status:** planned on 2026-05-30; starts only after D8 production coordination completes.
+**Status:** planned on 2026-05-30; starts only after D8 production coordination and evidence review complete.
 
 ## Purpose
 

@@ -105,6 +105,7 @@ REQUIRED_MATRIX_MARKERS = (
     "D8 Staging Execution Pack",
     "D8 Staging Records Policy",
     "D8 Staging Evidence Review",
+    "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "D8 Production Coordination",
     "D8 Production Coordination Runbook",
     "D9 Post-Launch Operating Loop",
