@@ -53,6 +53,7 @@ REQUIRED_FILES = (
     "backend/scripts/project_reorientation_summary_check.py",
     "backend/scripts/dev_guide_check.py",
     "backend/scripts/integrated_backend_standards_check.py",
+    "backend/scripts/lead_intelligence_docs_check.py",
     "backend/scripts/codex_skill_pack_check.py",
     "backend/scripts/activity_actions_doc_check.py",
     "backend/scripts/deployment_readiness_checklist_check.py",
@@ -71,6 +72,9 @@ REQUIRED_FILES = (
     "docs/project_reorientation_summary.md",
     "docs/dev_guide.md",
     "docs/integrated_backend_standards.md",
+    "docs/lead_intelligence_mvp.md",
+    "docs/public_source_enrichment_mvp.md",
+    "docs/lead_intelligence_scoring_notes.md",
     "docs/codex_skills/README.md",
     "docs/codex_skills/project_execution_rules.md",
     "docs/codex_skills/runtime_and_ports.md",
@@ -153,6 +157,7 @@ HANDOFF_MARKERS = (
     "python scripts/project_reorientation_summary_check.py",
     "python scripts/dev_guide_check.py",
     "python scripts/integrated_backend_standards_check.py",
+    "python scripts/lead_intelligence_docs_check.py",
     "python scripts/codex_skill_pack_check.py",
     "python scripts/activity_actions_doc_check.py",
     "python scripts/deployment_readiness_checklist_check.py",
@@ -254,6 +259,7 @@ def main() -> int:
         Check("project reorientation summary check runs"),
         Check("developer guide check runs"),
         Check("integrated backend standards check runs"),
+        Check("Lead Intelligence docs check runs"),
         Check("Codex skill pack check runs"),
         Check("activity actions doc check runs"),
         Check("deployment readiness checklist check runs"),
@@ -500,47 +506,53 @@ def main() -> int:
     else:
         checks[39].fail((backend_standards.stdout + backend_standards.stderr)[:160])
 
-    codex_skills = _run_script("scripts/codex_skill_pack_check.py")
-    if codex_skills.returncode == 0 and "Result: PASS" in codex_skills.stdout:
+    lead_intelligence = _run_script("scripts/lead_intelligence_docs_check.py")
+    if lead_intelligence.returncode == 0 and "Result: PASS" in lead_intelligence.stdout:
         checks[40].pass_("PASS")
     else:
-        checks[40].fail((codex_skills.stdout + codex_skills.stderr)[:160])
+        checks[40].fail((lead_intelligence.stdout + lead_intelligence.stderr)[:160])
+
+    codex_skills = _run_script("scripts/codex_skill_pack_check.py")
+    if codex_skills.returncode == 0 and "Result: PASS" in codex_skills.stdout:
+        checks[41].pass_("PASS")
+    else:
+        checks[41].fail((codex_skills.stdout + codex_skills.stderr)[:160])
 
     activity_actions = _run_script("scripts/activity_actions_doc_check.py")
     if activity_actions.returncode == 0 and "Result: PASS" in activity_actions.stdout:
-        checks[41].pass_("PASS")
+        checks[42].pass_("PASS")
     else:
-        checks[41].fail((activity_actions.stdout + activity_actions.stderr)[:160])
+        checks[42].fail((activity_actions.stdout + activity_actions.stderr)[:160])
 
     deployment_readiness = _run_script("scripts/deployment_readiness_checklist_check.py")
     if deployment_readiness.returncode == 0 and "Result: PASS" in deployment_readiness.stdout:
-        checks[42].pass_("PASS")
+        checks[43].pass_("PASS")
     else:
-        checks[42].fail((deployment_readiness.stdout + deployment_readiness.stderr)[:160])
+        checks[43].fail((deployment_readiness.stdout + deployment_readiness.stderr)[:160])
 
     testing_guide = _run_script("scripts/testing_guide_check.py")
     if testing_guide.returncode == 0 and "Result: PASS" in testing_guide.stdout:
-        checks[43].pass_("PASS")
+        checks[44].pass_("PASS")
     else:
-        checks[43].fail((testing_guide.stdout + testing_guide.stderr)[:160])
+        checks[44].fail((testing_guide.stdout + testing_guide.stderr)[:160])
 
     operator_guide = _run_script("scripts/operator_guide_check.py")
     if operator_guide.returncode == 0 and "Result: PASS" in operator_guide.stdout:
-        checks[44].pass_("PASS")
+        checks[45].pass_("PASS")
     else:
-        checks[44].fail((operator_guide.stdout + operator_guide.stderr)[:160])
+        checks[45].fail((operator_guide.stdout + operator_guide.stderr)[:160])
 
     handoff_code, handoff_text, handoff_output = _generate_handoff()
     if handoff_code == 0 and handoff_text:
-        checks[45].pass_("generated")
+        checks[46].pass_("generated")
     else:
-        checks[45].fail(handoff_output[:160])
+        checks[46].fail(handoff_output[:160])
 
     missing_markers = [marker for marker in HANDOFF_MARKERS if marker not in handoff_text]
     if not missing_markers:
-        checks[46].pass_("commands and safety boundaries")
+        checks[47].pass_("commands and safety boundaries")
     else:
-        checks[46].fail(", ".join(missing_markers))
+        checks[47].fail(", ".join(missing_markers))
 
     print("D8 Staging Execution Pack Check")
     for check in checks:

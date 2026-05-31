@@ -43,6 +43,8 @@ REQUIRED_MARKERS = (
     "dev_guide_check.py",
     "Integrated Backend Standards",
     "integrated_backend_standards_check.py",
+    "Lead Intelligence Docs",
+    "lead_intelligence_docs_check.py",
     "Codex Skill Pack",
     "codex_skill_pack_check.py",
     "Activity Actions",

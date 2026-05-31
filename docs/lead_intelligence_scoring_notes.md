@@ -1,53 +1,58 @@
-# Lead Intelligence — scoring notes (D5.2.3 pilot)
+# Lead Intelligence Scoring Notes
 
-Read-only documentation for internal pilot users. **No runtime change** in D5.2.3.
+**Status:** current on 2026-05-30.
 
-Implementation: `backend/app/services/a_domain/intelligence_score.py`
+## Purpose
 
----
+Lead Intelligence scoring is deterministic, explainable, and advisory. It helps operators prioritize outreach and market-response review, but it does not automate outreach, quote creation, order creation, partner selection, or customer commitments.
 
-## Score (0–100)
+Implementation anchor: `backend/app/services/a_domain/intelligence_score.py`.
 
-Deterministic breakdown from:
+## Score Inputs
 
-| Dimension | Source |
-|-----------|--------|
-| Primary contact | Lead has `primary_contact_id` |
-| Market intel count | `MarketIntelligenceItem` rows for company |
-| Product / business text | Company tags, description, lead `product_interest` |
-| Priority & strategic level | Lead `priority`, company `strategic_level` |
+The score may use:
 
----
+- primary contact presence
+- market intelligence count
+- company tags and business description
+- lead product interest text
+- priority and strategic level
+- evidence-backed segment matches
 
-## Market fit segments (display slugs)
+## Segment Slugs
 
-| Slug | UI label | Typical trigger |
-|------|----------|-----------------|
-| `lift_system_signal` | Lifting System Signal | sit-stand, lifting column, desk frame, ergonomic workstation keywords |
-| `general_office_furniture_only` | General Office Furniture | office/contract furniture without lift keywords |
-| `education_vertical` | Education Vertical | campus, education furniture, learning environment |
-| `medical_vertical` | Medical / Healthcare Vertical | medical/lab/clinical workstation cues |
-| `project_based_furniture` | Project-Based Furniture | contract interiors, installation, project rollout |
-| `oem_odm_fit` | OEM / ODM Signal | OEM/ODM, private label, lifting solution partner |
-| `heavy_duty_fit` | Heavy-Duty / Industrial | heavy-duty adjustable / industrial lift cues |
+| Slug | Typical signal |
+|---|---|
+| `lift_system_signal` | sit-stand, lifting column, desk frame, ergonomic workstation, adjustable frame |
+| `general_office_furniture_only` | office or contract furniture without clear lift keywords |
+| `education_vertical` | campus, classroom, school, education furniture |
+| `medical_vertical` | medical, healthcare, lab, clinical workstation |
+| `project_based_furniture` | contract interiors, installation, rollout, procurement project |
+| `oem_odm_fit` | OEM, ODM, private label, manufacturing partnership |
+| `heavy_duty_fit` | heavy-duty, industrial, high-load adjustable use case |
 
-Multiple segments may appear. Empty segments → enrich company text or run public-source enrichment.
+Use `oem_odm_fit`; do not introduce a duplicate `oem_odm_signal` slug without an explicit migration plan.
 
----
+## Operator Interpretation
 
-## Pilot tuning (D5.2.1)
+High scores indicate prioritization candidates, not promises. Operators should verify business fit, timing, quantity, compliance, and relationship context before creating RFQs, quotes, orders, or partner actions.
 
-- **Healthcare Lab Workspace** → `medical_vertical`
-- **Contract Project Interiors** → `project_based_furniture`
-- **Ergo Sit Stand Workspace** → `lift_system_signal`
-- **Campus Learning Furniture** → `education_vertical`
+Low or broad scores are not rejection decisions. They may mean the company needs more evidence, manual research, or lower-frequency nurture.
 
-Restart backend after scoring code changes for live API to reflect updates.
+## Safety Boundaries
 
----
+Scoring must not:
 
-## Not in scope (pilot)
+- automatically send LinkedIn, email, campaigns, webhooks, or notifications
+- automatically create RFQs, quotes, orders, shipments, feedback tickets, or partner recommendations
+- change quote or order statuses
+- expose internal cost, margin, pricing breakdowns, supplier private notes, backend paths, storage keys, tokens, or secrets
+- privilege any manufacturing partner by hard-coded default
 
-- No Outlook / LinkedIn automation
-- No CRM v1 façade
-- No new segment slug `oem_odm_signal` — use existing `oem_odm_fit`
+## Validation
+
+```powershell
+cd backend
+python scripts/lead_intelligence_docs_check.py
+python scripts/project_execution_chain_check.py
+```

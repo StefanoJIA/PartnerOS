@@ -550,6 +550,7 @@ python scripts/desktop_transition_roadmap_check.py
 python scripts/project_reorientation_summary_check.py
 python scripts/dev_guide_check.py
 python scripts/integrated_backend_standards_check.py
+python scripts/lead_intelligence_docs_check.py
 python scripts/codex_skill_pack_check.py
 python scripts/activity_actions_doc_check.py
 python scripts/deployment_readiness_checklist_check.py

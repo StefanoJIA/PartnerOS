@@ -184,6 +184,7 @@ python scripts/deployment_readiness_checklist_check.py  # deployment readiness c
 python scripts/testing_guide_check.py  # testing guide D7.6+/D8 validation matrix gate check
 python scripts/dev_guide_check.py  # developer guide current local workflow gate check
 python scripts/integrated_backend_standards_check.py  # backend standards and portal bridge safety gate check
+python scripts/lead_intelligence_docs_check.py  # Lead Intelligence evidence and human-review doc gate check
 python scripts/codex_skill_pack_check.py  # Codex agent rule pack current-stage gate check
 python scripts/activity_actions_doc_check.py  # canonical activity/timeline action gate check
 python scripts/operator_guide_check.py  # operator guide D8/D9 handoff and safety gate check

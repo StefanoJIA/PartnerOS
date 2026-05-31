@@ -42,6 +42,7 @@ The report stores gate labels, pass/fail status, and one-line summaries only. It
 | Project reorientation summary | Confirms the strategic reorientation summary no longer points to stale D0/D1 kickoff priorities |
 | Developer guide | Confirms the developer workflow uses current `8014` D7.6+/D8 handoff validation and avoids stale D0/D5 setup guidance |
 | Integrated backend standards | Confirms backend/API/portal bridge standards match current D7-D9 safety and handoff boundaries |
+| Lead Intelligence docs | Confirms Lead Intelligence, public-source enrichment, and scoring docs match current evidence-first and human-review rules |
 | Codex skill pack | Confirms project-specific agent rules match current D7-D9 execution state, ports, and safety boundaries |
 | Activity actions | Confirms canonical activity/timeline actions and manual-only side-effect boundaries |
 | Deployment readiness checklist | Confirms the staging handoff checklist matches D8/D9 evidence gates and no longer carries D5-era deploy steps |

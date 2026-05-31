@@ -31,6 +31,7 @@ CHAIN = (
     ("Project reorientation summary", "scripts/project_reorientation_summary_check.py"),
     ("Developer guide", "scripts/dev_guide_check.py"),
     ("Integrated backend standards", "scripts/integrated_backend_standards_check.py"),
+    ("Lead Intelligence docs", "scripts/lead_intelligence_docs_check.py"),
     ("Codex skill pack", "scripts/codex_skill_pack_check.py"),
     ("Activity actions", "scripts/activity_actions_doc_check.py"),
     ("Deployment readiness checklist", "scripts/deployment_readiness_checklist_check.py"),
