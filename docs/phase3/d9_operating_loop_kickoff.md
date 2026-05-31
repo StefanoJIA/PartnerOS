@@ -15,6 +15,7 @@ It does not authorize service portal deployment, nginx edits, notifications, ext
 | D8 staging validation | `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED` |
 | Production coordination | `python scripts/d8_production_coordination_check.py` reports `READY_FOR_PRODUCTION_COORDINATION` |
 | Evidence review | `python scripts/d8_staging_evidence_review_check.py` reports `READY_FOR_PRODUCTION_COORDINATION_REVIEW` |
+| Go / No-Go decision | If committed, the redacted decision record uses `docs/records/d8_production_go_no_go_YYYYMMDD.md` |
 | Records hygiene | `python scripts/d8_staging_records_check.py` and `python scripts/d9_operating_records_check.py` pass |
 
 ## Kickoff Agenda

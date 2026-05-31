@@ -8,6 +8,8 @@ The D9 operating execution pack verifies that the full D9 operating-loop plan is
 
 It aggregates the D9 kickoff checklist, D9.1 operating health review, D9.2 order operations loop, D9.3 market response loop, D9.4 improvement backlog, and D9 operating records policy.
 
+D9 starts only after D8 production coordination has a human Go / No-Go decision. If that decision is committed, use `docs/records/d8_production_go_no_go_YYYYMMDD.md` and keep it redacted.
+
 ## Command
 
 ```powershell
