@@ -72,3 +72,39 @@ def test_readiness_audit_rejects_unreadable_evidence(tmp_path, monkeypatch):
         "STAGING_EVIDENCE_UNREADABLE",
         "d8_strict_staging_evidence_20260530.json",
     )
+
+
+def test_readiness_audit_records_gate_uses_final_result_line(monkeypatch):
+    module = _load_module()
+
+    def fake_run(*args, **kwargs):  # noqa: ARG001
+        return type(
+            "Result",
+            (),
+            {
+                "returncode": 0,
+                "stdout": "nested Result: PASS\nResult: FAIL\n",
+                "stderr": "",
+            },
+        )()
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    ok, detail = module._records_gate_status()
+
+    assert ok is False
+    assert "Result: FAIL" in detail
+
+
+def test_readiness_audit_records_gate_requires_result_line(monkeypatch):
+    module = _load_module()
+
+    def fake_run(*args, **kwargs):  # noqa: ARG001
+        return type("Result", (), {"returncode": 0, "stdout": "[PASS] records\n", "stderr": ""})()
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    ok, detail = module._records_gate_status()
+
+    assert ok is False
+    assert "[PASS] records" in detail

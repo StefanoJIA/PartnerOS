@@ -173,7 +173,8 @@ def _records_gate_status() -> tuple[bool, str]:
         check=False,
     )
     output = "\n".join(part for part in (result.stdout.strip(), result.stderr.strip()) if part)
-    if result.returncode == 0 and "Result: PASS" in result.stdout:
+    result_lines = [line.strip() for line in output.splitlines() if line.strip().startswith("Result:")]
+    if result.returncode == 0 and result_lines and result_lines[-1] == "Result: PASS":
         return True, "PASS"
     detail = next((line for line in output.splitlines() if line.startswith("[FAIL]")), "")
     return False, detail or output[:160] or "records gate failed"
