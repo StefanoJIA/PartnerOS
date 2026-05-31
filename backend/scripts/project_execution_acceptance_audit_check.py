@@ -33,6 +33,8 @@ REQUIRED_MARKERS = (
     "database_lifecycle_doc_check.py",
     "Desktop Packaging Docs",
     "desktop_packaging_docs_check.py",
+    "Web-to-Desktop Migration",
+    "web_to_desktop_migration_doc_check.py",
     "Desktop Transition Roadmap",
     "desktop_transition_roadmap_check.py",
     "Project Reorientation Summary",

@@ -37,6 +37,7 @@ The report stores gate labels, pass/fail status, and one-line summaries only. It
 | Runtime modes | Confirms runtime mode semantics, local port guidance, health contract, and staging boundaries are current |
 | Database lifecycle | Confirms PostgreSQL lifecycle semantics, health fields, migration behavior, and final-user database boundaries are current |
 | Desktop packaging docs | Confirms packaging strategy and desktop open questions match the current D8 handoff boundary |
+| Web-to-desktop migration | Confirms the current browser-based implementation is mapped to the desktop target without forking business logic or bypassing staging gates |
 | Desktop transition roadmap | Confirms the desktop-first product roadmap is reconciled with the current D7-D9 execution state |
 | Project reorientation summary | Confirms the strategic reorientation summary no longer points to stale D0/D1 kickoff priorities |
 | Developer guide | Confirms the developer workflow uses current `8014` D7.6+/D8 handoff validation and avoids stale D0/D5 setup guidance |

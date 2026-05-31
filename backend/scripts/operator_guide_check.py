@@ -40,6 +40,7 @@ REQUIRED_MARKERS = (
     "runtime_modes_check.py",
     "database_lifecycle_doc_check.py",
     "desktop_packaging_docs_check.py",
+    "web_to_desktop_migration_doc_check.py",
     "desktop_transition_roadmap_check.py",
     "project_reorientation_summary_check.py",
     "dev_guide_check.py",

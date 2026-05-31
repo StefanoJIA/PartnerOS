@@ -176,6 +176,7 @@ python scripts/desktop_target_architecture_check.py  # desktop target architectu
 python scripts/runtime_modes_check.py  # runtime modes current-state and staging boundary gate check
 python scripts/database_lifecycle_doc_check.py  # database lifecycle current-state and health boundary gate check
 python scripts/desktop_packaging_docs_check.py  # desktop packaging strategy and open-question gate check
+python scripts/web_to_desktop_migration_doc_check.py  # Web-to-desktop migration boundary gate check
 python scripts/desktop_transition_roadmap_check.py  # desktop transition roadmap current-state gate check
 python scripts/project_reorientation_summary_check.py  # project reorientation current-state gate check
 python scripts/readme_check.py  # README current-stage and D8/D9 handoff gate check
