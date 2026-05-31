@@ -94,6 +94,11 @@ def _allow_local_http() -> bool:
     return _truthy(os.getenv("D8_STRICT_ALLOW_LOCAL_HTTP"))
 
 
+def _is_placeholder(value: str) -> bool:
+    stripped = value.strip()
+    return stripped.startswith("<") and stripped.endswith(">") or "<" in stripped or ">" in stripped
+
+
 def _json(response: httpx.Response | None) -> Any:
     if response is None:
         return {}
@@ -104,6 +109,8 @@ def _json(response: httpx.Response | None) -> Any:
 
 
 def _redacted_url(url: str) -> str:
+    if _is_placeholder(url):
+        return "https://<redacted-backend>" if url.startswith("https://") else "<placeholder>"
     parsed = urlparse(url)
     if not parsed.scheme or not parsed.hostname:
         return url
@@ -335,31 +342,37 @@ def main() -> int:
         Check("no forbidden fields or token leakage"),
     ]
 
-    if base:
+    if base and not _is_placeholder(base):
         checks[0].pass_(_redacted_url(base))
+    elif base:
+        checks[0].fail("placeholder BACKEND_BASE_URL")
     else:
         checks[0].fail("set BACKEND_BASE_URL")
 
-    if base and urlparse(base).scheme == "https":
+    if base and _is_placeholder(base):
+        checks[1].fail("staging/cloud validation requires a real HTTPS BACKEND_BASE_URL")
+    elif base and urlparse(base).scheme == "https":
         checks[1].pass_("https")
     elif base and allow_local and _is_localhost(base):
         checks[1].pass_("local http explicitly allowed")
     else:
         checks[1].fail("staging/cloud validation requires HTTPS BACKEND_BASE_URL")
 
-    if urlparse(origin).scheme == "https":
+    if _is_placeholder(origin):
+        checks[2].fail("SERVICE_PORTAL_ORIGIN must be a real HTTPS origin")
+    elif urlparse(origin).scheme == "https":
         checks[2].pass_(origin)
     else:
         checks[2].fail("SERVICE_PORTAL_ORIGIN must be HTTPS")
 
-    if token and token not in UNSAFE_TOKENS and len(token) >= 24:
+    if token and token not in UNSAFE_TOKENS and not _is_placeholder(token) and len(token) >= 24:
         checks[3].pass_("configured")
     else:
         checks[3].fail("set a non-default SERVICE_PORTAL_PARTNEROS_TOKEN")
 
-    if not checks[0].ok:
+    if not all(check.ok for check in checks[:4]):
         for item in checks[4:]:
-            item.fail("not attempted; BACKEND_BASE_URL missing")
+            item.fail("not attempted; staging inputs unsafe")
         return _finish(
             checks=checks,
             base=base,

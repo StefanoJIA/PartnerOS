@@ -142,3 +142,90 @@ def test_strict_staging_evidence_fails_for_short_token_without_printing_it(
     assert "set a non-default SERVICE_PORTAL_PARTNEROS_TOKEN" in token_check["detail"]
     assert "short-secret" not in output
     assert "short-secret" not in evidence.read_text(encoding="utf-8")
+
+
+def test_strict_staging_evidence_rejects_placeholder_backend_without_network(
+    tmp_path, monkeypatch, capsys
+):
+    module = _load_module()
+    evidence = tmp_path / "d8_strict_staging_evidence_20260530.json"
+    monkeypatch.setenv("BACKEND_BASE_URL", "https://<partneros-staging-backend-origin>")
+    monkeypatch.setenv("SERVICE_PORTAL_PARTNEROS_TOKEN", "staging-secret-token-123")
+    monkeypatch.setenv("SERVICE_PORTAL_ORIGIN", "https://service.intelli-opus.com")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "d8_strict_staging_evidence_check.py",
+            "--evidence-json",
+            str(evidence),
+        ],
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    payload = json.loads(evidence.read_text(encoding="utf-8"))
+    backend_check = next(check for check in payload["checks"] if check["label"] == "BACKEND_BASE_URL configured")
+    health_check = next(check for check in payload["checks"] if check["label"] == "health reachable")
+
+    assert "Result: FAIL" in output
+    assert payload["backend_base_url"] == "https://<redacted-backend>"
+    assert backend_check["detail"] == "placeholder BACKEND_BASE_URL"
+    assert health_check["detail"] == "not attempted; staging inputs unsafe"
+
+
+def test_strict_staging_evidence_rejects_placeholder_origin_without_network(
+    tmp_path, monkeypatch, capsys
+):
+    module = _load_module()
+    evidence = tmp_path / "d8_strict_staging_evidence_20260530.json"
+    monkeypatch.setenv("BACKEND_BASE_URL", "https://partneros-staging.example.com")
+    monkeypatch.setenv("SERVICE_PORTAL_PARTNEROS_TOKEN", "staging-secret-token-123")
+    monkeypatch.setenv("SERVICE_PORTAL_ORIGIN", "https://<service-portal-origin>")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "d8_strict_staging_evidence_check.py",
+            "--evidence-json",
+            str(evidence),
+        ],
+    )
+
+    assert module.main() == 1
+    payload = json.loads(evidence.read_text(encoding="utf-8"))
+    origin_check = next(check for check in payload["checks"] if check["label"] == "portal origin HTTPS")
+    health_check = next(check for check in payload["checks"] if check["label"] == "health reachable")
+
+    assert origin_check["detail"] == "SERVICE_PORTAL_ORIGIN must be a real HTTPS origin"
+    assert health_check["detail"] == "not attempted; staging inputs unsafe"
+
+
+def test_strict_staging_evidence_rejects_placeholder_token_without_network(
+    tmp_path, monkeypatch, capsys
+):
+    module = _load_module()
+    evidence = tmp_path / "d8_strict_staging_evidence_20260530.json"
+    monkeypatch.setenv("BACKEND_BASE_URL", "https://partneros-staging.example.com")
+    monkeypatch.setenv("SERVICE_PORTAL_PARTNEROS_TOKEN", "<private-token-from-operator>")
+    monkeypatch.setenv("SERVICE_PORTAL_ORIGIN", "https://service.intelli-opus.com")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "d8_strict_staging_evidence_check.py",
+            "--evidence-json",
+            str(evidence),
+        ],
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    payload = json.loads(evidence.read_text(encoding="utf-8"))
+    token_check = next(check for check in payload["checks"] if check["label"] == "portal token safe")
+    health_check = next(check for check in payload["checks"] if check["label"] == "health reachable")
+
+    assert token_check["detail"] == "set a non-default SERVICE_PORTAL_PARTNEROS_TOKEN"
+    assert health_check["detail"] == "not attempted; staging inputs unsafe"
+    assert "private-token-from-operator" not in output
+    assert "private-token-from-operator" not in evidence.read_text(encoding="utf-8")

@@ -62,6 +62,7 @@ python scripts/d8_strict_staging_evidence_check.py
 
 - `BACKEND_BASE_URL` is HTTPS for staging/cloud.
 - `SERVICE_PORTAL_PARTNEROS_TOKEN` is present, non-default, and not printed.
+- placeholder URL/token values are rejected before any network evidence call.
 - missing token returns 401 and wrong token returns 403.
 - portal CORS preflight allows only the configured service portal origin.
 - product and order bridge endpoints return customer-safe envelopes.
