@@ -74,6 +74,7 @@ For a redacted top-level execution-chain report:
 cd backend
 python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py --report-markdown ../docs/records/project_execution_chain_YYYYMMDD.md
+python scripts/project_execution_acceptance_audit_check.py
 ```
 
 The report stores gate labels, status, and one-line summaries only. It does not store raw command output, response bodies, tokens, customer files, or backend storage paths. Before committing generated reports, run `python scripts/project_execution_records_check.py`.

@@ -32,6 +32,7 @@ This audit maps the current project-planning objective to concrete evidence. It 
 | Source-derived project plan exists | [IE Auto Project Plan](ie_auto_project_plan.md), `python scripts/ie_auto_project_plan_check.py` | PASS |
 | Phase 3 roadmap covers D7-D9 sequence | [Phase 3 Roadmap](phase3_roadmap.md), `python scripts/phase3_roadmap_check.py` | PASS |
 | Stage goals and next gaps are explicit | [D8 Delivery Stage Goal Matrix](d8_delivery_stage_goal_matrix.md), `python scripts/d8_stage_goal_matrix_check.py` | PASS |
+| D8 staging execution pack runs the full local handoff chain | [D8 Staging Execution Pack](d8_staging_execution_pack.md), `python scripts/d8_staging_execution_pack_check.py` | PASS, still not staging proof |
 | Operator guide matches D8/D9 gates | [Operator Guide](../operator_guide.md), `python scripts/operator_guide_check.py` | PASS |
 | Local D8 readiness is classified | [D8 Readiness Audit](d8_readiness_audit.md), `python scripts/d8_readiness_audit.py` | `READY_FOR_STAGING` |
 | Local strict staging rehearsal is available | [D8 Local Staging Rehearsal](d8_local_staging_rehearsal.md), `python scripts/d8_local_staging_rehearsal_check.py` | PASS, but not staging proof |
@@ -103,6 +104,7 @@ python scripts/activity_actions_doc_check.py
 python scripts/deployment_readiness_checklist_check.py
 python scripts/testing_guide_check.py
 python scripts/testing_summary_d5_2_check.py
+python scripts/d8_staging_execution_pack_check.py
 python scripts/project_execution_status.py
 python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py

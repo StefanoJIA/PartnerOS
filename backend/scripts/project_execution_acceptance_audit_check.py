@@ -62,6 +62,8 @@ REQUIRED_MARKERS = (
     "IE Auto Project Plan",
     "Phase 3 Roadmap",
     "D8 Delivery Stage Goal Matrix",
+    "D8 Staging Execution Pack",
+    "d8_staging_execution_pack_check.py",
     "Operator Guide",
     "operator_guide_check.py",
     "D8 Local Staging Rehearsal",
