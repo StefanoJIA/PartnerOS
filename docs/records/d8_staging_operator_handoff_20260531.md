@@ -1,7 +1,7 @@
 # D8 Strict Staging Operator Handoff
 
-Generated at: 2026-05-31T02:46:28.389821+00:00
-Repository commit: `d6b4d3a`
+Generated at: 2026-05-31T16:34:51.033088+00:00
+Repository commit: `1a12af3`
 Readiness status: `READY_FOR_STAGING`
 
 ## Purpose
@@ -23,6 +23,7 @@ Run the PartnerOS D8 strict staging evidence flow against the real deployed stag
 | `docs/operator_guide.md` | Review the operator-facing D8/D9 handoff gates and manual-only safety boundaries |
 | `docs/phase3/d8_staging_handoff_bundle.md` | Confirm the operator-facing package, commands, evidence command, and exclusions |
 | `docs/phase3/d8_staging_operator_runbook.md` | Execute the sequence from `READY_FOR_STAGING_HANDOFF` through input preflight, strict evidence, records review, and next state |
+| `docs/phase3/d8_staging_records_policy.md` | Confirm canonical record names, current handoff/access-request requirements, and redaction rules |
 | `docs/phase3/d8_production_coordination_runbook.md` | Use only after `STAGING_VALIDATED` for the human Go / No-Go and rollback handoff |
 
 ## Preflight
@@ -110,7 +111,7 @@ python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/recor
 ```text
 D8 Readiness Audit
 [PASS] D8 docs present (31 docs)
-[PASS] D8 scripts present (32 scripts)
+[PASS] D8 scripts present (33 scripts)
 [PASS] stage matrix safety invariants (documented)
 [PASS] staging records hygiene (PASS)
 [PASS] strict staging evidence state (READY_FOR_STAGING: no strict staging evidence JSON found)
