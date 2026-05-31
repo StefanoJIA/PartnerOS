@@ -218,6 +218,13 @@ def _run_script(script: str, *args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
+def _result_pass(result: subprocess.CompletedProcess[str]) -> bool:
+    if result.returncode != 0:
+        return False
+    result_lines = [line.strip() for line in result.stdout.splitlines() if line.strip().startswith("Result:")]
+    return bool(result_lines) and result_lines[-1] == "Result: PASS"
+
+
 def _generate_handoff() -> tuple[int, str, str]:
     with tempfile.TemporaryDirectory(prefix="d8_handoff_") as tmp:
         output = Path(tmp) / "d8_staging_operator_handoff_20990101.md"
@@ -308,283 +315,283 @@ def main() -> int:
         checks[1].fail((readiness.stdout + readiness.stderr)[:160])
 
     matrix = _run_script("scripts/d8_stage_goal_matrix_check.py")
-    if matrix.returncode == 0 and "Result: PASS" in matrix.stdout:
+    if _result_pass(matrix):
         checks[2].pass_("PASS")
     else:
         checks[2].fail((matrix.stdout + matrix.stderr)[:160])
 
     local_rehearsal = _run_script("scripts/d8_local_staging_rehearsal_check.py")
-    if local_rehearsal.returncode == 0 and "Result: PASS" in local_rehearsal.stdout:
+    if _result_pass(local_rehearsal):
         checks[3].pass_("PASS")
     else:
         checks[3].fail((local_rehearsal.stdout + local_rehearsal.stderr)[:160])
 
     handoff_bundle = _run_script("scripts/d8_staging_handoff_bundle_check.py")
-    if handoff_bundle.returncode == 0 and "Result: PASS" in handoff_bundle.stdout:
+    if _result_pass(handoff_bundle):
         checks[4].pass_("PASS")
     else:
         checks[4].fail((handoff_bundle.stdout + handoff_bundle.stderr)[:160])
 
     operator_runbook = _run_script("scripts/d8_staging_operator_runbook_check.py")
-    if operator_runbook.returncode == 0 and "Result: PASS" in operator_runbook.stdout:
+    if _result_pass(operator_runbook):
         checks[5].pass_("PASS")
     else:
         checks[5].fail((operator_runbook.stdout + operator_runbook.stderr)[:160])
 
     input_preflight = _run_script("scripts/d8_staging_input_preflight_check.py")
-    if input_preflight.returncode == 0 and "Result: PASS" in input_preflight.stdout:
+    if _result_pass(input_preflight):
         checks[6].pass_("PASS")
     else:
         checks[6].fail((input_preflight.stdout + input_preflight.stderr)[:160])
 
     access_request = _run_script("scripts/d8_staging_access_request_check.py")
-    if access_request.returncode == 0 and "Result: PASS" in access_request.stdout:
+    if _result_pass(access_request):
         checks[7].pass_("PASS")
     else:
         checks[7].fail((access_request.stdout + access_request.stderr)[:160])
 
     operator_response_intake = _run_script("scripts/d8_staging_operator_response_intake_check.py")
-    if operator_response_intake.returncode == 0 and "Result: PASS" in operator_response_intake.stdout:
+    if _result_pass(operator_response_intake):
         checks[8].pass_("PASS")
     else:
         checks[8].fail((operator_response_intake.stdout + operator_response_intake.stderr)[:160])
 
     gap_triage = _run_script("scripts/d8_staging_gap_triage_check.py")
-    if gap_triage.returncode == 0 and "Result: PASS" in gap_triage.stdout:
+    if _result_pass(gap_triage):
         checks[9].pass_("PASS")
     else:
         checks[9].fail((gap_triage.stdout + gap_triage.stderr)[:160])
 
     records = _run_script("scripts/d8_staging_records_check.py")
-    if records.returncode == 0 and "Result: PASS" in records.stdout:
+    if _result_pass(records):
         checks[10].pass_("PASS")
     else:
         checks[10].fail((records.stdout + records.stderr)[:160])
 
     evidence_review = _run_script("scripts/d8_staging_evidence_review_check.py")
-    if evidence_review.returncode == 0 and "Result: PASS" in evidence_review.stdout:
+    if _result_pass(evidence_review):
         checks[11].pass_("PASS")
     else:
         checks[11].fail((evidence_review.stdout + evidence_review.stderr)[:160])
 
     production = _run_script("scripts/d8_production_coordination_check.py")
-    if production.returncode == 0 and "Result: PASS" in production.stdout:
+    if _result_pass(production):
         checks[12].pass_("PASS")
     else:
         checks[12].fail((production.stdout + production.stderr)[:160])
 
     production_runbook = _run_script("scripts/d8_production_coordination_runbook_check.py")
-    if production_runbook.returncode == 0 and "Result: PASS" in production_runbook.stdout:
+    if _result_pass(production_runbook):
         checks[13].pass_("PASS")
     else:
         checks[13].fail((production_runbook.stdout + production_runbook.stderr)[:160])
 
     d9 = _run_script("scripts/d9_post_launch_plan_check.py")
-    if d9.returncode == 0 and "Result: PASS" in d9.stdout:
+    if _result_pass(d9):
         checks[14].pass_("PASS")
     else:
         checks[14].fail((d9.stdout + d9.stderr)[:160])
 
     d9_pack = _run_script("scripts/d9_operating_execution_pack_check.py")
-    if d9_pack.returncode == 0 and "Result: PASS" in d9_pack.stdout:
+    if _result_pass(d9_pack):
         checks[15].pass_("PASS")
     else:
         checks[15].fail((d9_pack.stdout + d9_pack.stderr)[:160])
 
     d9_kickoff = _run_script("scripts/d9_operating_loop_kickoff_check.py")
-    if d9_kickoff.returncode == 0 and "Result: PASS" in d9_kickoff.stdout:
+    if _result_pass(d9_kickoff):
         checks[16].pass_("PASS")
     else:
         checks[16].fail((d9_kickoff.stdout + d9_kickoff.stderr)[:160])
 
     d9_health = _run_script("scripts/d9_1_operating_health_review_check.py")
-    if d9_health.returncode == 0 and "Result: PASS" in d9_health.stdout:
+    if _result_pass(d9_health):
         checks[17].pass_("PASS")
     else:
         checks[17].fail((d9_health.stdout + d9_health.stderr)[:160])
 
     d9_orders = _run_script("scripts/d9_2_order_operations_loop_check.py")
-    if d9_orders.returncode == 0 and "Result: PASS" in d9_orders.stdout:
+    if _result_pass(d9_orders):
         checks[18].pass_("PASS")
     else:
         checks[18].fail((d9_orders.stdout + d9_orders.stderr)[:160])
 
     d9_market = _run_script("scripts/d9_3_market_response_loop_check.py")
-    if d9_market.returncode == 0 and "Result: PASS" in d9_market.stdout:
+    if _result_pass(d9_market):
         checks[19].pass_("PASS")
     else:
         checks[19].fail((d9_market.stdout + d9_market.stderr)[:160])
 
     d9_backlog = _run_script("scripts/d9_4_improvement_backlog_check.py")
-    if d9_backlog.returncode == 0 and "Result: PASS" in d9_backlog.stdout:
+    if _result_pass(d9_backlog):
         checks[20].pass_("PASS")
     else:
         checks[20].fail((d9_backlog.stdout + d9_backlog.stderr)[:160])
 
     d9_records = _run_script("scripts/d9_operating_records_check.py")
-    if d9_records.returncode == 0 and "Result: PASS" in d9_records.stdout:
+    if _result_pass(d9_records):
         checks[21].pass_("PASS")
     else:
         checks[21].fail((d9_records.stdout + d9_records.stderr)[:160])
 
     roadmap = _run_script("scripts/phase3_roadmap_check.py")
-    if roadmap.returncode == 0 and "Result: PASS" in roadmap.stdout:
+    if _result_pass(roadmap):
         checks[22].pass_("PASS")
     else:
         checks[22].fail((roadmap.stdout + roadmap.stderr)[:160])
 
     project_plan = _run_script("scripts/ie_auto_project_plan_check.py")
-    if project_plan.returncode == 0 and "Result: PASS" in project_plan.stdout:
+    if _result_pass(project_plan):
         checks[23].pass_("PASS")
     else:
         checks[23].fail((project_plan.stdout + project_plan.stderr)[:160])
 
     execution_chain = _run_script("scripts/project_execution_chain_check.py")
-    if execution_chain.returncode == 0 and "Result: PASS" in execution_chain.stdout:
+    if _result_pass(execution_chain):
         checks[24].pass_("PASS")
     else:
         checks[24].fail((execution_chain.stdout + execution_chain.stderr)[:160])
 
     execution_status = _run_script("scripts/project_execution_status.py")
-    if execution_status.returncode == 0 and "Result: PASS" in execution_status.stdout:
+    if _result_pass(execution_status):
         checks[25].pass_("PASS")
     else:
         checks[25].fail((execution_status.stdout + execution_status.stderr)[:160])
 
     acceptance_audit = _run_script("scripts/project_execution_acceptance_audit_check.py")
-    if acceptance_audit.returncode == 0 and "Result: PASS" in acceptance_audit.stdout:
+    if _result_pass(acceptance_audit):
         checks[26].pass_("PASS")
     else:
         checks[26].fail((acceptance_audit.stdout + acceptance_audit.stderr)[:160])
 
     execution_records = _run_script("scripts/project_execution_records_check.py")
-    if execution_records.returncode == 0 and "Result: PASS" in execution_records.stdout:
+    if _result_pass(execution_records):
         checks[27].pass_("PASS")
     else:
         checks[27].fail((execution_records.stdout + execution_records.stderr)[:160])
 
     agent_guide = _run_script("scripts/agent_guide_check.py")
-    if agent_guide.returncode == 0 and "Result: PASS" in agent_guide.stdout:
+    if _result_pass(agent_guide):
         checks[28].pass_("PASS")
     else:
         checks[28].fail((agent_guide.stdout + agent_guide.stderr)[:160])
 
     readme = _run_script("scripts/readme_check.py")
-    if readme.returncode == 0 and "Result: PASS" in readme.stdout:
+    if _result_pass(readme):
         checks[29].pass_("PASS")
     else:
         checks[29].fail((readme.stdout + readme.stderr)[:160])
 
     product_vision = _run_script("scripts/product_vision_check.py")
-    if product_vision.returncode == 0 and "Result: PASS" in product_vision.stdout:
+    if _result_pass(product_vision):
         checks[30].pass_("PASS")
     else:
         checks[30].fail((product_vision.stdout + product_vision.stderr)[:160])
 
     desktop_target = _run_script("scripts/desktop_target_architecture_check.py")
-    if desktop_target.returncode == 0 and "Result: PASS" in desktop_target.stdout:
+    if _result_pass(desktop_target):
         checks[31].pass_("PASS")
     else:
         checks[31].fail((desktop_target.stdout + desktop_target.stderr)[:160])
 
     runtime_modes = _run_script("scripts/runtime_modes_check.py")
-    if runtime_modes.returncode == 0 and "Result: PASS" in runtime_modes.stdout:
+    if _result_pass(runtime_modes):
         checks[32].pass_("PASS")
     else:
         checks[32].fail((runtime_modes.stdout + runtime_modes.stderr)[:160])
 
     database_lifecycle = _run_script("scripts/database_lifecycle_doc_check.py")
-    if database_lifecycle.returncode == 0 and "Result: PASS" in database_lifecycle.stdout:
+    if _result_pass(database_lifecycle):
         checks[33].pass_("PASS")
     else:
         checks[33].fail((database_lifecycle.stdout + database_lifecycle.stderr)[:160])
 
     desktop_packaging = _run_script("scripts/desktop_packaging_docs_check.py")
-    if desktop_packaging.returncode == 0 and "Result: PASS" in desktop_packaging.stdout:
+    if _result_pass(desktop_packaging):
         checks[34].pass_("PASS")
     else:
         checks[34].fail((desktop_packaging.stdout + desktop_packaging.stderr)[:160])
 
     web_to_desktop = _run_script("scripts/web_to_desktop_migration_doc_check.py")
-    if web_to_desktop.returncode == 0 and "Result: PASS" in web_to_desktop.stdout:
+    if _result_pass(web_to_desktop):
         checks[35].pass_("PASS")
     else:
         checks[35].fail((web_to_desktop.stdout + web_to_desktop.stderr)[:160])
 
     desktop_transition = _run_script("scripts/desktop_transition_roadmap_check.py")
-    if desktop_transition.returncode == 0 and "Result: PASS" in desktop_transition.stdout:
+    if _result_pass(desktop_transition):
         checks[36].pass_("PASS")
     else:
         checks[36].fail((desktop_transition.stdout + desktop_transition.stderr)[:160])
 
     reorientation = _run_script("scripts/project_reorientation_summary_check.py")
-    if reorientation.returncode == 0 and "Result: PASS" in reorientation.stdout:
+    if _result_pass(reorientation):
         checks[37].pass_("PASS")
     else:
         checks[37].fail((reorientation.stdout + reorientation.stderr)[:160])
 
     dev_guide = _run_script("scripts/dev_guide_check.py")
-    if dev_guide.returncode == 0 and "Result: PASS" in dev_guide.stdout:
+    if _result_pass(dev_guide):
         checks[38].pass_("PASS")
     else:
         checks[38].fail((dev_guide.stdout + dev_guide.stderr)[:160])
 
     backend_standards = _run_script("scripts/integrated_backend_standards_check.py")
-    if backend_standards.returncode == 0 and "Result: PASS" in backend_standards.stdout:
+    if _result_pass(backend_standards):
         checks[39].pass_("PASS")
     else:
         checks[39].fail((backend_standards.stdout + backend_standards.stderr)[:160])
 
     lead_intelligence = _run_script("scripts/lead_intelligence_docs_check.py")
-    if lead_intelligence.returncode == 0 and "Result: PASS" in lead_intelligence.stdout:
+    if _result_pass(lead_intelligence):
         checks[40].pass_("PASS")
     else:
         checks[40].fail((lead_intelligence.stdout + lead_intelligence.stderr)[:160])
 
     manual_a_domain = _run_script("scripts/manual_a_domain_test_plan_check.py")
-    if manual_a_domain.returncode == 0 and "Result: PASS" in manual_a_domain.stdout:
+    if _result_pass(manual_a_domain):
         checks[41].pass_("PASS")
     else:
         checks[41].fail((manual_a_domain.stdout + manual_a_domain.stderr)[:160])
 
     codex_skills = _run_script("scripts/codex_skill_pack_check.py")
-    if codex_skills.returncode == 0 and "Result: PASS" in codex_skills.stdout:
+    if _result_pass(codex_skills):
         checks[42].pass_("PASS")
     else:
         checks[42].fail((codex_skills.stdout + codex_skills.stderr)[:160])
 
     activity_actions = _run_script("scripts/activity_actions_doc_check.py")
-    if activity_actions.returncode == 0 and "Result: PASS" in activity_actions.stdout:
+    if _result_pass(activity_actions):
         checks[43].pass_("PASS")
     else:
         checks[43].fail((activity_actions.stdout + activity_actions.stderr)[:160])
 
     deployment_readiness = _run_script("scripts/deployment_readiness_checklist_check.py")
-    if deployment_readiness.returncode == 0 and "Result: PASS" in deployment_readiness.stdout:
+    if _result_pass(deployment_readiness):
         checks[44].pass_("PASS")
     else:
         checks[44].fail((deployment_readiness.stdout + deployment_readiness.stderr)[:160])
 
     testing_guide = _run_script("scripts/testing_guide_check.py")
-    if testing_guide.returncode == 0 and "Result: PASS" in testing_guide.stdout:
+    if _result_pass(testing_guide):
         checks[45].pass_("PASS")
     else:
         checks[45].fail((testing_guide.stdout + testing_guide.stderr)[:160])
 
     testing_summary = _run_script("scripts/testing_summary_d5_2_check.py")
-    if testing_summary.returncode == 0 and "Result: PASS" in testing_summary.stdout:
+    if _result_pass(testing_summary):
         checks[46].pass_("PASS")
     else:
         checks[46].fail((testing_summary.stdout + testing_summary.stderr)[:160])
 
     operator_guide = _run_script("scripts/operator_guide_check.py")
-    if operator_guide.returncode == 0 and "Result: PASS" in operator_guide.stdout:
+    if _result_pass(operator_guide):
         checks[47].pass_("PASS")
     else:
         checks[47].fail((operator_guide.stdout + operator_guide.stderr)[:160])
 
     chain_gate = _run_script("scripts/project_execution_chain_gate_check.py")
-    if chain_gate.returncode == 0 and "Result: PASS" in chain_gate.stdout:
+    if _result_pass(chain_gate):
         checks[48].pass_("PASS")
     else:
         checks[48].fail((chain_gate.stdout + chain_gate.stderr)[:160])
