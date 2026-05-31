@@ -60,6 +60,16 @@ This matrix turns the D7.9-D8 work into a compact execution and evidence map. It
 
 ## Immediate Stage Goal
 
+Before handing the package to the staging operator, run the local handoff gate set:
+
+```powershell
+cd backend
+python scripts/project_execution_chain_gate_check.py
+python scripts/d8_staging_execution_pack_check.py
+python scripts/project_execution_acceptance_audit_check.py
+python scripts/project_execution_status.py
+```
+
 Run the strict staging evidence command with real staging values and save both artifacts:
 
 ```powershell
