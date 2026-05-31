@@ -6,6 +6,7 @@ import json
 import re
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 try:
     from record_redaction import redaction_issues
@@ -141,6 +142,11 @@ def _evidence_issues(records: list[Path]) -> list[str]:
         result = str(data.get("result") or "").upper()
         if result not in {"PASS", "FAIL"}:
             issues.append(f"{path.name}:result")
+        backend_base_url = str(data.get("backend_base_url") or "")
+        if backend_base_url.startswith(("http://", "https://")):
+            host = (urlparse(backend_base_url).hostname or "").lower()
+            if host not in {"localhost", "127.0.0.1", "::1", "<redacted-backend>"}:
+                issues.append(f"{path.name}:backend_base_url_redaction")
         if not isinstance(data.get("checks"), list):
             issues.append(f"{path.name}:checks")
         safety = data.get("safety")

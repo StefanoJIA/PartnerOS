@@ -98,6 +98,23 @@ def test_strict_staging_evidence_accepts_canonical_gap_name(tmp_path):
     )
 
 
+def test_strict_staging_evidence_redacts_remote_backend_url():
+    module = _load_module()
+
+    assert module._redacted_url("https://partneros-staging.private.example.com") == "https://<redacted-backend>"
+    assert (
+        module._redacted_url("https://user:secret@partneros-staging.private.example.com/api?token=value")
+        == "https://<redacted-backend>/api"
+    )
+
+
+def test_strict_staging_evidence_keeps_localhost_backend_url():
+    module = _load_module()
+
+    assert module._redacted_url("http://127.0.0.1:8014") == "http://127.0.0.1:8014"
+    assert module._redacted_url("http://user:secret@localhost:8014/api") == "http://***:***@localhost:8014/api"
+
+
 def test_strict_staging_evidence_fails_for_short_token_without_printing_it(
     tmp_path, monkeypatch, capsys
 ):

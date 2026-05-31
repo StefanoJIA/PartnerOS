@@ -105,10 +105,15 @@ def _json(response: httpx.Response | None) -> Any:
 
 def _redacted_url(url: str) -> str:
     parsed = urlparse(url)
+    if not parsed.scheme or not parsed.hostname:
+        return url
     if parsed.username or parsed.password:
         host = parsed.hostname or ""
         port = f":{parsed.port}" if parsed.port else ""
-        return f"{parsed.scheme}://***:***@{host}{port}{parsed.path or ''}"
+        if _is_localhost(url):
+            return f"{parsed.scheme}://***:***@{host}{port}{parsed.path or ''}"
+    if not _is_localhost(url):
+        return f"{parsed.scheme}://<redacted-backend>{parsed.path or ''}"
     return url
 
 

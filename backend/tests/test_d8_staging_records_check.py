@@ -116,6 +116,56 @@ def test_d8_staging_records_check_requires_gap_register_for_failed_evidence(tmp_
     assert "missing d8_strict_staging_gaps_20260530.md" in output
 
 
+def test_d8_staging_records_check_rejects_unredacted_evidence_backend_url(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    _write_required_current_records(tmp_path)
+    (tmp_path / "d8_strict_staging_evidence_20260530.json").write_text(
+        """
+{
+  "backend_base_url": "https://private-staging.example.com",
+  "result": "PASS",
+  "checks": [],
+  "safety": {
+    "token_redacted": true,
+    "response_bodies_stored": false
+  }
+}
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "backend_base_url_redaction" in output
+
+
+def test_d8_staging_records_check_accepts_redacted_evidence_backend_url(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    _write_required_current_records(tmp_path)
+    (tmp_path / "d8_strict_staging_evidence_20260530.json").write_text(
+        """
+{
+  "backend_base_url": "https://<redacted-backend>",
+  "result": "PASS",
+  "checks": [],
+  "safety": {
+    "token_redacted": true,
+    "response_bodies_stored": false
+  }
+}
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert module.main() == 0
+    output = capsys.readouterr().out
+    assert "Result: PASS" in output
+
+
 def test_d8_staging_records_check_accepts_production_go_no_go_record(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
