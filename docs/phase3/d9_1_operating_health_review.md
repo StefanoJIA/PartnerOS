@@ -42,6 +42,8 @@ python scripts/d9_operating_records_check.py
 
 Use a canonical redacted record name such as `docs/records/d9_operating_health_YYYYMMDD.md`.
 
+`Owner: TBD` is allowed only as a human owner placeholder before production coordination assigns a named operator or team. It is not an auto-assignee, notification target, or permission to create tickets.
+
 ```markdown
 # D9 Operating Health - YYYY-MM-DD
 

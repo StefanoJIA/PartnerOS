@@ -28,6 +28,8 @@ REQUIRED_MARKERS = (
     "Owner",
     "Priority",
     "Next action",
+    "Owner: TBD` is allowed only as a human owner placeholder",
+    "not an auto-assignee, notification target, or permission to create tickets",
     "No automatic ticket creation",
     "No automatic pricing, product, quote, order, shipment, payment, inventory, or partner-selection mutation",
     "No `.env`",

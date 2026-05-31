@@ -28,6 +28,8 @@ REQUIRED_MARKERS = (
     "Partner-fit summary",
     "Advisory summary",
     "advisory planning loop",
+    "Owner: TBD` is allowed only as a human owner placeholder",
+    "not an auto-assignee, notification target, or permission to create tickets",
     "No automatic customer reply",
     "No automatic pricing, product, quote, order, shipment, payment, inventory, or partner-selection mutation",
     "No `.env`",

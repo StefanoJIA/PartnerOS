@@ -28,6 +28,8 @@ REQUIRED_MARKERS = (
     "Shipment summary",
     "Resource summary",
     "Feedback summary",
+    "Owner: TBD` is allowed only as a human owner placeholder",
+    "not an auto-assignee, notification target, or permission to create tickets",
     "No customer or supplier notification",
     "No automatic order, production, shipment, delivery, payment, inventory, or partner-selection mutation",
     "No `.env`",

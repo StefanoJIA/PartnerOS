@@ -28,6 +28,8 @@ REQUIRED_MARKERS = (
     "Portal read summary",
     "Safety summary",
     "products, orders, production, shipment, resources, and feedback-status",
+    "Owner: TBD` is allowed only as a human owner placeholder",
+    "not an auto-assignee, notification target, or permission to create tickets",
     "No `.env`",
     "No email, webhook, carrier API",
 )
