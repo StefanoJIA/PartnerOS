@@ -6,7 +6,7 @@
 
 This intake gate defines what the repository may receive after a staging operator runs or prepares the strict staging evidence flow. It keeps private staging values in private channels while preserving enough redacted context for review, rerun planning, and production coordination.
 
-It is not staging proof by itself. The repository remains `READY_FOR_STAGING` until strict staging evidence is saved and reviewed.
+It is not staging proof by itself and must not be used as `STAGING_VALIDATED` or `STAGING_GAPS_OPEN` evidence. The repository remains `READY_FOR_STAGING` until strict staging evidence is saved and reviewed.
 
 ## Acceptable Repository Inputs
 

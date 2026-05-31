@@ -137,6 +137,7 @@ REQUIRED_MATRIX_MARKERS = (
     "--evidence-json",
     "--gap-markdown",
     "No automatic customer or supplier notification",
+    "Rehearsal output is not staging proof and must not change the readiness state to `STAGING_VALIDATED` or `STAGING_GAPS_OPEN`",
 )
 
 

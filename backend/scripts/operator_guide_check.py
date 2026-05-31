@@ -60,6 +60,7 @@ REQUIRED_MARKERS = (
     "carrier APIs",
     "service.intelli-opus.com",
     "implemented D7.7 Portal Bridge API",
+    "Local rehearsal output is not staging proof and must not change readiness to `STAGING_VALIDATED` or `STAGING_GAPS_OPEN`",
 )
 FORBIDDEN_MARKERS = (
     "PORTAL_CUSTOMER_API_TOKEN=",

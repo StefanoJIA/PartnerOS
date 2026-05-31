@@ -96,6 +96,7 @@ REQUIRED_NEXT_BRIEF = (
     "READY_FOR_STAGING",
     "STAGING_GAPS_OPEN",
     "STAGING_VALIDATED",
+    "does not prove `STAGING_VALIDATED` or `STAGING_GAPS_OPEN`",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "human Go / No-Go",
     "docs/records/d8_production_go_no_go_YYYYMMDD.md",

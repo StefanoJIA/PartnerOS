@@ -413,7 +413,7 @@ To rehearse strict staging command order against a local backend only, use [D8 L
 python scripts/d8_local_staging_rehearsal_check.py
 ```
 
-Local rehearsal output is not staging proof and must not change readiness to `STAGING_VALIDATED`.
+Local rehearsal output is not staging proof and must not change readiness to `STAGING_VALIDATED` or `STAGING_GAPS_OPEN`.
 
 After private staging values are available, but before running strict evidence, run:
 

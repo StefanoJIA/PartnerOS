@@ -34,6 +34,7 @@ REQUIRED_MARKERS = (
     "python scripts/d8_readiness_audit.py",
     "No `.env`",
     "No email, webhook, carrier API",
+    "must not be used as `STAGING_VALIDATED` or `STAGING_GAPS_OPEN` evidence",
 )
 FORBIDDEN_MARKERS = (
     "SERVICE_PORTAL_PARTNEROS_TOKEN=",
