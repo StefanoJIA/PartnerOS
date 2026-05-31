@@ -36,6 +36,8 @@ REQUIRED_MARKERS = (
     "AI-assisted output remains advisory and human-reviewed",
     "python scripts/lead_intelligence_docs_check.py",
     "python scripts/project_execution_chain_gate_check.py",
+    "python scripts/d8_staging_execution_pack_check.py",
+    "python scripts/project_execution_acceptance_audit_check.py",
 )
 FORBIDDEN_MARKERS = (
     "娑?",
