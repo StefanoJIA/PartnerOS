@@ -113,6 +113,36 @@ def test_strict_staging_evidence_forbids_local_rehearsal_outputs_under_docs_reco
     )
 
 
+def test_strict_staging_evidence_does_not_write_local_rehearsal_to_docs_records(capsys):
+    module = _load_module()
+    evidence = module.BACKEND_ROOT.parent / "docs" / "records" / "d8_strict_staging_evidence_20990101.json"
+    gap = module.BACKEND_ROOT.parent / "docs" / "records" / "d8_strict_staging_gaps_20990101.md"
+    evidence.unlink(missing_ok=True)
+    gap.unlink(missing_ok=True)
+    checks = [module.Check("synthetic local rehearsal")]
+    checks[0].pass_("ok")
+
+    try:
+        assert (
+            module._finish(
+                checks=checks,
+                base="http://127.0.0.1:8014",
+                origin="https://service.intelli-opus.com",
+                allow_local=True,
+                evidence_json=str(evidence),
+                gap_markdown=str(gap),
+            )
+            == 1
+        )
+        output = capsys.readouterr().out
+        assert "local rehearsal evidence must stay outside docs/records" in output
+        assert not evidence.exists()
+        assert not gap.exists()
+    finally:
+        evidence.unlink(missing_ok=True)
+        gap.unlink(missing_ok=True)
+
+
 def test_strict_staging_evidence_accepts_canonical_gap_name(tmp_path):
     module = _load_module()
 
