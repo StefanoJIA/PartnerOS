@@ -180,6 +180,8 @@ HANDOFF_MARKERS = (
     "--gap-markdown",
     "Do not deploy or modify `service.intelli-opus.com`",
     "Do not print, screenshot, commit, or paste portal tokens",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "until strict staging evidence from real staging values replaces it",
 )
 FORBIDDEN_DOC_MARKERS = (
     "partneros-staging.example.com",

@@ -27,6 +27,8 @@ python scripts/d8_readiness_audit.py
 | `STAGING_EVIDENCE_NONCANONICAL` | A strict staging evidence-like file exists but does not use the canonical `YYYYMMDD` name | Rename/regenerate evidence with canonical names before review |
 | `STAGING_EVIDENCE_UNREADABLE` | Latest canonical strict staging evidence cannot be parsed as valid evidence JSON | Regenerate evidence and rerun records/review gates |
 
+Production coordination must not begin from `STAGING_EVIDENCE_LOCAL_REHEARSAL`. If local rehearsal output is saved where strict staging evidence is expected, `d8_production_coordination_check.py` reports `WAITING_FOR_REAL_STAGING_EVIDENCE` until strict staging evidence from real staging values replaces it.
+
 ## Evidence Inputs
 
 The audit looks for:

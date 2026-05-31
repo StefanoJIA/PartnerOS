@@ -23,6 +23,8 @@ REQUIRED_MARKERS = (
     "d8_strict_staging_evidence_YYYYMMDD.json",
     "outside `docs/records`",
     "READY_FOR_STAGING",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "until strict staging evidence from real staging values replaces it",
     "STAGING_VALIDATED",
     "STAGING_GAPS_OPEN",
     "strict evidence script rejects local rehearsal output paths under `docs/records`",

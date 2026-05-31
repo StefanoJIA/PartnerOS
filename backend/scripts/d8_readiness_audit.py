@@ -86,6 +86,8 @@ REQUIRED_SCRIPTS = (
 REQUIRED_READINESS_DOC_MARKERS = (
     "STAGING_EVIDENCE_LOCAL_REHEARSAL",
     "Latest strict evidence used local HTTP rehearsal or localhost backend",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "until strict staging evidence from real staging values replaces it",
 )
 SAFETY_MARKERS = (
     "No automatic customer or supplier notification",
