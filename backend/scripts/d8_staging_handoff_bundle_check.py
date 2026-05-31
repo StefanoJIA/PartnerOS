@@ -29,6 +29,8 @@ REQUIRED_LINKS = (
     "d8_staging_evidence_review.md",
     "d8_production_coordination_plan.md",
     "d8_production_coordination_runbook.md",
+    "../records/d8_staging_operator_handoff_20260531.md",
+    "../records/d8_staging_access_request_20260531.md",
 )
 REQUIRED_COMMANDS = (
     "python scripts/readme_check.py",
@@ -64,6 +66,9 @@ REQUIRED_MARKERS = (
     "raw response bodies",
     "service.intelli-opus.com",
     "nginx",
+    "Committed Records",
+    "D8 Staging Operator Handoff Record",
+    "D8 Staging Access Request Record",
 )
 FORBIDDEN_MARKERS = (
     "PORTAL_CUSTOMER_API_TOKEN=",

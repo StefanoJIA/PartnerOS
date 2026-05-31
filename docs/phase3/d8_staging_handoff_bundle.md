@@ -27,6 +27,13 @@ This bundle is the exact local package to hand to the staging operator before re
 | [D8 Production Coordination Plan](d8_production_coordination_plan.md) | Defines the path after `STAGING_VALIDATED` |
 | [D8 Production Coordination Runbook](d8_production_coordination_runbook.md) | Defines the human Go / No-Go and rollback handoff after staging validation |
 
+## Committed Records
+
+| Record | Use |
+|---|---|
+| [D8 Staging Operator Handoff Record](../records/d8_staging_operator_handoff_20260531.md) | Current redacted operator handoff generated from local gates |
+| [D8 Staging Access Request Record](../records/d8_staging_access_request_20260531.md) | Current redacted request for private staging values |
+
 ## Preflight Commands
 
 ```powershell
