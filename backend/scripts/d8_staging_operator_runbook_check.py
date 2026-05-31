@@ -18,6 +18,8 @@ REQUIRED_MARKERS = (
     "READY_FOR_STAGING_HANDOFF",
     "WAITING_FOR_PRIVATE_VALUES",
     "Required staging values are unavailable or placeholders",
+    "LOCAL_REHEARSAL_READY",
+    "Required values are present for explicit localhost rehearsal only",
     "INPUTS_UNSAFE",
     "Provided staging inputs are non-HTTPS",
     "WAITING_FOR_STAGING_EVIDENCE",
