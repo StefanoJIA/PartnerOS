@@ -54,6 +54,8 @@ Current D8/D9 docs: [Project Execution Acceptance Audit](docs/phase3/project_exe
 
 For completion status, use the [Project Execution Acceptance Audit](docs/phase3/project_execution_acceptance_audit.md) `Completion Proof Ledger`: local planning is `PROVED_LOCAL`, while strict staging, production coordination, and D9 launch remain `MISSING_EXTERNAL` until real staging evidence exists.
 
+Strict staging evidence keeps the real `BACKEND_BASE_URL` in the private operator channel; saved evidence records show a remote backend as `https://<redacted-backend>`.
+
 See [D7.9 Resource Center](docs/phase3/d7_9_resource_center.md) · [IE Auto Project Plan](docs/phase3/ie_auto_project_plan.md) · [D7.8 Service Portal Integration UAT](docs/phase3/d7_8_service_portal_integration_uat.md) · [Service Portal API Contract](docs/phase3/service_portal_api_contract_for_frontend.md) · [D7.7 Customer Portal Bridge API](docs/phase3/d7_7_customer_portal_bridge_api.md) · [D7.6 Shipment Tracking Foundation](docs/phase3/d7_6_shipment_tracking_foundation.md) · [D7.5.1 Cloud Portal Integration Review](docs/phase3/d7_5_1_existing_cloud_portal_integration_review.md) · [Phase 3 Roadmap](docs/phase3/phase3_roadmap.md).
 
 D6 implementation references:

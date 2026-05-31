@@ -444,7 +444,7 @@ Before committing staging records, run:
 python scripts/d8_staging_records_check.py
 ```
 
-Keep D8 staging artifacts under canonical `docs/records/d8_*_YYYYMMDD` names. The record gate verifies redaction metadata, token placeholders, strict evidence schema, and matching gap registers for failed evidence.
+Keep D8 staging artifacts under canonical `docs/records/d8_*_YYYYMMDD` names. The record gate verifies redaction metadata, token placeholders, strict evidence schema, and matching gap registers for failed evidence. Saved strict staging evidence shows a remote backend as `https://<redacted-backend>` while the real `BACKEND_BASE_URL` stays in the private operator channel.
 
 After records pass, review the saved evidence state with:
 
