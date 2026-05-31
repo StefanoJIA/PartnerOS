@@ -37,11 +37,11 @@ REQUIRED_BOUNDARIES = (
     "Do not expose internal cost",
 )
 FORBIDDEN_MARKERS = (
-    "SERVICE_PORTAL_PARTNEROS_TOKEN:",
     "Bearer ",
     "raw response body",
 )
 TOKEN_ASSIGNMENT = re.compile(r"SERVICE_PORTAL_PARTNEROS_TOKEN\s*=")
+TOKEN_STATUS = re.compile(r"^\s*SERVICE_PORTAL_PARTNEROS_TOKEN\s*:\s*(?P<value>.+?)\s*$", re.IGNORECASE)
 
 
 class Check:
@@ -73,10 +73,12 @@ def _missing(text: str, markers: tuple[str, ...]) -> list[str]:
 
 
 def _forbidden(text: str) -> list[str]:
-    allowed = "SERVICE_PORTAL_PARTNEROS_TOKEN: provided privately"
-    forbidden = [marker for marker in FORBIDDEN_MARKERS if marker in text and marker not in allowed]
+    forbidden = [marker for marker in FORBIDDEN_MARKERS if marker in text]
     forbidden.extend(redaction_issues(DOC, text, include_common_markers=False))
     for line in text.splitlines():
+        status = TOKEN_STATUS.match(line)
+        if status and status.group("value").strip() != "provided privately":
+            forbidden.append("SERVICE_PORTAL_PARTNEROS_TOKEN:<non-private-status>")
         if TOKEN_ASSIGNMENT.search(line) and "<portal-server-token>" not in line:
             forbidden.append("SERVICE_PORTAL_PARTNEROS_TOKEN=<non-placeholder>")
             break
