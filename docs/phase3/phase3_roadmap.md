@@ -36,8 +36,8 @@ Phase 3 builds the **Customer Order** module and downstream production/shipment 
 | **D8.3** | Service Portal Staging | HTTP contract runner for service.intelli-opus.com integration | Contract runner implemented |
 | **D8.4** | Multi-Partner Operations Dashboard | read-only partner workload, supplier, production, shipment risk view | Implemented |
 | **D8.5** | Market Response Intelligence | feedback tags, win-loss signals, demand board, product gaps, advisory recommendations | Implemented |
-| **D8** | Deployment & Integration Hardening | CORS, HTTPS, token/storage safety, cloud readiness gate, evidence review, production coordination plan, human Go / No-Go handoff | Evidence workflow added |
-| **D9** | Post-Launch Operating Loop | production health review, order operations loop, market response loop, improvement backlog after `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, production coordination, and human Go / No-Go handoff; optional record `docs/records/d8_production_go_no_go_YYYYMMDD.md` | Planned |
+| **D8** | Deployment & Integration Hardening | CORS, HTTPS, token/storage safety, cloud readiness gate, evidence review, production coordination plan, `WAITING_FOR_REAL_STAGING_EVIDENCE` guard for mistaken local rehearsal evidence, human Go / No-Go handoff | Evidence workflow added |
+| **D9** | Post-Launch Operating Loop | production health review, order operations loop, market response loop, improvement backlog after `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, production coordination, and human Go / No-Go handoff; local rehearsal output must first leave `WAITING_FOR_REAL_STAGING_EVIDENCE`; optional record `docs/records/d8_production_go_no_go_YYYYMMDD.md` | Planned |
 
 ---
 

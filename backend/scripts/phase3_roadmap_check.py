@@ -74,6 +74,7 @@ REQUIRED_GRAPH_MARKERS = (
 REQUIRED_GATE_MARKERS = (
     "evidence review",
     "production coordination plan",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "human Go / No-Go handoff",
     "docs/records/d8_production_go_no_go_YYYYMMDD.md",

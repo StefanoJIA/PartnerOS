@@ -47,6 +47,7 @@ REQUIRED_MARKERS = (
     "Do not expose internal costs",
 )
 PROJECT_EXECUTION_RULE_MARKERS = (
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
     "python scripts/project_execution_chain_gate_check.py",
     "python scripts/d8_staging_execution_pack_check.py",
     "python scripts/project_execution_acceptance_audit_check.py",

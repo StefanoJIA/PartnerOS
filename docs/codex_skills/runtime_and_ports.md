@@ -8,3 +8,4 @@
 - Start database with `docker compose up -d db`.
 - Do not run multiple backend instances with different code versions on the same smoke port.
 - Local validation on `8014` does not prove `STAGING_VALIDATED`; strict staging evidence uses the real staging `BACKEND_BASE_URL`.
+- `WAITING_FOR_REAL_STAGING_EVIDENCE` means local rehearsal output must be replaced by strict staging evidence from real staging values.
