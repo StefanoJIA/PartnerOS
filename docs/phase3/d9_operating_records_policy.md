@@ -41,6 +41,8 @@ The check verifies canonical names and scans D9 records for token assignments, i
 
 ## Template
 
+`Owner: TBD` is allowed only as a human owner placeholder before production coordination assigns a named operator or team. It is not an auto-assignee, notification target, or permission to create tickets.
+
 ```markdown
 # D9 Operating Review - YYYY-MM-DD
 

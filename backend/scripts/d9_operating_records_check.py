@@ -12,6 +12,12 @@ except ModuleNotFoundError:
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 RECORDS_ROOT = REPO_ROOT / "docs" / "records"
+POLICY_DOC = REPO_ROOT / "docs" / "phase3" / "d9_operating_records_policy.md"
+POLICY_MARKERS = (
+    "D9 Operating Records Policy",
+    "Owner: TBD` is allowed only as a human owner placeholder",
+    "not an auto-assignee, notification target, or permission to create tickets",
+)
 
 D9_RECORD_PATTERN = re.compile(
     r"^d9_(?:operating_review|operating_health|order_operations|market_response|improvement_backlog)_\d{8}\.md$"
@@ -65,12 +71,26 @@ def _redaction_issues(records: list[Path]) -> list[str]:
     return issues
 
 
+def _policy_text() -> str:
+    try:
+        return POLICY_DOC.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+
+
 def main() -> int:
     checks = [
         Check("docs/records exists"),
+        Check("D9 operating records policy is explicit"),
         Check("D9 operating record names are canonical"),
         Check("D9 operating records are redacted"),
     ]
+
+    policy_text = _policy_text()
+    policy_missing = [marker for marker in POLICY_MARKERS if marker not in policy_text]
+    checks[1].pass_(f"{len(POLICY_MARKERS)} markers") if not policy_missing else checks[1].fail(
+        ", ".join(policy_missing)
+    )
 
     if RECORDS_ROOT.exists() and RECORDS_ROOT.is_dir():
         checks[0].pass_(_display_path(RECORDS_ROOT))
@@ -79,10 +99,10 @@ def main() -> int:
 
     records = _d9_records()
     naming = _naming_issues(records)
-    checks[1].pass_(f"{len(records)} D9 records") if not naming else checks[1].fail(", ".join(naming))
+    checks[2].pass_(f"{len(records)} D9 records") if not naming else checks[2].fail(", ".join(naming))
 
     redaction = _redaction_issues(records)
-    checks[2].pass_("no token assignments or forbidden markers") if not redaction else checks[2].fail(
+    checks[3].pass_("no token assignments or forbidden markers") if not redaction else checks[3].fail(
         ", ".join(redaction[:8])
     )
 
