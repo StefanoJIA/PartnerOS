@@ -34,6 +34,13 @@ def test_project_execution_acceptance_audit_check_passes_with_repo_doc(monkeypat
     assert "Result: PASS" in output
 
 
+def test_project_execution_acceptance_audit_requires_real_evidence_wait_clearance():
+    module = _load_module()
+
+    assert "clearance from `WAITING_FOR_REAL_STAGING_EVIDENCE`" in module.REQUIRED_MARKERS
+    assert "no longer reports `WAITING_FOR_REAL_STAGING_EVIDENCE`" in module.REQUIRED_MARKERS
+
+
 def test_project_execution_acceptance_audit_check_fails_when_readiness_is_already_validated(monkeypatch, capsys):
     module = _load_module()
 

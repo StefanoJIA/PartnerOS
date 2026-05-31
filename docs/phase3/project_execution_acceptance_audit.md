@@ -46,7 +46,7 @@ This audit maps the current project-planning objective to concrete evidence. It 
 | Saved staging evidence has a review gate | [D8 Staging Evidence Review](d8_staging_evidence_review.md), `python scripts/d8_staging_evidence_review_check.py` | `WAITING_FOR_STAGING_EVIDENCE` until evidence arrives |
 | Production coordination is gated behind staging and evidence review | [D8 Production Coordination Plan](d8_production_coordination_plan.md), `python scripts/d8_production_coordination_check.py` | `WAITING_FOR_STAGING_VALIDATION`; later requires `READY_FOR_PRODUCTION_COORDINATION_REVIEW` |
 | Production coordination runbook is ready | [D8 Production Coordination Runbook](d8_production_coordination_runbook.md), `python scripts/d8_production_coordination_runbook_check.py` | PASS, but gated behind `STAGING_VALIDATED` and `READY_FOR_PRODUCTION_COORDINATION_REVIEW` |
-| D9 is planned but gated | [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md), `python scripts/d9_post_launch_plan_check.py` | PASS, gated behind `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, production coordination, and human Go / No-Go handoff |
+| D9 is planned but gated | [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md), `python scripts/d9_post_launch_plan_check.py` | PASS, gated behind `STAGING_VALIDATED`, clearance from `WAITING_FOR_REAL_STAGING_EVIDENCE`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, production coordination, and human Go / No-Go handoff |
 | D9 operating execution pack is planned but gated | [D9 Operating Execution Pack](d9_operating_execution_pack.md), `python scripts/d9_operating_execution_pack_check.py` | PASS, runs `d8_production_coordination_check.py` and `d8_staging_evidence_review_check.py`, with `project_execution_status.py` as the outer sanity check, and references `docs/records/d8_production_go_no_go_YYYYMMDD.md` |
 | D9 kickoff is planned but gated | [D9 Operating Loop Kickoff](d9_operating_loop_kickoff.md), `python scripts/d9_operating_loop_kickoff_check.py` | PASS, requires `READY_FOR_PRODUCTION_COORDINATION_REVIEW` and the human Go / No-Go handoff |
 | D9.1 health review is planned but gated | [D9.1 Operating Health Review](d9_1_operating_health_review.md), `python scripts/d9_1_operating_health_review_check.py` | PASS |
@@ -80,7 +80,7 @@ Until that evidence exists, the correct state is `READY_FOR_STAGING_HANDOFF`, no
 | Strict staging has been validated | Saved `docs/records/d8_strict_staging_evidence_YYYYMMDD.json` from the real deployed staging backend reports `PASS` | `MISSING_EXTERNAL` |
 | Local rehearsal evidence has been replaced | `python scripts/d8_production_coordination_check.py` does not report `WAITING_FOR_REAL_STAGING_EVIDENCE` | `MISSING_EXTERNAL` |
 | Production coordination can begin | `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, and `python scripts/d8_production_coordination_check.py` no longer reports `WAITING_FOR_STAGING_VALIDATION` | `MISSING_EXTERNAL` |
-| D9 operating loop can begin | Production coordination and human Go / No-Go handoff are complete; optional committed record uses `docs/records/d8_production_go_no_go_YYYYMMDD.md` | `MISSING_EXTERNAL` |
+| D9 operating loop can begin | `python scripts/d8_production_coordination_check.py` no longer reports `WAITING_FOR_REAL_STAGING_EVIDENCE`; production coordination and human Go / No-Go handoff are complete; optional committed record uses `docs/records/d8_production_go_no_go_YYYYMMDD.md` | `MISSING_EXTERNAL` |
 
 ## Command
 

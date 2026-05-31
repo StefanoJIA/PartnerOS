@@ -110,6 +110,8 @@ REQUIRED_MARKERS = (
     "Private staging values have been requested safely",
     "Production coordination can begin",
     "D9 operating loop can begin",
+    "clearance from `WAITING_FOR_REAL_STAGING_EVIDENCE`",
+    "no longer reports `WAITING_FOR_REAL_STAGING_EVIDENCE`",
     "No `.env`",
     "No email, webhook, carrier API",
 )
