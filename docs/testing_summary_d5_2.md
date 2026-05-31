@@ -43,6 +43,7 @@ Use the current matrix instead:
 ```powershell
 cd backend
 $env:BACKEND_BASE_URL="http://127.0.0.1:8014"
+python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
 python scripts/project_execution_status.py
 python scripts/d8_staging_execution_pack_check.py
@@ -87,5 +88,6 @@ Do not use this historical summary to:
 ```powershell
 cd backend
 python scripts/testing_summary_d5_2_check.py
+python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
 ```

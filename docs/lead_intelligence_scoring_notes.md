@@ -54,5 +54,6 @@ Scoring must not:
 ```powershell
 cd backend
 python scripts/lead_intelligence_docs_check.py
+python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
 ```

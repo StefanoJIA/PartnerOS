@@ -20,6 +20,7 @@ REQUIRED_MARKERS = (
     "READY_FOR_STAGING_HANDOFF",
     "STAGING_VALIDATED",
     "http://127.0.0.1:8014",
+    "python scripts/project_execution_chain_gate_check.py",
     "python scripts/project_execution_chain_check.py",
     "python scripts/d8_staging_execution_pack_check.py",
     "python scripts/testing_summary_d5_2_check.py",

@@ -33,6 +33,7 @@ REQUIRED_MARKERS = (
     "must not",
     "python scripts/manual_a_domain_test_plan_check.py",
     "python scripts/lead_intelligence_docs_check.py",
+    "python scripts/project_execution_chain_gate_check.py",
 )
 REQUIRED_TEMPLATE_MARKERS = (
     "Manual Test Record Template",

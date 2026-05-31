@@ -31,6 +31,7 @@ REQUIRED_MARKERS = (
     "must not send the quote",
     "partner-neutral",
     "python scripts/activity_actions_doc_check.py",
+    "python scripts/project_execution_chain_gate_check.py",
 )
 FORBIDDEN_MARKERS = (
     "娑?",

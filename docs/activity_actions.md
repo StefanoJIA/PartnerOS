@@ -112,6 +112,7 @@ Partner actions must stay partner-neutral and must not hard-code HOSUN, JOOBOO, 
 ```powershell
 cd backend
 python scripts/activity_actions_doc_check.py
+python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
 ```
 

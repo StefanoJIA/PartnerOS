@@ -35,6 +35,7 @@ REQUIRED_MARKERS = (
     "must not trigger outreach or external notifications",
     "AI-assisted output remains advisory and human-reviewed",
     "python scripts/lead_intelligence_docs_check.py",
+    "python scripts/project_execution_chain_gate_check.py",
 )
 FORBIDDEN_MARKERS = (
     "娑?",
