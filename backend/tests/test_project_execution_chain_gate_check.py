@@ -37,3 +37,16 @@ def test_project_execution_chain_gate_check_flags_token_assignment(monkeypatch, 
     output = capsys.readouterr().out
     assert "chain gate remains redacted" in output
     assert "SERVICE_PORTAL_PARTNEROS_TOKEN=" in output
+
+
+def test_project_execution_chain_gate_check_flags_missing_proof_record(monkeypatch, tmp_path, capsys):
+    module = _load_module()
+    doc = tmp_path / "project_execution_chain_gate.md"
+    doc.write_text("\n".join(module.REQUIRED_MARKERS), encoding="utf-8")
+    monkeypatch.setattr(module, "DOC", doc)
+    monkeypatch.setattr(module, "REPO_ROOT", tmp_path)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "chain gate proof records exist" in output
+    assert "docs/records/project_execution_chain_20260531.md" in output

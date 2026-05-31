@@ -81,10 +81,22 @@ def _forbidden(text: str) -> list[str]:
     return issues
 
 
+def _proof_record_issues() -> list[str]:
+    issues: list[str] = []
+    for marker in REQUIRED_MARKERS:
+        if not marker.startswith("docs/records/"):
+            continue
+        path = REPO_ROOT / marker
+        if not path.is_file():
+            issues.append(marker)
+    return issues
+
+
 def main() -> int:
     checks = [
         Check("project execution chain gate doc exists"),
         Check("chain gate names commands, states, proof records, and gates"),
+        Check("chain gate proof records exist"),
         Check("chain gate remains redacted"),
     ]
 
@@ -94,8 +106,13 @@ def main() -> int:
     missing = _missing(text)
     checks[1].pass_(f"{len(REQUIRED_MARKERS)} markers") if not missing else checks[1].fail(", ".join(missing))
 
+    record_issues = _proof_record_issues()
+    checks[2].pass_("current proof records present") if not record_issues else checks[2].fail(
+        ", ".join(record_issues)
+    )
+
     forbidden = _forbidden(text)
-    checks[2].pass_("redacted") if not forbidden else checks[2].fail(", ".join(forbidden))
+    checks[3].pass_("redacted") if not forbidden else checks[3].fail(", ".join(forbidden))
 
     print("Project Execution Chain Gate Check")
     for check in checks:
