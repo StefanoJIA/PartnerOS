@@ -12,6 +12,7 @@ This audit maps the current project-planning objective to concrete evidence. It 
 |---|---|---|
 | Repository entrypoint states the current stage | [README](../../README.md), `python scripts/readme_check.py` | PASS |
 | Deployment readiness checklist matches current gates | [Deployment Readiness Checklist](../deployment_readiness_checklist.md), `python scripts/deployment_readiness_checklist_check.py` | PASS |
+| Testing guide matches current validation matrix | [Testing Guide](../testing.md), `python scripts/testing_guide_check.py` | PASS |
 | Source-derived project plan exists | [IE Auto Project Plan](ie_auto_project_plan.md), `python scripts/ie_auto_project_plan_check.py` | PASS |
 | Phase 3 roadmap covers D7-D9 sequence | [Phase 3 Roadmap](phase3_roadmap.md), `python scripts/phase3_roadmap_check.py` | PASS |
 | Stage goals and next gaps are explicit | [D8 Delivery Stage Goal Matrix](d8_delivery_stage_goal_matrix.md), `python scripts/d8_stage_goal_matrix_check.py` | PASS |
@@ -58,6 +59,7 @@ Until that evidence exists, the correct state is `READY_FOR_STAGING_HANDOFF`, no
 cd backend
 python scripts/project_execution_acceptance_audit_check.py
 python scripts/deployment_readiness_checklist_check.py
+python scripts/testing_guide_check.py
 python scripts/project_execution_status.py
 python scripts/project_execution_chain_check.py
 ```

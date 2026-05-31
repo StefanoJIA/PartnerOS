@@ -1,4 +1,4 @@
-"""Validate README current-stage and D8/D9 handoff guidance."""
+"""Validate the current D7.6+/D8 testing guide."""
 
 from __future__ import annotations
 
@@ -11,37 +11,43 @@ except ModuleNotFoundError:
     from scripts.record_redaction import redaction_issues
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DOC = REPO_ROOT / "README.md"
+DOC = REPO_ROOT / "docs" / "testing.md"
 
 REQUIRED_MARKERS = (
-    "D7",
-    "closed through D7.9",
-    "D8",
+    "Testing Guide",
+    "Preferred local validation port",
+    "8014",
     "READY_FOR_STAGING_HANDOFF",
-    "D9",
-    "staging evidence review and production coordination",
-    "Port 8014 (D7.6+ validation default)",
-    '$env:BACKEND_BASE_URL="http://127.0.0.1:8014"',
-    '$env:VITE_API_PROXY_TARGET="http://127.0.0.1:8014"',
-    "Current D8/D9 docs",
-    "D8 Staging Execution Pack",
-    "D8 Staging Evidence Review",
-    "D8 Production Coordination Runbook",
-    "D9 Operating Execution Pack",
-    "Project Execution Acceptance Audit",
-    "python scripts/d8_staging_execution_pack_check.py",
-    "python scripts/d8_staging_evidence_review_check.py",
-    "python scripts/project_execution_status.py",
-    "python scripts/project_execution_acceptance_audit_check.py",
-    "python scripts/readme_check.py",
-    "python scripts/deployment_readiness_checklist_check.py",
-    "python scripts/testing_guide_check.py",
-    "python scripts/operator_guide_check.py",
+    "d7_7_portal_bridge_check.py",
+    "d7_6_shipment_tracking_check.py",
+    "d7_5_production_milestone_check.py",
+    "smoke_all_d5.py",
+    "dev_runtime_doctor.py",
+    "readme_check.py",
+    "deployment_readiness_checklist_check.py",
+    "testing_guide_check.py",
+    "operator_guide_check.py",
+    "project_execution_chain_check.py",
+    "project_execution_status.py",
+    "python -m pytest -q",
+    "npm run test -- --run",
+    "d8_strict_staging_evidence_check.py --evidence-json",
+    "d8_staging_evidence_review_check.py",
+    "STAGING_VALIDATED",
+    "PARTNEROS_TEST_DATABASE_URL",
+    "Legacy D5/D6 Checks",
+    "not the current D7.6+/D8 validation matrix",
+    "Do not send email/webhooks",
+    "service.intelli-opus.com",
 )
 FORBIDDEN_MARKERS = (
-    "**D7** is Order / Production / Shipment.",
-    "D7.1 design complete",
-    "No Phase 2 yet",
+    "D5.2.11 Internal MVP Release Pack",
+    "D5.2.2 smoke test",
+    "8010 示例",
+    "PORTAL_CUSTOMER_API_TOKEN=",
+    "Bearer ",
+    "raw response body:",
+    "password_hash",
 )
 TOKEN_ASSIGNMENT = re.compile(r"SERVICE_PORTAL_PARTNEROS_TOKEN\s*=")
 
@@ -73,36 +79,39 @@ def _text() -> str:
         return ""
 
 
-def _token_assignment_issues(text: str) -> list[str]:
+def _redaction_issues(text: str) -> list[str]:
     issues: list[str] = []
+    for marker in FORBIDDEN_MARKERS[3:]:
+        if marker.lower() in text.lower():
+            issues.append(marker)
     for line in text.splitlines():
         if TOKEN_ASSIGNMENT.search(line) and "<portal-server-token>" not in line:
             issues.append("SERVICE_PORTAL_PARTNEROS_TOKEN=<non-placeholder>")
+    issues.extend(redaction_issues(DOC, text, include_common_markers=False))
     return issues
 
 
 def main() -> int:
     checks = [
-        Check("README exists"),
-        Check("README contains current stage and handoff gates"),
-        Check("README avoids stale stage claims"),
-        Check("README is redacted"),
+        Check("testing guide exists"),
+        Check("testing guide contains current D7.6+/D8 validation matrix"),
+        Check("testing guide avoids stale primary D5/D6 test matrix"),
+        Check("testing guide is redacted"),
     ]
 
     text = _text()
-    checks[0].pass_("README.md") if text else checks[0].fail(str(DOC))
+    checks[0].pass_("docs/testing.md") if text else checks[0].fail(str(DOC))
 
     missing = [marker for marker in REQUIRED_MARKERS if marker not in text]
     checks[1].pass_(f"{len(REQUIRED_MARKERS)} markers") if not missing else checks[1].fail(", ".join(missing))
 
-    stale = [marker for marker in FORBIDDEN_MARKERS if marker in text]
-    checks[2].pass_("no stale D7/D5.2 boundary markers") if not stale else checks[2].fail(", ".join(stale))
+    stale = [marker for marker in FORBIDDEN_MARKERS[:3] if marker in text]
+    checks[2].pass_("no stale primary D5/D6 matrix markers") if not stale else checks[2].fail(", ".join(stale))
 
-    redaction = _token_assignment_issues(text)
-    redaction.extend(redaction_issues(DOC, text, include_common_markers=False))
+    redaction = _redaction_issues(text)
     checks[3].pass_("no secret-like markers") if not redaction else checks[3].fail(", ".join(redaction[:8]))
 
-    print("README Check")
+    print("Testing Guide Check")
     for check in checks:
         print(check.line())
     passed = all(check.ok for check in checks)
