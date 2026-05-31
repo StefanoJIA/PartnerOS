@@ -13,7 +13,7 @@ Related entry points:
 
 ## Current State
 
-The repository is in `READY_FOR_STAGING_HANDOFF` when the aggregate local gates pass. That means local docs, scripts, tests, and handoff records agree. It does not mean `STAGING_VALIDATED`.
+The repository is in `READY_FOR_STAGING_HANDOFF` when the aggregate local gates pass. That means local docs, scripts, tests, and handoff records agree. It does not mean `STAGING_VALIDATED`. If local rehearsal output is saved where strict evidence is expected, production coordination remains at `WAITING_FOR_REAL_STAGING_EVIDENCE` until real staging evidence replaces it.
 
 Current local execution priorities:
 

@@ -17,6 +17,8 @@ REQUIRED_MARKERS = (
     "PartnerOS Developer Guide",
     "READY_FOR_STAGING_HANDOFF",
     "does not mean `STAGING_VALIDATED`",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "until real staging evidence replaces it",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "human Go / No-Go handoff",
     "docs/records/d8_production_go_no_go_YYYYMMDD.md",

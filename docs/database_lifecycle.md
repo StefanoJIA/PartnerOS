@@ -8,7 +8,7 @@ PostgreSQL + pgvector remains the authoritative data and vector store for Partne
 
 This is a runtime architecture reference. It is not staging proof, not a production deployment runbook, and not permission to change cloud infrastructure.
 
-Current local project state is `READY_FOR_STAGING_HANDOFF`. `STAGING_VALIDATED` still requires the strict staging evidence workflow with real private environment values and redacted saved records.
+Current local project state is `READY_FOR_STAGING_HANDOFF`. `STAGING_VALIDATED` still requires the strict staging evidence workflow with real private environment values and redacted saved records. If local rehearsal output is saved where strict evidence is expected, production coordination remains at `WAITING_FOR_REAL_STAGING_EVIDENCE` until real staging evidence replaces it.
 
 ## Current Implementation
 

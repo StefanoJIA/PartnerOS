@@ -19,6 +19,8 @@ REQUIRED_MARKERS = (
     "PostgreSQL + pgvector remains the authoritative",
     "READY_FOR_STAGING_HANDOFF",
     "STAGING_VALIDATED",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "until real staging evidence replaces it",
     "backend/app/core/database_lifecycle.py",
     "database_lifecycle_phase",
     "migration_pending",
