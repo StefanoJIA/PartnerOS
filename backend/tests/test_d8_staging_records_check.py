@@ -293,6 +293,21 @@ def test_d8_staging_records_check_rejects_production_go_no_go_without_safety(tmp
     assert "d8_production_go_no_go_20260530.md:missing" in output
 
 
+def test_d8_staging_records_check_rejects_invalid_production_decision_value(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    _write_required_current_records(tmp_path)
+    (tmp_path / "d8_production_go_no_go_20260530.md").write_text(
+        _valid_production_go_no_go_body(module).replace("Decision: Pause", "Decision: Maybe") + "\n",
+        encoding="utf-8",
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "D8 production decision records include safety markers" in output
+    assert "invalid Decision 'Maybe'" in output
+
+
 def test_d8_staging_records_check_accepts_staging_access_request_record(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)

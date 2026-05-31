@@ -27,7 +27,9 @@ CURRENT_ACCESS_REQUEST_PATTERN = re.compile(r"^d8_staging_access_request_\d{8}\.
 PRODUCTION_GO_NO_GO_PATTERN = re.compile(r"^d8_production_go_no_go_\d{8}\.md$")
 BACKEND_URL_STATUS = re.compile(r"^\s*BACKEND_BASE_URL\s*:\s*(?P<value>.+?)\s*$", re.IGNORECASE)
 PORTAL_TOKEN_STATUS = re.compile(r"^\s*SERVICE_PORTAL_PARTNEROS_TOKEN\s*:\s*(?P<value>.+?)\s*$", re.IGNORECASE)
+PRODUCTION_DECISION_STATUS = re.compile(r"^\s*Decision\s*:\s*(?P<value>.+?)\s*$", re.IGNORECASE)
 EXTRA_FORBIDDEN_RECORD_MARKERS = ("supplier_reference", "partneros-staging.example.com")
+ALLOWED_PRODUCTION_DECISIONS = {"Go", "No-Go", "Pause"}
 PRODUCTION_DECISION_REQUIRED_MARKERS = (
     "Decision:",
     "Evidence source: redacted summary only",
@@ -69,6 +71,7 @@ REQUIRED_POLICY_MARKERS = (
     "Strict staging evidence and gap records are not required before the real staging run",
     "WAITING_FOR_STAGING_EVIDENCE",
     "production Go / No-Go decision record",
+    "Decision must be one of `Go`, `No-Go`, or `Pause`",
     "Readiness: STAGING_VALIDATED",
     "Evidence review: READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "Do not paste real `SERVICE_PORTAL_PARTNEROS_TOKEN`",
@@ -194,6 +197,17 @@ def _production_decision_issues(records: list[Path]) -> list[str]:
         missing = [marker for marker in PRODUCTION_DECISION_REQUIRED_MARKERS if marker not in text]
         if missing:
             issues.append(f"{path.name}:missing {', '.join(missing)}")
+        decision_value = ""
+        for line in text.splitlines():
+            match = PRODUCTION_DECISION_STATUS.match(line)
+            if match:
+                decision_value = match.group("value").strip()
+                break
+        if decision_value and decision_value not in ALLOWED_PRODUCTION_DECISIONS:
+            issues.append(
+                f"{path.name}:invalid Decision {decision_value!r}; expected "
+                f"{', '.join(sorted(ALLOWED_PRODUCTION_DECISIONS))}"
+            )
     return issues
 
 
