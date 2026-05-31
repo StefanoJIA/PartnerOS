@@ -45,6 +45,9 @@ python scripts/desktop_transition_roadmap_check.py
 python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
 python scripts/project_execution_status.py
+python scripts/d8_staging_execution_pack_check.py
+python scripts/d9_operating_execution_pack_check.py
+python scripts/project_execution_acceptance_audit_check.py
 ```
 
 For D7.6+ smoke and current D8 local validation, use backend port `8014` and follow [Testing Guide](testing.md).

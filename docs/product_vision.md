@@ -22,6 +22,8 @@ D5 Lead Intelligence is closed. D6 Quote MVP is closed. D7 is closed through D7.
 
 D8 is currently `READY_FOR_STAGING_HANDOFF`: local docs, gates, and handoff runbooks agree, but real strict staging evidence still requires private staging values. D9 operating loops remain planned behind `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, production coordination, and the human Go / No-Go handoff.
 
+Local handoff claims must be backed by `python scripts/d8_staging_execution_pack_check.py`, `python scripts/d9_operating_execution_pack_check.py`, and `python scripts/project_execution_acceptance_audit_check.py`. These checks prove internal alignment only; they do not replace strict staging evidence.
+
 ## Value Loop
 
 The product value loop is:

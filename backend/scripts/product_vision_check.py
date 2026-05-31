@@ -32,6 +32,9 @@ REQUIRED_MARKERS = (
     "Manual-Only Safety",
     "Shipment plans do not call carriers",
     "automatically change an order to shipped/delivered",
+    "python scripts/d8_staging_execution_pack_check.py",
+    "python scripts/d9_operating_execution_pack_check.py",
+    "python scripts/project_execution_acceptance_audit_check.py",
     "Project Reorientation Summary",
     "Integrated Backend Standards",
 )
