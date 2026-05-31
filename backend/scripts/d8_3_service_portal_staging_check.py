@@ -119,6 +119,18 @@ def _json(response: httpx.Response | None) -> Any:
         return {}
 
 
+def _finish(*, checks: list[Check], base: str, origin: str, create_feedback: bool) -> int:
+    print("D8.3 Service Portal Staging Contract Check")
+    print(f"BACKEND_BASE_URL={_redacted_url(base)}")
+    print(f"SERVICE_PORTAL_ORIGIN={origin}")
+    print(f"create_test_feedback={create_feedback}")
+    for check in checks:
+        print(check.line())
+    passed = all(check.ok for check in checks)
+    print(f"Result: {'PASS' if passed else 'FAIL'}")
+    return 0 if passed else 1
+
+
 def no_forbidden_blob(*responses: httpx.Response | dict[str, Any] | None, token: str = "") -> tuple[bool, str]:
     payloads: list[Any] = []
     for response in responses:
@@ -168,14 +180,7 @@ def main() -> int:
         checks[0].fail(input_issue)
         for check in checks[1:]:
             check.fail("not attempted; staging inputs unsafe")
-        print("D8.3 Service Portal Staging Contract Check")
-        print(f"BACKEND_BASE_URL={_redacted_url(base)}")
-        print(f"SERVICE_PORTAL_ORIGIN={origin}")
-        print(f"create_test_feedback={create_feedback}")
-        for check in checks:
-            print(check.line())
-        print("Result: FAIL")
-        return 1
+        return _finish(checks=checks, base=base, origin=origin, create_feedback=create_feedback)
 
     responses: list[httpx.Response | None] = []
     order_items: list[dict[str, Any]] = []
@@ -184,10 +189,9 @@ def main() -> int:
             health = client.get(f"{base}/health")
         except httpx.HTTPError as exc:
             checks[0].fail(str(exc)[:120])
-            for check in checks:
-                print(check.line())
-            print("Result: FAIL")
-            return 1
+            for check in checks[1:]:
+                check.fail("not attempted; backend unreachable")
+            return _finish(checks=checks, base=base, origin=origin, create_feedback=create_feedback)
         checks[0].pass_(f"HTTP {health.status_code}") if health.status_code == 200 else checks[0].fail(
             f"HTTP {health.status_code}"
         )
@@ -202,19 +206,25 @@ def main() -> int:
             f"HTTP {wrong.status_code if wrong else 'unreachable'}"
         )
 
-        preflight = client.options(
-            f"{base}/api/v1/portal/customer/products",
-            headers={
-                "Origin": origin,
-                "Access-Control-Request-Method": "GET",
-                "Access-Control-Request-Headers": "x-portal-customer-token",
-            },
-        )
-        allowed_origin = preflight.headers.get("access-control-allow-origin", "")
-        if preflight.status_code in {200, 204} and allowed_origin == origin:
-            checks[3].pass_(origin)
+        try:
+            preflight = client.options(
+                f"{base}/api/v1/portal/customer/products",
+                headers={
+                    "Origin": origin,
+                    "Access-Control-Request-Method": "GET",
+                    "Access-Control-Request-Headers": "x-portal-customer-token",
+                },
+            )
+        except httpx.HTTPError as exc:
+            preflight = None
+            checks[3].fail(str(exc)[:120])
         else:
-            checks[3].fail(f"HTTP {preflight.status_code} allow-origin={allowed_origin or 'missing'}")
+            allowed_origin = preflight.headers.get("access-control-allow-origin", "")
+            if preflight.status_code in {200, 204} and allowed_origin == origin:
+                checks[3].pass_(origin)
+            else:
+                checks[3].fail(f"HTTP {preflight.status_code} allow-origin={allowed_origin or 'missing'}")
+        responses.append(preflight)
 
         products = _get(client, "/products?limit=5", headers=headers)
         orders = _get(client, "/orders?limit=5", headers=headers)
@@ -274,15 +284,7 @@ def main() -> int:
     clean, detail = no_forbidden_blob(*responses, token=token)
     checks[11].pass_(detail) if clean else checks[11].fail(detail)
 
-    print("D8.3 Service Portal Staging Contract Check")
-    print(f"BACKEND_BASE_URL={_redacted_url(base)}")
-    print(f"SERVICE_PORTAL_ORIGIN={origin}")
-    print(f"create_test_feedback={create_feedback}")
-    for check in checks:
-        print(check.line())
-    passed = all(check.ok for check in checks)
-    print(f"Result: {'PASS' if passed else 'FAIL'}")
-    return 0 if passed else 1
+    return _finish(checks=checks, base=base, origin=origin, create_feedback=create_feedback)
 
 
 if __name__ == "__main__":

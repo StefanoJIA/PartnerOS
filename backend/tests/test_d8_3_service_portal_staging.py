@@ -80,3 +80,23 @@ def test_staging_contract_rejects_default_token_without_network(monkeypatch, cap
     assert "BACKEND_BASE_URL=https://<redacted-backend>" in output
     assert "SERVICE_PORTAL_PARTNEROS_TOKEN must be non-default and private" in output
     assert "test-portal-token" not in output
+
+
+def test_staging_contract_finish_reports_fail(capsys):
+    check = script.Check("preflight")
+    check.fail("unreachable")
+
+    assert (
+        script._finish(
+            checks=[check],
+            base="https://private-staging.example.com",
+            origin="https://service.intelli-opus.com",
+            create_feedback=False,
+        )
+        == 1
+    )
+    output = capsys.readouterr().out
+    assert "D8.3 Service Portal Staging Contract Check" in output
+    assert "BACKEND_BASE_URL=https://<redacted-backend>" in output
+    assert "[FAIL] preflight (unreachable)" in output
+    assert "Result: FAIL" in output
