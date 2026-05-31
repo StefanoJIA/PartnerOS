@@ -24,6 +24,7 @@ REQUIRED_FILES = (
     "docs/phase3/d9_3_market_response_loop.md",
     "docs/phase3/d9_4_improvement_backlog.md",
     "docs/phase3/d9_operating_records_policy.md",
+    "backend/scripts/d8_readiness_audit.py",
     "backend/scripts/d8_staging_evidence_review_check.py",
     "backend/scripts/d8_production_coordination_check.py",
     "backend/scripts/d9_operating_execution_pack_check.py",
@@ -37,9 +38,11 @@ REQUIRED_FILES = (
 )
 REQUIRED_DOC_MARKERS = (
     "D9 Operating Execution Pack",
+    "STAGING_VALIDATED",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "human Go / No-Go handoff",
     "docs/records/d8_production_go_no_go_YYYYMMDD.md",
+    "python scripts/d8_readiness_audit.py",
     "python scripts/d8_staging_evidence_review_check.py",
     "python scripts/d8_production_coordination_check.py",
     "python scripts/project_execution_status.py",
@@ -54,6 +57,7 @@ REQUIRED_DOC_MARKERS = (
     "No automatic ticket creation",
 )
 SCRIPTS = (
+    "scripts/d8_readiness_audit.py",
     "scripts/d8_staging_evidence_review_check.py",
     "scripts/d8_production_coordination_check.py",
     "scripts/d9_post_launch_plan_check.py",
@@ -114,6 +118,14 @@ def _result_pass(result: subprocess.CompletedProcess[str]) -> bool:
     return bool(result_lines) and result_lines[-1] == "Result: PASS"
 
 
+def _script_pass(script: str, result: subprocess.CompletedProcess[str]) -> bool:
+    if script == "scripts/d8_readiness_audit.py":
+        return result.returncode == 0 and any(
+            line.startswith("Overall:") for line in result.stdout.splitlines()
+        )
+    return _result_pass(result)
+
+
 def main() -> int:
     checks = [
         Check("D9 execution pack files present"),
@@ -138,7 +150,7 @@ def main() -> int:
 
     for index, script in enumerate(SCRIPTS, start=3):
         result = _run_script(script)
-        if _result_pass(result):
+        if _script_pass(script, result):
             checks[index].pass_("PASS")
         else:
             checks[index].fail((result.stdout + result.stderr)[:160])

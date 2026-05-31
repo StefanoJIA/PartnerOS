@@ -72,3 +72,15 @@ def test_d9_operating_execution_pack_uses_final_result_line():
     assert module._result_pass(passing) is True
     assert module._result_pass(nested_fail) is False
     assert module._result_pass(no_result) is False
+
+
+def test_d9_operating_execution_pack_accepts_readiness_overall_output():
+    module = _load_module()
+    result = subprocess.CompletedProcess(
+        args=[],
+        returncode=0,
+        stdout="D8 Readiness Audit\nOverall: READY_FOR_STAGING\n",
+        stderr="",
+    )
+
+    assert module._script_pass("scripts/d8_readiness_audit.py", result) is True

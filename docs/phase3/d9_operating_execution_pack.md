@@ -1,6 +1,6 @@
 # D9 Operating Execution Pack
 
-**Status:** planned on 2026-05-30; run after D8 production coordination, evidence review, and human Go / No-Go handoff, before the first D9 operating review.
+**Status:** planned on 2026-05-30; run after D8 `STAGING_VALIDATED`, production coordination, evidence review, and human Go / No-Go handoff, before the first D9 operating review.
 
 ## Purpose
 
@@ -8,7 +8,7 @@ The D9 operating execution pack verifies that the full D9 operating-loop plan is
 
 It aggregates the D9 kickoff checklist, D9.1 operating health review, D9.2 order operations loop, D9.3 market response loop, D9.4 improvement backlog, and D9 operating records policy.
 
-D9 starts only after D8 production coordination has a human Go / No-Go decision. If that decision is committed, use `docs/records/d8_production_go_no_go_YYYYMMDD.md` and keep it redacted.
+D9 starts only after `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED`, D8 production coordination has a human Go / No-Go decision, and evidence review reports `READY_FOR_PRODUCTION_COORDINATION_REVIEW`. If that decision is committed, use `docs/records/d8_production_go_no_go_YYYYMMDD.md` and keep it redacted.
 
 ## Command
 
@@ -23,6 +23,7 @@ python scripts/project_execution_status.py
 ```powershell
 python scripts/d9_post_launch_plan_check.py
 python scripts/d9_operating_loop_kickoff_check.py
+python scripts/d8_readiness_audit.py
 python scripts/d8_production_coordination_check.py
 python scripts/d8_staging_evidence_review_check.py
 python scripts/d9_1_operating_health_review_check.py
@@ -36,7 +37,7 @@ python scripts/d9_operating_records_check.py
 
 | Result | Meaning |
 |---|---|
-| `PASS` | D9 operating plans, review templates, and redaction gates are ready for a human operator after D8 validation, `READY_FOR_PRODUCTION_COORDINATION_REVIEW` evidence review, and the human Go / No-Go handoff |
+| `PASS` | D9 operating plans, review templates, and redaction gates are ready for a human operator after D8 `STAGING_VALIDATED`, production coordination, `READY_FOR_PRODUCTION_COORDINATION_REVIEW` evidence review, and the human Go / No-Go handoff |
 | `FAIL` | A D9 plan, command, record policy, or safety boundary is missing |
 
 ## Boundaries
