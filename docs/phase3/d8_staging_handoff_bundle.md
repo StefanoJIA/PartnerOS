@@ -72,7 +72,7 @@ When private staging values are available, run [D8 Staging Input Preflight](d8_s
 
 When operations replies, use [D8 Staging Operator Response Intake](d8_staging_operator_response_intake.md) to accept only redacted confirmation fields and canonical evidence artifact names.
 
-[D8 Local Staging Rehearsal](d8_local_staging_rehearsal.md) is optional for command-order practice against local `127.0.0.1:8014`. It is not staging proof and must not be committed as `STAGING_VALIDATED` evidence.
+[D8 Local Staging Rehearsal](d8_local_staging_rehearsal.md) is optional for command-order practice against local `127.0.0.1:8014`. It is not staging proof and must not be committed as `STAGING_VALIDATED` or `STAGING_GAPS_OPEN` evidence. Keep rehearsal scratch artifacts outside `docs/records`.
 
 ## Strict Evidence Command
 
