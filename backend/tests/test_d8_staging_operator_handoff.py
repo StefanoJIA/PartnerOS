@@ -29,6 +29,8 @@ def test_handoff_text_contains_runbooks_commands_and_boundaries(monkeypatch):
     assert "docs/phase3/d8_production_coordination_runbook.md" in text
     assert "python scripts/d8_strict_staging_evidence_check.py --evidence-json" in text
     assert "python scripts/project_execution_status.py" in text
+    assert '$env:BACKEND_BASE_URL="<partneros-staging-backend-origin>"' in text
+    assert "partneros-staging.example.com" not in text
     assert "Do not deploy or modify `service.intelli-opus.com`" in text
     assert "Do not print, screenshot, commit, or paste portal tokens" in text
     assert "SERVICE_PORTAL_PARTNEROS_TOKEN=<" not in text
@@ -41,6 +43,19 @@ def test_handoff_text_omits_secret_like_audit_output(monkeypatch):
     text = module._handoff_text("READY_FOR_STAGING", "SERVICE_PORTAL_API_KEY=actual-secret-value")
 
     assert "actual-secret-value" not in text
+    assert "Readiness audit output omitted" in text
+
+
+def test_handoff_text_omits_audit_output_with_committed_staging_host(monkeypatch):
+    module = _load_module()
+    monkeypatch.setattr(module, "_git_head", lambda: "abc1234")
+
+    text = module._handoff_text(
+        "LOCAL_ARTIFACTS_INCOMPLETE",
+        "D8 records failed: partneros-staging.example.com",
+    )
+
+    assert "partneros-staging.example.com" not in text
     assert "Readiness audit output omitted" in text
 
 

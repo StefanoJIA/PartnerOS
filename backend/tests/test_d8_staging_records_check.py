@@ -232,6 +232,26 @@ def test_d8_staging_records_check_rejects_private_backend_url_status(tmp_path, m
     assert "BACKEND_BASE_URL:<non-private-status>" in output
 
 
+def test_d8_staging_records_check_rejects_committed_example_staging_host(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d8_staging_access_request_20260530.md").write_text(
+        "BACKEND_BASE_URL: provided privately\n"
+        "SERVICE_PORTAL_PARTNEROS_TOKEN: provided privately\n"
+        "SERVICE_PORTAL_ORIGIN: https://service.intelli-opus.com\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "d8_staging_operator_handoff_20260530.md").write_text(
+        '$env:BACKEND_BASE_URL="https://partneros-staging.example.com"\n',
+        encoding="utf-8",
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "D8 staging records are redacted" in output
+    assert "partneros-staging.example.com" in output
+
+
 def test_d8_staging_records_check_rejects_portal_token_status_value(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)

@@ -26,7 +26,7 @@ CURRENT_HANDOFF_PATTERN = re.compile(r"^d8_staging_operator_handoff_\d{8}\.md$")
 CURRENT_ACCESS_REQUEST_PATTERN = re.compile(r"^d8_staging_access_request_\d{8}\.md$")
 BACKEND_URL_STATUS = re.compile(r"^\s*BACKEND_BASE_URL\s*:\s*(?P<value>.+?)\s*$", re.IGNORECASE)
 PORTAL_TOKEN_STATUS = re.compile(r"^\s*SERVICE_PORTAL_PARTNEROS_TOKEN\s*:\s*(?P<value>.+?)\s*$", re.IGNORECASE)
-EXTRA_FORBIDDEN_RECORD_MARKERS = ("supplier_reference",)
+EXTRA_FORBIDDEN_RECORD_MARKERS = ("supplier_reference", "partneros-staging.example.com")
 REQUIRED_POLICY_MARKERS = (
     "D8 Staging Records Policy",
     "d8_staging_operator_handoff_YYYYMMDD.md",

@@ -1,7 +1,7 @@
 # D8 Strict Staging Operator Handoff
 
-Generated at: 2026-05-31T16:34:51.033088+00:00
-Repository commit: `1a12af3`
+Generated at: 2026-05-31T17:31:32.234435+00:00
+Repository commit: `a1002be`
 Readiness status: `READY_FOR_STAGING`
 
 ## Purpose
@@ -85,7 +85,7 @@ python scripts/project_execution_records_check.py
 
 ```powershell
 cd backend
-$env:BACKEND_BASE_URL="https://partneros-staging.example.com"
+$env:BACKEND_BASE_URL="<partneros-staging-backend-origin>"
 $env:SERVICE_PORTAL_PARTNEROS_TOKEN="<portal-server-token>"
 $env:SERVICE_PORTAL_ORIGIN="https://service.intelli-opus.com"
 python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/records/d8_strict_staging_evidence_YYYYMMDD.json --gap-markdown ../docs/records/d8_strict_staging_gaps_YYYYMMDD.md

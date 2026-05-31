@@ -17,6 +17,7 @@ except ModuleNotFoundError:
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = BACKEND_ROOT.parent
 HANDOFF_NAME_PATTERN = re.compile(r"^d8_staging_operator_handoff_\d{8}\.md$")
+EXTRA_AUDIT_FORBIDDEN_MARKERS = ("partneros-staging.example.com",)
 
 
 def _parse_args():
@@ -76,7 +77,11 @@ def _git_head() -> str:
 
 
 def _safe_audit_output(audit_output: str) -> str:
-    issues = redaction_issues(Path("d8_readiness_audit_output.txt"), audit_output)
+    issues = redaction_issues(
+        Path("d8_readiness_audit_output.txt"),
+        audit_output,
+        EXTRA_AUDIT_FORBIDDEN_MARKERS,
+    )
     if issues:
         return "Readiness audit output omitted because it contained secret-like or forbidden markers. Rerun the audit locally and inspect logs without committing them."
     return audit_output
@@ -173,7 +178,7 @@ python scripts/project_execution_records_check.py
 
 ```powershell
 cd backend
-$env:BACKEND_BASE_URL="https://partneros-staging.example.com"
+$env:BACKEND_BASE_URL="<partneros-staging-backend-origin>"
 $env:SERVICE_PORTAL_PARTNEROS_TOKEN="<portal-server-token>"
 $env:SERVICE_PORTAL_ORIGIN="https://service.intelli-opus.com"
 python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/records/d8_strict_staging_evidence_YYYYMMDD.json --gap-markdown ../docs/records/d8_strict_staging_gaps_YYYYMMDD.md
