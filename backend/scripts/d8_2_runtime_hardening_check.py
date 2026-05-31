@@ -186,6 +186,24 @@ def _check_storage(settings) -> list[Check]:
     return [backend, path, ignored]
 
 
+def _finish(items: list[Check], *, strict: bool) -> int:
+    print("D8.2 Runtime Hardening Check")
+    print(f"strict_staging={strict}")
+    for item in items:
+        print(item.line())
+
+    fails = [item for item in items if item.level == "FAIL"]
+    warns = [item for item in items if item.level == "WARN"]
+    print()
+    if fails:
+        print("Result: FAIL")
+        return 1
+    print("Result: PASS")
+    if warns:
+        print(f"Warnings: {len(warns)}")
+    return 0
+
+
 def run() -> int:
     get_settings.cache_clear()
     settings = get_settings()
@@ -201,22 +219,7 @@ def run() -> int:
     items.extend(_check_portal_token(strict, settings))
     items.extend(_check_storage(settings))
 
-    print("D8.2 Runtime Hardening Check")
-    print(f"strict_staging={strict}")
-    for item in items:
-        print(item.line())
-
-    fails = [item for item in items if item.level == "FAIL"]
-    warns = [item for item in items if item.level == "WARN"]
-    print()
-    if fails:
-        print("Result: FAIL")
-        return 1
-    if warns:
-        print(f"Result: PASS ({len(warns)} warning(s))")
-    else:
-        print("Result: PASS")
-    return 0
+    return _finish(items, strict=strict)
 
 
 def main() -> None:

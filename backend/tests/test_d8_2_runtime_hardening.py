@@ -59,3 +59,26 @@ def test_portal_token_checks_do_not_print_secret_value():
     assert items[1].level == "FAIL"
     assert "test-portal-token" not in rendered
     assert "service portal origin configured" in rendered
+
+
+def test_finish_reports_pass_and_warning_count(capsys):
+    warning = script.Check("local warning")
+    warning.warn("development mode")
+
+    assert script._finish([warning], strict=False) == 0
+    output = capsys.readouterr().out
+    assert "D8.2 Runtime Hardening Check" in output
+    assert "[WARN] local warning (development mode)" in output
+    assert "Result: PASS" in output
+    assert "Warnings: 1" in output
+
+
+def test_finish_reports_fail(capsys):
+    failure = script.Check("strict failure")
+    failure.fail("bad config")
+
+    assert script._finish([failure], strict=True) == 1
+    output = capsys.readouterr().out
+    assert "strict_staging=True" in output
+    assert "[FAIL] strict failure (bad config)" in output
+    assert "Result: FAIL" in output
