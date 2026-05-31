@@ -8,7 +8,7 @@ The D9 operating execution pack verifies that the full D9 operating-loop plan is
 
 It aggregates the D9 kickoff checklist, D9.1 operating health review, D9.2 order operations loop, D9.3 market response loop, D9.4 improvement backlog, and D9 operating records policy.
 
-D9 starts only after `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED`, D8 production coordination has a human Go / No-Go decision, and evidence review reports `READY_FOR_PRODUCTION_COORDINATION_REVIEW`. If that decision is committed, use `docs/records/d8_production_go_no_go_YYYYMMDD.md` and keep it redacted.
+D9 starts only after `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED`, `python scripts/d8_production_coordination_check.py` no longer reports `WAITING_FOR_REAL_STAGING_EVIDENCE`, D8 production coordination has a human Go / No-Go decision, and evidence review reports `READY_FOR_PRODUCTION_COORDINATION_REVIEW`. If that decision is committed, use `docs/records/d8_production_go_no_go_YYYYMMDD.md` and keep it redacted.
 
 ## Command
 
@@ -37,7 +37,7 @@ python scripts/d9_operating_records_check.py
 
 | Result | Meaning |
 |---|---|
-| `PASS` | D9 operating plans, review templates, and redaction gates are ready for a human operator after D8 `STAGING_VALIDATED`, production coordination, `READY_FOR_PRODUCTION_COORDINATION_REVIEW` evidence review, and the human Go / No-Go handoff |
+| `PASS` | D9 operating plans, review templates, and redaction gates are ready for a human operator after D8 `STAGING_VALIDATED`, `WAITING_FOR_REAL_STAGING_EVIDENCE` is cleared, production coordination, `READY_FOR_PRODUCTION_COORDINATION_REVIEW` evidence review, and the human Go / No-Go handoff |
 | `FAIL` | A D9 plan, command, record policy, or safety boundary is missing |
 
 ## Boundaries

@@ -13,6 +13,7 @@ It does not authorize service portal deployment, nginx edits, notifications, ext
 | Gate | Required evidence |
 |---|---|
 | D8 staging validation | `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED` |
+| D8 real-evidence wait cleared | `python scripts/d8_production_coordination_check.py` does not report `WAITING_FOR_REAL_STAGING_EVIDENCE` |
 | Production coordination | `python scripts/d8_production_coordination_check.py` reports `READY_FOR_PRODUCTION_COORDINATION` |
 | Evidence review | `python scripts/d8_staging_evidence_review_check.py` reports `READY_FOR_PRODUCTION_COORDINATION_REVIEW` |
 | Go / No-Go decision | If committed, the redacted decision record uses `docs/records/d8_production_go_no_go_YYYYMMDD.md` |

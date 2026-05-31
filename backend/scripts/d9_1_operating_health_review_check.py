@@ -15,6 +15,7 @@ DOC = REPO_ROOT / "docs" / "phase3" / "d9_1_operating_health_review.md"
 REQUIRED_MARKERS = (
     "D9.1 Operating Health Review",
     "STAGING_VALIDATED",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
     "READY_FOR_PRODUCTION_COORDINATION",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "human Go / No-Go handoff",

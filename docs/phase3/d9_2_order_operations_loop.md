@@ -13,6 +13,7 @@ It is a review and follow-up planning loop, not an automation workflow.
 | Gate | Required evidence |
 |---|---|
 | D8 staging validation | `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED` |
+| D8 real-evidence wait cleared | `python scripts/d8_production_coordination_check.py` does not report `WAITING_FOR_REAL_STAGING_EVIDENCE` |
 | D8 production coordination | `python scripts/d8_production_coordination_check.py` reports `READY_FOR_PRODUCTION_COORDINATION` |
 | D8 evidence review | `python scripts/d8_staging_evidence_review_check.py` reports `READY_FOR_PRODUCTION_COORDINATION_REVIEW` |
 | D8 Go / No-Go record | If committed, the redacted decision record uses `docs/records/d8_production_go_no_go_YYYYMMDD.md` |

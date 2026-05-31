@@ -17,6 +17,7 @@ REQUIRED_MARKERS = (
     "D8 production coordination",
     "human Go / No-Go handoff",
     "STAGING_VALIDATED",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
     "READY_FOR_PRODUCTION_COORDINATION",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "docs/records/d8_production_go_no_go_YYYYMMDD.md",

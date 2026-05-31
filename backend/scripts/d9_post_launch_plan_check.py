@@ -23,6 +23,7 @@ IMPROVEMENT_BACKLOG_DOC = REPO_ROOT / "docs" / "phase3" / "d9_4_improvement_back
 REQUIRED_MARKERS = (
     "D9 Post-Launch Operating Loop",
     "STAGING_VALIDATED",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "python scripts/d8_staging_evidence_review_check.py",
     "docs/records/d8_production_go_no_go_YYYYMMDD.md",
@@ -139,6 +140,7 @@ def main() -> int:
 
     if (
         "STAGING_VALIDATED" in text
+        and "WAITING_FOR_REAL_STAGING_EVIDENCE" in text
         and "D8 Production Coordination Plan" in text
         and "READY_FOR_PRODUCTION_COORDINATION_REVIEW" in text
         and "docs/records/d8_production_go_no_go_YYYYMMDD.md" in text

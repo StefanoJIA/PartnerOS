@@ -15,6 +15,7 @@ DOC = REPO_ROOT / "docs" / "phase3" / "d9_3_market_response_loop.md"
 REQUIRED_MARKERS = (
     "D9.3 Market Response Loop",
     "STAGING_VALIDATED",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
     "READY_FOR_PRODUCTION_COORDINATION",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "human Go / No-Go handoff",

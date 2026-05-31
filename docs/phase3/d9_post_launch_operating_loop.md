@@ -11,6 +11,7 @@ D9 turns the deployed PartnerOS and existing service portal bridge into a monito
 | Gate | Required evidence |
 |---|---|
 | D8 staging | `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED` |
+| D8 real-evidence wait cleared | `python scripts/d8_production_coordination_check.py` does not report `WAITING_FOR_REAL_STAGING_EVIDENCE` |
 | D8 production handoff | [D8 Production Coordination Plan](d8_production_coordination_plan.md) Go / No-Go completed |
 | D8 evidence review | `python scripts/d8_staging_evidence_review_check.py` reports `READY_FOR_PRODUCTION_COORDINATION_REVIEW` |
 | D8 Go / No-Go record | If committed, the redacted decision record uses `docs/records/d8_production_go_no_go_YYYYMMDD.md` |

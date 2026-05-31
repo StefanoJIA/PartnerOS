@@ -15,6 +15,7 @@ DOC = REPO_ROOT / "docs" / "phase3" / "d9_4_improvement_backlog.md"
 REQUIRED_MARKERS = (
     "D9.4 Improvement Backlog",
     "STAGING_VALIDATED",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
     "READY_FOR_PRODUCTION_COORDINATION",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "human Go / No-Go handoff",
