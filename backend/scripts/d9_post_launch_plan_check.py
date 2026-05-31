@@ -25,6 +25,7 @@ REQUIRED_MARKERS = (
     "STAGING_VALIDATED",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "python scripts/d8_staging_evidence_review_check.py",
+    "docs/records/d8_production_go_no_go_YYYYMMDD.md",
     "Portal feedback",
     "Order operations",
     "Market response intelligence",
@@ -133,10 +134,11 @@ def main() -> int:
         "STAGING_VALIDATED" in text
         and "D8 Production Coordination Plan" in text
         and "READY_FOR_PRODUCTION_COORDINATION_REVIEW" in text
+        and "docs/records/d8_production_go_no_go_YYYYMMDD.md" in text
     ):
-        checks[4].pass_("after D8 production coordination and evidence review")
+        checks[4].pass_("after D8 production coordination, Go / No-Go, and evidence review")
     else:
-        checks[4].fail("missing D8/STAGING_VALIDATED/evidence review dependency")
+        checks[4].fail("missing D8/STAGING_VALIDATED/Go-No-Go/evidence review dependency")
 
     if RECORDS_POLICY_DOC.exists():
         checks[5].pass_(_display_path(RECORDS_POLICY_DOC))
