@@ -35,6 +35,7 @@ REQUIRED_POLICY_MARKERS = (
     "d8_strict_staging_gaps_YYYYMMDD.md",
     "current operator handoff and staging access request records",
     "remote backend host is stored as `https://<redacted-backend>`",
+    "PASS evidence record with `allow_local_http=true` or a localhost `backend_base_url` is rejected",
     "Strict staging evidence and gap records are not required before the real staging run",
     "WAITING_FOR_STAGING_EVIDENCE",
     "Do not paste real `SERVICE_PORTAL_PARTNEROS_TOKEN`",
@@ -144,10 +145,15 @@ def _evidence_issues(records: list[Path]) -> list[str]:
         if result not in {"PASS", "FAIL"}:
             issues.append(f"{path.name}:result")
         backend_base_url = str(data.get("backend_base_url") or "")
+        backend_host = ""
         if backend_base_url.startswith(("http://", "https://")):
-            host = (urlparse(backend_base_url).hostname or "").lower()
-            if host not in {"localhost", "127.0.0.1", "::1", "<redacted-backend>"}:
+            backend_host = (urlparse(backend_base_url).hostname or "").lower()
+            if backend_host not in {"localhost", "127.0.0.1", "::1", "<redacted-backend>"}:
                 issues.append(f"{path.name}:backend_base_url_redaction")
+        if result == "PASS" and data.get("allow_local_http") is True:
+            issues.append(f"{path.name}:pass_evidence_allows_local_http")
+        if result == "PASS" and backend_host in {"localhost", "127.0.0.1", "::1"}:
+            issues.append(f"{path.name}:pass_evidence_uses_local_backend")
         if not isinstance(data.get("checks"), list):
             issues.append(f"{path.name}:checks")
         safety = data.get("safety")

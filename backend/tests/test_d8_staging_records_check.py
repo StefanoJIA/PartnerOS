@@ -34,6 +34,7 @@ REQUIRED_POLICY_MARKERS_FIXTURE = (
     "d8_strict_staging_evidence_YYYYMMDD.json",
     "d8_strict_staging_gaps_YYYYMMDD.md",
     "current operator handoff and staging access request records",
+    "PASS evidence record with `allow_local_http=true` or a localhost `backend_base_url` is rejected",
     "Strict staging evidence and gap records are not required before the real staging run",
     "WAITING_FOR_STAGING_EVIDENCE",
     "Do not paste real `SERVICE_PORTAL_PARTNEROS_TOKEN`",
@@ -164,6 +165,33 @@ def test_d8_staging_records_check_accepts_redacted_evidence_backend_url(tmp_path
     assert module.main() == 0
     output = capsys.readouterr().out
     assert "Result: PASS" in output
+
+
+def test_d8_staging_records_check_rejects_pass_local_rehearsal_evidence(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    _write_required_current_records(tmp_path)
+    (tmp_path / "d8_strict_staging_evidence_20260530.json").write_text(
+        """
+{
+  "backend_base_url": "http://127.0.0.1:8014",
+  "allow_local_http": true,
+  "result": "PASS",
+  "checks": [],
+  "safety": {
+    "token_redacted": true,
+    "response_bodies_stored": false
+  }
+}
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "pass_evidence_allows_local_http" in output
+    assert "pass_evidence_uses_local_backend" in output
 
 
 def test_d8_staging_records_check_accepts_production_go_no_go_record(tmp_path, monkeypatch, capsys):
