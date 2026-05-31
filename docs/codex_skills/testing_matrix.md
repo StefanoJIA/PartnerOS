@@ -39,6 +39,7 @@ npm run test -- --run
 
 - `READY_FOR_STAGING_HANDOFF` means local docs, gates, and handoff runbooks agree.
 - Local validation does not prove `STAGING_VALIDATED`.
+- `WAITING_FOR_REAL_STAGING_EVIDENCE` means local rehearsal evidence must be replaced before production coordination.
 - D8/D9 execution packs and the acceptance audit must pass locally before claiming the handoff package is ready.
 - Strict staging evidence requires real private staging values and `python scripts/d8_strict_staging_evidence_check.py --evidence-json ... --gap-markdown ...`.
 

@@ -46,6 +46,7 @@ Expected local result before external staging validation:
 - `project_execution_status.py` reports `READY_FOR_STAGING_HANDOFF`.
 - `d8_readiness_audit.py` reports `READY_FOR_STAGING`.
 - `d8_production_coordination_check.py` reports `WAITING_FOR_STAGING_VALIDATION`.
+- If local rehearsal evidence is saved by mistake, `d8_production_coordination_check.py` reports `WAITING_FOR_REAL_STAGING_EVIDENCE` until strict staging evidence from real staging values replaces it.
 - `d8_staging_execution_pack_check.py`, `d9_operating_execution_pack_check.py`, and `project_execution_acceptance_audit_check.py` report local PASS while preserving the external staging gate.
 - D8 strict staging evidence remains pending until real staging values are supplied.
 

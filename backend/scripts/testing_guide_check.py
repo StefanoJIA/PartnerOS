@@ -40,6 +40,7 @@ REQUIRED_MARKERS = (
     "d8_strict_staging_evidence_check.py --evidence-json",
     "d8_staging_evidence_review_check.py",
     "STAGING_VALIDATED",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
     "PARTNEROS_TEST_DATABASE_URL",
     "Legacy D5/D6 Checks",
     "not the current D7.6+/D8 validation matrix",
@@ -134,6 +135,7 @@ def main() -> int:
             "project_execution_acceptance_audit_check.py",
             "READY_FOR_STAGING_HANDOFF",
             "Local validation does not prove `STAGING_VALIDATED`",
+            "WAITING_FOR_REAL_STAGING_EVIDENCE",
         )
         if marker not in matrix_text
     ]
