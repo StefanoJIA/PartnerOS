@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+from types import SimpleNamespace
 
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "d8_integration_hardening_check.py"
@@ -29,3 +30,22 @@ def test_integration_hardening_doc_contains_required_markers():
 
     missing = [marker for marker in module.REQUIRED_INTEGRATION_DOC_MARKERS if marker not in text]
     assert missing == []
+
+
+def test_integration_hardening_safe_json_tolerates_non_json_response():
+    module = _load_module()
+    response = SimpleNamespace(json=lambda: (_ for _ in ()).throw(ValueError("not json")))
+
+    assert module._safe_json(response) == {}
+
+
+def test_integration_hardening_finish_reports_fail(capsys):
+    module = _load_module()
+    check = module.Check("integration")
+    check.fail("HTTP 500")
+
+    assert module._finish([check]) == 1
+    output = capsys.readouterr().out
+    assert "D8 Integration Hardening Check" in output
+    assert "[FAIL] integration (HTTP 500)" in output
+    assert "Result: FAIL" in output

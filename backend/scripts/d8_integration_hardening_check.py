@@ -131,6 +131,15 @@ def _safe_json(response) -> dict:
         return {}
 
 
+def _finish(checks: list[Check]) -> int:
+    print("D8 Integration Hardening Check")
+    for check in checks:
+        print(check.line())
+    passed = all(check.ok for check in checks)
+    print(f"Result: {'PASS' if passed else 'FAIL'}")
+    return 0 if passed else 1
+
+
 def _git_tracked_sensitive_files() -> list[str]:
     result = subprocess.run(
         ["git", "ls-files"],
@@ -199,7 +208,7 @@ def main() -> int:
     app.dependency_overrides[get_db] = _fake_db
 
     responses = []
-    with TestClient(app) as client:
+    with TestClient(app, raise_server_exceptions=False) as client:
         preflight = client.options(
             "/api/v1/portal/customer/orders",
             headers={
@@ -254,12 +263,7 @@ def main() -> int:
     leaked = next((marker for marker in FORBIDDEN if marker in blob), None)
     checks[7].pass_("clean") if leaked is None else checks[7].fail(leaked)
 
-    print("D8 Integration Hardening Check")
-    for check in checks:
-        print(check.line())
-    passed = all(check.ok for check in checks)
-    print(f"Result: {'PASS' if passed else 'FAIL'}")
-    return 0 if passed else 1
+    return _finish(checks)
 
 
 if __name__ == "__main__":
