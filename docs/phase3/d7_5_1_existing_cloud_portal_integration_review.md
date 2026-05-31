@@ -145,5 +145,7 @@ cd backend
 python scripts/d7_5_1_portal_integration_review_check.py
 python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
+python scripts/d8_staging_execution_pack_check.py
+python scripts/project_execution_acceptance_audit_check.py
 python scripts/project_execution_status.py
 ```

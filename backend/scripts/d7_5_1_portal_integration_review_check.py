@@ -100,6 +100,8 @@ def main() -> int:
         Check("doc contains D7.6 / D7.7 / D7.8 route"),
         Check("doc reflects current implemented bridge state"),
         Check("doc includes project execution chain gate"),
+        Check("doc includes D8 staging execution pack"),
+        Check("doc includes project execution acceptance audit"),
         Check("migration at D7.5.1-D7.9 head"),
         Check("no migration beyond D7.9"),
         Check("no portal session tables"),
@@ -124,23 +126,25 @@ def main() -> int:
         )
         checks[7].pass_() if current_ok else checks[7].fail("stale or mojibake markers")
         checks[8].pass_() if "project_execution_chain_gate_check.py" in text else checks[8].fail("missing")
+        checks[9].pass_() if "d8_staging_execution_pack_check.py" in text else checks[9].fail("missing")
+        checks[10].pass_() if "project_execution_acceptance_audit_check.py" in text else checks[10].fail("missing")
         if "judgment" in text and "retained as customer-facing" in text:
-            checks[12].pass_()
+            checks[14].pass_()
         else:
-            checks[12].fail("not A")
+            checks[14].fail("not A")
     else:
-        for c in checks[:9]:
+        for c in checks[:11]:
             c.fail("doc missing")
-        checks[12].fail("doc missing")
+        checks[14].fail("doc missing")
 
     mig_ok, mig_detail = _migration_ok()
-    checks[9].pass_(mig_detail) if mig_ok else checks[9].fail(mig_detail)
+    checks[11].pass_(mig_detail) if mig_ok else checks[11].fail(mig_detail)
 
     nm_ok, nm_detail = _no_new_migrations()
-    checks[10].pass_(nm_detail) if nm_ok else checks[10].fail(nm_detail)
+    checks[12].pass_(nm_detail) if nm_ok else checks[12].fail(nm_detail)
 
     tbl_ok, tbl_detail = _no_forbidden_tables_in_migrations()
-    checks[11].pass_(tbl_detail) if tbl_ok else checks[11].fail(tbl_detail)
+    checks[13].pass_(tbl_detail) if tbl_ok else checks[13].fail(tbl_detail)
 
     for c in checks:
         print(c.line())
