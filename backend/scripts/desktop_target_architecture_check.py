@@ -21,6 +21,7 @@ REQUIRED_MARKERS = (
     "Vue/Vite frontend with a FastAPI backend and PostgreSQL/pgvector",
     "No final-user path may require users to run PostgreSQL, pgAdmin, Docker, Alembic, or raw SQL",
     '$env:BACKEND_BASE_URL="http://127.0.0.1:8014"',
+    "project_execution_chain_gate_check.py",
     "SERVICE_PORTAL_PARTNEROS_TOKEN",
     "service.intelli-opus.com",
     "must not edit nginx",

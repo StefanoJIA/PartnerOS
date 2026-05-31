@@ -33,6 +33,7 @@ REQUIRED_MARKERS = (
     "python scripts/agent_guide_check.py",
     "python scripts/testing_guide_check.py",
     "python scripts/desktop_transition_roadmap_check.py",
+    "python scripts/project_execution_chain_gate_check.py",
     "python scripts/project_execution_chain_check.py",
     "backend port `8014`",
     "No final-user workflow may require pgAdmin",

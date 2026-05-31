@@ -33,6 +33,7 @@ REQUIRED_MARKERS = (
     "SERVICE_PORTAL_PARTNEROS_TOKEN",
     "service.intelli-opus.com",
     "python scripts/web_to_desktop_migration_doc_check.py",
+    "python scripts/project_execution_chain_gate_check.py",
 )
 FORBIDDEN_MARKERS = (
     "娑?",

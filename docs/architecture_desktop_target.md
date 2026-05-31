@@ -78,6 +78,7 @@ D8 validation uses local port `8014` for D7.6+/D8 checks:
 ```powershell
 cd backend
 $env:BACKEND_BASE_URL="http://127.0.0.1:8014"
+python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
 python scripts/project_execution_status.py
 ```

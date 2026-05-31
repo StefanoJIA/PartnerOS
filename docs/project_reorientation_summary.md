@@ -45,6 +45,7 @@ python scripts/desktop_transition_roadmap_check.py
 python scripts/project_reorientation_summary_check.py
 python scripts/deployment_readiness_checklist_check.py
 python scripts/testing_guide_check.py
+python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
 python scripts/project_execution_status.py
 ```

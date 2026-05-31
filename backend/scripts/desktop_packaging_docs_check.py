@@ -29,6 +29,7 @@ REQUIRED_PACKAGING_MARKERS = (
     "Do not require final users to run PostgreSQL, pgAdmin, Docker, Alembic, or raw SQL",
     "service.intelli-opus.com",
     "python scripts/desktop_packaging_docs_check.py",
+    "python scripts/project_execution_chain_gate_check.py",
     "STAGING_VALIDATED",
 )
 REQUIRED_QUESTIONS_MARKERS = (

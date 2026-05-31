@@ -29,6 +29,7 @@ REQUIRED_MARKERS = (
     "real `BACKEND_BASE_URL`",
     "real `SERVICE_PORTAL_PARTNEROS_TOKEN`",
     "python scripts/project_reorientation_summary_check.py",
+    "python scripts/project_execution_chain_gate_check.py",
     "python scripts/project_execution_chain_check.py",
     "backend port `8014`",
     "service.intelli-opus.com",
