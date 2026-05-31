@@ -42,6 +42,7 @@ REQUIRED_MARKERS = (
     "Completion Proof Ledger",
     "PROVED_LOCAL",
     "MISSING_EXTERNAL",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
     "https://<redacted-backend>",
     "python scripts/d8_staging_execution_pack_check.py",
     "python scripts/d8_staging_evidence_review_check.py",
