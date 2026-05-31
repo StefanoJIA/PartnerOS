@@ -9,7 +9,6 @@ import {
   EOD_SAFETY_NOTE,
   EOD_TITLE,
   EOD_EMPTY_HIGHLIGHTS,
-  EOD_COPY_SUCCESS,
 } from '@/constants/dailyWorkSummary'
 import * as dailyWork from '@/api/dailyWorkSummary'
 

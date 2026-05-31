@@ -112,7 +112,7 @@ describe('ProductFitCard', () => {
       global: { plugins: [ElementPlus] },
     })
     await flushPromises()
-    const vm = wrapper.vm as { copyQuestions: () => Promise<void> }
+    const vm = wrapper.vm as unknown as { copyQuestions: () => void }
     await vm.copyQuestions()
     expect(writeText).toHaveBeenCalledWith(
       mockFit.recommended_discovery_questions.join('\n\n'),

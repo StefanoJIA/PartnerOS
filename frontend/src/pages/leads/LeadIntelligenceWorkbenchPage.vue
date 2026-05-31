@@ -74,7 +74,7 @@
         <el-table-column label="Missing Fields" min-width="140">
           <template #default="{ row }">
             <span v-if="row.missingFields.length" class="text-xs text-amber-700">
-              {{ row.missingFields.map((f) => MISSING_FIELD_LABELS[f] || f).join(', ') }}
+              {{ formatMissingFields(row.missingFields) }}
             </span>
             <span v-else class="text-xs text-slate-400">—</span>
           </template>
@@ -796,6 +796,10 @@ function sortByScore(a: ReviewRow, b: ReviewRow) {
 
 function sortCompletenessByScore(a: CompletenessRow, b: CompletenessRow) {
   return a.score - b.score
+}
+
+function formatMissingFields(fields: string[]) {
+  return fields.map((field) => MISSING_FIELD_LABELS[field] || field).join(', ')
 }
 
 function onCompletenessRowClick(row: CompletenessRow) {

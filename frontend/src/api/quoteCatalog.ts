@@ -59,6 +59,7 @@ export async function fetchCatalogProducts(params?: {
   partner_id?: string
   category?: string
   search?: string
+  limit?: number
 }) {
   const { data } = await http.get<V1Envelope<ProductListData>>('/v1/products', { params })
   return data.data

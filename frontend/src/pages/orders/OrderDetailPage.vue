@@ -199,7 +199,12 @@ async function onUploadOrderResource(opt: UploadRequestOptions) {
     opt.onSuccess?.({} as never)
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : 'Upload order resource failed'
-    opt.onError?.(e as Error)
+    const uploadError = Object.assign(e instanceof Error ? e : new Error('Upload order resource failed'), {
+      status: 0,
+      method: 'POST',
+      url: '',
+    }) as Parameters<NonNullable<UploadRequestOptions['onError']>>[0]
+    opt.onError?.(uploadError)
   } finally {
     resourceUploading.value = false
   }

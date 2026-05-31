@@ -210,9 +210,9 @@ export function completenessStatusTagType(status: CompletenessStatus) {
 export function applyContactResearchPreset(touch: {
   interaction_type: string
   channel: string
-  subject: string
-  summary: string
-  next_action: string
+  subject?: string | null
+  summary?: string | null
+  next_action?: string | null
 }) {
   touch.interaction_type = 'contact_research'
   touch.channel = 'manual_research'

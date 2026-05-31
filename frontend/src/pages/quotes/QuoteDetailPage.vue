@@ -115,7 +115,7 @@ async function onCreateOrder() {
     }
     const result = await createOrderFromQuote(payload)
     showCreateOrderModal.value = false
-    router.push({ name: 'order-detail', params: { orderId: result.order.id } })
+    router.push({ name: 'order-detail', params: { orderId: result.id } })
   } catch (e: unknown) {
     readinessError.value = e instanceof Error ? e.message : 'Create order failed'
   } finally {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { fetchCatalogProducts, postPricingPreview, type CatalogProduct } from '@/api/quoteCatalog'
+import { fetchCatalogProducts, postPricingPreview, type CatalogProduct, type PricingPreviewResult } from '@/api/quoteCatalog'
 import { http } from '@/api/http'
 
 const router = useRouter()
@@ -10,7 +10,7 @@ const productId = ref('')
 const quantity = ref(50)
 const incoterm = ref('FOB')
 const strategy = ref('volume')
-const preview = ref<Record<string, unknown> | null>(null)
+const preview = ref<PricingPreviewResult | null>(null)
 const loading = ref(false)
 const error = ref('')
 const billToCompany = ref('')

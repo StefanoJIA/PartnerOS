@@ -137,6 +137,7 @@ python scripts/d7_6_shipment_tracking_check.py  # D7.6 shipment tracking smoke
 python scripts/d7_7_portal_bridge_check.py  # D7.7 customer portal bridge smoke
 python scripts/d7_8_portal_live_integration_check.py  # D7.8 service portal UAT smoke
 python scripts/d7_9_resource_center_check.py  # D7.9 resource center smoke
+python scripts/d8_0_staging_build_readiness_check.py  # D8.0 build/staging integration checklist
 python scripts/d8_1_rbac_scoped_access_check.py  # D8.1 RBAC scoped access smoke
 python scripts/d8_2_runtime_hardening_check.py  # D8.2 runtime hardening smoke
 python scripts/d8_3_service_portal_staging_check.py  # D8.3 service portal staging contract
@@ -198,6 +199,45 @@ python scripts/operator_guide_check.py  # operator guide D8/D9 handoff and safet
 python scripts/testing_summary_d5_2_check.py  # historical D5.2 testing-summary boundary gate check
 python scripts/d7_4_partner_supplier_check.py   # D7.4 partner split & supplier confirmation smoke
 python scripts/d7_3_customer_confirmation_check.py  # D7.3 customer confirmation smoke
+```
+
+### D8.0 Real Staging Integration & Build Closure
+
+D8.0 keeps the project at `READY_FOR_STAGING_HANDOFF` while closing build and staging integration prerequisites. It does not deploy or modify `service.intelli-opus.com`, create proof records, refresh proof records, or enter D9.
+
+Required service portal staging backend variables:
+
+| Variable | Required staging value |
+|---|---|
+| `PORTAL_CUSTOMER_API_ENABLED` | `true` |
+| `PORTAL_CUSTOMER_API_TOKEN` | Secret server-to-server token, never committed |
+| `PORTAL_CUSTOMER_ALLOWED_ORIGINS` | `https://service.intelli-opus.com` |
+| `PUBLIC_BASE_URL` | Public HTTPS origin for the PartnerOS staging backend |
+
+Build/runtime closure commands:
+
+```powershell
+cd backend
+$env:BACKEND_BASE_URL="http://127.0.0.1:8014"
+python -m pytest -q
+python scripts/dev_runtime_doctor.py
+python scripts/smoke_all_d5.py
+python scripts/d7_8_portal_live_integration_check.py
+python scripts/d8_0_staging_build_readiness_check.py
+
+cd ../frontend
+$env:VITE_API_PROXY_TARGET="http://127.0.0.1:8014"
+npm run test -- --run
+npm run build
+```
+
+Clean Docker/Postgres and empty-DB migration must also be verified before real staging closure:
+
+```powershell
+docker compose up -d db
+cd backend
+$env:DATABASE_URL="<scratch-db-url>"
+alembic upgrade head
 ```
 
 ### Port 8000 (legacy)

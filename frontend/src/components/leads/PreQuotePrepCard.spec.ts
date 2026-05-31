@@ -77,7 +77,7 @@ describe('PreQuotePrepCard', () => {
       global: { plugins: [ElementPlus] },
     })
     await flushPromises()
-    const vm = wrapper.vm as { copyPreQuoteBrief: () => Promise<void> }
+    const vm = wrapper.vm as unknown as { copyPreQuoteBrief: () => void }
     await vm.copyPreQuoteBrief()
     expect(writeText).toHaveBeenCalledWith(mockBrief.pre_quote_brief_text)
   })

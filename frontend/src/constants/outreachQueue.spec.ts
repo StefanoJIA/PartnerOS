@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   filterQueueRows,
   followUpNextAction,
-  NO_NEXT_ACTION,
   recommendChannel,
   touchpointTypeForChannel,
 } from '@/constants/outreachQueue'

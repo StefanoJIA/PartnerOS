@@ -281,6 +281,51 @@ python scripts/d7_9_resource_center_check.py
 
 Only resources with `status=published` and `customer_visible=true` appear in the Portal bridge. Resource Center does not send email, notify customers, create permanent public URLs, or expose storage keys/backend paths.
 
+## D8.0 Real Staging Integration & Build Closure
+
+D8.0 is the current handoff closure step. The project remains `READY_FOR_STAGING_HANDOFF` until a real staging backend, clean Docker/Postgres runtime, and empty-database migration are verified. Do not create or refresh proof records, do not mark local rehearsal as `STAGING_VALIDATED`, and do not enter D9 from this step.
+
+Run the build/runtime matrix:
+
+```powershell
+cd backend
+$env:BACKEND_BASE_URL="http://127.0.0.1:8014"
+python -m pytest -q
+python scripts/dev_runtime_doctor.py
+python scripts/smoke_all_d5.py
+python scripts/d7_8_portal_live_integration_check.py
+python scripts/d8_0_staging_build_readiness_check.py
+
+cd ../frontend
+$env:VITE_API_PROXY_TARGET="http://127.0.0.1:8014"
+npm run test -- --run
+npm run build
+```
+
+Verify clean Docker/Postgres and empty-DB migration before staging closure:
+
+```powershell
+docker compose up -d db
+docker compose ps db
+
+cd backend
+docker compose exec -T db psql -U partneros -d postgres -c "DROP DATABASE IF EXISTS partneros_migration_check;"
+docker compose exec -T db psql -U partneros -d postgres -c "CREATE DATABASE partneros_migration_check OWNER partneros;"
+$env:DATABASE_URL="<scratch-db-url>"
+alembic upgrade head
+```
+
+Configure these PartnerOS staging backend variables for `service.intelli-opus.com` integration. Store token values only in the runtime secret manager or shell session.
+
+| Variable | Required staging value |
+|---|---|
+| `PORTAL_CUSTOMER_API_ENABLED` | `true` |
+| `PORTAL_CUSTOMER_API_TOKEN` | Secret server-to-server token, never committed |
+| `PORTAL_CUSTOMER_ALLOWED_ORIGINS` | `https://service.intelli-opus.com` |
+| `PUBLIC_BASE_URL` | Public HTTPS origin for the PartnerOS staging backend |
+
+`PORTAL_CUSTOMER_API_REQUIRE_TOKEN` stays `true`. Do not deploy or modify `service.intelli-opus.com`, nginx, cloud upstreams, carrier APIs, webhooks, email, supplier notification, customer notification, order status, shipment status, payment state, PDFs, `.env`, `local_data/`, or `backend/storage/` as part of this checklist.
+
 ## D8.1 RBAC / Scoped Access
 
 Internal users now resolve to explicit permissions from their role. Admin receives `*`, operator-style roles can write orders/resources/feedback, and Viewer can read but cannot perform operational writes.
