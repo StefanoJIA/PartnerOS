@@ -167,6 +167,7 @@ python scripts/d9_4_improvement_backlog_check.py  # D9.4 improvement backlog can
 python scripts/d9_operating_records_check.py  # D9 operating record naming/redaction check
 python scripts/phase3_roadmap_check.py  # Phase 3 D7-D9 roadmap consistency
 python scripts/ie_auto_project_plan_check.py  # IE Auto source-plan consistency
+python scripts/project_execution_chain_gate_check.py  # project execution chain gate doc check
 python scripts/project_execution_chain_check.py  # local project execution gate chain
 python scripts/project_execution_status.py  # local current stage / next action summary
 python scripts/project_execution_acceptance_audit_check.py  # project objective evidence/missing-staging audit
