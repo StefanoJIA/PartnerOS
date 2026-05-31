@@ -27,6 +27,8 @@ REQUIRED_MARKERS = (
     "product_vision_check.py",
     "Desktop Target Architecture",
     "desktop_target_architecture_check.py",
+    "Runtime Modes",
+    "runtime_modes_check.py",
     "Desktop Transition Roadmap",
     "desktop_transition_roadmap_check.py",
     "Project Reorientation Summary",
