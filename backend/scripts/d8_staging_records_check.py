@@ -23,6 +23,8 @@ STAGING_RECORD_PATTERN = re.compile(
 )
 CURRENT_HANDOFF_PATTERN = re.compile(r"^d8_staging_operator_handoff_\d{8}\.md$")
 CURRENT_ACCESS_REQUEST_PATTERN = re.compile(r"^d8_staging_access_request_\d{8}\.md$")
+BACKEND_URL_STATUS = re.compile(r"^\s*BACKEND_BASE_URL\s*:\s*(?P<value>.+?)\s*$", re.IGNORECASE)
+PORTAL_TOKEN_STATUS = re.compile(r"^\s*SERVICE_PORTAL_PARTNEROS_TOKEN\s*:\s*(?P<value>.+?)\s*$", re.IGNORECASE)
 EXTRA_FORBIDDEN_RECORD_MARKERS = ("supplier_reference",)
 REQUIRED_POLICY_MARKERS = (
     "D8 Staging Records Policy",
@@ -99,6 +101,13 @@ def _sensitive_marker_issues(records: list[Path]) -> list[str]:
             issues.append(f"{path.name}:unreadable")
             continue
         issues.extend(redaction_issues(path, text, EXTRA_FORBIDDEN_RECORD_MARKERS))
+        for line_no, line in enumerate(text.splitlines(), start=1):
+            backend_url = BACKEND_URL_STATUS.match(line)
+            if backend_url and backend_url.group("value").strip() != "provided privately":
+                issues.append(f"{path.name}:{line_no}:BACKEND_BASE_URL:<non-private-status>")
+            portal_token = PORTAL_TOKEN_STATUS.match(line)
+            if portal_token and portal_token.group("value").strip() != "provided privately":
+                issues.append(f"{path.name}:{line_no}:SERVICE_PORTAL_PARTNEROS_TOKEN:<non-private-status>")
     return issues
 
 
