@@ -217,6 +217,7 @@ def main() -> int:
         "Current Stage: READY_FOR_STAGING_HANDOFF",
         "d8_staging_handoff_bundle.md",
         "d8_staging_operator_runbook.md",
+        "docs/records/d8_staging_access_request_20260531.md",
         "d8_staging_access_request.md",
     )
     missing_next_action = [marker for marker in next_action_markers if marker not in status_output]

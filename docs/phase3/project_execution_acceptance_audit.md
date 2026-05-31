@@ -54,7 +54,7 @@ This audit maps the current project-planning objective to concrete evidence. It 
 | D9.4 improvement backlog is planned but gated | [D9.4 Improvement Backlog](d9_4_improvement_backlog.md), `python scripts/d9_4_improvement_backlog_check.py` | PASS |
 | D9 records policy is redaction-gated | [D9 Operating Records Policy](d9_operating_records_policy.md), `python scripts/d9_operating_records_check.py` | PASS |
 | Aggregate local execution chain is ready | [Project Execution Chain Gate](project_execution_chain_gate.md), `python scripts/project_execution_chain_check.py` | `READY_FOR_STAGING_HANDOFF` |
-| Current stage and next action are summarized | `python scripts/project_execution_status.py`; next action points to `d8_staging_handoff_bundle.md`, `d8_staging_operator_runbook.md`, and `d8_staging_access_request.md` | `READY_FOR_STAGING_HANDOFF` |
+| Current stage and next action are summarized | `python scripts/project_execution_status.py`; next action points to `d8_staging_handoff_bundle.md`, `d8_staging_operator_runbook.md`, `docs/records/d8_staging_access_request_20260531.md`, and `d8_staging_access_request.md` | `READY_FOR_STAGING_HANDOFF` |
 
 ## Not Yet Complete
 

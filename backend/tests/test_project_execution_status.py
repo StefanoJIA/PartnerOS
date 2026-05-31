@@ -34,6 +34,7 @@ def test_project_execution_status_reports_staging_handoff(monkeypatch, capsys):
     assert "Current Stage: READY_FOR_STAGING_HANDOFF" in output
     assert "d8_staging_handoff_bundle.md" in output
     assert "d8_staging_operator_runbook.md" in output
+    assert "docs/records/d8_staging_access_request_20260531.md" in output
     assert "d8_staging_access_request.md" in output
     assert "Result: PASS" in output
 
