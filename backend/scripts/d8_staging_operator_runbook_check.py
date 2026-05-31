@@ -32,6 +32,7 @@ REQUIRED_MARKERS = (
     "SERVICE_PORTAL_ORIGIN",
     "python scripts/project_execution_status.py",
     "python scripts/project_execution_chain_gate_check.py",
+    "python scripts/staging_evidence_boundary_check.py",
     "python scripts/project_execution_chain_check.py",
     "python scripts/project_execution_acceptance_audit_check.py",
     "python scripts/d8_staging_execution_pack_check.py",

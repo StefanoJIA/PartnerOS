@@ -1,7 +1,7 @@
 # D8 Strict Staging Operator Handoff
 
-Generated at: 2026-05-31T22:41:25.396409+00:00
-Repository commit: `ca0e1b8`
+Generated at: 2026-05-31T23:11:44.125898+00:00
+Repository commit: `d62d577`
 Readiness status: `READY_FOR_STAGING`
 
 ## Purpose
@@ -49,6 +49,7 @@ python scripts/activity_actions_doc_check.py
 python scripts/deployment_readiness_checklist_check.py
 python scripts/testing_guide_check.py
 python scripts/testing_summary_d5_2_check.py
+python scripts/staging_evidence_boundary_check.py
 python scripts/d8_readiness_audit.py
 python scripts/d8_stage_goal_matrix_check.py
 python scripts/d8_integration_hardening_check.py
