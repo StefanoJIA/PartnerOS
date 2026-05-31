@@ -150,7 +150,7 @@ def _write_report(raw_path: str | None, checks: list[Check], state: str) -> None
         f"Generated at: {generated}",
         f"State: `{state}`",
         "",
-        "This report stores gate labels, pass/fail status, and redacted one-line summaries only. It does not store raw command output, response bodies, portal tokens, customer files, backend storage paths, or secrets.",
+        "This report stores gate labels, pass/fail status, and redacted one-line summaries only. It does not store full command logs, response bodies, portal tokens, customer files, backend storage paths, or secrets.",
         "",
         "| Gate | Status | Summary |",
         "|---|---|---|",
