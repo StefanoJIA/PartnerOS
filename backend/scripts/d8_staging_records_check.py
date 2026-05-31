@@ -34,6 +34,7 @@ REQUIRED_POLICY_MARKERS = (
     "d8_strict_staging_evidence_YYYYMMDD.json",
     "d8_strict_staging_gaps_YYYYMMDD.md",
     "current operator handoff and staging access request records",
+    "remote backend host is stored as `https://<redacted-backend>`",
     "Strict staging evidence and gap records are not required before the real staging run",
     "WAITING_FOR_STAGING_EVIDENCE",
     "Do not paste real `SERVICE_PORTAL_PARTNEROS_TOKEN`",

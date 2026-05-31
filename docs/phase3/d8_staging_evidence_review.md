@@ -43,7 +43,7 @@ python scripts/d8_staging_evidence_review_check.py
 
 - Confirm `d8_staging_records_check.py` passes before sharing or committing records.
 - Confirm `d8_readiness_audit.py` reports the same state implied by the latest evidence.
-- For `PASS`, verify the evidence date, deployed commit, backend origin, and portal origin with the staging operator.
+- For `PASS`, verify the evidence date, deployed commit, backend origin, and portal origin with the staging operator. The saved evidence should show a remote backend as `https://<redacted-backend>`, with the real `BACKEND_BASE_URL` kept in the private operator channel.
 - For `FAIL`, verify each gap has an owner, status, recommended action, and rerun date before production coordination.
 - Do not treat local rehearsal output as `STAGING_VALIDATED`.
 
