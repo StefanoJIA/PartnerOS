@@ -49,6 +49,43 @@ def test_staging_input_preflight_fails_for_unsafe_values(monkeypatch, capsys):
     assert "INPUTS_UNSAFE" in output
 
 
+def test_staging_input_preflight_rejects_placeholder_backend_url(monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setenv("BACKEND_BASE_URL", "https://<partneros-staging-backend-origin>")
+    monkeypatch.setenv("SERVICE_PORTAL_PARTNEROS_TOKEN", "staging-secret-token-123")
+    monkeypatch.setenv("SERVICE_PORTAL_ORIGIN", "https://service.intelli-opus.com")
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "INPUTS_UNSAFE" in output
+    assert "placeholder URL" in output
+
+
+def test_staging_input_preflight_rejects_placeholder_origin(monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setenv("BACKEND_BASE_URL", "https://partneros-staging.example.com")
+    monkeypatch.setenv("SERVICE_PORTAL_PARTNEROS_TOKEN", "staging-secret-token-123")
+    monkeypatch.setenv("SERVICE_PORTAL_ORIGIN", "https://<service-portal-origin>")
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "INPUTS_UNSAFE" in output
+    assert "placeholder URL" in output
+
+
+def test_staging_input_preflight_rejects_generic_placeholder_token(monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setenv("BACKEND_BASE_URL", "https://partneros-staging.example.com")
+    monkeypatch.setenv("SERVICE_PORTAL_PARTNEROS_TOKEN", "<private-token-from-operator>")
+    monkeypatch.setenv("SERVICE_PORTAL_ORIGIN", "https://service.intelli-opus.com")
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "INPUTS_UNSAFE" in output
+    assert "placeholder, known default" in output
+    assert "private-token-from-operator" not in output
+
+
 def test_staging_input_preflight_allows_explicit_local_http_rehearsal(monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setenv("BACKEND_BASE_URL", "http://127.0.0.1:8014")

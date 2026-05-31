@@ -45,6 +45,11 @@ def _is_https_url(value: str) -> bool:
     return parsed.scheme == "https" and bool(parsed.netloc)
 
 
+def _is_placeholder(value: str) -> bool:
+    stripped = value.strip()
+    return stripped.startswith("<") and stripped.endswith(">") or "<" in stripped or ">" in stripped
+
+
 def _truthy(value: str | None) -> bool:
     return (value or "").strip().lower() in {"1", "true", "yes", "on"}
 
@@ -80,6 +85,8 @@ def main() -> int:
     checks[0].pass_("provided") if backend_base else checks[0].fail("missing")
     if not backend_base:
         checks[1].pass_("waiting for BACKEND_BASE_URL")
+    elif _is_placeholder(backend_base):
+        checks[1].fail("placeholder URL")
     elif _is_https_url(backend_base):
         checks[1].pass_("https origin")
     elif allow_local_http and _is_localhost_url(backend_base):
@@ -90,7 +97,7 @@ def main() -> int:
     checks[2].pass_("provided") if token else checks[2].fail("missing")
     if not token:
         checks[3].pass_("waiting for SERVICE_PORTAL_PARTNEROS_TOKEN")
-    elif token not in UNSAFE_TOKENS and len(token) >= MIN_TOKEN_LENGTH:
+    elif token not in UNSAFE_TOKENS and not _is_placeholder(token) and len(token) >= MIN_TOKEN_LENGTH:
         checks[3].pass_(f"redacted={_redacted(token)}")
     else:
         checks[3].fail(f"placeholder, known default, or shorter than {MIN_TOKEN_LENGTH} characters")
@@ -98,6 +105,8 @@ def main() -> int:
     checks[4].pass_("provided") if origin else checks[4].fail("missing")
     if not origin:
         checks[5].pass_("waiting for SERVICE_PORTAL_ORIGIN")
+    elif _is_placeholder(origin):
+        checks[5].fail("placeholder URL")
     elif _is_https_url(origin):
         checks[5].pass_("https origin")
     else:
