@@ -172,6 +172,7 @@ python scripts/project_execution_chain_check.py --report-markdown ../docs/record
 python scripts/project_execution_records_check.py  # project execution report naming/redaction check
 python scripts/agent_guide_check.py  # AGENTS.md runtime, validation, and safety gate check
 python scripts/product_vision_check.py  # product vision current-state and safety gate check
+python scripts/desktop_target_architecture_check.py  # desktop target architecture current-state gate check
 python scripts/desktop_transition_roadmap_check.py  # desktop transition roadmap current-state gate check
 python scripts/project_reorientation_summary_check.py  # project reorientation current-state gate check
 python scripts/readme_check.py  # README current-stage and D8/D9 handoff gate check

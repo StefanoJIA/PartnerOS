@@ -25,6 +25,8 @@ REQUIRED_MARKERS = (
     "readme_check.py",
     "Product Vision",
     "product_vision_check.py",
+    "Desktop Target Architecture",
+    "desktop_target_architecture_check.py",
     "Desktop Transition Roadmap",
     "desktop_transition_roadmap_check.py",
     "Project Reorientation Summary",
