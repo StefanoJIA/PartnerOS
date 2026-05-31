@@ -69,6 +69,19 @@ def test_production_coordination_blocks_when_evidence_review_not_ready(monkeypat
     assert "Result: FAIL" in output
 
 
+def test_production_coordination_waits_for_real_staging_when_latest_evidence_is_local_rehearsal(
+    monkeypatch, capsys
+):
+    module = _load_module()
+    monkeypatch.setattr(module, "_readiness_status", lambda: (True, "STAGING_EVIDENCE_LOCAL_REHEARSAL"))
+    monkeypatch.setattr(module, "_evidence_review_status", lambda: (True, "EVIDENCE_LOCAL_REHEARSAL"))
+
+    assert module.main() == 0
+    output = capsys.readouterr().out
+    assert "WAITING_FOR_REAL_STAGING_EVIDENCE" in output
+    assert "local rehearsal is not staging evidence" in output
+
+
 def test_production_coordination_result_pass_uses_final_result_line():
     module = _load_module()
     passing = type("Result", (), {"returncode": 0})()

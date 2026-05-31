@@ -140,6 +140,9 @@ def main() -> int:
     elif status in {"READY_FOR_STAGING", "STAGING_GAPS_OPEN"}:
         checks[5].pass_(f"WAITING_FOR_STAGING_VALIDATION: {status}")
         coordination_state = "WAITING_FOR_STAGING_VALIDATION"
+    elif status == "STAGING_EVIDENCE_LOCAL_REHEARSAL":
+        checks[5].pass_("WAITING_FOR_REAL_STAGING_EVIDENCE: local rehearsal is not staging evidence")
+        coordination_state = "WAITING_FOR_REAL_STAGING_EVIDENCE"
     elif status == "STAGING_VALIDATED":
         checks[5].fail(f"BLOCKED_BY_EVIDENCE_REVIEW: {review_state}")
         coordination_state = "BLOCKED_BY_EVIDENCE_REVIEW"
