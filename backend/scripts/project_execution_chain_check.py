@@ -122,6 +122,13 @@ def _summary(output: str) -> str:
     return output.splitlines()[-1].strip() if output.splitlines() else "no output"
 
 
+def _result_pass(result: subprocess.CompletedProcess[str], output: str) -> bool:
+    if result.returncode != 0:
+        return False
+    result_lines = [line.strip() for line in output.splitlines() if line.strip().startswith("Result:")]
+    return not result_lines or result_lines[-1] == "Result: PASS"
+
+
 def _safe_output_path(raw: str) -> Path:
     path = Path(raw)
     if not path.is_absolute():
@@ -178,7 +185,7 @@ def main(argv: list[str] | None = None) -> int:
         check = Check(label)
         result = _run_script(script)
         output = "\n".join(part for part in (result.stdout.strip(), result.stderr.strip()) if part)
-        if result.returncode == 0:
+        if _result_pass(result, output):
             check.pass_(_summary(output))
         else:
             failing_line = next((line for line in output.splitlines() if line.startswith("[FAIL]")), "")

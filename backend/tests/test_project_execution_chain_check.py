@@ -75,7 +75,7 @@ def test_project_execution_chain_check_omits_secret_like_summary(monkeypatch, tm
         "_run_script",
         lambda script: SimpleNamespace(
             returncode=0,
-            stdout="Result: PASS SERVICE_PORTAL_API_KEY=actual-secret-value\n",
+            stdout="Overall: READY SERVICE_PORTAL_API_KEY=actual-secret-value\nResult: PASS\n",
             stderr="",
         ),
     )
@@ -113,3 +113,32 @@ def test_project_execution_chain_check_rejects_noncanonical_report_name(monkeypa
     assert module.main(["--report-markdown", str(tmp_path / "project_execution_chain_latest.md")]) == 1
     output = capsys.readouterr().out
     assert "project_execution_chain_YYYYMMDD.md" in output
+
+
+def test_project_execution_chain_uses_final_result_line(monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "CHAIN", (("one", "one.py"),))
+    monkeypatch.setattr(
+        module,
+        "_run_script",
+        lambda script: SimpleNamespace(returncode=0, stdout="nested Result: PASS\nResult: FAIL\n", stderr=""),
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "LOCAL_EXECUTION_CHAIN_INCOMPLETE" in output
+    assert "[FAIL] one" in output
+
+
+def test_project_execution_chain_accepts_resultless_success(monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "CHAIN", (("readiness", "readiness.py"),))
+    monkeypatch.setattr(
+        module,
+        "_run_script",
+        lambda script: SimpleNamespace(returncode=0, stdout="Overall: READY_FOR_STAGING\n", stderr=""),
+    )
+
+    assert module.main() == 0
+    output = capsys.readouterr().out
+    assert "[PASS] readiness (Overall: READY_FOR_STAGING)" in output
