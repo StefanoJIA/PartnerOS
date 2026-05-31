@@ -414,6 +414,7 @@ python scripts/d8_local_staging_rehearsal_check.py
 ```
 
 Local rehearsal output is not staging proof and must not change readiness to `STAGING_VALIDATED` or `STAGING_GAPS_OPEN`.
+If local rehearsal evidence is ever saved by mistake, `d8_production_coordination_check.py` reports `WAITING_FOR_REAL_STAGING_EVIDENCE`; replace it with strict staging evidence from real staging values before production coordination.
 
 After private staging values are available, but before running strict evidence, run:
 

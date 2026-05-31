@@ -30,6 +30,7 @@ REQUIRED_MARKERS = (
     "d8_staging_evidence_review_check.py",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "d8_production_coordination_check.py",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
     "d8_production_coordination_runbook_check.py",
     "D9 starts only after `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, production coordination, and the human Go / No-Go handoff",
     "docs/records/d8_production_go_no_go_YYYYMMDD.md",
