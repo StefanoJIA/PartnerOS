@@ -65,6 +65,8 @@ REQUIRED_INTEGRATION_DOC_MARKERS = (
     "d8_production_coordination_runbook.md",
     "python scripts/d8_production_coordination_runbook_check.py",
     "STAGING_VALIDATED",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "strict staging evidence from real staging values",
     "Go / No-Go handoff",
 )
 

@@ -57,7 +57,7 @@ python scripts/d8_strict_staging_evidence_check.py
 ```
 
 See [D8 Strict Staging / Cloud Validation](d8_strict_staging_cloud_validation.md).
-After `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED`, use [D8 Production Coordination Plan](d8_production_coordination_plan.md), [D8 Production Coordination Runbook](d8_production_coordination_runbook.md), `python scripts/d8_production_coordination_check.py`, and `python scripts/d8_production_coordination_runbook_check.py` for the Go / No-Go handoff.
+After `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED`, use [D8 Production Coordination Plan](d8_production_coordination_plan.md), [D8 Production Coordination Runbook](d8_production_coordination_runbook.md), `python scripts/d8_production_coordination_check.py`, and `python scripts/d8_production_coordination_runbook_check.py` for the Go / No-Go handoff. If local rehearsal output is saved where strict evidence is expected, `d8_production_coordination_check.py` remains at `WAITING_FOR_REAL_STAGING_EVIDENCE` until strict staging evidence from real staging values replaces it.
 
 For strict staging environment checks:
 

@@ -317,6 +317,7 @@ Use [D8 Readiness Audit](d8_readiness_audit.md) to classify the repo as `READY_F
 Use [D8 Staging Operator Handoff](d8_staging_operator_handoff.md) to generate the command sheet for whoever has the real staging backend URL and portal token.
 Use [D8 Staging Execution Pack](d8_staging_execution_pack.md) to verify the local handoff chain before sharing it.
 Use [D8 Local Staging Rehearsal](d8_local_staging_rehearsal.md) only to practice command order against a local backend; it does not prove `STAGING_VALIDATED` or `STAGING_GAPS_OPEN`.
+If local rehearsal output is saved where strict evidence is expected, `WAITING_FOR_REAL_STAGING_EVIDENCE` keeps production coordination blocked until real staging evidence replaces it.
 Use [D8 Staging Handoff Bundle](d8_staging_handoff_bundle.md) as the operator-facing manifest of docs, commands, generated handoff, evidence command, and exclusions.
 Use [D8 Staging Operator Runbook](d8_staging_operator_runbook.md) as the operator sequence from `READY_FOR_STAGING_HANDOFF` through evidence review and the next state.
 Use [D8 Staging Input Preflight](d8_staging_input_preflight.md) after private values arrive and before strict staging evidence.
