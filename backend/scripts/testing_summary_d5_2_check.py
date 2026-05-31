@@ -23,6 +23,7 @@ REQUIRED_MARKERS = (
     "python scripts/project_execution_chain_gate_check.py",
     "python scripts/project_execution_chain_check.py",
     "python scripts/d8_staging_execution_pack_check.py",
+    "python scripts/project_execution_acceptance_audit_check.py",
     "python scripts/testing_summary_d5_2_check.py",
     "D7 order, production, shipment, portal bridge, or resource-center workflows",
     "D8 RBAC, runtime hardening, partner operations, market response, or staging evidence",
