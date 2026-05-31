@@ -8,7 +8,7 @@ Current state:
 - D6 Quote MVP is closed.
 - D7 order, confirmation, partner/supplier, production milestone, portal bridge, feedback intake, and shipment plan foundations are closed through D7.9.
 - D8 is `READY_FOR_STAGING_HANDOFF`: local gates are ready, but real strict staging evidence still needs private staging values.
-- D9 operating loops remain planned behind `STAGING_VALIDATED`, evidence review, production coordination, and the human Go / No-Go handoff. If committed, that handoff uses `docs/records/d8_production_go_no_go_YYYYMMDD.md`.
+- D9 operating loops remain planned behind `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, production coordination, and the human Go / No-Go handoff. If committed, that handoff uses `docs/records/d8_production_go_no_go_YYYYMMDD.md`.
 
 Related docs:
 

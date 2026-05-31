@@ -19,6 +19,7 @@ REQUIRED_MARKERS = (
     "service.intelli-opus.com",
     "READY_FOR_STAGING_HANDOFF",
     "STAGING_VALIDATED",
+    "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "human Go / No-Go handoff",
     "docs/records/d8_production_go_no_go_YYYYMMDD.md",
     "D7 is closed through D7.9",

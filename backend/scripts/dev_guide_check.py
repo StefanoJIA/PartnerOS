@@ -17,6 +17,7 @@ REQUIRED_MARKERS = (
     "PartnerOS Developer Guide",
     "READY_FOR_STAGING_HANDOFF",
     "does not mean `STAGING_VALIDATED`",
+    "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "human Go / No-Go handoff",
     "docs/records/d8_production_go_no_go_YYYYMMDD.md",
     "service.intelli-opus.com",
