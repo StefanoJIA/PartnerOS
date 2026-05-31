@@ -93,3 +93,41 @@ def test_project_execution_acceptance_audit_check_fails_when_proof_record_is_mis
     output = capsys.readouterr().out
     assert "acceptance audit proof records exist" in output
     assert "docs/records/missing_acceptance_record.md" in output
+
+
+def test_project_execution_acceptance_audit_uses_final_result_line(monkeypatch, capsys):
+    module = _load_module()
+
+    def fake_run(script: str):
+        if script.endswith("d8_readiness_audit.py"):
+            return SimpleNamespace(
+                returncode=0,
+                stdout="Overall: READY_FOR_STAGING\nnested Result: PASS\nResult: FAIL\n",
+                stderr="",
+            )
+        if script.endswith("d8_production_coordination_check.py"):
+            return SimpleNamespace(returncode=0, stdout="Coordination State: WAITING_FOR_STAGING_VALIDATION\n", stderr="")
+        return SimpleNamespace(returncode=0, stdout="Result: PASS\n", stderr="")
+
+    monkeypatch.setattr(module, "_run_script", fake_run)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "[FAIL] D8 readiness remains pre-staging (READY_FOR_STAGING)" in output
+
+
+def test_project_execution_acceptance_audit_accepts_resultless_state_outputs(monkeypatch, capsys):
+    module = _load_module()
+
+    def fake_run(script: str):
+        if script.endswith("d8_readiness_audit.py"):
+            return SimpleNamespace(returncode=0, stdout="Overall: READY_FOR_STAGING\n", stderr="")
+        if script.endswith("d8_production_coordination_check.py"):
+            return SimpleNamespace(returncode=0, stdout="Coordination State: WAITING_FOR_STAGING_VALIDATION\n", stderr="")
+        return SimpleNamespace(returncode=0, stdout="Result: PASS\n", stderr="")
+
+    monkeypatch.setattr(module, "_run_script", fake_run)
+
+    assert module.main() == 0
+    output = capsys.readouterr().out
+    assert "[PASS] D8 readiness remains pre-staging (READY_FOR_STAGING)" in output

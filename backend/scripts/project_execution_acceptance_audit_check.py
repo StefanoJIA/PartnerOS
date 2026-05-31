@@ -172,6 +172,13 @@ def _extract(output: str, prefix: str) -> str:
     return "UNKNOWN"
 
 
+def _result_pass(result: subprocess.CompletedProcess[str], output: str) -> bool:
+    if result.returncode != 0:
+        return False
+    result_lines = [line.strip() for line in output.splitlines() if line.strip().startswith("Result:")]
+    return not result_lines or result_lines[-1] == "Result: PASS"
+
+
 def _status_next_action(chain_state: str, readiness_state: str, coordination_state: str) -> tuple[str, str]:
     spec = importlib.util.spec_from_file_location("project_execution_status_for_acceptance", STATUS_SCRIPT)
     if not spec or not spec.loader:
@@ -209,7 +216,7 @@ def main() -> int:
     readiness = _run_script("scripts/d8_readiness_audit.py")
     readiness_output = "\n".join(part for part in (readiness.stdout.strip(), readiness.stderr.strip()) if part)
     readiness_state = _extract(readiness_output, "Overall:")
-    if readiness.returncode == 0 and readiness_state == "READY_FOR_STAGING":
+    if _result_pass(readiness, readiness_output) and readiness_state == "READY_FOR_STAGING":
         checks[4].pass_(readiness_state)
     else:
         checks[4].fail(readiness_state)
@@ -217,7 +224,7 @@ def main() -> int:
     production = _run_script("scripts/d8_production_coordination_check.py")
     production_output = "\n".join(part for part in (production.stdout.strip(), production.stderr.strip()) if part)
     coordination_state = _extract(production_output, "Coordination State:")
-    if production.returncode == 0 and coordination_state == "WAITING_FOR_STAGING_VALIDATION":
+    if _result_pass(production, production_output) and coordination_state == "WAITING_FOR_STAGING_VALIDATION":
         checks[5].pass_(coordination_state)
     else:
         checks[5].fail(coordination_state)
