@@ -45,6 +45,8 @@ REQUIRED_MARKERS = (
     "integrated_backend_standards_check.py",
     "Lead Intelligence Docs",
     "lead_intelligence_docs_check.py",
+    "Manual A-Domain Test Plan",
+    "manual_a_domain_test_plan_check.py",
     "Codex Skill Pack",
     "codex_skill_pack_check.py",
     "Activity Actions",

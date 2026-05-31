@@ -23,6 +23,7 @@ This audit maps the current project-planning objective to concrete evidence. It 
 | Developer guide matches current local workflow | [Developer Guide](../dev_guide.md), `python scripts/dev_guide_check.py` | PASS |
 | Integrated backend standards match current bridge boundaries | [Integrated Backend Standards](../integrated_backend_standards.md), `python scripts/integrated_backend_standards_check.py` | PASS |
 | Lead Intelligence Docs match evidence-first human-review rules | [Lead Intelligence MVP](../lead_intelligence_mvp.md), [Public-Source Enrichment MVP](../public_source_enrichment_mvp.md), `python scripts/lead_intelligence_docs_check.py` | PASS |
+| Manual A-Domain Test Plan matches current UAT boundary | [Manual A-Domain Test Plan](../manual_a_domain_test_plan.md), `python scripts/manual_a_domain_test_plan_check.py` | PASS |
 | Codex skill pack matches current agent rules | [Codex Skill Pack](../codex_skills/README.md), `python scripts/codex_skill_pack_check.py` | PASS |
 | Activity Actions document canonical timeline actions | [Activity Actions](../activity_actions.md), `python scripts/activity_actions_doc_check.py` | PASS |
 | Deployment readiness checklist matches current gates | [Deployment Readiness Checklist](../deployment_readiness_checklist.md), `python scripts/deployment_readiness_checklist_check.py` | PASS |
@@ -84,6 +85,7 @@ python scripts/project_reorientation_summary_check.py
 python scripts/dev_guide_check.py
 python scripts/integrated_backend_standards_check.py
 python scripts/lead_intelligence_docs_check.py
+python scripts/manual_a_domain_test_plan_check.py
 python scripts/codex_skill_pack_check.py
 python scripts/activity_actions_doc_check.py
 python scripts/deployment_readiness_checklist_check.py

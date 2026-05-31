@@ -46,6 +46,7 @@ REQUIRED_MARKERS = (
     "dev_guide_check.py",
     "integrated_backend_standards_check.py",
     "lead_intelligence_docs_check.py",
+    "manual_a_domain_test_plan_check.py",
     "codex_skill_pack_check.py",
     "activity_actions_doc_check.py",
     "deployment_readiness_checklist_check.py",
