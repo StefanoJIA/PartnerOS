@@ -69,6 +69,16 @@ The overall project objective is not complete because real staging validation ha
 
 Until that evidence exists, the correct state is `READY_FOR_STAGING_HANDOFF`, not `STAGING_VALIDATED`; D9 remains gated until staging validation, evidence review, production coordination, and the human Go / No-Go handoff are all ready. If committed, the redacted decision record uses `docs/records/d8_production_go_no_go_YYYYMMDD.md`.
 
+## Completion Proof Ledger
+
+| Claim | Required proof | Current evidence verdict |
+|---|---|---|
+| Local project planning chain is internally consistent | `python scripts/project_execution_chain_check.py` returns `State: READY_FOR_STAGING_HANDOFF` | `PROVED_LOCAL` |
+| Local D8 implementation is ready to hand to staging operator | `python scripts/d8_readiness_audit.py` returns `Overall: READY_FOR_STAGING` and handoff docs/checks pass | `PROVED_LOCAL` |
+| Strict staging has been validated | Saved `docs/records/d8_strict_staging_evidence_YYYYMMDD.json` from the real deployed staging backend reports `PASS` | `MISSING_EXTERNAL` |
+| Production coordination can begin | `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, and `python scripts/d8_production_coordination_check.py` no longer reports `WAITING_FOR_STAGING_VALIDATION` | `MISSING_EXTERNAL` |
+| D9 operating loop can begin | Production coordination and human Go / No-Go handoff are complete; optional committed record uses `docs/records/d8_production_go_no_go_YYYYMMDD.md` | `MISSING_EXTERNAL` |
+
 ## Command
 
 ```powershell
