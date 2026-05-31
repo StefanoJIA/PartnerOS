@@ -4,7 +4,7 @@
 
 ## Purpose
 
-This file preserves the D5.2 Internal MVP testing baseline for release history. It is not the current D8/D9 validation matrix and must not be used to claim `READY_FOR_STAGING_HANDOFF` or `STAGING_VALIDATED`.
+This file preserves the D5.2 Internal MVP testing baseline for release history. It is not the current D8/D9 validation matrix and must not be used to claim `READY_FOR_STAGING_HANDOFF`, `STAGING_VALIDATED`, or clearance from `WAITING_FOR_REAL_STAGING_EVIDENCE`.
 
 Current validation lives in:
 

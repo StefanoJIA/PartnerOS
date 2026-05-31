@@ -19,6 +19,7 @@ REQUIRED_MARKERS = (
     "not the current D8/D9 validation matrix",
     "READY_FOR_STAGING_HANDOFF",
     "STAGING_VALIDATED",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
     "http://127.0.0.1:8014",
     "python scripts/project_execution_chain_gate_check.py",
     "python scripts/project_execution_chain_check.py",
