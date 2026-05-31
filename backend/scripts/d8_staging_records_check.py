@@ -15,6 +15,7 @@ except ModuleNotFoundError:
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = BACKEND_ROOT.parent
 RECORDS_ROOT = REPO_ROOT / "docs" / "records"
+POLICY_DOC = REPO_ROOT / "docs" / "phase3" / "d8_staging_records_policy.md"
 
 EVIDENCE_PATTERN = re.compile(r"^d8_strict_staging_evidence_\d{8}\.json$")
 STAGING_RECORD_PATTERN = re.compile(
@@ -23,6 +24,18 @@ STAGING_RECORD_PATTERN = re.compile(
 CURRENT_HANDOFF_PATTERN = re.compile(r"^d8_staging_operator_handoff_\d{8}\.md$")
 CURRENT_ACCESS_REQUEST_PATTERN = re.compile(r"^d8_staging_access_request_\d{8}\.md$")
 EXTRA_FORBIDDEN_RECORD_MARKERS = ("supplier_reference",)
+REQUIRED_POLICY_MARKERS = (
+    "D8 Staging Records Policy",
+    "d8_staging_operator_handoff_YYYYMMDD.md",
+    "d8_staging_access_request_YYYYMMDD.md",
+    "d8_strict_staging_evidence_YYYYMMDD.json",
+    "d8_strict_staging_gaps_YYYYMMDD.md",
+    "current operator handoff and staging access request records",
+    "Strict staging evidence and gap records are not required before the real staging run",
+    "WAITING_FOR_STAGING_EVIDENCE",
+    "Do not paste real `SERVICE_PORTAL_PARTNEROS_TOKEN`",
+    "Do not store raw API response bodies",
+)
 
 
 class Check:
@@ -64,6 +77,17 @@ def _display_path(path: Path) -> str:
         return str(path.relative_to(REPO_ROOT))
     except ValueError:
         return str(path)
+
+
+def _policy_text() -> str:
+    try:
+        return POLICY_DOC.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+
+
+def _policy_marker_issues(text: str) -> list[str]:
+    return [marker for marker in REQUIRED_POLICY_MARKERS if marker not in text]
 
 
 def _sensitive_marker_issues(records: list[Path]) -> list[str]:
@@ -127,6 +151,8 @@ def _evidence_issues(records: list[Path]) -> list[str]:
 
 def main() -> int:
     checks = [
+        Check("D8 staging records policy exists"),
+        Check("D8 staging records policy matches current gate"),
         Check("docs/records exists"),
         Check("D8 staging record names are canonical"),
         Check("current D8 handoff records exist"),
@@ -134,27 +160,37 @@ def main() -> int:
         Check("strict staging evidence schema"),
     ]
 
+    policy_text = _policy_text()
+    checks[0].pass_("docs/phase3/d8_staging_records_policy.md") if policy_text else checks[0].fail(
+        str(POLICY_DOC)
+    )
+
+    policy_missing = _policy_marker_issues(policy_text)
+    checks[1].pass_(f"{len(REQUIRED_POLICY_MARKERS)} markers") if not policy_missing else checks[1].fail(
+        ", ".join(policy_missing)
+    )
+
     if RECORDS_ROOT.exists() and RECORDS_ROOT.is_dir():
-        checks[0].pass_(_display_path(RECORDS_ROOT))
+        checks[2].pass_(_display_path(RECORDS_ROOT))
     else:
-        checks[0].fail("missing docs/records")
+        checks[2].fail("missing docs/records")
 
     records = _staging_records()
     naming = _naming_issues(records)
-    checks[1].pass_(f"{len(records)} D8 records") if not naming else checks[1].fail(", ".join(naming))
+    checks[3].pass_(f"{len(records)} D8 records") if not naming else checks[3].fail(", ".join(naming))
 
     required_current = _required_current_record_issues(records)
-    checks[2].pass_("handoff and access request records") if not required_current else checks[2].fail(
+    checks[4].pass_("handoff and access request records") if not required_current else checks[4].fail(
         ", ".join(required_current)
     )
 
     sensitive = _sensitive_marker_issues(records)
-    checks[3].pass_("no token assignments or internal markers") if not sensitive else checks[3].fail(
+    checks[5].pass_("no token assignments or internal markers") if not sensitive else checks[5].fail(
         ", ".join(sensitive[:8])
     )
 
     evidence = _evidence_issues(records)
-    checks[4].pass_("all evidence JSON valid") if not evidence else checks[4].fail(", ".join(evidence[:8]))
+    checks[6].pass_("all evidence JSON valid") if not evidence else checks[6].fail(", ".join(evidence[:8]))
 
     print("D8 Staging Records Check")
     for check in checks:

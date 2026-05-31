@@ -42,7 +42,9 @@ cd backend
 python scripts/d8_staging_records_check.py
 ```
 
-The check verifies canonical names, redaction markers, strict evidence safety metadata, and the matching gap register for failed evidence.
+The check verifies canonical names, the current operator handoff and staging access request records, redaction markers, strict evidence safety metadata, and the matching gap register for failed evidence.
+
+Strict staging evidence and gap records are not required before the real staging run. Until then, the records gate should pass with the current handoff and access request records while evidence review remains `WAITING_FOR_STAGING_EVIDENCE`.
 
 For failed evidence, use [D8 Staging Gap Triage](d8_staging_gap_triage.md) before production coordination. Each gap row should retain a recommended action, owner, and status until a rerun proves it fixed or superseded.
 

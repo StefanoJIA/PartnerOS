@@ -28,6 +28,35 @@ def _write_required_current_records(records_root: Path) -> None:
     )
 
 
+REQUIRED_POLICY_MARKERS_FIXTURE = (
+    "d8_staging_operator_handoff_YYYYMMDD.md",
+    "d8_staging_access_request_YYYYMMDD.md",
+    "d8_strict_staging_evidence_YYYYMMDD.json",
+    "d8_strict_staging_gaps_YYYYMMDD.md",
+    "current operator handoff and staging access request records",
+    "Strict staging evidence and gap records are not required before the real staging run",
+    "WAITING_FOR_STAGING_EVIDENCE",
+    "Do not paste real `SERVICE_PORTAL_PARTNEROS_TOKEN`",
+    "Do not store raw API response bodies",
+)
+
+
+def test_d8_staging_records_check_rejects_stale_policy_doc(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    records = tmp_path / "records"
+    records.mkdir()
+    policy = tmp_path / "policy.md"
+    policy.write_text("D8 Staging Records Policy\n", encoding="utf-8")
+    _write_required_current_records(records)
+    monkeypatch.setattr(module, "RECORDS_ROOT", records)
+    monkeypatch.setattr(module, "POLICY_DOC", policy)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "D8 staging records policy matches current gate" in output
+    assert "current operator handoff and staging access request records" in output
+
+
 def test_d8_staging_records_check_rejects_missing_current_records(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
