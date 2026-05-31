@@ -1,6 +1,6 @@
 # Project Execution Chain Report
 
-Generated at: 2026-05-31T17:07:48.301554+00:00
+Generated at: 2026-05-31T17:45:42.777062+00:00
 State: `READY_FOR_STAGING_HANDOFF`
 
 This report stores gate labels, pass/fail status, and redacted one-line summaries only. It does not store full command logs, response bodies, portal tokens, customer files, backend storage paths, or secrets.
