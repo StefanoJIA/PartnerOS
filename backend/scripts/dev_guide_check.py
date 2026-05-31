@@ -31,6 +31,7 @@ REQUIRED_MARKERS = (
     "d7_7_portal_bridge_check.py",
     "d7_6_shipment_tracking_check.py",
     "dev_guide_check.py",
+    "project_execution_chain_gate_check.py",
     "project_execution_chain_check.py",
     "project_execution_status.py",
     "npm run test -- --run",

@@ -504,6 +504,7 @@ This keeps product positioning, partner neutrality, operating lifecycle, current
 For a single local planning gate, run:
 
 ```powershell
+python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
 ```
 
@@ -558,6 +559,7 @@ python scripts/deployment_readiness_checklist_check.py
 python scripts/testing_guide_check.py
 python scripts/testing_summary_d5_2_check.py
 python scripts/operator_guide_check.py
+python scripts/project_execution_chain_gate_check.py
 ```
 
 This keeps the operator instructions, testing guide, and deployment readiness checklist aligned with `READY_FOR_STAGING_HANDOFF`, strict staging evidence review, production coordination, D9 gates, and manual-only safety boundaries.

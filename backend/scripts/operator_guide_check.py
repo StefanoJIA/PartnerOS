@@ -34,6 +34,7 @@ REQUIRED_MARKERS = (
     "d9_operating_execution_pack_check.py",
     "d9_operating_loop_kickoff_check.py",
     "d9_operating_records_check.py",
+    "project_execution_chain_gate_check.py",
     "project_execution_status.py",
     "project_execution_acceptance_audit_check.py",
     "product_vision_check.py",

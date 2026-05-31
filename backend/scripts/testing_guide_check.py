@@ -28,6 +28,7 @@ REQUIRED_MARKERS = (
     "deployment_readiness_checklist_check.py",
     "testing_guide_check.py",
     "operator_guide_check.py",
+    "project_execution_chain_gate_check.py",
     "project_execution_chain_check.py",
     "project_execution_status.py",
     "python -m pytest -q",
