@@ -26,6 +26,8 @@ REQUIRED_MARKERS = (
     "docs/records/project_execution_chain_20260531.md",
     "D8 Staging Operator Handoff Record",
     "docs/records/d8_staging_operator_handoff_20260531.md",
+    "D8 Staging Access Request Record",
+    "docs/records/d8_staging_access_request_20260531.md",
     "Port 8014 (D7.6+ validation default)",
     '$env:BACKEND_BASE_URL="http://127.0.0.1:8014"',
     '$env:VITE_API_PROXY_TARGET="http://127.0.0.1:8014"',

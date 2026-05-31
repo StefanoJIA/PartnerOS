@@ -38,7 +38,7 @@ This audit maps the current project-planning objective to concrete evidence. It 
 | Operator handoff bundle is defined | [D8 Staging Handoff Bundle](d8_staging_handoff_bundle.md), `python scripts/d8_staging_handoff_bundle_check.py` | PASS |
 | Operator runbook defines evidence sequence | [D8 Staging Operator Runbook](d8_staging_operator_runbook.md), `python scripts/d8_staging_operator_runbook_check.py` | PASS |
 | Private staging inputs can be preflighted locally | [D8 Staging Input Preflight](d8_staging_input_preflight.md), `python scripts/d8_staging_input_preflight_check.py` | `WAITING_FOR_PRIVATE_VALUES` until values arrive |
-| Private staging inputs are requested safely | [D8 Staging Access Request](d8_staging_access_request.md), `python scripts/d8_staging_access_request_check.py` | PASS |
+| Private staging inputs are requested safely | [D8 Staging Access Request](d8_staging_access_request.md), [D8 Staging Access Request Record](../records/d8_staging_access_request_20260531.md), `python scripts/d8_staging_access_request_check.py` | PASS; redacted access request record committed |
 | Operator response intake is redaction-gated | [D8 Staging Operator Response Intake](d8_staging_operator_response_intake.md), `python scripts/d8_staging_operator_response_intake_check.py` | PASS |
 | Failed staging evidence has a triage loop | [D8 Staging Gap Triage](d8_staging_gap_triage.md), `python scripts/d8_staging_gap_triage_check.py` | PASS |
 | Staging records are canonical and redacted | [D8 Staging Records Policy](d8_staging_records_policy.md), `python scripts/d8_staging_records_check.py` | PASS |
@@ -75,6 +75,7 @@ Until that evidence exists, the correct state is `READY_FOR_STAGING_HANDOFF`, no
 |---|---|---|
 | Local project planning chain is internally consistent | `python scripts/project_execution_chain_check.py` returns `State: READY_FOR_STAGING_HANDOFF` | `PROVED_LOCAL` |
 | Local D8 implementation is ready to hand to staging operator | `python scripts/d8_readiness_audit.py` returns `Overall: READY_FOR_STAGING` and handoff docs/checks pass | `PROVED_LOCAL` |
+| Private staging values have been requested safely | `docs/records/d8_staging_access_request_20260531.md` is present and `python scripts/d8_staging_records_check.py` passes redaction and naming checks | `PROVED_LOCAL` |
 | Strict staging has been validated | Saved `docs/records/d8_strict_staging_evidence_YYYYMMDD.json` from the real deployed staging backend reports `PASS` | `MISSING_EXTERNAL` |
 | Production coordination can begin | `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, and `python scripts/d8_production_coordination_check.py` no longer reports `WAITING_FOR_STAGING_VALIDATION` | `MISSING_EXTERNAL` |
 | D9 operating loop can begin | Production coordination and human Go / No-Go handoff are complete; optional committed record uses `docs/records/d8_production_go_no_go_YYYYMMDD.md` | `MISSING_EXTERNAL` |
