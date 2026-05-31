@@ -32,6 +32,8 @@ REQUIRED_MARKERS = (
     "partner-neutral",
     "python scripts/activity_actions_doc_check.py",
     "python scripts/project_execution_chain_gate_check.py",
+    "python scripts/d8_staging_execution_pack_check.py",
+    "python scripts/project_execution_acceptance_audit_check.py",
 )
 FORBIDDEN_MARKERS = (
     "娑?",
