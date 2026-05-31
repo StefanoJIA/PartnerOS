@@ -39,6 +39,23 @@ PRODUCTION_DECISION_REQUIRED_MARKERS = (
     "No automatic order, shipment, delivery, payment, or partner-selection mutation.",
     "No tokens, raw response bodies, internal cost, margin, supplier private note, backend path, storage key, database URL, or secret included.",
 )
+ACCESS_REQUEST_REQUIRED_MARKERS = (
+    "Status: open",
+    "Repository state: `READY_FOR_STAGING_HANDOFF`",
+    "BACKEND_BASE_URL: provided privately",
+    "SERVICE_PORTAL_PARTNEROS_TOKEN: provided privately",
+    "SERVICE_PORTAL_ORIGIN: https://service.intelli-opus.com",
+    "DEPLOYED_COMMIT: <short-sha-or-release>",
+    "TEST_DATA_SCOPE: TEST customer/order/product/resource/feedback fixtures only",
+    "python scripts/d8_staging_input_preflight_check.py",
+    "python scripts/d8_staging_operator_response_intake_check.py",
+    "python scripts/d8_strict_staging_evidence_check.py",
+    "python scripts/d8_staging_records_check.py",
+    "python scripts/d8_readiness_audit.py",
+    "python scripts/d8_staging_evidence_review_check.py",
+    "No `.env`",
+    "Do not deploy or modify `service.intelli-opus.com`",
+)
 REQUIRED_POLICY_MARKERS = (
     "D8 Staging Records Policy",
     "d8_staging_operator_handoff_YYYYMMDD.md",
@@ -46,6 +63,7 @@ REQUIRED_POLICY_MARKERS = (
     "d8_strict_staging_evidence_YYYYMMDD.json",
     "d8_strict_staging_gaps_YYYYMMDD.md",
     "current operator handoff and staging access request records",
+    "current access request record must include the redacted reply format and validation commands",
     "remote backend host is stored as `https://<redacted-backend>`",
     "Any evidence record with `allow_local_http=true` or a localhost `backend_base_url` is rejected",
     "Strict staging evidence and gap records are not required before the real staging run",
@@ -147,6 +165,22 @@ def _required_current_record_issues(records: list[Path]) -> list[str]:
     return issues
 
 
+def _access_request_issues(records: list[Path]) -> list[str]:
+    issues: list[str] = []
+    for path in records:
+        if not CURRENT_ACCESS_REQUEST_PATTERN.match(path.name):
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            issues.append(f"{path.name}:unreadable")
+            continue
+        missing = [marker for marker in ACCESS_REQUEST_REQUIRED_MARKERS if marker not in text]
+        if missing:
+            issues.append(f"{path.name}:missing {', '.join(missing)}")
+    return issues
+
+
 def _production_decision_issues(records: list[Path]) -> list[str]:
     issues: list[str] = []
     for path in records:
@@ -212,6 +246,7 @@ def main() -> int:
         Check("D8 staging records are redacted"),
         Check("D8 production decision records include safety markers"),
         Check("strict staging evidence schema"),
+        Check("D8 access request records are actionable"),
     ]
 
     policy_text = _policy_text()
@@ -250,6 +285,11 @@ def main() -> int:
 
     evidence = _evidence_issues(records)
     checks[7].pass_("all evidence JSON valid") if not evidence else checks[7].fail(", ".join(evidence[:8]))
+
+    access_request = _access_request_issues(records)
+    checks[8].pass_("required access request markers") if not access_request else checks[8].fail(
+        ", ".join(access_request[:4])
+    )
 
     print("D8 Staging Records Check")
     for check in checks:

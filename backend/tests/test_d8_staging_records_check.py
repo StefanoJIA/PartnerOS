@@ -21,10 +21,34 @@ def _write_required_current_records(records_root: Path) -> None:
         encoding="utf-8",
     )
     (records_root / "d8_staging_access_request_20260530.md").write_text(
+        _valid_access_request_body() + "\n",
+        encoding="utf-8",
+    )
+
+
+def _valid_access_request_body() -> str:
+    return (
+        "# D8 Staging Access Request - 2026-05-30\n\n"
+        "Status: open\n"
+        "Repository state: `READY_FOR_STAGING_HANDOFF`\n"
+        "Evidence target: strict staging validation\n\n"
+        "```text\n"
         "BACKEND_BASE_URL: provided privately\n"
         "SERVICE_PORTAL_PARTNEROS_TOKEN: provided privately\n"
-        "SERVICE_PORTAL_ORIGIN: https://service.intelli-opus.com\n",
-        encoding="utf-8",
+        "SERVICE_PORTAL_ORIGIN: https://service.intelli-opus.com\n"
+        "DEPLOYED_COMMIT: <short-sha-or-release>\n"
+        "TEST_DATA_SCOPE: TEST customer/order/product/resource/feedback fixtures only\n"
+        "```\n\n"
+        "```powershell\n"
+        "python scripts/d8_staging_input_preflight_check.py\n"
+        "python scripts/d8_staging_operator_response_intake_check.py\n"
+        "python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/records/d8_strict_staging_evidence_YYYYMMDD.json --gap-markdown ../docs/records/d8_strict_staging_gaps_YYYYMMDD.md\n"
+        "python scripts/d8_staging_records_check.py\n"
+        "python scripts/d8_readiness_audit.py\n"
+        "python scripts/d8_staging_evidence_review_check.py\n"
+        "```\n\n"
+        "- No `.env`\n"
+        "- Do not deploy or modify `service.intelli-opus.com`\n"
     )
 
 
@@ -34,6 +58,7 @@ REQUIRED_POLICY_MARKERS_FIXTURE = (
     "d8_strict_staging_evidence_YYYYMMDD.json",
     "d8_strict_staging_gaps_YYYYMMDD.md",
     "current operator handoff and staging access request records",
+    "current access request record must include the redacted reply format and validation commands",
     "Any evidence record with `allow_local_http=true` or a localhost `backend_base_url` is rejected",
     "Strict staging evidence and gap records are not required before the real staging run",
     "WAITING_FOR_STAGING_EVIDENCE",
@@ -277,6 +302,24 @@ def test_d8_staging_records_check_accepts_staging_access_request_record(tmp_path
     output = capsys.readouterr().out
     assert "D8 staging record names are canonical" in output
     assert "Result: PASS" in output
+
+
+def test_d8_staging_records_check_rejects_incomplete_access_request_record(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d8_staging_operator_handoff_20260530.md").write_text("Operator handoff: redacted\n", encoding="utf-8")
+    (tmp_path / "d8_staging_access_request_20260530.md").write_text(
+        "BACKEND_BASE_URL: provided privately\n"
+        "SERVICE_PORTAL_PARTNEROS_TOKEN: provided privately\n"
+        "SERVICE_PORTAL_ORIGIN: https://service.intelli-opus.com\n",
+        encoding="utf-8",
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "D8 access request records are actionable" in output
+    assert "Status: open" in output
+    assert "python scripts/d8_staging_input_preflight_check.py" in output
 
 
 def test_d8_staging_records_check_rejects_bearer_token(tmp_path, monkeypatch, capsys):
