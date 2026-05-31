@@ -38,6 +38,7 @@ CHAIN = (
     ("Deployment readiness checklist", "scripts/deployment_readiness_checklist_check.py"),
     ("Testing guide", "scripts/testing_guide_check.py"),
     ("D5.2 testing summary", "scripts/testing_summary_d5_2_check.py"),
+    ("Staging evidence boundary", "scripts/staging_evidence_boundary_check.py"),
     ("IE Auto project plan", "scripts/ie_auto_project_plan_check.py"),
     ("Phase 3 roadmap", "scripts/phase3_roadmap_check.py"),
     ("D8 stage goal matrix", "scripts/d8_stage_goal_matrix_check.py"),

@@ -29,6 +29,7 @@ This audit maps the current project-planning objective to concrete evidence. It 
 | Deployment readiness checklist matches current gates | [Deployment Readiness Checklist](../deployment_readiness_checklist.md), `python scripts/deployment_readiness_checklist_check.py` | PASS |
 | Testing guide matches current validation matrix | [Testing Guide](../testing.md), `python scripts/testing_guide_check.py` | PASS |
 | D5.2 Testing Summary is preserved as historical only | [D5.2 Testing Summary](../testing_summary_d5_2.md), `python scripts/testing_summary_d5_2_check.py` | PASS |
+| Staging evidence boundary is enforced | `python scripts/staging_evidence_boundary_check.py` confirms Markdown docs that mention `STAGING_VALIDATED` also carry `WAITING_FOR_REAL_STAGING_EVIDENCE` | PASS |
 | Source-derived project plan exists | [IE Auto Project Plan](ie_auto_project_plan.md), `python scripts/ie_auto_project_plan_check.py` | PASS |
 | Phase 3 roadmap covers D7-D9 sequence | [Phase 3 Roadmap](phase3_roadmap.md), `python scripts/phase3_roadmap_check.py` | PASS |
 | Stage goals and next gaps are explicit | [D8 Delivery Stage Goal Matrix](d8_delivery_stage_goal_matrix.md), `python scripts/d8_stage_goal_matrix_check.py` | PASS |
@@ -105,6 +106,7 @@ python scripts/activity_actions_doc_check.py
 python scripts/deployment_readiness_checklist_check.py
 python scripts/testing_guide_check.py
 python scripts/testing_summary_d5_2_check.py
+python scripts/staging_evidence_boundary_check.py
 python scripts/d8_staging_execution_pack_check.py
 python scripts/project_execution_status.py
 python scripts/project_execution_chain_gate_check.py

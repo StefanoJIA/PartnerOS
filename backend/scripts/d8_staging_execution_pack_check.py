@@ -61,6 +61,7 @@ REQUIRED_FILES = (
     "backend/scripts/deployment_readiness_checklist_check.py",
     "backend/scripts/testing_guide_check.py",
     "backend/scripts/testing_summary_d5_2_check.py",
+    "backend/scripts/staging_evidence_boundary_check.py",
     "backend/scripts/operator_guide_check.py",
     "README.md",
     "AGENTS.md",
@@ -303,6 +304,7 @@ def main() -> int:
         Check("deployment readiness checklist check runs"),
         Check("testing guide check runs"),
         Check("D5.2 testing summary check runs"),
+        Check("staging evidence boundary check runs"),
         Check("operator guide check runs"),
         Check("project execution chain gate check runs"),
         Check("D8 handoff docs avoid deprecated staging host"),
@@ -589,34 +591,40 @@ def main() -> int:
     else:
         checks[46].fail((testing_summary.stdout + testing_summary.stderr)[:160])
 
-    operator_guide = _run_script("scripts/operator_guide_check.py")
-    if _result_pass(operator_guide):
+    staging_boundary = _run_script("scripts/staging_evidence_boundary_check.py")
+    if _result_pass(staging_boundary):
         checks[47].pass_("PASS")
     else:
-        checks[47].fail((operator_guide.stdout + operator_guide.stderr)[:160])
+        checks[47].fail((staging_boundary.stdout + staging_boundary.stderr)[:160])
+
+    operator_guide = _run_script("scripts/operator_guide_check.py")
+    if _result_pass(operator_guide):
+        checks[48].pass_("PASS")
+    else:
+        checks[48].fail((operator_guide.stdout + operator_guide.stderr)[:160])
 
     chain_gate = _run_script("scripts/project_execution_chain_gate_check.py")
     if _result_pass(chain_gate):
-        checks[48].pass_("PASS")
+        checks[49].pass_("PASS")
     else:
-        checks[48].fail((chain_gate.stdout + chain_gate.stderr)[:160])
+        checks[49].fail((chain_gate.stdout + chain_gate.stderr)[:160])
 
     doc_marker_issues = _doc_marker_issues()
-    checks[49].pass_("private backend placeholder only") if not doc_marker_issues else checks[49].fail(
+    checks[50].pass_("private backend placeholder only") if not doc_marker_issues else checks[50].fail(
         ", ".join(doc_marker_issues[:8])
     )
 
     handoff_code, handoff_text, handoff_output = _generate_handoff()
     if handoff_code == 0 and handoff_text:
-        checks[50].pass_("generated")
+        checks[51].pass_("generated")
     else:
-        checks[50].fail(handoff_output[:160])
+        checks[51].fail(handoff_output[:160])
 
     missing_markers = [marker for marker in HANDOFF_MARKERS if marker not in handoff_text]
     if not missing_markers:
-        checks[51].pass_("commands and safety boundaries")
+        checks[52].pass_("commands and safety boundaries")
     else:
-        checks[51].fail(", ".join(missing_markers))
+        checks[52].fail(", ".join(missing_markers))
 
     print("D8 Staging Execution Pack Check")
     for check in checks:

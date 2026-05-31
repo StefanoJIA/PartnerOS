@@ -61,6 +61,7 @@ The report stores gate labels, pass/fail status, and one-line summaries only. It
 | Deployment readiness checklist | Confirms the staging handoff checklist matches D8/D9 evidence gates and no longer carries D5-era deploy steps |
 | Testing guide | Confirms the local validation matrix uses the current D7.6+/D8 `8014` checks and separates local validation from strict staging evidence |
 | D5.2 testing summary | Confirms the historical D5.2 testing record is clearly superseded by current D8/D9 validation |
+| Staging evidence boundary | Confirms Markdown docs that mention `STAGING_VALIDATED` also carry the `WAITING_FOR_REAL_STAGING_EVIDENCE` boundary |
 | IE Auto project plan | Confirms product positioning, lifecycle, safety rules, and current D7-D9 execution order |
 | Phase 3 roadmap | Confirms D7-D9 stages, dependency graph, related docs, and safety boundaries |
 | D8 stage goal matrix | Confirms stage artifacts, smoke commands, evidence state, and next gaps |

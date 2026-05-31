@@ -29,6 +29,8 @@ REQUIRED_MARKERS = (
     "docs/records/d8_staging_operator_handoff_20260531.md",
     "docs/records/d8_staging_access_request_20260531.md",
     "D8 staging handoff bundle",
+    "Staging evidence boundary",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
     "D8 staging execution pack",
     "D8 staging access request",
     "D8 production coordination",
