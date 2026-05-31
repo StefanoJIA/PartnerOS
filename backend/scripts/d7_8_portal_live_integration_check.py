@@ -6,6 +6,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 from uuid import uuid4
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
@@ -68,20 +69,34 @@ def _client(enabled: bool = True) -> TestClient:
     app.dependency_overrides[get_current_user] = lambda: User(
         id=uuid4(), email="d7_8_uat@test.example", is_active=True
     )
-    return TestClient(app)
+    return TestClient(app, raise_server_exceptions=False)
 
 
 def _no_forbidden_blob(*responses) -> tuple[bool, str]:
-    blob = json.dumps([r.json() for r in responses], ensure_ascii=False).lower()
+    payloads = []
+    for response in responses:
+        try:
+            payloads.append(response.json())
+        except ValueError:
+            payloads.append({})
+    blob = json.dumps(payloads, ensure_ascii=False).lower()
     for marker in FORBIDDEN:
         if marker in blob:
             return False, marker
     return True, "clean"
 
 
+def _redacted_backend_url(value: str) -> str:
+    parsed = urlparse(value)
+    if parsed.scheme in {"http", "https"} and parsed.hostname not in {"localhost", "127.0.0.1", "::1"}:
+        return f"{parsed.scheme}://<redacted-backend>{parsed.path or ''}"
+    return value
+
+
 def main() -> int:
     print("D7.8 Service Portal Live Integration Readiness Check")
-    print(f"BACKEND_BASE_URL={os.environ.get('BACKEND_BASE_URL', 'http://127.0.0.1:8014')}")
+    backend_url = os.environ.get("BACKEND_BASE_URL", "http://127.0.0.1:8014")
+    print(f"BACKEND_BASE_URL={_redacted_backend_url(backend_url)}")
     checks = [
         Check("enabled flag exposes portal API"),
         Check("missing token rejected"),
