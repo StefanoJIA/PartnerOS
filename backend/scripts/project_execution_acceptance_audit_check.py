@@ -103,6 +103,7 @@ REQUIRED_MARKERS = (
     "Completion Proof Ledger",
     "PROVED_LOCAL",
     "MISSING_EXTERNAL",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
     "State: READY_FOR_STAGING_HANDOFF",
     "Overall: READY_FOR_STAGING",
     "Strict staging has been validated",

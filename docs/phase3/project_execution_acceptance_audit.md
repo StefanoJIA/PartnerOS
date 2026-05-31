@@ -78,6 +78,7 @@ Until that evidence exists, the correct state is `READY_FOR_STAGING_HANDOFF`, no
 | Local D8 implementation is ready to hand to staging operator | `python scripts/d8_readiness_audit.py` returns `Overall: READY_FOR_STAGING` and handoff docs/checks pass | `PROVED_LOCAL` |
 | Private staging values have been requested safely | `docs/records/d8_staging_access_request_20260531.md` is present and `python scripts/d8_staging_records_check.py` passes redaction and naming checks | `PROVED_LOCAL` |
 | Strict staging has been validated | Saved `docs/records/d8_strict_staging_evidence_YYYYMMDD.json` from the real deployed staging backend reports `PASS` | `MISSING_EXTERNAL` |
+| Local rehearsal evidence has been replaced | `python scripts/d8_production_coordination_check.py` does not report `WAITING_FOR_REAL_STAGING_EVIDENCE` | `MISSING_EXTERNAL` |
 | Production coordination can begin | `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, and `python scripts/d8_production_coordination_check.py` no longer reports `WAITING_FOR_STAGING_VALIDATION` | `MISSING_EXTERNAL` |
 | D9 operating loop can begin | Production coordination and human Go / No-Go handoff are complete; optional committed record uses `docs/records/d8_production_go_no_go_YYYYMMDD.md` | `MISSING_EXTERNAL` |
 
