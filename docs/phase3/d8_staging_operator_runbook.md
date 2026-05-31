@@ -67,6 +67,8 @@ python scripts/project_execution_status.py
 | `docs/phase3/d8_staging_records_policy.md` | Defines the canonical record names, current handoff/access-request requirement, and redaction rules |
 | Console summaries | `project_execution_status.py` still reports the next manual action; no raw bodies or secrets are printed |
 
+Local rehearsal output is command-order practice only. It must stay outside `docs/records` and must not be used as `STAGING_VALIDATED` or `STAGING_GAPS_OPEN` evidence.
+
 ## Boundaries
 
 - No `.env`, token values, cookies, raw headers, raw response bodies, screenshots with secrets, customer files, uploads, `local_data`, or `backend/storage`.

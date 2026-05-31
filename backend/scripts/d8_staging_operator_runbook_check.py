@@ -41,6 +41,9 @@ REQUIRED_MARKERS = (
     "python scripts/d8_production_coordination_check.py",
     "docs/phase3/d8_staging_records_policy.md",
     "current handoff/access-request requirement",
+    "Local rehearsal output is command-order practice only",
+    "must stay outside `docs/records`",
+    "must not be used as `STAGING_VALIDATED` or `STAGING_GAPS_OPEN` evidence",
 )
 REQUIRED_BOUNDARIES = (
     "No `.env`",
