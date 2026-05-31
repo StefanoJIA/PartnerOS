@@ -86,6 +86,34 @@ def test_project_execution_status_reports_staging_gaps_open(monkeypatch, capsys)
     assert "rerun strict staging evidence" in output
 
 
+def test_project_execution_status_reports_local_rehearsal_evidence(monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "_latest_access_request_record", lambda: "docs/records/d8_staging_access_request_20260531.md")
+
+    def fake_run(script: str):
+        outputs = {
+            "scripts/project_execution_chain_gate_check.py": "Result: PASS\n",
+            "scripts/project_execution_chain_check.py": "State: READY_FOR_STAGING_HANDOFF\nResult: PASS\n",
+            "scripts/d8_readiness_audit.py": "Overall: STAGING_EVIDENCE_LOCAL_REHEARSAL\nResult: FAIL\n",
+            "scripts/d8_production_coordination_check.py": "Coordination State: BLOCKED_BY_READINESS_AUDIT\nResult: FAIL\n",
+        }
+        return SimpleNamespace(
+            returncode=1
+            if script in {"scripts/d8_readiness_audit.py", "scripts/d8_production_coordination_check.py"}
+            else 0,
+            stdout=outputs[script],
+            stderr="",
+        )
+
+    monkeypatch.setattr(module, "_run_script", fake_run)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "Current Stage: STAGING_EVIDENCE_LOCAL_REHEARSAL" in output
+    assert "Replace the local rehearsal PASS evidence" in output
+    assert "real staging values" in output
+
+
 def test_project_execution_status_reports_staging_validated_before_coordination(monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "_latest_access_request_record", lambda: "docs/records/d8_staging_access_request_20260531.md")
