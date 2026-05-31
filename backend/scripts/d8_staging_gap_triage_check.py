@@ -24,6 +24,8 @@ REQUIRED_DOC_MARKERS = (
     "python scripts/d8_readiness_audit.py",
     "configuration, token/CORS, runtime readiness, portal bridge contract, field leakage, test data, or unknown",
     "fixed_pending_rerun",
+    "Owner: TBD` is allowed only as a human owner placeholder",
+    "not an auto-assignee, notification target, or permission to create tickets",
     "No automatic customer or supplier notification",
     "No customer portal deployment",
 )

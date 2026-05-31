@@ -230,6 +230,8 @@ def _write_gap_markdown(raw_path: str | None, *, checks: list[Check], base: str,
             [
                 "## Follow-Up Items",
                 "",
+                "`Owner: TBD` is a human owner placeholder only. It is not an auto-assignee, notification target, or permission to create tickets.",
+                "",
                 "| Check | Detail | Recommended action | Owner | Status |",
                 "|---|---|---|---|---|",
             ]

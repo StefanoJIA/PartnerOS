@@ -56,7 +56,10 @@ def test_strict_staging_evidence_fails_without_backend_url_with_redacted_outputs
         "business_records_mutated": False,
     }
     assert "actual-secret" not in evidence.read_text(encoding="utf-8").lower()
-    assert "Safety boundary" in gaps.read_text(encoding="utf-8")
+    gap_text = gaps.read_text(encoding="utf-8")
+    assert "Safety boundary" in gap_text
+    assert "Owner: TBD` is a human owner placeholder only" in gap_text
+    assert "not an auto-assignee, notification target, or permission to create tickets" in gap_text
 
 
 def test_strict_staging_evidence_rejects_backend_storage_output_path():

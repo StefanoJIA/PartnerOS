@@ -33,6 +33,8 @@ This runbook turns a failed D8 strict staging evidence run into a human-owned fi
 | Owner | Human owner or team placeholder |
 | Status | `open`, `blocked`, `fixed_pending_rerun`, or `closed` |
 
+`Owner: TBD` is allowed only as a human owner placeholder until the staging operator assigns a named operator or team. It is not an auto-assignee, notification target, or permission to create tickets.
+
 ## Close Criteria
 
 - Latest strict staging evidence JSON has `result=PASS`, or a newer failed evidence run contains a narrower remaining gap list.

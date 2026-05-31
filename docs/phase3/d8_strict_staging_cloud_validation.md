@@ -43,7 +43,7 @@ To also create a follow-up register for failed checks:
 python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/records/d8_strict_staging_evidence_YYYYMMDD.json --gap-markdown ../docs/records/d8_strict_staging_gaps_YYYYMMDD.md
 ```
 
-The gap register lists failing checks, sanitized details, recommended actions, owner placeholders, and open/closed status.
+The gap register lists failing checks, sanitized details, recommended actions, owner placeholders, and open/closed status. `Owner: TBD` is allowed only as a human owner placeholder until the staging operator assigns a named operator or team; it is not an auto-assignee, notification target, or permission to create tickets.
 
 When a gap register is produced, use [D8 Staging Gap Triage](d8_staging_gap_triage.md) and `python scripts/d8_staging_gap_triage_check.py` to keep ownership, status, and rerun criteria explicit.
 
