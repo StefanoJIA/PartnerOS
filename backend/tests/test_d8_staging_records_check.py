@@ -38,6 +38,8 @@ REQUIRED_POLICY_MARKERS_FIXTURE = (
     "Strict staging evidence and gap records are not required before the real staging run",
     "WAITING_FOR_STAGING_EVIDENCE",
     "production Go / No-Go decision record",
+    "Readiness: STAGING_VALIDATED",
+    "Evidence review: READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "Do not paste real `SERVICE_PORTAL_PARTNEROS_TOKEN`",
     "Do not store raw API response bodies",
 )

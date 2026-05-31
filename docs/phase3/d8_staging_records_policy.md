@@ -53,7 +53,7 @@ For failed evidence, use [D8 Staging Gap Triage](d8_staging_gap_triage.md) befor
 
 After records pass, use [D8 Staging Evidence Review](d8_staging_evidence_review.md) and `python scripts/d8_staging_evidence_review_check.py` to interpret the latest saved evidence as waiting, ready for production coordination review, or requiring gap triage.
 
-If a production Go / No-Go decision record is committed, it must include `Decision:`, `Evidence source: redacted summary only`, and a Safety section confirming no nginx/upstream change from this repository, no customer or supplier notification, no automatic business-status mutation, and no tokens, raw response bodies, internal costs, supplier private notes, backend paths, storage keys, database URLs, or secrets.
+If a production Go / No-Go decision record is committed, it must include `Decision:`, `Evidence source: redacted summary only`, `Readiness: STAGING_VALIDATED`, `Evidence review: READY_FOR_PRODUCTION_COORDINATION_REVIEW`, and a Safety section confirming no nginx/upstream change from this repository, no customer or supplier notification, no automatic business-status mutation, and no tokens, raw response bodies, internal costs, supplier private notes, backend paths, storage keys, database URLs, or secrets.
 
 ## Boundaries
 

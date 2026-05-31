@@ -31,6 +31,8 @@ EXTRA_FORBIDDEN_RECORD_MARKERS = ("supplier_reference", "partneros-staging.examp
 PRODUCTION_DECISION_REQUIRED_MARKERS = (
     "Decision:",
     "Evidence source: redacted summary only",
+    "Readiness: STAGING_VALIDATED",
+    "Evidence review: READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "## Safety",
     "No nginx or upstream change from this repository.",
     "No customer or supplier notification.",
@@ -49,6 +51,8 @@ REQUIRED_POLICY_MARKERS = (
     "Strict staging evidence and gap records are not required before the real staging run",
     "WAITING_FOR_STAGING_EVIDENCE",
     "production Go / No-Go decision record",
+    "Readiness: STAGING_VALIDATED",
+    "Evidence review: READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "Do not paste real `SERVICE_PORTAL_PARTNEROS_TOKEN`",
     "Do not store raw API response bodies",
 )
