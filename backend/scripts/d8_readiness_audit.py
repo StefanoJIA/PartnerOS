@@ -8,6 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = BACKEND_ROOT.parent
@@ -82,6 +83,10 @@ REQUIRED_SCRIPTS = (
     "backend/scripts/project_execution_acceptance_audit_check.py",
     "backend/scripts/project_execution_records_check.py",
 )
+REQUIRED_READINESS_DOC_MARKERS = (
+    "STAGING_EVIDENCE_LOCAL_REHEARSAL",
+    "Latest PASS evidence used local HTTP rehearsal or localhost backend",
+)
 SAFETY_MARKERS = (
     "No automatic customer or supplier notification",
     "No email, webhook, carrier API, nginx",
@@ -154,6 +159,10 @@ def _staging_status() -> tuple[str, str]:
     data = _read_json(latest)
     result = str(data.get("result") or "").upper()
     if result == "PASS":
+        backend_base_url = str(data.get("backend_base_url") or "")
+        backend_host = (urlparse(backend_base_url).hostname or "").lower()
+        if data.get("allow_local_http") is True or backend_host in {"localhost", "127.0.0.1", "::1"}:
+            return "STAGING_EVIDENCE_LOCAL_REHEARSAL", latest.name
         return "STAGING_VALIDATED", latest.name
     if result == "FAIL":
         gap_name = latest.name.replace("evidence", "gaps").replace(".json", ".md")
@@ -199,7 +208,10 @@ def main() -> int:
 
     matrix = REPO_ROOT / "docs/phase3/d8_delivery_stage_goal_matrix.md"
     text = matrix.read_text(encoding="utf-8") if matrix.exists() else ""
+    readiness_doc = REPO_ROOT / "docs/phase3/d8_readiness_audit.md"
+    readiness_text = readiness_doc.read_text(encoding="utf-8") if readiness_doc.exists() else ""
     missing_safety = [marker for marker in SAFETY_MARKERS if marker not in text]
+    missing_safety.extend(marker for marker in REQUIRED_READINESS_DOC_MARKERS if marker not in readiness_text)
     checks[2].pass_("documented") if not missing_safety else checks[2].fail(", ".join(missing_safety))
 
     records_ok, records_detail = _records_gate_status()
@@ -232,7 +244,13 @@ def main() -> int:
     elif overall == "STAGING_VALIDATED":
         print("Next: proceed to production coordination planning without changing service.intelli-opus.com from this repo.")
 
-    return 0 if local_ready and staging_status not in {"STAGING_EVIDENCE_UNREADABLE", "STAGING_EVIDENCE_NONCANONICAL"} else 1
+    return (
+        0
+        if local_ready
+        and staging_status
+        not in {"STAGING_EVIDENCE_UNREADABLE", "STAGING_EVIDENCE_NONCANONICAL", "STAGING_EVIDENCE_LOCAL_REHEARSAL"}
+        else 1
+    )
 
 
 if __name__ == "__main__":
