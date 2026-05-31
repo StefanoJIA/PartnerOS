@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 from pathlib import Path
 
 
@@ -49,3 +50,25 @@ def test_d9_operating_execution_pack_check_flags_generic_secret(monkeypatch, tmp
     output = capsys.readouterr().out
     assert "D9 execution pack doc is redacted" in output
     assert "pack.md" in output
+
+
+def test_d9_operating_execution_pack_uses_final_result_line():
+    module = _load_module()
+
+    passing = subprocess.CompletedProcess(
+        args=[],
+        returncode=0,
+        stdout="[PASS] child\nResult: PASS\n",
+        stderr="",
+    )
+    nested_fail = subprocess.CompletedProcess(
+        args=[],
+        returncode=0,
+        stdout="nested Result: PASS\nResult: FAIL\n",
+        stderr="",
+    )
+    no_result = subprocess.CompletedProcess(args=[], returncode=0, stdout="[PASS] child\n", stderr="")
+
+    assert module._result_pass(passing) is True
+    assert module._result_pass(nested_fail) is False
+    assert module._result_pass(no_result) is False

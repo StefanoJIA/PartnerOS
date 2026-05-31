@@ -103,6 +103,13 @@ def _doc_text() -> str:
         return ""
 
 
+def _result_pass(result: subprocess.CompletedProcess[str]) -> bool:
+    if result.returncode != 0:
+        return False
+    result_lines = [line.strip() for line in result.stdout.splitlines() if line.strip().startswith("Result:")]
+    return bool(result_lines) and result_lines[-1] == "Result: PASS"
+
+
 def main() -> int:
     checks = [
         Check("D9 execution pack files present"),
@@ -127,7 +134,7 @@ def main() -> int:
 
     for index, script in enumerate(SCRIPTS, start=3):
         result = _run_script(script)
-        if result.returncode == 0 and "Result: PASS" in result.stdout:
+        if _result_pass(result):
             checks[index].pass_("PASS")
         else:
             checks[index].fail((result.stdout + result.stderr)[:160])
