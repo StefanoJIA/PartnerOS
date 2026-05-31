@@ -57,3 +57,21 @@ def test_d7_9_finish_reports_fail(capsys):
     output = capsys.readouterr().out
     assert "[FAIL] sample (broken)" in output
     assert "Result: FAIL" in output
+
+
+def test_d7_6_json_helper_tolerates_non_json_response():
+    module = _load_script("d7_6_shipment_tracking_check.py")
+    response = SimpleNamespace(json=lambda: (_ for _ in ()).throw(ValueError("not json")))
+
+    assert module._json(response) == {}
+
+
+def test_d7_6_finish_reports_fail(capsys):
+    module = _load_script("d7_6_shipment_tracking_check.py")
+    check = module.Check("shipment")
+    check.fail("backend unavailable")
+
+    assert module._finish([check]) == 1
+    output = capsys.readouterr().out
+    assert "[FAIL] shipment (backend unavailable)" in output
+    assert "Result: FAIL" in output

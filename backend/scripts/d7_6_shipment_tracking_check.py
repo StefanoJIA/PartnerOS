@@ -46,23 +46,40 @@ class Check:
         return f"[{status}] {self.label}{suffix}"
 
 
+def _json(response: httpx.Response) -> dict:
+    try:
+        data = response.json()
+    except ValueError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _finish(checks: list[Check]) -> int:
+    for c in checks:
+        print(c.line())
+    passed = all(c.ok for c in checks)
+    print(f"Result: {'PASS' if passed else 'FAIL'}")
+    return 0 if passed else 1
+
+
 def _login(client: httpx.Client, base: str) -> dict[str, str] | None:
     r = client.post(f"{base}/api/auth/login", json={"email": "admin@example.com", "password": "admin123"})
     if r.status_code != 200:
         return None
-    return {"Authorization": f"Bearer {r.json()['access_token']}"}
+    token = _json(r).get("access_token")
+    return {"Authorization": f"Bearer {token}"} if token else None
 
 
 def _first_confirmed_order(client: httpx.Client, base: str, headers: dict[str, str]) -> tuple[str | None, str]:
     lr = client.get(f"{base}/api/v1/orders?status=confirmed&limit=20", headers=headers)
-    for item in lr.json().get("data", {}).get("items", []):
+    for item in _json(lr).get("data", {}).get("items", []):
         return item["id"], item.get("order_number", item["id"][:8])
     return None, "no confirmed order"
 
 
 def _first_pending_order(client: httpx.Client, base: str, headers: dict[str, str]) -> str | None:
     lr = client.get(f"{base}/api/v1/orders?status=pending_customer_confirmation&limit=20", headers=headers)
-    items = lr.json().get("data", {}).get("items", [])
+    items = _json(lr).get("data", {}).get("items", [])
     return items[0]["id"] if items else None
 
 
@@ -90,17 +107,13 @@ def main() -> int:
             if not headers:
                 for c in checks:
                     c.fail("login failed")
-                print("\n".join(c.line() for c in checks))
-                print("Result: FAIL")
-                return 1
+                return _finish(checks)
 
             order_id, label = _first_confirmed_order(client, base, headers)
             if not order_id:
                 for c in checks:
                     c.fail(label)
-                print("\n".join(c.line() for c in checks))
-                print("Result: FAIL")
-                return 1
+                return _finish(checks)
             checks[0].pass_(label)
 
             pending_id = _first_pending_order(client, base, headers)
@@ -135,17 +148,15 @@ def main() -> int:
             if create.status_code not in (200, 201):
                 for c in checks[2:]:
                     c.fail(f"HTTP {create.status_code}: {create.text[:200]}")
-                print("\n".join(c.line() for c in checks))
-                print("Result: FAIL")
-                return 1
-            plan = create.json().get("data", {})
+                return _finish(checks)
+            plan = _json(create).get("data", {})
             plan_id = plan.get("id")
             safety = plan.get("safety", {})
             checks[2].pass_(plan_id or "")
 
             listed = client.get(f"{base}/api/v1/orders/{order_id}/shipment-plans", headers=headers)
             blob += listed.text.lower()
-            plans = listed.json().get("data", {}).get("items", []) if listed.status_code == 200 else []
+            plans = _json(listed).get("data", {}).get("items", []) if listed.status_code == 200 else []
             checks[3].pass_(f"{len(plans)} plan(s)") if any(p.get("id") == plan_id for p in plans) else checks[3].fail(
                 f"HTTP {listed.status_code}"
             )
@@ -156,9 +167,10 @@ def main() -> int:
                 json={"status": "shipped", "tracking_number": "D76-SMOKE-SHIPPED"},
             )
             blob += patched.text.lower()
-            if patched.status_code == 200 and patched.json().get("data", {}).get("status") == "shipped":
+            pdata = _json(patched).get("data", {}) if patched.status_code == 200 else {}
+            if patched.status_code == 200 and pdata.get("status") == "shipped":
                 checks[4].pass_()
-                safety = patched.json().get("data", {}).get("safety", safety)
+                safety = pdata.get("safety", safety)
             else:
                 checks[4].fail(f"HTTP {patched.status_code}")
 
@@ -168,12 +180,14 @@ def main() -> int:
                 json={"status": "cancelled"},
             )
             blob += cancelled.text.lower()
-            checks[5].pass_() if cancelled.status_code == 200 and cancelled.json().get("data", {}).get("status") == "cancelled" else checks[5].fail(
-                f"HTTP {cancelled.status_code}"
-            )
+            cancelled_data = _json(cancelled).get("data", {}) if cancelled.status_code == 200 else {}
+            if cancelled.status_code == 200 and cancelled_data.get("status") == "cancelled":
+                checks[5].pass_()
+            else:
+                checks[5].fail(f"HTTP {cancelled.status_code}")
 
             tr = client.get(f"{base}/api/v1/orders/{order_id}/timeline", headers=headers)
-            types = [i.get("type") for i in tr.json().get("data", {}).get("items", [])]
+            types = [i.get("type") for i in _json(tr).get("data", {}).get("items", [])]
             if "shipment_plan_created" in types and "shipment_status_changed" in types:
                 checks[6].pass_()
             else:
@@ -184,7 +198,7 @@ def main() -> int:
             checks[9].pass_() if safety.get("customer_notified") is False else checks[9].fail(str(safety))
 
             order = client.get(f"{base}/api/v1/orders/{order_id}", headers=headers)
-            status = order.json().get("data", {}).get("status")
+            status = _json(order).get("data", {}).get("status")
             checks[10].pass_(status) if status not in ("shipped", "delivered") else checks[10].fail(status)
 
             checks[11].pass_() if not any(p in blob for p in FORBIDDEN) else checks[11].fail("forbidden text")
@@ -194,11 +208,7 @@ def main() -> int:
             if not c.ok:
                 c.fail("backend unreachable")
 
-    for c in checks:
-        print(c.line())
-    passed = all(c.ok for c in checks)
-    print(f"Result: {'PASS' if passed else 'FAIL'}")
-    return 0 if passed else 1
+    return _finish(checks)
 
 
 if __name__ == "__main__":
