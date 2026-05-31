@@ -81,6 +81,8 @@ $env:BACKEND_BASE_URL="http://127.0.0.1:8014"
 python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
 python scripts/project_execution_status.py
+python scripts/d8_staging_execution_pack_check.py
+python scripts/project_execution_acceptance_audit_check.py
 ```
 
 Strict staging evidence is separate and uses the real staging `BACKEND_BASE_URL`, `SERVICE_PORTAL_PARTNEROS_TOKEN`, and `SERVICE_PORTAL_ORIGIN`.
