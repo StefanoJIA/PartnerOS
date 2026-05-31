@@ -116,11 +116,12 @@ def _evidence_state() -> tuple[str, str]:
     if safety.get("token_redacted") is not True or safety.get("response_bodies_stored") is not False:
         return "EVIDENCE_UNSAFE", latest.name
 
+    backend_base_url = str(data.get("backend_base_url") or "")
+    backend_host = (urlparse(backend_base_url).hostname or "").lower()
+    if data.get("allow_local_http") is True or backend_host in {"localhost", "127.0.0.1", "::1"}:
+        return "EVIDENCE_LOCAL_REHEARSAL", latest.name
+
     if result == "PASS":
-        backend_base_url = str(data.get("backend_base_url") or "")
-        backend_host = (urlparse(backend_base_url).hostname or "").lower()
-        if data.get("allow_local_http") is True or backend_host in {"localhost", "127.0.0.1", "::1"}:
-            return "EVIDENCE_LOCAL_REHEARSAL", latest.name
         return "READY_FOR_PRODUCTION_COORDINATION_REVIEW", latest.name
 
     gap_name = latest.name.replace("evidence", "gaps").replace(".json", ".md")

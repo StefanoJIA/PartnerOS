@@ -93,7 +93,7 @@ def _next_action(
     if readiness == "STAGING_EVIDENCE_LOCAL_REHEARSAL":
         return (
             "STAGING_EVIDENCE_LOCAL_REHEARSAL",
-            "Replace the local rehearsal PASS evidence with strict staging evidence from real staging values before production coordination.",
+            "Replace the local rehearsal evidence with strict staging evidence from real staging values before production coordination.",
         )
     if readiness == "STAGING_VALIDATED" and coordination == "READY_FOR_PRODUCTION_COORDINATION":
         return (

@@ -25,11 +25,12 @@ python scripts/d8_strict_staging_evidence_check.py
 If a rehearsal needs files, write scratch files outside committed records or delete them before committing:
 
 ```powershell
-python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/records/d8_strict_staging_evidence_YYYYMMDD.json --gap-markdown ../docs/records/d8_strict_staging_gaps_YYYYMMDD.md
-python scripts/d8_staging_records_check.py
+$evidence = Join-Path $env:TEMP "d8_strict_staging_evidence_YYYYMMDD.json"
+$gaps = Join-Path $env:TEMP "d8_strict_staging_gaps_YYYYMMDD.md"
+python scripts/d8_strict_staging_evidence_check.py --evidence-json $evidence --gap-markdown $gaps
 ```
 
-Do not commit rehearsal evidence as staging proof. If local rehearsal artifacts are kept for debugging, label them clearly outside the canonical D8 staging evidence names or remove them before handoff.
+Do not commit rehearsal evidence as staging proof. If local rehearsal artifacts are kept for debugging, keep them outside `docs/records`, or remove them before handoff.
 
 ## Expected Result
 

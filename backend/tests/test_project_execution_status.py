@@ -110,7 +110,7 @@ def test_project_execution_status_reports_local_rehearsal_evidence(monkeypatch, 
     assert module.main() == 1
     output = capsys.readouterr().out
     assert "Current Stage: STAGING_EVIDENCE_LOCAL_REHEARSAL" in output
-    assert "Replace the local rehearsal PASS evidence" in output
+    assert "Replace the local rehearsal evidence" in output
     assert "real staging values" in output
 
 

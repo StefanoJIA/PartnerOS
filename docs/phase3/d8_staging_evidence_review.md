@@ -38,16 +38,16 @@ python scripts/d8_staging_evidence_review_check.py
 | `WAITING_FOR_STAGING_EVIDENCE` | No saved strict staging evidence exists yet | Obtain private staging values and run strict staging evidence |
 | `READY_FOR_PRODUCTION_COORDINATION_REVIEW` | Latest evidence is `PASS`, redacted, and schema-readable | Run production coordination checks before any external release action |
 | `STAGING_GAPS_REQUIRE_TRIAGE` | Latest evidence is `FAIL` or has a matching gap register need | Use D8 Staging Gap Triage, assign owners, fix, and rerun evidence |
-| `EVIDENCE_LOCAL_REHEARSAL` | Latest PASS evidence used `allow_local_http=true` or a localhost backend | Re-run strict staging evidence with real staging values |
+| `EVIDENCE_LOCAL_REHEARSAL` | Latest strict evidence used `allow_local_http=true` or a localhost backend | Re-run strict staging evidence with real staging values |
 
 ## Human Review Checklist
 
 - Confirm `d8_staging_records_check.py` passes before sharing or committing records.
 - Confirm `d8_readiness_audit.py` reports the same state implied by the latest evidence.
-- For `PASS`, confirm the saved evidence did not use `allow_local_http=true` or a localhost `backend_base_url`.
+- Confirm the saved canonical evidence did not use `allow_local_http=true` or a localhost `backend_base_url`.
 - For `PASS`, verify the evidence date, deployed commit, backend origin, and portal origin with the staging operator. The saved evidence should show a remote backend as `https://<redacted-backend>`, with the real `BACKEND_BASE_URL` kept in the private operator channel.
 - For `FAIL`, verify each gap has an owner, status, recommended action, and rerun date before production coordination.
-- Do not treat local rehearsal output as `STAGING_VALIDATED`.
+- Do not treat local rehearsal output as `STAGING_VALIDATED` or `STAGING_GAPS_OPEN`.
 
 ## Boundaries
 

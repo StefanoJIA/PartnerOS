@@ -85,7 +85,7 @@ REQUIRED_SCRIPTS = (
 )
 REQUIRED_READINESS_DOC_MARKERS = (
     "STAGING_EVIDENCE_LOCAL_REHEARSAL",
-    "Latest PASS evidence used local HTTP rehearsal or localhost backend",
+    "Latest strict evidence used local HTTP rehearsal or localhost backend",
 )
 SAFETY_MARKERS = (
     "No automatic customer or supplier notification",
@@ -158,11 +158,11 @@ def _staging_status() -> tuple[str, str]:
     latest = files[0]
     data = _read_json(latest)
     result = str(data.get("result") or "").upper()
+    backend_base_url = str(data.get("backend_base_url") or "")
+    backend_host = (urlparse(backend_base_url).hostname or "").lower()
+    if data.get("allow_local_http") is True or backend_host in {"localhost", "127.0.0.1", "::1"}:
+        return "STAGING_EVIDENCE_LOCAL_REHEARSAL", latest.name
     if result == "PASS":
-        backend_base_url = str(data.get("backend_base_url") or "")
-        backend_host = (urlparse(backend_base_url).hostname or "").lower()
-        if data.get("allow_local_http") is True or backend_host in {"localhost", "127.0.0.1", "::1"}:
-            return "STAGING_EVIDENCE_LOCAL_REHEARSAL", latest.name
         return "STAGING_VALIDATED", latest.name
     if result == "FAIL":
         gap_name = latest.name.replace("evidence", "gaps").replace(".json", ".md")
