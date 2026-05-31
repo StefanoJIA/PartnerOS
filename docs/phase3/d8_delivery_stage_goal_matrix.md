@@ -30,6 +30,7 @@ This matrix turns the D7.9-D8 work into a compact execution and evidence map. It
 | D8 Staging Access Request | Define the exact private staging inputs needed without storing secrets | `docs/phase3/d8_staging_access_request.md` | `python scripts/d8_staging_access_request_check.py` | Committed record: `docs/records/d8_staging_access_request_20260531.md` | Send before strict staging when real URL/token/origin are missing |
 | D8 Staging Operator Response Intake | Define what redacted operator response data the repo may accept | `docs/phase3/d8_staging_operator_response_intake.md` | `python scripts/d8_staging_operator_response_intake_check.py` | Added | Use when operations replies with private values or evidence artifacts |
 | D8 Staging Gap Triage | Define owner/status/rerun loop for failed strict staging evidence | `docs/phase3/d8_staging_gap_triage.md` | `python scripts/d8_staging_gap_triage_check.py` | Added | Use when strict staging evidence returns `FAIL` |
+| Staging Evidence Boundary | Enforce that docs mentioning `STAGING_VALIDATED` also carry the `WAITING_FOR_REAL_STAGING_EVIDENCE` boundary | `backend/scripts/staging_evidence_boundary_check.py` | `python scripts/staging_evidence_boundary_check.py` | Added | Keep docs from implying production coordination can start from local rehearsal output |
 | D8 Staging Execution Pack | Verify the handoff chain is internally consistent | `docs/phase3/d8_staging_execution_pack.md` | `python scripts/d8_staging_execution_pack_check.py` | Added | Run before sharing the staging handoff |
 | D8 Staging Records Policy | Keep real staging records canonical and redacted | `docs/phase3/d8_staging_records_policy.md` | `python scripts/d8_staging_records_check.py` | Added | Run before committing staging evidence artifacts |
 | D8 Staging Evidence Review | Interpret saved strict staging evidence before production coordination | `docs/phase3/d8_staging_evidence_review.md` | `python scripts/d8_staging_evidence_review_check.py` | Added | Use after strict evidence and records check |
@@ -65,6 +66,7 @@ Before handing the package to the staging operator, run the local handoff gate s
 ```powershell
 cd backend
 python scripts/project_execution_chain_gate_check.py
+python scripts/staging_evidence_boundary_check.py
 python scripts/d8_staging_execution_pack_check.py
 python scripts/project_execution_acceptance_audit_check.py
 python scripts/project_execution_status.py
