@@ -26,8 +26,20 @@ SECRET_ASSIGNMENT_PATTERN = re.compile(
     r"\b:?\s*=\s*['\"]?([^'\"\s]+)",
     re.IGNORECASE,
 )
+SECRET_FIELD_PATTERN = re.compile(
+    r"\b([A-Z0-9_-]*(?:TOKEN|SECRET|PASSWORD|API[_-]?KEY|PRIVATE[_-]?KEY|DATABASE[_-]?URL)[A-Z0-9_-]*)"
+    r"\b\s*:\s*['\"]?([^'\"\s`|]+)",
+    re.IGNORECASE,
+)
 BEARER_PATTERN = re.compile(r"\bAuthorization:?\s*Bearer\s+([^\s`'\"|]+)", re.IGNORECASE)
-ALLOWED_SECRET_PLACEHOLDERS = {"<portal-server-token>", "<redacted>", "***", "REDACTED"}
+ALLOWED_SECRET_PLACEHOLDERS = {
+    "<portal-server-token>",
+    "<redacted>",
+    "***",
+    "REDACTED",
+    "provided",
+    "provided-privately",
+}
 
 
 def _is_placeholder(value: str) -> bool:
@@ -54,6 +66,10 @@ def redaction_issues(
     for line_no, line in enumerate(text.splitlines(), start=1):
         assignment = SECRET_ASSIGNMENT_PATTERN.search(line)
         if assignment and not _is_placeholder(assignment.group(2)):
+            issues.append(f"{path.name}:{line_no}")
+            continue
+        secret_field = SECRET_FIELD_PATTERN.search(line)
+        if secret_field and not _is_placeholder(secret_field.group(2)):
             issues.append(f"{path.name}:{line_no}")
             continue
         bearer = BEARER_PATTERN.search(line)

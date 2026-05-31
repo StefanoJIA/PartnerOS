@@ -44,6 +44,33 @@ def test_record_redaction_flags_authorization_bearer_value():
     assert issues == ["record.md:1"]
 
 
+def test_record_redaction_flags_secret_colon_fields():
+    module = _load_module()
+    text = "\n".join(
+        [
+            "SERVICE_PORTAL_PARTNEROS_TOKEN: actual-secret-value",
+            "X-Portal-Customer-Token: actual-secret-value",
+        ]
+    )
+
+    issues = module.redaction_issues(Path("record.md"), text)
+
+    assert issues == ["record.md:1", "record.md:2"]
+
+
+def test_record_redaction_allows_secret_colon_placeholders():
+    module = _load_module()
+    text = "\n".join(
+        [
+            "SERVICE_PORTAL_PARTNEROS_TOKEN: <provided-privately>",
+            "X-Portal-Customer-Token: <portal-server-token>",
+            "SERVICE_PORTAL_PARTNEROS_TOKEN: provided privately",
+        ]
+    )
+
+    assert module.redaction_issues(Path("record.md"), text) == []
+
+
 def test_record_redaction_can_skip_common_markers_for_runbook_boundary_text():
     module = _load_module()
     text = "No raw response body, local_data, or backend/storage artifact may be committed.\n"
