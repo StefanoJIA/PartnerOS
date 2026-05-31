@@ -20,6 +20,8 @@ REQUIRED_PLAN_MARKERS = (
     "No email, webhook, carrier API",
     "No automatic order, shipment, delivery, payment, or partner-selection mutation",
     "docs/records/d8_production_go_no_go_YYYYMMDD.md",
+    "python scripts/d8_production_coordination_check.py",
+    "READY_FOR_PRODUCTION_COORDINATION",
     "Rollback",
     "Go / No-Go",
 )
