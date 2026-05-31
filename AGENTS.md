@@ -8,7 +8,7 @@ PartnerOS is the internal source of truth for intelliOffice operations. The publ
 
 - Backend: FastAPI from `backend/`.
 - Frontend: Vue/Vite from `frontend/`.
-- Preferred local backend smoke port: `8014` for D7.6+ validation.
+- Preferred local backend smoke port: `8014` for D7.6+ and D8 handoff validation.
 - Docker Postgres: `127.0.0.1:5435`, managed by `docker compose up -d db`.
 
 ## Safety
@@ -18,15 +18,16 @@ PartnerOS is the internal source of truth for intelliOffice operations. The publ
 - D7 customer portal APIs are server-to-server bridge APIs only. Do not deploy or modify `service.intelli-opus.com` from this repo.
 - Do not auto-send email/webhooks, call carrier APIs, notify suppliers/customers, or automatically change order status to shipped/delivered.
 
-## D7 Boundaries
+## D7/D8 Boundaries
 
-- D7.1-D7.6 are complete: orders, customer confirmations, partner splits, supplier confirmations, production milestones, and shipment plans.
-- D7.7 adds `/api/v1/portal/customer/*` with strict customer-visible field whitelists and feedback intake.
+- D7 is closed through D7.9: orders, customer confirmations, partner splits, supplier confirmations, production milestones, shipment plans, customer portal bridge APIs, UAT, and resource center.
 - Feedback tickets do not auto-reply, notify customers, or promise resolution time.
+- Current D8 state is `READY_FOR_STAGING_HANDOFF`, not `STAGING_VALIDATED`.
+- D9 remains gated behind `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, production coordination, and the human Go/No-Go handoff.
 
 ## Validation
 
-Before committing D7 work, run the relevant matrix:
+Before committing D7/D8 handoff work, run the relevant matrix:
 
 ```powershell
 cd backend
@@ -37,6 +38,14 @@ python scripts/d7_6_shipment_tracking_check.py
 python scripts/d7_5_production_milestone_check.py
 python scripts/smoke_all_d5.py
 python scripts/dev_runtime_doctor.py
+python scripts/readme_check.py
+python scripts/deployment_readiness_checklist_check.py
+python scripts/testing_guide_check.py
+python scripts/operator_guide_check.py
+python scripts/codex_skill_pack_check.py
+python scripts/project_execution_chain_gate_check.py
+python scripts/project_execution_chain_check.py
+python scripts/project_execution_status.py
 python -m pytest -q
 
 cd ../frontend
