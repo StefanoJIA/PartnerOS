@@ -210,7 +210,7 @@ Review-only stage: maps the **already-deployed HOSUN & intelli cloud customer po
 python scripts/d7_5_1_portal_integration_review_check.py
 ```
 
-**Judgment:** retain existing cloud portal; integrate via future D7.7 Portal Bridge API.
+**Judgment:** retain existing cloud portal; integrate via the implemented D7.7 Portal Bridge API.
 
 ## D7.6 Shipment Tracking
 

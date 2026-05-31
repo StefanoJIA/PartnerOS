@@ -55,6 +55,7 @@ REQUIRED_MARKERS = (
     "operator_guide_check.py",
     "carrier APIs",
     "service.intelli-opus.com",
+    "implemented D7.7 Portal Bridge API",
 )
 FORBIDDEN_MARKERS = (
     "PORTAL_CUSTOMER_API_TOKEN=",
@@ -62,6 +63,7 @@ FORBIDDEN_MARKERS = (
     "raw response body:",
     "password_hash",
     "database_url",
+    "future D7.7 Portal Bridge API",
 )
 TOKEN_ASSIGNMENT = re.compile(r"SERVICE_PORTAL_PARTNEROS_TOKEN\s*=")
 
