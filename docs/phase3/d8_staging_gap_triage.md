@@ -40,6 +40,7 @@ This runbook turns a failed D8 strict staging evidence run into a human-owned fi
 - Latest strict staging evidence JSON has `result=PASS`, or a newer failed evidence run contains a narrower remaining gap list.
 - `python scripts/d8_staging_records_check.py` passes.
 - `python scripts/d8_readiness_audit.py` reports either `STAGING_VALIDATED` or the current `STAGING_GAPS_OPEN` state with the latest gap register.
+- `python scripts/d8_production_coordination_check.py` does not report `WAITING_FOR_REAL_STAGING_EVIDENCE`; local rehearsal evidence must be replaced by strict staging evidence from real staging values before coordination.
 - No gap record contains token values, `.env` content, raw response bodies, customer files, internal costs, supplier private notes, storage paths, or backend secrets.
 
 ## Safety Boundaries

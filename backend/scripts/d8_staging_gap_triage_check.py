@@ -28,6 +28,8 @@ REQUIRED_DOC_MARKERS = (
     "Owner: TBD` is allowed only as a human owner placeholder",
     "not an auto-assignee, notification target, or permission to create tickets",
     "No automatic customer or supplier notification",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "strict staging evidence from real staging values before coordination",
     "No customer portal deployment",
 )
 REQUIRED_GAP_MARKERS = (

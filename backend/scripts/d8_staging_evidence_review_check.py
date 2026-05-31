@@ -24,6 +24,8 @@ REQUIRED_DOC_MARKERS = (
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "STAGING_GAPS_REQUIRE_TRIAGE",
     "EVIDENCE_LOCAL_REHEARSAL",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "until strict staging evidence from real staging values replaces the rehearsal output",
     "d8_strict_staging_evidence_YYYYMMDD.json",
     "d8_strict_staging_gaps_YYYYMMDD.md",
     "python scripts/d8_staging_evidence_review_check.py",

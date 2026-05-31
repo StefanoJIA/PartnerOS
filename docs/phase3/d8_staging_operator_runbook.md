@@ -15,6 +15,7 @@ This runbook gives the staging operator the exact execution order for moving fro
 | `LOCAL_REHEARSAL_READY` | Required values are present for explicit localhost rehearsal only | Practice command order only; do not write records under `docs/records` |
 | `INPUTS_UNSAFE` | Provided staging inputs are non-HTTPS, placeholder, known-default, too short, or otherwise unsafe | Fix values before strict evidence |
 | `WAITING_FOR_STAGING_EVIDENCE` | Inputs may be ready but no saved strict evidence exists | Run strict evidence and save redacted artifacts |
+| `WAITING_FOR_REAL_STAGING_EVIDENCE` | Local rehearsal output was saved where strict evidence is expected | Replace it with strict staging evidence from real staging values before production coordination |
 | `STAGING_GAPS_OPEN` | Strict evidence failed and a gap register exists | Triage owners, close gaps, rerun evidence |
 | `STAGING_VALIDATED` | Latest strict evidence is PASS | Proceed to production coordination review |
 
@@ -69,6 +70,7 @@ python scripts/project_execution_status.py
 | Console summaries | `project_execution_status.py` still reports the next manual action; no raw bodies or secrets are printed |
 
 Local rehearsal output is command-order practice only. It must stay outside `docs/records` and must not be used as `STAGING_VALIDATED` or `STAGING_GAPS_OPEN` evidence.
+If local rehearsal output is saved where strict evidence is expected, do not proceed to production coordination; `d8_production_coordination_check.py` must remain at `WAITING_FOR_REAL_STAGING_EVIDENCE` until strict staging evidence from real staging values replaces it.
 
 ## Boundaries
 

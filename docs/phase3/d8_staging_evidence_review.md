@@ -40,6 +40,8 @@ python scripts/d8_staging_evidence_review_check.py
 | `STAGING_GAPS_REQUIRE_TRIAGE` | Latest evidence is `FAIL` or has a matching gap register need | Use D8 Staging Gap Triage, assign owners, fix, and rerun evidence |
 | `EVIDENCE_LOCAL_REHEARSAL` | Latest strict evidence used `allow_local_http=true` or a localhost backend | Re-run strict staging evidence with real staging values |
 
+`EVIDENCE_LOCAL_REHEARSAL` must keep production coordination blocked. `d8_production_coordination_check.py` reports `WAITING_FOR_REAL_STAGING_EVIDENCE` until strict staging evidence from real staging values replaces the rehearsal output.
+
 ## Human Review Checklist
 
 - Confirm `d8_staging_records_check.py` passes before sharing or committing records.

@@ -68,6 +68,8 @@ REQUIRED_POLICY_MARKERS = (
     "current access request record must include the redacted reply format and validation commands",
     "remote backend host is stored as `https://<redacted-backend>`",
     "Any evidence record with `allow_local_http=true` or a localhost `backend_base_url` is rejected",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "until strict staging evidence from real staging values replaces it",
     "Strict staging evidence and gap records are not required before the real staging run",
     "WAITING_FOR_STAGING_EVIDENCE",
     "production Go / No-Go decision record",

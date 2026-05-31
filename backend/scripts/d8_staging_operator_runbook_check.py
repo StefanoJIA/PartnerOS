@@ -23,6 +23,8 @@ REQUIRED_MARKERS = (
     "INPUTS_UNSAFE",
     "Provided staging inputs are non-HTTPS",
     "WAITING_FOR_STAGING_EVIDENCE",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "Replace it with strict staging evidence from real staging values before production coordination",
     "STAGING_GAPS_OPEN",
     "STAGING_VALIDATED",
     "BACKEND_BASE_URL",
@@ -46,6 +48,7 @@ REQUIRED_MARKERS = (
     "Local rehearsal output is command-order practice only",
     "must stay outside `docs/records`",
     "must not be used as `STAGING_VALIDATED` or `STAGING_GAPS_OPEN` evidence",
+    "until strict staging evidence from real staging values replaces it",
 )
 REQUIRED_BOUNDARIES = (
     "No `.env`",
