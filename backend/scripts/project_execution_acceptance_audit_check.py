@@ -79,6 +79,8 @@ REQUIRED_MARKERS = (
     "D9 Post-Launch Operating Loop",
     "D9 Operating Loop Kickoff",
     "D9 Operating Execution Pack",
+    "d8_production_coordination_check.py",
+    "with `project_execution_status.py` as the outer sanity check",
     "D9.1 Operating Health Review",
     "D9.2 Order Operations Loop",
     "D9.3 Market Response Loop",
