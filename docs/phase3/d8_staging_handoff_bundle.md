@@ -68,7 +68,7 @@ python scripts/d8_staging_records_check.py
 
 The generated handoff may be shared only after records check passes and the content contains no token values, raw response bodies, customer files, backend storage paths, or `local_data` references.
 
-When private staging values are available, run [D8 Staging Input Preflight](d8_staging_input_preflight.md) before the strict evidence command. `WAITING_FOR_PRIVATE_VALUES` is acceptable before credentials arrive; `INPUTS_UNSAFE` must be fixed before evidence.
+When private staging values are available, run [D8 Staging Input Preflight](d8_staging_input_preflight.md) before the strict evidence command. `WAITING_FOR_PRIVATE_VALUES` is acceptable before credentials arrive; `LOCAL_REHEARSAL_READY` is only for command-order practice; `INPUTS_UNSAFE` must be fixed before evidence.
 
 When operations replies, use [D8 Staging Operator Response Intake](d8_staging_operator_response_intake.md) to accept only redacted confirmation fields and canonical evidence artifact names.
 

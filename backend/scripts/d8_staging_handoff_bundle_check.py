@@ -63,6 +63,7 @@ REQUIRED_MARKERS = (
     "SERVICE_PORTAL_PARTNEROS_TOKEN",
     "SERVICE_PORTAL_ORIGIN",
     "not staging proof",
+    "LOCAL_REHEARSAL_READY",
     "STAGING_GAPS_OPEN",
     "outside `docs/records`",
     "Exclude",
