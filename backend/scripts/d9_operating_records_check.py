@@ -15,8 +15,15 @@ RECORDS_ROOT = REPO_ROOT / "docs" / "records"
 POLICY_DOC = REPO_ROOT / "docs" / "phase3" / "d9_operating_records_policy.md"
 POLICY_MARKERS = (
     "D9 Operating Records Policy",
+    "requires each committed D9 record to include the Safety section markers",
     "Owner: TBD` is allowed only as a human owner placeholder",
     "not an auto-assignee, notification target, or permission to create tickets",
+)
+RECORD_REQUIRED_MARKERS = (
+    "## Safety",
+    "No tokens or raw response bodies included.",
+    "No internal cost, margin, supplier private note, backend path, storage key, database URL, or secret included.",
+    "No automatic customer/supplier notification or business-status mutation triggered.",
 )
 
 D9_RECORD_PATTERN = re.compile(
@@ -71,6 +78,20 @@ def _redaction_issues(records: list[Path]) -> list[str]:
     return issues
 
 
+def _safety_marker_issues(records: list[Path]) -> list[str]:
+    issues: list[str] = []
+    for path in records:
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            issues.append(f"{path.name}:unreadable")
+            continue
+        missing = [marker for marker in RECORD_REQUIRED_MARKERS if marker not in text]
+        if missing:
+            issues.append(f"{path.name}:missing {', '.join(missing)}")
+    return issues
+
+
 def _policy_text() -> str:
     try:
         return POLICY_DOC.read_text(encoding="utf-8")
@@ -83,6 +104,7 @@ def main() -> int:
         Check("docs/records exists"),
         Check("D9 operating records policy is explicit"),
         Check("D9 operating record names are canonical"),
+        Check("D9 operating records include safety markers"),
         Check("D9 operating records are redacted"),
     ]
 
@@ -101,8 +123,11 @@ def main() -> int:
     naming = _naming_issues(records)
     checks[2].pass_(f"{len(records)} D9 records") if not naming else checks[2].fail(", ".join(naming))
 
+    safety = _safety_marker_issues(records)
+    checks[3].pass_("required record safety markers") if not safety else checks[3].fail(", ".join(safety[:4]))
+
     redaction = _redaction_issues(records)
-    checks[3].pass_("no token assignments or forbidden markers") if not redaction else checks[3].fail(
+    checks[4].pass_("no token assignments or forbidden markers") if not redaction else checks[4].fail(
         ", ".join(redaction[:8])
     )
 

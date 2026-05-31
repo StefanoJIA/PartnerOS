@@ -15,6 +15,21 @@ def _load_module():
     return module
 
 
+def _valid_record_body(module) -> str:
+    return "\n".join(
+        [
+            "# D9 Operating Review - 2026-05-30",
+            "",
+            "Loop: Operating health",
+            "Evidence source: redacted summary only",
+            "Owner: TBD",
+            "Status: open",
+            "",
+            *module.RECORD_REQUIRED_MARKERS,
+        ]
+    )
+
+
 def test_d9_operating_records_check_passes_without_d9_records(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
@@ -26,7 +41,10 @@ def test_d9_operating_records_check_passes_without_d9_records(tmp_path, monkeypa
 def test_d9_operating_records_check_accepts_aggregate_review_record(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
-    (tmp_path / "d9_operating_review_20260530.md").write_text("redacted summary\n", encoding="utf-8")
+    (tmp_path / "d9_operating_review_20260530.md").write_text(
+        _valid_record_body(module) + "\n",
+        encoding="utf-8",
+    )
 
     assert module.main() == 0
     output = capsys.readouterr().out
@@ -38,14 +56,7 @@ def test_d9_operating_records_check_accepts_template_safety_statement(tmp_path, 
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
     (tmp_path / "d9_operating_review_20260530.md").write_text(
-        """
-# D9 Operating Review - 2026-05-30
-
-## Safety
-
-- No tokens or raw response bodies included.
-- No automatic customer/supplier notification or business-status mutation triggered.
-""".strip()
+        _valid_record_body(module)
         + "\n",
         encoding="utf-8",
     )
@@ -54,6 +65,17 @@ def test_d9_operating_records_check_accepts_template_safety_statement(tmp_path, 
     output = capsys.readouterr().out
     assert "D9 operating records are redacted" in output
     assert "Result: PASS" in output
+
+
+def test_d9_operating_records_check_rejects_missing_safety_markers(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d9_operating_review_20260530.md").write_text("redacted summary\n", encoding="utf-8")
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "D9 operating records include safety markers" in output
+    assert "d9_operating_review_20260530.md:missing" in output
 
 
 def test_d9_operating_records_check_rejects_noncanonical_name(tmp_path, monkeypatch, capsys):
