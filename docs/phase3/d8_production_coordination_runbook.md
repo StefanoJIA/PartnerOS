@@ -13,6 +13,7 @@ It does not deploy, route, notify, mutate orders, or modify `service.intelli-opu
 | State | Meaning | Operator action |
 |---|---|---|
 | `WAITING_FOR_STAGING_VALIDATION` | Strict staging evidence is missing or failed | Do not start production coordination |
+| `WAITING_FOR_REAL_STAGING_EVIDENCE` | Latest evidence is local rehearsal output, not real staging evidence | Replace it with strict staging evidence from real staging values |
 | `STAGING_VALIDATED` | Latest strict staging evidence is PASS and records hygiene passed | Prepare Go / No-Go materials |
 | `BLOCKED_BY_EVIDENCE_REVIEW` | Readiness says staging passed, but evidence review does not report `READY_FOR_PRODUCTION_COORDINATION_REVIEW` | Return to evidence review or gap triage before Go / No-Go |
 | `READY_FOR_PRODUCTION_COORDINATION` | `python scripts/d8_production_coordination_check.py` confirms the local coordination gate | Share redacted evidence and plan with the portal/cloud operator |
