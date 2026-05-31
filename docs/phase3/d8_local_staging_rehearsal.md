@@ -4,7 +4,7 @@
 
 ## Purpose
 
-The local staging rehearsal lets an operator practice the strict evidence command order against a local backend without creating real staging evidence or implying `STAGING_VALIDATED`.
+The local staging rehearsal lets an operator practice the strict evidence command order against a local backend without creating real staging evidence or implying `STAGING_VALIDATED` or `STAGING_GAPS_OPEN`.
 
 This rehearsal is useful for checking shell syntax, command sequencing, redaction checks, and handoff flow. It is not a substitute for the real staging run.
 
@@ -30,7 +30,7 @@ $gaps = Join-Path $env:TEMP "d8_strict_staging_gaps_YYYYMMDD.md"
 python scripts/d8_strict_staging_evidence_check.py --evidence-json $evidence --gap-markdown $gaps
 ```
 
-Do not commit rehearsal evidence as staging proof. If local rehearsal artifacts are kept for debugging, keep them outside `docs/records`, or remove them before handoff.
+Do not commit rehearsal evidence as staging proof. The strict evidence script rejects local rehearsal output paths under `docs/records`; if local rehearsal artifacts are kept for debugging, keep them outside `docs/records`, or remove them before handoff.
 
 ## Expected Result
 
@@ -40,6 +40,6 @@ Do not commit rehearsal evidence as staging proof. If local rehearsal artifacts 
 
 ## Boundaries
 
-- No local rehearsal artifact proves `STAGING_VALIDATED`.
+- No local rehearsal artifact proves `STAGING_VALIDATED` or `STAGING_GAPS_OPEN`.
 - No `.env`, real staging token, raw response body, customer file, upload, `local_data`, or `backend/storage` artifact may be committed.
 - No email, webhook, carrier API, customer notification, supplier notification, order mutation, shipment mutation, payment action, inventory reservation, partner-selection mutation, nginx edit, cloud upstream edit, or `service.intelli-opus.com` deployment is authorized by rehearsal.

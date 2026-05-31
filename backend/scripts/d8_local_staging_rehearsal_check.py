@@ -23,6 +23,8 @@ REQUIRED_MARKERS = (
     "outside `docs/records`",
     "READY_FOR_STAGING",
     "STAGING_VALIDATED",
+    "STAGING_GAPS_OPEN",
+    "strict evidence script rejects local rehearsal output paths under `docs/records`",
     "Do not commit rehearsal evidence as staging proof",
     "No `.env`",
     "No email, webhook, carrier API",

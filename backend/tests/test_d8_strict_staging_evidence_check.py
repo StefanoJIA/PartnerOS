@@ -91,6 +91,28 @@ def test_strict_staging_evidence_rejects_noncanonical_gap_name(tmp_path):
         module._safe_output_path(str(tmp_path / "d8_strict_staging_gaps_latest.md"))
 
 
+def test_strict_staging_evidence_forbids_local_rehearsal_outputs_under_docs_records():
+    module = _load_module()
+    docs_record = module.BACKEND_ROOT.parent / "docs" / "records" / "d8_strict_staging_evidence_20260530.json"
+    temp_record = module.BACKEND_ROOT.parent / "backend" / "tmp" / "d8_strict_staging_evidence_20260530.json"
+
+    assert module._local_rehearsal_outputs_forbidden(
+        base="http://127.0.0.1:8014",
+        allow_local=True,
+        paths=[docs_record],
+    )
+    assert not module._local_rehearsal_outputs_forbidden(
+        base="http://127.0.0.1:8014",
+        allow_local=True,
+        paths=[temp_record],
+    )
+    assert not module._local_rehearsal_outputs_forbidden(
+        base="https://partneros-staging.example.com",
+        allow_local=False,
+        paths=[docs_record],
+    )
+
+
 def test_strict_staging_evidence_accepts_canonical_gap_name(tmp_path):
     module = _load_module()
 

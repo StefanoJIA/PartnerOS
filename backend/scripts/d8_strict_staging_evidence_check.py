@@ -213,6 +213,22 @@ def _safe_output_path(raw: str) -> Path:
     return resolved
 
 
+def _is_under_docs_records(path: Path) -> bool:
+    docs_records = (BACKEND_ROOT.parent / "docs" / "records").resolve()
+    try:
+        path.resolve().relative_to(docs_records)
+    except ValueError:
+        return False
+    return True
+
+
+def _local_rehearsal_outputs_forbidden(*, base: str, allow_local: bool, paths: list[Path]) -> bool:
+    if not paths:
+        return False
+    is_local_rehearsal = allow_local or _is_localhost(base)
+    return is_local_rehearsal and any(_is_under_docs_records(path) for path in paths)
+
+
 def _recommended_action(check: Check) -> str:
     label = check.label.lower()
     if "backend_base_url" in label or "https staging url" in label:
@@ -311,6 +327,11 @@ def _finish(
         print(check.line())
     passed = all(check.ok for check in checks)
     try:
+        evidence_path = _safe_evidence_path(evidence_json) if evidence_json else None
+        gap_path = _safe_output_path(gap_markdown) if gap_markdown else None
+        output_paths = [path for path in (evidence_path, gap_path) if path is not None]
+        if _local_rehearsal_outputs_forbidden(base=base, allow_local=allow_local, paths=output_paths):
+            raise ValueError("local rehearsal evidence must stay outside docs/records")
         _write_evidence(evidence_json, checks=checks, base=base, origin=origin, allow_local=allow_local)
         _write_gap_markdown(gap_markdown, checks=checks, base=base, origin=origin)
     except OSError as exc:
