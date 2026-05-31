@@ -59,6 +59,28 @@ def test_handoff_text_omits_audit_output_with_committed_staging_host(monkeypatch
     assert "Readiness audit output omitted" in text
 
 
+def test_handoff_readiness_audit_nonzero_is_failed_even_with_overall(monkeypatch):
+    module = _load_module()
+
+    def fake_run(*args, **kwargs):  # noqa: ARG001
+        return type(
+            "Result",
+            (),
+            {
+                "returncode": 1,
+                "stdout": "Overall: READY_FOR_STAGING\nResult: FAIL\n",
+                "stderr": "",
+            },
+        )()
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    status, output = module._run_readiness_audit()
+
+    assert status == "AUDIT_FAILED"
+    assert "Overall: READY_FOR_STAGING" in output
+
+
 def test_handoff_rejects_backend_storage_output_path():
     module = _load_module()
 

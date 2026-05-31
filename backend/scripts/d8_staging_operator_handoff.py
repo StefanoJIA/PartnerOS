@@ -60,7 +60,7 @@ def _run_readiness_audit() -> tuple[str, str]:
         if line.startswith("Overall:"):
             status = line.split(":", 1)[1].strip()
             break
-    if result.returncode != 0 and status == "UNKNOWN":
+    if result.returncode != 0:
         status = "AUDIT_FAILED"
     return status, output
 
