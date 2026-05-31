@@ -22,6 +22,7 @@ REQUIRED_PLAN_MARKERS = (
     "docs/records/d8_production_go_no_go_YYYYMMDD.md",
     "python scripts/d8_production_coordination_check.py",
     "READY_FOR_PRODUCTION_COORDINATION",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
     "Rollback",
     "Go / No-Go",
 )

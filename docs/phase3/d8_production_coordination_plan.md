@@ -17,6 +17,7 @@ Use [D8 Production Coordination Runbook](d8_production_coordination_runbook.md) 
 | Evidence review | `python scripts/d8_staging_evidence_review_check.py` reports `READY_FOR_PRODUCTION_COORDINATION_REVIEW` |
 | Staging evidence | `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED` |
 | Coordination state | `python scripts/d8_production_coordination_check.py` reports `READY_FOR_PRODUCTION_COORDINATION` |
+| Local rehearsal evidence | `WAITING_FOR_REAL_STAGING_EVIDENCE` means the latest saved evidence was local rehearsal output and must be replaced with real staging evidence |
 | Gap register | No open D8 strict staging gap register remains for the latest evidence run |
 | Go / No-Go record | Optional redacted decision record uses `docs/records/d8_production_go_no_go_YYYYMMDD.md` |
 
