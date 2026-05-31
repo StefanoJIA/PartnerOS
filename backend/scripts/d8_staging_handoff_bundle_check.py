@@ -39,6 +39,7 @@ REQUIRED_COMMANDS = (
     "python scripts/project_execution_status.py",
     "python scripts/project_execution_chain_gate_check.py",
     "python scripts/project_execution_chain_check.py",
+    "python scripts/project_execution_acceptance_audit_check.py",
     "python scripts/operator_guide_check.py",
     "python scripts/d8_staging_execution_pack_check.py",
     "python scripts/d8_staging_operator_runbook_check.py",

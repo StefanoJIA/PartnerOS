@@ -29,6 +29,7 @@ REQUIRED_MARKERS = (
     "python scripts/project_execution_status.py",
     "python scripts/project_execution_chain_gate_check.py",
     "python scripts/project_execution_chain_check.py",
+    "python scripts/project_execution_acceptance_audit_check.py",
     "python scripts/d8_staging_execution_pack_check.py",
     "python scripts/d8_staging_input_preflight_check.py",
     "python scripts/d8_strict_staging_evidence_check.py",
