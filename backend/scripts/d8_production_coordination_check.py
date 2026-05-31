@@ -45,6 +45,13 @@ class Check:
         return f"[{status}] {self.label}{suffix}"
 
 
+def _result_pass(result: subprocess.CompletedProcess[str], output: str) -> bool:
+    if result.returncode != 0:
+        return False
+    result_lines = [line.strip() for line in output.splitlines() if line.strip().startswith("Result:")]
+    return not result_lines or result_lines[-1] == "Result: PASS"
+
+
 def _readiness_status() -> tuple[bool, str]:
     result = subprocess.run(
         [sys.executable, "scripts/d8_readiness_audit.py"],
@@ -59,7 +66,7 @@ def _readiness_status() -> tuple[bool, str]:
         if line.startswith("Overall:"):
             status = line.split(":", 1)[1].strip()
             break
-    return result.returncode == 0 and status != "UNKNOWN", status
+    return _result_pass(result, output) and status != "UNKNOWN", status
 
 
 def _evidence_review_status() -> tuple[bool, str]:
@@ -76,7 +83,7 @@ def _evidence_review_status() -> tuple[bool, str]:
         if line.startswith("Review State:"):
             status = line.split(":", 1)[1].strip()
             break
-    return result.returncode == 0 and status != "UNKNOWN", status
+    return _result_pass(result, output) and status != "UNKNOWN", status
 
 
 def _plan_text() -> str:
