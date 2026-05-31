@@ -43,7 +43,7 @@ cd backend
 python scripts/d8_staging_records_check.py
 ```
 
-The check verifies canonical names, the current operator handoff and staging access request records, redaction markers, strict evidence safety metadata, required safety markers for any committed production Go / No-Go decision record, and the matching gap register for failed evidence. The current access request record must include the redacted reply format and validation commands. In strict staging evidence, any remote backend host is stored as `https://<redacted-backend>`; local rehearsal URLs such as `http://127.0.0.1:8014` may remain visible because they do not reveal private infrastructure.
+The check verifies canonical names, the current operator handoff and staging access request records, redaction markers, strict evidence safety metadata, required safety markers for any committed production Go / No-Go decision record, and the matching gap register for failed evidence. The current access request record must include the redacted reply format and validation commands. In committed strict staging evidence, any remote backend host is stored as `https://<redacted-backend>`; local rehearsal URLs such as `http://127.0.0.1:8014` may appear only in scratch outputs kept outside `docs/records`.
 
 Canonical evidence must come from real staging, not local rehearsal. Any evidence record with `allow_local_http=true` or a localhost `backend_base_url` is rejected by the records gate and must not produce `STAGING_VALIDATED` or `STAGING_GAPS_OPEN`.
 
