@@ -123,12 +123,29 @@ def _forbidden(text: str) -> list[str]:
     return issues
 
 
+def _record_link_issues() -> list[str]:
+    issues: list[str] = []
+    for link in REQUIRED_LINKS:
+        if not link.startswith("../records/"):
+            continue
+        path = (DOC.parent / link).resolve()
+        try:
+            path.relative_to(REPO_ROOT)
+        except ValueError:
+            issues.append(link)
+            continue
+        if not path.is_file():
+            issues.append(link)
+    return issues
+
+
 def main() -> int:
     checks = [
         Check("D8 staging handoff bundle doc exists"),
         Check("bundle links required handoff docs"),
         Check("bundle includes required commands"),
         Check("bundle preserves safety boundaries"),
+        Check("bundle committed record links exist"),
         Check("bundle avoids secret-like markers"),
     ]
 
@@ -148,8 +165,13 @@ def main() -> int:
     missing_markers = _missing(text, REQUIRED_MARKERS)
     checks[3].pass_("documented") if not missing_markers else checks[3].fail(", ".join(missing_markers))
 
+    record_issues = _record_link_issues()
+    checks[4].pass_("committed records present") if not record_issues else checks[4].fail(
+        ", ".join(record_issues)
+    )
+
     forbidden = _forbidden(text)
-    checks[4].pass_("redacted") if not forbidden else checks[4].fail(", ".join(forbidden))
+    checks[5].pass_("redacted") if not forbidden else checks[5].fail(", ".join(forbidden))
 
     print("D8 Staging Handoff Bundle Check")
     for check in checks:

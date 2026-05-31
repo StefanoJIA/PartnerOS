@@ -27,6 +27,11 @@ def test_d8_staging_handoff_bundle_check_passes_for_repo_doc(capsys):
 def test_d8_staging_handoff_bundle_check_flags_token_assignment(monkeypatch, tmp_path, capsys):
     module = _load_module()
     doc = tmp_path / "bundle.md"
+    records = tmp_path.parent / "records"
+    records.mkdir(exist_ok=True)
+    for link in module.REQUIRED_LINKS:
+        if link.startswith("../records/"):
+            (records / Path(link).name).write_text("redacted\n", encoding="utf-8")
     doc.write_text(
         "\n".join(
             [
@@ -51,6 +56,11 @@ def test_d8_staging_handoff_bundle_check_flags_authorization_bearer(
 ):
     module = _load_module()
     doc = tmp_path / "bundle.md"
+    records = tmp_path.parent / "records"
+    records.mkdir(exist_ok=True)
+    for link in module.REQUIRED_LINKS:
+        if link.startswith("../records/"):
+            (records / Path(link).name).write_text("redacted\n", encoding="utf-8")
     doc.write_text(
         "\n".join(
             [
@@ -68,3 +78,23 @@ def test_d8_staging_handoff_bundle_check_flags_authorization_bearer(
     output = capsys.readouterr().out
     assert "bundle avoids secret-like markers" in output
     assert "bundle.md" in output
+
+
+def test_d8_staging_handoff_bundle_check_flags_missing_committed_record(
+    monkeypatch, tmp_path, capsys
+):
+    module = _load_module()
+    phase3 = tmp_path / "docs" / "phase3"
+    phase3.mkdir(parents=True)
+    doc = phase3 / "bundle.md"
+    doc.write_text(
+        "\n".join([*module.REQUIRED_LINKS, *module.REQUIRED_COMMANDS, *module.REQUIRED_MARKERS]),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "DOC", doc)
+    monkeypatch.setattr(module, "REPO_ROOT", tmp_path)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "bundle committed record links exist" in output
+    assert "../records/d8_staging_operator_handoff_20260531.md" in output
