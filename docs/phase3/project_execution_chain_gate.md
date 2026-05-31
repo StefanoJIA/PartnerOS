@@ -62,15 +62,15 @@ The report stores gate labels, pass/fail status, and one-line summaries only. It
 | D8 staging operator response intake | Confirms operator replies can be accepted without token values, raw payloads, or unsafe artifacts |
 | D8 staging gap triage | Confirms failed staging evidence has an owner/status/rerun loop |
 | D8 staging evidence review | Interprets saved strict staging evidence as waiting, production-coordination-ready, or requiring triage |
-| D8 production coordination | Keeps production coordination blocked until strict staging has validated |
+| D8 production coordination | Keeps production coordination blocked until strict staging has validated and evidence review is ready |
 | D8 production coordination runbook | Confirms the human Go / No-Go and rollback handoff sequence is complete and redacted |
-| D9 post-launch plan | Confirms post-launch loop remains planned behind D8 validation |
-| D9 operating execution pack | Confirms the full D9 local operating gate set runs together |
-| D9 operating loop kickoff | Confirms the first D9 review session remains gated behind D8 production coordination |
-| D9.1 operating health review | Confirms the first D9 health track has redacted signal and record rules |
-| D9.2 order operations loop | Confirms the D9 order execution track has redacted signal and follow-up rules |
-| D9.3 market response loop | Confirms the D9 market response track remains advisory and redacted |
-| D9.4 improvement backlog | Confirms repeated operating gaps become reviewed backlog candidates only |
+| D9 post-launch plan | Confirms post-launch loop remains planned behind `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, production coordination, and human Go / No-Go handoff |
+| D9 operating execution pack | Confirms the full D9 local operating gate set runs together and references `docs/records/d8_production_go_no_go_YYYYMMDD.md` if committed |
+| D9 operating loop kickoff | Confirms the first D9 review session remains gated behind D8 production coordination, evidence review, and human Go / No-Go handoff |
+| D9.1 operating health review | Confirms the first D9 health track has redacted signal and record rules after the D8 Go / No-Go gate |
+| D9.2 order operations loop | Confirms the D9 order execution track has redacted signal and follow-up rules after the D8 Go / No-Go gate |
+| D9.3 market response loop | Confirms the D9 market response track remains advisory and redacted after the D8 Go / No-Go gate |
+| D9.4 improvement backlog | Confirms repeated operating gaps become reviewed backlog candidates only after the D8 Go / No-Go gate |
 | D9 operating records | Confirms D9 record naming and redaction policy |
 | Project execution acceptance audit | Maps the current project-planning objective to evidence and missing external staging proof |
 | Project execution records | Confirms generated execution reports are canonical and redacted |

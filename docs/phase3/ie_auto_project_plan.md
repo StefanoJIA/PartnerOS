@@ -327,7 +327,7 @@ Use [D8 Staging Records Policy](d8_staging_records_policy.md) to keep saved stag
 Use [D8 Staging Evidence Review](d8_staging_evidence_review.md) after records pass to interpret the latest evidence before production coordination.
 Use [D8 Production Coordination Plan](d8_production_coordination_plan.md) after `STAGING_VALIDATED` for the Go / No-Go and rollback handoff.
 Use [D8 Production Coordination Runbook](d8_production_coordination_runbook.md) after `STAGING_VALIDATED` to sequence the human Go / No-Go, rollback handoff, and D9 kickoff gates without deploying from this repo.
-Use [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md) after production coordination and `READY_FOR_PRODUCTION_COORDINATION_REVIEW` evidence review to keep health review, order operations, feedback, market intelligence, and improvement backlog under human review.
+Use [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md) after `STAGING_VALIDATED`, production coordination, `READY_FOR_PRODUCTION_COORDINATION_REVIEW` evidence review, and human Go / No-Go handoff to keep health review, order operations, feedback, market intelligence, and improvement backlog under human review.
 Use [D9 Operating Execution Pack](d9_operating_execution_pack.md) to verify all D9 review tracks and record gates before the first operating review.
 Use [D9 Operating Loop Kickoff](d9_operating_loop_kickoff.md) for the first redacted D9 review session after D8 production coordination, evidence review, and human Go / No-Go handoff.
 Use [D9.1 Operating Health Review](d9_1_operating_health_review.md) to review readiness, manifest, auth rejection, CORS, customer-safe reads, and forbidden-field safety.
