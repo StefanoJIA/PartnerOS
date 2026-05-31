@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 try:
@@ -43,6 +44,7 @@ FORBIDDEN_MARKERS = (
     "password_hash",
     "database_url",
 )
+TOKEN_STATUS = re.compile(r"^\s*SERVICE_PORTAL_PARTNEROS_TOKEN\s*:\s*(?P<value>.+?)\s*$", re.IGNORECASE)
 
 
 class Check:
@@ -80,6 +82,9 @@ def _forbidden(text: str) -> list[str]:
     issues = [marker for marker in FORBIDDEN_MARKERS if marker in text]
     issues.extend(redaction_issues(DOC, text, include_common_markers=False))
     for line in text.splitlines():
+        status = TOKEN_STATUS.match(line)
+        if status and status.group("value").strip() != "provided privately":
+            issues.append("SERVICE_PORTAL_PARTNEROS_TOKEN:<non-private-status>")
         if "SERVICE_PORTAL_PARTNEROS_TOKEN" in line and "=" in line and "<portal-server-token>" not in line:
             issues.append("SERVICE_PORTAL_PARTNEROS_TOKEN=<non-placeholder>")
     return issues
