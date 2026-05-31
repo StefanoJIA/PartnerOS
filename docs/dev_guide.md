@@ -122,6 +122,7 @@ python scripts/dev_runtime_doctor.py
 python scripts/readme_check.py
 python scripts/deployment_readiness_checklist_check.py
 python scripts/testing_guide_check.py
+python scripts/staging_evidence_boundary_check.py
 python scripts/operator_guide_check.py
 python scripts/dev_guide_check.py
 python scripts/project_execution_chain_gate_check.py
@@ -181,6 +182,7 @@ python scripts/d8_staging_handoff_bundle_check.py
 python scripts/d8_staging_operator_runbook_check.py
 python scripts/d8_staging_access_request_check.py
 python scripts/project_execution_chain_gate_check.py
+python scripts/staging_evidence_boundary_check.py
 python scripts/project_execution_chain_check.py
 python scripts/project_execution_status.py
 python scripts/d8_staging_execution_pack_check.py
