@@ -30,6 +30,8 @@ REQUIRED_MARKERS = (
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "human Go / No-Go handoff",
     "docs/records/d8_production_go_no_go_YYYYMMDD.md",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "until real staging evidence replaces it",
     "python scripts/agent_guide_check.py",
     "python scripts/testing_guide_check.py",
     "python scripts/desktop_transition_roadmap_check.py",

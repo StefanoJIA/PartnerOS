@@ -31,7 +31,7 @@ Development mode may still use Vue, FastAPI, PostgreSQL, Docker, and manual comm
 | D8 | Runtime hardening, service portal staging integration, strict staging evidence, production coordination readiness | Local gates ready; waiting for real staging values and evidence |
 | D9 | Post-launch operating loop, health review, order operations, market response, improvement backlog | Planned behind `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, production coordination, and human Go / No-Go handoff; if committed, the record uses `docs/records/d8_production_go_no_go_YYYYMMDD.md` |
 
-Current local proof is `READY_FOR_STAGING_HANDOFF`, not `STAGING_VALIDATED`.
+Current local proof is `READY_FOR_STAGING_HANDOFF`, not `STAGING_VALIDATED`. If local rehearsal output is saved where strict evidence is expected, production coordination remains at `WAITING_FOR_REAL_STAGING_EVIDENCE` until real staging evidence replaces it.
 
 ## Active Validation Chain
 

@@ -81,7 +81,7 @@ python scripts/d8_staging_execution_pack_check.py
 python scripts/project_execution_acceptance_audit_check.py
 ```
 
-These checks support `READY_FOR_STAGING_HANDOFF`; they do not prove `STAGING_VALIDATED`.
+These checks support `READY_FOR_STAGING_HANDOFF`; they do not prove `STAGING_VALIDATED`. If local rehearsal output is saved where strict evidence is expected, production coordination remains at `WAITING_FOR_REAL_STAGING_EVIDENCE` until real staging evidence replaces it.
 
 ## Related Docs
 

@@ -30,6 +30,7 @@ Open questions here do not block D8 staging evidence. They do block any claim th
 - Do not introduce SQLite, PostgreSQL-lite, or a dual database path without an explicit architecture decision.
 - Do not require final users to run PostgreSQL, pgAdmin, Docker, Alembic, or raw SQL.
 - Do not treat local desktop packaging checks as `STAGING_VALIDATED`.
+- If local rehearsal output is saved where strict evidence is expected, production coordination remains at `WAITING_FOR_REAL_STAGING_EVIDENCE` until real staging evidence replaces it.
 - Do not deploy or modify `service.intelli-opus.com` from packaging work.
 - Do not use installer work to trigger email, webhooks, carrier APIs, notifications, feedback creation, or business-record mutation.
 

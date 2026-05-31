@@ -33,6 +33,8 @@ REQUIRED_PACKAGING_MARKERS = (
     "python scripts/d8_staging_execution_pack_check.py",
     "python scripts/project_execution_acceptance_audit_check.py",
     "STAGING_VALIDATED",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "until real staging evidence replaces it",
 )
 REQUIRED_QUESTIONS_MARKERS = (
     "Open Questions: Desktop & Packaging",
@@ -44,6 +46,8 @@ REQUIRED_QUESTIONS_MARKERS = (
     "PostgreSQL + pgvector remains authoritative",
     "Do not introduce SQLite",
     "Do not require final users to run PostgreSQL, pgAdmin, Docker, Alembic, or raw SQL",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "until real staging evidence replaces it",
     "service.intelli-opus.com",
     "python scripts/desktop_packaging_docs_check.py",
     "python scripts/project_execution_chain_gate_check.py",
