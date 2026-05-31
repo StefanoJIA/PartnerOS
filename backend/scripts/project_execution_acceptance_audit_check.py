@@ -31,6 +31,8 @@ REQUIRED_MARKERS = (
     "runtime_modes_check.py",
     "Database Lifecycle",
     "database_lifecycle_doc_check.py",
+    "Desktop Packaging Docs",
+    "desktop_packaging_docs_check.py",
     "Desktop Transition Roadmap",
     "desktop_transition_roadmap_check.py",
     "Project Reorientation Summary",

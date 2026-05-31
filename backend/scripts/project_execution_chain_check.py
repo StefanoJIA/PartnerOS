@@ -25,6 +25,7 @@ CHAIN = (
     ("Desktop target architecture", "scripts/desktop_target_architecture_check.py"),
     ("Runtime modes", "scripts/runtime_modes_check.py"),
     ("Database lifecycle", "scripts/database_lifecycle_doc_check.py"),
+    ("Desktop packaging docs", "scripts/desktop_packaging_docs_check.py"),
     ("Desktop transition roadmap", "scripts/desktop_transition_roadmap_check.py"),
     ("Project reorientation summary", "scripts/project_reorientation_summary_check.py"),
     ("Developer guide", "scripts/dev_guide_check.py"),

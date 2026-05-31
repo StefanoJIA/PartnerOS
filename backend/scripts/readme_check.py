@@ -39,6 +39,7 @@ REQUIRED_MARKERS = (
     "python scripts/desktop_target_architecture_check.py",
     "python scripts/runtime_modes_check.py",
     "python scripts/database_lifecycle_doc_check.py",
+    "python scripts/desktop_packaging_docs_check.py",
     "python scripts/desktop_transition_roadmap_check.py",
     "python scripts/project_reorientation_summary_check.py",
     "python scripts/dev_guide_check.py",

@@ -1,51 +1,89 @@
-# Packaging strategy（打包与分发策略）
+# Packaging Strategy
 
-## 1. 目标产物
+**Status:** current on 2026-05-30.
 
-- **Windows 安装包**（`.msi` / **NSIS** / WiX 等，具体 D6 锁定）。  
-- 安装后：**单一桌面快捷方式**「intelliOffice」；双击完成启动链（含本地后端与数据库就绪）。  
-- 安装目录或 `%AppData%` 下：**版本号**、日志、配置、（可选）数据库数据目录。
+## Purpose
 
-## 2. Desktop shell：Tauri 2 vs Electron
+PartnerOS is still implemented as a Vue + FastAPI + PostgreSQL application, but the target delivery shape remains a Windows desktop application that internal users launch from one app icon. This strategy keeps desktop packaging aligned with the current `READY_FOR_STAGING_HANDOFF` state while avoiding premature production installer commitments.
 
-| 维度 | Tauri 2（**当前阶段优先评估**） | Electron |
-|------|----------------------------------|----------|
-| 运行时体积 | 相对小（系统 WebView） | 捆绑 Chromium，体积较大 |
-| 安全面 | Rust 侧壳，攻击面可控 | Node + Chromium，需严格审计 |
-| 与 Windows 集成 |  Tray、单实例、安装体验较好 | 成熟生态、案例多 |
-| 团队曲线 | 需 Rust 与前端协作 | 偏 JavaScript 全栈 |
+This document is not a production release runbook, not staging evidence, and not permission to deploy or modify `service.intelli-opus.com`.
 
-**建议**：**D2** 原型以 **Tauri 2** 为主路径；若在 **启动子进程、IPC、安装器** 上遇阻，再评估 Electron 作为备选，并在文档与 [open_questions_desktop.md](open_questions_desktop.md) 中记录决策。
+## Current Packaging Facts
 
-**D2 已落地（仓库事实）**：`frontend/src-tauri` 为 Tauri 2 最小工程；`tauri dev` / `tauri build` 依赖本机 **Rust** 工具链。
+- Frontend desktop shell work is under `frontend/src-tauri`.
+- The desktop shell target is Tauri 2 unless a later architecture decision records a reason to switch.
+- The backend sidecar path uses PyInstaller around `sidecar_entry.py` to create an `intellioffice-backend` executable.
+- The Tauri app launches the sidecar through the shell plugin and probes `/health`.
+- The sidecar default health origin is `http://127.0.0.1:17888/health`.
+- Browser-based local development and D7.6+/D8 validation still use port `8014`.
+- PostgreSQL + pgvector remains the authoritative store; see [Database Lifecycle](database_lifecycle.md).
 
-**D3 已落地（Windows 最小链路，仓库事实）**：
+## Desktop Delivery Shape
 
-- **Sidecar 可执行文件**：PyInstaller 单文件 **`intellioffice-backend.exe`**（由 `sidecar_entry.py` 启动 Uvicorn）；构建命令 **`cd frontend && npm run sidecar:prepare`**（详见 [testing.md](testing.md) D3）。  
-- **Tauri 集成**：`tauri.conf.json` → `bundle.externalBin`: `["binaries/intellioffice-backend"]`；运行时由 **`tauri-plugin-shell`** 以 sidecar 方式 `spawn`，注入 **`APP_RUNTIME_MODE=desktop`**、`HOST`、`PORT`；应用退出时 **`RunEvent::Exit`** 上对已持有子进程 **`kill`**。  
-- **能力**：`capabilities/default.json` 中 `shell:allow-spawn` 允许 `binaries/intellioffice-backend`（`sidecar: true`）。  
-- **仍属后续**：安装包签名、自动更新、**macOS/Linux** sidecar 与 triple 验收、非 Windows 打包流水线。
+The intended desktop package should eventually provide:
 
-## 3. 后端 sidecar（FastAPI）
+- one Windows installer or signed package
+- one intelliOffice launch icon
+- a managed backend sidecar
+- a managed database lifecycle path
+- a local health/diagnostic surface
+- redacted logs and diagnostic export for support
+- clear upgrade and rollback behavior
 
-- **形式（D3）**：**PyInstaller** 将 **`sidecar_entry.py`** 打成 **`intellioffice-backend.exe`**，由 **Tauri shell** 按 `externalBin` 约定启动，默认监听 **`127.0.0.1:17888`**（与开发用 8000 错开；详见 `desktop_runtime.rs` 与 [testing.md](testing.md)）。占位后 D4+ 可评估占用检测或递增端口。  
-- **契约**：健康检查 `GET /health`（D1 JSON）；壳在启动后 **轮询** health直至可判定 **ready / degraded / error**。  
-- **前端**：Tauri 装载 `vite build` 产物；**无 Vite 代理** 时由 `bootDesktopHttpBase()`（`backendOrigin.ts`）在启动时将 axios `baseURL` 设为 **`<backend_origin>/api`**。开发期浏览器 / `tauri dev` + 外部后端仍用 **`npm run dev`** 代理 `/api` 与 `/health`。
+Final users should not need separate frontend/backend commands or manual seed scripts.
 
-## 4. PostgreSQL 托管路径（选项，未最终锁定）
+Do not require final users to run PostgreSQL, pgAdmin, Docker, Alembic, or raw SQL.
 
-1. **捆绑便携式 Postgres**（pgvector 构建或官方二进制 + 扩展）：安装包解压到应用目录，DLM 负责 `initdb`、启停。  
-2. **安装阶段注册 Windows 服务**（企业感强，权限与升级复杂）。  
-3. **首次运行下载 runtime**（减小安装包，需网络与校验）。  
+## Installer Boundary
 
-详尽对比与法务/体积约束记在 [open_questions_desktop.md](open_questions_desktop.md)；**不阻塞 D0–D3** 的 Windows shell + sidecar 串联（macOS/Linux 仍属后续）。
+Installer implementation is not complete in the current D8 handoff. The next packaging decisions remain:
 
-## 5. 自动更新（D6）
+- MSI, NSIS, WiX, or another Windows installer format
+- signing certificate and publisher identity
+- update channel and rollback policy
+- embedded PostgreSQL versus service-managed PostgreSQL versus another approved lifecycle path
+- backup/restore UX
+- desktop data directory and retention policy
+- enterprise IT deployment requirements
 
-- Tauri 内置 updater 或 Squirrel / 自建 CDN；**签名证书**、delta 包、回滚策略后续单独立项。
+These are tracked in [Open Questions: Desktop & Packaging](open_questions_desktop.md). They must be closed through explicit decisions before claiming production desktop release readiness.
 
-## 6. 相关文档
+## Database Packaging Boundary
 
-- [architecture_desktop_target.md](architecture_desktop_target.md)  
-- [database_lifecycle.md](database_lifecycle.md)  
-- [migration_from_web_to_desktop.md](migration_from_web_to_desktop.md)  
+Do not replace the PostgreSQL + pgvector architecture with SQLite or an unreviewed dual-path database strategy inside packaging work. Any long-term SQLite, PostgreSQL-lite, or dual-database SKU must go through an explicit architecture decision and database lifecycle update.
+
+The packaging layer may orchestrate database startup, migration, backup, restore, and diagnostics in the future. It must not hide migration failures, silently create unsafe default credentials, or ask final users to operate database tools.
+
+## Safety Boundaries
+
+Packaging work must not:
+
+- commit `.env`, `local_data/`, `backend/storage/`, generated logs, uploads, tokens, or customer files
+- call staging unless running an explicit evidence script with private values
+- deploy or modify `service.intelli-opus.com`
+- edit nginx or cloud upstreams
+- send email, webhooks, carrier API calls, customer notifications, or supplier notifications
+- automatically change order status to shipped or delivered
+- create feedback tickets or mutate business records as part of packaging
+
+## Validation
+
+Use these local checks after changing packaging or desktop decision docs:
+
+```powershell
+cd backend
+python scripts/desktop_packaging_docs_check.py
+python scripts/desktop_target_architecture_check.py
+python scripts/database_lifecycle_doc_check.py
+python scripts/project_execution_chain_check.py
+```
+
+These checks support `READY_FOR_STAGING_HANDOFF`; they do not prove `STAGING_VALIDATED`.
+
+## Related Docs
+
+- [Desktop Target Architecture](architecture_desktop_target.md)
+- [Runtime Modes](runtime_modes.md)
+- [Database Lifecycle](database_lifecycle.md)
+- [Open Questions: Desktop & Packaging](open_questions_desktop.md)
+- [D8 Staging Operator Runbook](phase3/d8_staging_operator_runbook.md)
