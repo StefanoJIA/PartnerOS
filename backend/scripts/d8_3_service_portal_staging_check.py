@@ -7,6 +7,7 @@ import os
 import sys
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 if str(BACKEND_ROOT) not in sys.path:
@@ -27,6 +28,15 @@ FORBIDDEN = (
     "secret_key",
     "password_hash",
 )
+UNSAFE_TOKENS = {
+    "",
+    "<portal-server-token>",
+    "test-portal-token",
+    "dev-portal-token",
+    "change-me",
+    "d8-integration-hardening-local-token",
+}
+MIN_TOKEN_LENGTH = 24
 
 
 class Check:
@@ -67,6 +77,37 @@ def _portal_token() -> str:
 
 def _origin() -> str:
     return os.getenv("SERVICE_PORTAL_ORIGIN", "https://service.intelli-opus.com").strip()
+
+
+def _is_placeholder(value: str) -> bool:
+    stripped = value.strip()
+    return stripped.startswith("<") and stripped.endswith(">") or "<" in stripped or ">" in stripped
+
+
+def _is_localhost_url(value: str) -> bool:
+    parsed = urlparse(value)
+    return parsed.scheme == "http" and (parsed.hostname or "").lower() in {"localhost", "127.0.0.1", "::1"}
+
+
+def _redacted_url(value: str) -> str:
+    if _is_placeholder(value):
+        return "https://<redacted-backend>" if value.startswith("https://") else "<placeholder>"
+    parsed = urlparse(value)
+    if parsed.scheme in {"http", "https"} and parsed.hostname and not _is_localhost_url(value):
+        return f"{parsed.scheme}://<redacted-backend>{parsed.path or ''}"
+    return value
+
+
+def _input_issue(base: str, token: str, origin: str) -> str:
+    if _is_placeholder(base):
+        return "placeholder BACKEND_BASE_URL"
+    if not (urlparse(base).scheme == "https" or _is_localhost_url(base)):
+        return "BACKEND_BASE_URL must be HTTPS or local rehearsal HTTP"
+    if not token or token in UNSAFE_TOKENS or _is_placeholder(token) or len(token) < MIN_TOKEN_LENGTH:
+        return "SERVICE_PORTAL_PARTNEROS_TOKEN must be non-default and private"
+    if _is_placeholder(origin) or urlparse(origin).scheme != "https":
+        return "SERVICE_PORTAL_ORIGIN must be a real HTTPS origin"
+    return ""
 
 
 def _json(response: httpx.Response | None) -> Any:
@@ -121,6 +162,20 @@ def main() -> int:
         Check("optional TEST feedback"),
         Check("no forbidden fields or token leakage"),
     ]
+
+    input_issue = _input_issue(base, token, origin)
+    if input_issue:
+        checks[0].fail(input_issue)
+        for check in checks[1:]:
+            check.fail("not attempted; staging inputs unsafe")
+        print("D8.3 Service Portal Staging Contract Check")
+        print(f"BACKEND_BASE_URL={_redacted_url(base)}")
+        print(f"SERVICE_PORTAL_ORIGIN={origin}")
+        print(f"create_test_feedback={create_feedback}")
+        for check in checks:
+            print(check.line())
+        print("Result: FAIL")
+        return 1
 
     responses: list[httpx.Response | None] = []
     order_items: list[dict[str, Any]] = []
@@ -220,7 +275,7 @@ def main() -> int:
     checks[11].pass_(detail) if clean else checks[11].fail(detail)
 
     print("D8.3 Service Portal Staging Contract Check")
-    print(f"BACKEND_BASE_URL={base}")
+    print(f"BACKEND_BASE_URL={_redacted_url(base)}")
     print(f"SERVICE_PORTAL_ORIGIN={origin}")
     print(f"create_test_feedback={create_feedback}")
     for check in checks:

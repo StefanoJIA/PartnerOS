@@ -51,3 +51,32 @@ def test_no_forbidden_blob_rejects_internal_fields_and_token():
     assert marker == "storage_key"
     assert token is False
     assert token_marker == "portal token leaked"
+
+
+def test_redacted_url_hides_remote_backend_origin():
+    assert script._redacted_url("https://private-staging.example.com/api") == "https://<redacted-backend>/api"
+    assert script._redacted_url("http://127.0.0.1:8014") == "http://127.0.0.1:8014"
+
+
+def test_staging_contract_rejects_placeholder_backend_without_network(monkeypatch, capsys):
+    monkeypatch.setenv("BACKEND_BASE_URL", "https://<partneros-staging-backend-origin>")
+    monkeypatch.setenv("SERVICE_PORTAL_PARTNEROS_TOKEN", "staging-secret-token-123")
+    monkeypatch.setenv("SERVICE_PORTAL_ORIGIN", "https://service.intelli-opus.com")
+
+    assert script.main() == 1
+    output = capsys.readouterr().out
+    assert "BACKEND_BASE_URL=https://<redacted-backend>" in output
+    assert "placeholder BACKEND_BASE_URL" in output
+    assert "not attempted; staging inputs unsafe" in output
+
+
+def test_staging_contract_rejects_default_token_without_network(monkeypatch, capsys):
+    monkeypatch.setenv("BACKEND_BASE_URL", "https://private-staging.example.com")
+    monkeypatch.setenv("SERVICE_PORTAL_PARTNEROS_TOKEN", "test-portal-token")
+    monkeypatch.setenv("SERVICE_PORTAL_ORIGIN", "https://service.intelli-opus.com")
+
+    assert script.main() == 1
+    output = capsys.readouterr().out
+    assert "BACKEND_BASE_URL=https://<redacted-backend>" in output
+    assert "SERVICE_PORTAL_PARTNEROS_TOKEN must be non-default and private" in output
+    assert "test-portal-token" not in output

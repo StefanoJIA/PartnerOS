@@ -23,7 +23,8 @@ cd backend
 $env:BACKEND_BASE_URL="http://127.0.0.1:8014"
 $env:PORTAL_CUSTOMER_API_ENABLED="true"
 $env:PORTAL_CUSTOMER_API_REQUIRE_TOKEN="true"
-$env:PORTAL_CUSTOMER_API_TOKEN="test-portal-token"
+$env:PORTAL_CUSTOMER_API_TOKEN="local-rehearsal-portal-token-123"
+$env:SERVICE_PORTAL_PARTNEROS_TOKEN="local-rehearsal-portal-token-123"
 $env:PORTAL_CUSTOMER_ALLOWED_ORIGINS="https://service.intelli-opus.com"
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8014
 python scripts/d8_3_service_portal_staging_check.py
@@ -47,6 +48,8 @@ python scripts/d8_3_service_portal_staging_check.py
 
 - Do not store PartnerOS portal tokens in browser JavaScript.
 - Prefer a service portal backend proxy that injects the PartnerOS token server-side.
+- The runner rejects placeholder, known default, or short token values before making HTTP calls.
+- Remote `BACKEND_BASE_URL` is printed as `https://<redacted-backend>` in runner output.
 - Do not expose internal fields, backend paths, storage keys, or tokens in portal responses.
 - Do not create non-TEST feedback during staging UAT.
 - Do not change cloud nginx or service portal routing in this PartnerOS PR.
