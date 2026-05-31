@@ -55,6 +55,8 @@ REQUIRED_MARKERS = (
     "deployment_readiness_checklist_check.py",
     "Testing Guide",
     "testing_guide_check.py",
+    "D5.2 Testing Summary",
+    "testing_summary_d5_2_check.py",
     "IE Auto Project Plan",
     "Phase 3 Roadmap",
     "D8 Delivery Stage Goal Matrix",

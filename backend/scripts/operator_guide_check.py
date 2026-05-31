@@ -51,6 +51,7 @@ REQUIRED_MARKERS = (
     "activity_actions_doc_check.py",
     "deployment_readiness_checklist_check.py",
     "testing_guide_check.py",
+    "testing_summary_d5_2_check.py",
     "operator_guide_check.py",
     "carrier APIs",
     "service.intelli-opus.com",

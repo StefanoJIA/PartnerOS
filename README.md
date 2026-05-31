@@ -189,6 +189,7 @@ python scripts/manual_a_domain_test_plan_check.py  # manual A-domain UAT and rec
 python scripts/codex_skill_pack_check.py  # Codex agent rule pack current-stage gate check
 python scripts/activity_actions_doc_check.py  # canonical activity/timeline action gate check
 python scripts/operator_guide_check.py  # operator guide D8/D9 handoff and safety gate check
+python scripts/testing_summary_d5_2_check.py  # historical D5.2 testing-summary boundary gate check
 python scripts/d7_4_partner_supplier_check.py   # D7.4 partner split & supplier confirmation smoke
 python scripts/d7_3_customer_confirmation_check.py  # D7.3 customer confirmation smoke
 ```

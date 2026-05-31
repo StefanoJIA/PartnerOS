@@ -28,6 +28,7 @@ This audit maps the current project-planning objective to concrete evidence. It 
 | Activity Actions document canonical timeline actions | [Activity Actions](../activity_actions.md), `python scripts/activity_actions_doc_check.py` | PASS |
 | Deployment readiness checklist matches current gates | [Deployment Readiness Checklist](../deployment_readiness_checklist.md), `python scripts/deployment_readiness_checklist_check.py` | PASS |
 | Testing guide matches current validation matrix | [Testing Guide](../testing.md), `python scripts/testing_guide_check.py` | PASS |
+| D5.2 Testing Summary is preserved as historical only | [D5.2 Testing Summary](../testing_summary_d5_2.md), `python scripts/testing_summary_d5_2_check.py` | PASS |
 | Source-derived project plan exists | [IE Auto Project Plan](ie_auto_project_plan.md), `python scripts/ie_auto_project_plan_check.py` | PASS |
 | Phase 3 roadmap covers D7-D9 sequence | [Phase 3 Roadmap](phase3_roadmap.md), `python scripts/phase3_roadmap_check.py` | PASS |
 | Stage goals and next gaps are explicit | [D8 Delivery Stage Goal Matrix](d8_delivery_stage_goal_matrix.md), `python scripts/d8_stage_goal_matrix_check.py` | PASS |
@@ -90,6 +91,7 @@ python scripts/codex_skill_pack_check.py
 python scripts/activity_actions_doc_check.py
 python scripts/deployment_readiness_checklist_check.py
 python scripts/testing_guide_check.py
+python scripts/testing_summary_d5_2_check.py
 python scripts/project_execution_status.py
 python scripts/project_execution_chain_check.py
 ```
