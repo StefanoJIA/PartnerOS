@@ -176,6 +176,7 @@ python scripts/project_reorientation_summary_check.py  # project reorientation c
 python scripts/readme_check.py  # README current-stage and D8/D9 handoff gate check
 python scripts/deployment_readiness_checklist_check.py  # deployment readiness checklist D8/D9 handoff gate check
 python scripts/testing_guide_check.py  # testing guide D7.6+/D8 validation matrix gate check
+python scripts/dev_guide_check.py  # developer guide current local workflow gate check
 python scripts/operator_guide_check.py  # operator guide D8/D9 handoff and safety gate check
 python scripts/d7_4_partner_supplier_check.py   # D7.4 partner split & supplier confirmation smoke
 python scripts/d7_3_customer_confirmation_check.py  # D7.3 customer confirmation smoke
@@ -257,7 +258,7 @@ First-time setup: `python scripts/init_local_env.py` → edit `backend/.env` →
    alembic upgrade head
    python -m app.scripts.seed
    python -m app.scripts.seed_business_flow   # 可选 demo 链
-   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8014
    ```
 4. **前端**（在 `frontend` 目录）：
    ```bash

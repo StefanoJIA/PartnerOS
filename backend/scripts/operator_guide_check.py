@@ -37,6 +37,7 @@ REQUIRED_MARKERS = (
     "project_execution_acceptance_audit_check.py",
     "desktop_transition_roadmap_check.py",
     "project_reorientation_summary_check.py",
+    "dev_guide_check.py",
     "deployment_readiness_checklist_check.py",
     "testing_guide_check.py",
     "operator_guide_check.py",

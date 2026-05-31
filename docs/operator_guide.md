@@ -542,6 +542,7 @@ After changing this operator guide or the D8/D9 handoff gates, run:
 python scripts/agent_guide_check.py
 python scripts/desktop_transition_roadmap_check.py
 python scripts/project_reorientation_summary_check.py
+python scripts/dev_guide_check.py
 python scripts/deployment_readiness_checklist_check.py
 python scripts/testing_guide_check.py
 python scripts/operator_guide_check.py
@@ -777,7 +778,7 @@ python scripts/daily_work_summary.py
 | 问题 | 处理 |
 |------|------|
 | 前端 API 404 / 502 | 确认 backend 运行；`BACKEND_BASE_URL` 与 `VITE_API_PROXY_TARGET` 端口一致 |
-| 8000 被占用 | 改用 8010，见 [dev_guide.md](dev_guide.md) § Changing backend port |
+| Backend port occupied | Prefer the current `8014` validation port and keep `BACKEND_BASE_URL` / `VITE_API_PROXY_TARGET` aligned; see [dev_guide.md](dev_guide.md) |
 | migration pending | `cd backend && alembic upgrade head` |
 | Portal summary 空 | 确认 DB 有 leads；backend 为新代码实例 |
 

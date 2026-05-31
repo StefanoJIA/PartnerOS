@@ -27,6 +27,8 @@ REQUIRED_MARKERS = (
     "desktop_transition_roadmap_check.py",
     "Project Reorientation Summary",
     "project_reorientation_summary_check.py",
+    "Developer Guide",
+    "dev_guide_check.py",
     "Deployment Readiness Checklist",
     "deployment_readiness_checklist_check.py",
     "Testing Guide",
