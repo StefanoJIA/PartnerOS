@@ -6,6 +6,7 @@ import json
 import re
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 try:
     from record_redaction import redaction_issues
@@ -22,11 +23,14 @@ REQUIRED_DOC_MARKERS = (
     "WAITING_FOR_STAGING_EVIDENCE",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "STAGING_GAPS_REQUIRE_TRIAGE",
+    "EVIDENCE_LOCAL_REHEARSAL",
     "d8_strict_staging_evidence_YYYYMMDD.json",
     "d8_strict_staging_gaps_YYYYMMDD.md",
     "python scripts/d8_staging_evidence_review_check.py",
     "python scripts/d8_staging_records_check.py",
     "python scripts/d8_readiness_audit.py",
+    "allow_local_http=true",
+    "localhost `backend_base_url`",
     "No `.env`",
     "No email, webhook, carrier API",
 )
@@ -113,6 +117,10 @@ def _evidence_state() -> tuple[str, str]:
         return "EVIDENCE_UNSAFE", latest.name
 
     if result == "PASS":
+        backend_base_url = str(data.get("backend_base_url") or "")
+        backend_host = (urlparse(backend_base_url).hostname or "").lower()
+        if data.get("allow_local_http") is True or backend_host in {"localhost", "127.0.0.1", "::1"}:
+            return "EVIDENCE_LOCAL_REHEARSAL", latest.name
         return "READY_FOR_PRODUCTION_COORDINATION_REVIEW", latest.name
 
     gap_name = latest.name.replace("evidence", "gaps").replace(".json", ".md")

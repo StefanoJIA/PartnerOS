@@ -95,6 +95,32 @@ def test_d8_staging_evidence_review_rejects_unsafe_evidence(tmp_path, monkeypatc
     assert "EVIDENCE_UNSAFE" in output
 
 
+def test_d8_staging_evidence_review_rejects_pass_local_rehearsal(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d8_strict_staging_evidence_20260530.json").write_text(
+        """
+{
+  "backend_base_url": "http://127.0.0.1:8014",
+  "allow_local_http": true,
+  "result": "PASS",
+  "checks": [],
+  "safety": {
+    "token_redacted": true,
+    "response_bodies_stored": false
+  }
+}
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "Review State: EVIDENCE_LOCAL_REHEARSAL" in output
+    assert "Result: FAIL" in output
+
+
 def test_d8_staging_evidence_review_flags_generic_private_key_in_doc(monkeypatch, tmp_path, capsys):
     module = _load_module()
     doc = tmp_path / "review.md"
