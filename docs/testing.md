@@ -23,9 +23,13 @@ python scripts/readme_check.py
 python scripts/deployment_readiness_checklist_check.py
 python scripts/testing_guide_check.py
 python scripts/operator_guide_check.py
+python scripts/codex_skill_pack_check.py
 python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
 python scripts/project_execution_status.py
+python scripts/d8_staging_execution_pack_check.py
+python scripts/d9_operating_execution_pack_check.py
+python scripts/project_execution_acceptance_audit_check.py
 python -m pytest -q
 ```
 
@@ -42,6 +46,7 @@ Expected local result before external staging validation:
 - `project_execution_status.py` reports `READY_FOR_STAGING_HANDOFF`.
 - `d8_readiness_audit.py` reports `READY_FOR_STAGING`.
 - `d8_production_coordination_check.py` reports `WAITING_FOR_STAGING_VALIDATION`.
+- `d8_staging_execution_pack_check.py`, `d9_operating_execution_pack_check.py`, and `project_execution_acceptance_audit_check.py` report local PASS while preserving the external staging gate.
 - D8 strict staging evidence remains pending until real staging values are supplied.
 
 ## Strict Staging Evidence

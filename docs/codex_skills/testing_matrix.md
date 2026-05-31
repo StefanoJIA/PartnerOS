@@ -21,6 +21,9 @@ python scripts/codex_skill_pack_check.py
 python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
 python scripts/project_execution_status.py
+python scripts/d8_staging_execution_pack_check.py
+python scripts/d9_operating_execution_pack_check.py
+python scripts/project_execution_acceptance_audit_check.py
 python -m pytest -q
 ```
 
@@ -36,6 +39,7 @@ npm run test -- --run
 
 - `READY_FOR_STAGING_HANDOFF` means local docs, gates, and handoff runbooks agree.
 - Local validation does not prove `STAGING_VALIDATED`.
+- D8/D9 execution packs and the acceptance audit must pass locally before claiming the handoff package is ready.
 - Strict staging evidence requires real private staging values and `python scripts/d8_strict_staging_evidence_check.py --evidence-json ... --gap-markdown ...`.
 
 Warnings from optional Redis/worker/PUBLIC_BASE_URL checks are acceptable in local development if the scripts still report PASS.
