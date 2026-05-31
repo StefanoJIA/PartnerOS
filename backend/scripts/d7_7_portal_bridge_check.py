@@ -55,15 +55,29 @@ def _new_client(*, enabled: bool):
     get_settings.cache_clear()
     from app.main import create_app
 
-    return TestClient(create_app())
+    return TestClient(create_app(), raise_server_exceptions=False)
 
 
 def _no_forbidden_blob(*responses) -> tuple[bool, str]:
-    blob = json.dumps([r.json() for r in responses], ensure_ascii=False).lower()
+    payloads = []
+    for response in responses:
+        try:
+            payloads.append(response.json())
+        except ValueError:
+            payloads.append({})
+    blob = json.dumps(payloads, ensure_ascii=False).lower()
     for marker in FORBIDDEN:
         if marker in blob:
             return False, marker
     return True, "clean"
+
+
+def _json(response) -> dict:
+    try:
+        data = response.json()
+    except ValueError:
+        return {}
+    return data if isinstance(data, dict) else {}
 
 
 def main() -> int:
@@ -98,7 +112,7 @@ def main() -> int:
         checks[3].pass_(f"HTTP {products.status_code}") if products.status_code == 200 else checks[3].fail(products.text[:160])
         checks[4].pass_(f"HTTP {orders.status_code}") if orders.status_code == 200 else checks[4].fail(orders.text[:160])
 
-        order_items = orders.json().get("data", {}).get("items", []) if orders.status_code == 200 else []
+        order_items = _json(orders).get("data", {}).get("items", []) if orders.status_code == 200 else []
         detail = production = shipment = resources = None
         if order_items:
             oid = order_items[0]["id"]
@@ -128,7 +142,7 @@ def main() -> int:
                 "customer_email": "smoke@example.com",
             },
         )
-        fdata = feedback.json().get("data", {}) if feedback.status_code == 201 else {}
+        fdata = _json(feedback).get("data", {}) if feedback.status_code == 201 else {}
         if feedback.status_code == 201 and fdata.get("customer_notified") is False and fdata.get("automatic_reply_sent") is False:
             checks[9].pass_(fdata.get("ticket_number", "created"))
         else:

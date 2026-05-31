@@ -59,15 +59,39 @@ def _client() -> TestClient:
     _configure()
     from app.main import create_app
 
-    return TestClient(create_app())
+    return TestClient(create_app(), raise_server_exceptions=False)
 
 
 def _no_forbidden(*responses) -> tuple[bool, str]:
-    blob = json.dumps([r.json() for r in responses if r.headers.get("content-type", "").startswith("application/json")], ensure_ascii=False).lower()
+    payloads = []
+    for response in responses:
+        if not response.headers.get("content-type", "").startswith("application/json"):
+            continue
+        try:
+            payloads.append(response.json())
+        except ValueError:
+            payloads.append({})
+    blob = json.dumps(payloads, ensure_ascii=False).lower()
     for marker in FORBIDDEN:
         if marker in blob:
             return False, marker
     return True, "clean"
+
+
+def _json(response) -> dict:
+    try:
+        data = response.json()
+    except ValueError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _finish(checks: list[Check]) -> int:
+    for check in checks:
+        print(check.line())
+    passed = all(c.ok for c in checks)
+    print(f"Result: {'PASS' if passed else 'FAIL'}")
+    return 0 if passed else 1
 
 
 def main() -> int:
@@ -89,20 +113,16 @@ def main() -> int:
         login = c.post("/api/auth/login", json={"email": "admin@example.com", "password": "admin123"})
         if login.status_code != 200:
             checks[0].fail(f"HTTP {login.status_code}")
-            for check in checks:
-                print(check.line())
-            return 1
+            return _finish(checks)
         checks[0].pass_("admin@example.com")
-        auth = {"Authorization": f"Bearer {login.json()['access_token']}"}
+        auth = {"Authorization": f"Bearer {_json(login).get('access_token', '')}"}
         portal_auth = {"X-Portal-Customer-Token": "test-portal-token"}
 
         orders = c.get("/api/v1/orders?limit=1", headers=auth)
-        items = orders.json().get("data", {}).get("items", []) if orders.status_code == 200 else []
+        items = _json(orders).get("data", {}).get("items", []) if orders.status_code == 200 else []
         if not items:
             checks[1].fail("no orders")
-            for check in checks:
-                print(check.line())
-            return 1
+            return _finish(checks)
         order_id = items[0]["id"]
         checks[1].pass_(items[0].get("order_number", order_id[:8]))
 
@@ -112,13 +132,11 @@ def main() -> int:
             files={"upload": ("TEST-d7-9-resource.txt", b"TEST D7.9 customer resource", "text/plain")},
         )
         if upload.status_code == 201:
-            checks[2].pass_(upload.json().get("id", "uploaded"))
+            checks[2].pass_(_json(upload).get("id", "uploaded"))
         else:
             checks[2].fail(upload.text[:160])
-            for check in checks:
-                print(check.line())
-            return 1
-        file_id = upload.json()["id"]
+            return _finish(checks)
+        file_id = _json(upload)["id"]
 
         created = c.post(
             f"/api/v1/orders/{order_id}/resources",
@@ -131,34 +149,34 @@ def main() -> int:
                 "customer_visible": False,
             },
         )
-        if created.status_code == 201 and created.json().get("data", {}).get("customer_visible") is False:
-            checks[3].pass_(created.json()["data"]["id"])
+        created_data = _json(created).get("data", {}) if created.status_code == 201 else {}
+        if created.status_code == 201 and created_data.get("customer_visible") is False:
+            checks[3].pass_(created_data["id"])
         else:
             checks[3].fail(created.text[:160])
-            for check in checks:
-                print(check.line())
-            return 1
-        resource_id = created.json()["data"]["id"]
+            return _finish(checks)
+        resource_id = created_data["id"]
 
         published = c.patch(
             f"/api/v1/orders/{order_id}/resources/{resource_id}",
             headers=auth,
             json={"status": "published", "customer_visible": True},
         )
-        pdata = published.json().get("data", {}) if published.status_code == 200 else {}
+        pdata = _json(published).get("data", {}) if published.status_code == 200 else {}
         if published.status_code == 200 and pdata.get("status") == "published" and pdata.get("customer_visible") is True:
             checks[4].pass_("published")
         else:
             checks[4].fail(published.text[:160])
 
         internal = c.get(f"/api/v1/orders/{order_id}/resources", headers=auth)
-        if internal.status_code == 200 and internal.json().get("data", {}).get("total", 0) >= 1:
-            checks[5].pass_(f"{internal.json()['data']['total']} resource(s)")
+        internal_data = _json(internal).get("data", {}) if internal.status_code == 200 else {}
+        if internal.status_code == 200 and internal_data.get("total", 0) >= 1:
+            checks[5].pass_(f"{internal_data['total']} resource(s)")
         else:
             checks[5].fail(internal.text[:160])
 
         portal = c.get(f"/api/v1/portal/customer/orders/{order_id}/resources", headers=portal_auth)
-        presources = portal.json().get("data", {}).get("items", []) if portal.status_code == 200 else []
+        presources = _json(portal).get("data", {}).get("items", []) if portal.status_code == 200 else []
         current = next((r for r in presources if r.get("id") == resource_id), None)
         if current and current.get("download_url") and current.get("safety", {}).get("file_location_exposed") is False:
             checks[6].pass_("download_url present")
@@ -177,7 +195,7 @@ def main() -> int:
             json={"status": "draft", "customer_visible": False},
         )
         portal_after = c.get(f"/api/v1/portal/customer/orders/{order_id}/resources", headers=portal_auth)
-        after_items = portal_after.json().get("data", {}).get("items", []) if portal_after.status_code == 200 else []
+        after_items = _json(portal_after).get("data", {}).get("items", []) if portal_after.status_code == 200 else []
         if hidden.status_code == 200 and not any(r.get("id") == resource_id for r in after_items):
             checks[8].pass_("hidden")
         else:
@@ -186,11 +204,7 @@ def main() -> int:
         clean, marker = _no_forbidden(created, published, internal, portal, portal_after)
         checks[9].pass_(marker) if clean else checks[9].fail(marker)
 
-    for check in checks:
-        print(check.line())
-    passed = all(c.ok for c in checks)
-    print(f"Result: {'PASS' if passed else 'FAIL'}")
-    return 0 if passed else 1
+    return _finish(checks)
 
 
 if __name__ == "__main__":
