@@ -38,6 +38,8 @@ REQUIRED_MARKERS = (
     "python scripts/d8_staging_evidence_review_check.py",
     "python scripts/d8_readiness_audit.py",
     "python scripts/d8_production_coordination_check.py",
+    "docs/phase3/d8_staging_records_policy.md",
+    "current handoff/access-request requirement",
 )
 REQUIRED_BOUNDARIES = (
     "No `.env`",

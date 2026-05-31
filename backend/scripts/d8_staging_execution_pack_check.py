@@ -125,6 +125,7 @@ HANDOFF_MARKERS = (
     "SERVICE_PORTAL_ORIGIN",
     "docs/phase3/d8_staging_handoff_bundle.md",
     "docs/phase3/d8_staging_operator_runbook.md",
+    "docs/phase3/d8_staging_records_policy.md",
     "docs/phase3/d8_production_coordination_runbook.md",
     "python scripts/d8_readiness_audit.py",
     "python scripts/d8_stage_goal_matrix_check.py",

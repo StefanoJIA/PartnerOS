@@ -63,6 +63,7 @@ python scripts/project_execution_status.py
 |---|---|
 | `docs/records/d8_strict_staging_evidence_YYYYMMDD.json` | Redacted JSON exists, records check passes, and evidence review reads the latest result |
 | `docs/records/d8_strict_staging_gaps_YYYYMMDD.md` | Required when evidence result is FAIL; contains owner/status/rerun fields only |
+| `docs/phase3/d8_staging_records_policy.md` | Defines the canonical record names, current handoff/access-request requirement, and redaction rules |
 | Console summaries | `project_execution_status.py` still reports the next manual action; no raw bodies or secrets are printed |
 
 ## Boundaries

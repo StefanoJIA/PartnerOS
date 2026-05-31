@@ -111,6 +111,7 @@ Run the PartnerOS D8 strict staging evidence flow against the real deployed stag
 | `docs/operator_guide.md` | Review the operator-facing D8/D9 handoff gates and manual-only safety boundaries |
 | `docs/phase3/d8_staging_handoff_bundle.md` | Confirm the operator-facing package, commands, evidence command, and exclusions |
 | `docs/phase3/d8_staging_operator_runbook.md` | Execute the sequence from `READY_FOR_STAGING_HANDOFF` through input preflight, strict evidence, records review, and next state |
+| `docs/phase3/d8_staging_records_policy.md` | Confirm canonical record names, current handoff/access-request requirements, and redaction rules |
 | `docs/phase3/d8_production_coordination_runbook.md` | Use only after `STAGING_VALIDATED` for the human Go / No-Go and rollback handoff |
 
 ## Preflight
