@@ -26,6 +26,14 @@ python scripts/project_execution_records_check.py
 
 The report stores gate labels, pass/fail status, and one-line summaries only. It must not store raw command output, response bodies, portal tokens, customer files, backend storage paths, `local_data` paths, cost or margin details, supplier private notes, or secrets.
 
+## Current Proof Records
+
+| Record | Meaning |
+|---|---|
+| `docs/records/project_execution_chain_20260531.md` | Redacted local chain proof for the current handoff state |
+| `docs/records/d8_staging_operator_handoff_20260531.md` | Redacted operator handoff generated from local gates |
+| `docs/records/d8_staging_access_request_20260531.md` | Redacted request for private staging values |
+
 ## Gate Chain
 
 | Gate | Purpose |

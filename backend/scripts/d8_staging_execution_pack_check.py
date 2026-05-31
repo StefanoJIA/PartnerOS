@@ -37,6 +37,7 @@ REQUIRED_FILES = (
     "backend/scripts/d9_operating_records_check.py",
     "backend/scripts/phase3_roadmap_check.py",
     "backend/scripts/ie_auto_project_plan_check.py",
+    "backend/scripts/project_execution_chain_gate_check.py",
     "backend/scripts/project_execution_chain_check.py",
     "backend/scripts/project_execution_status.py",
     "backend/scripts/project_execution_acceptance_audit_check.py",
@@ -169,6 +170,7 @@ HANDOFF_MARKERS = (
     "python scripts/testing_guide_check.py",
     "python scripts/testing_summary_d5_2_check.py",
     "python scripts/operator_guide_check.py",
+    "python scripts/project_execution_chain_gate_check.py",
     "python scripts/project_execution_chain_check.py",
     "python scripts/project_execution_status.py",
     "python scripts/project_execution_acceptance_audit_check.py",
@@ -273,6 +275,7 @@ def main() -> int:
         Check("testing guide check runs"),
         Check("D5.2 testing summary check runs"),
         Check("operator guide check runs"),
+        Check("project execution chain gate check runs"),
         Check("handoff generator runs"),
         Check("handoff contains required commands and safety markers"),
     ]
@@ -562,17 +565,23 @@ def main() -> int:
     else:
         checks[47].fail((operator_guide.stdout + operator_guide.stderr)[:160])
 
+    chain_gate = _run_script("scripts/project_execution_chain_gate_check.py")
+    if chain_gate.returncode == 0 and "Result: PASS" in chain_gate.stdout:
+        checks[48].pass_("PASS")
+    else:
+        checks[48].fail((chain_gate.stdout + chain_gate.stderr)[:160])
+
     handoff_code, handoff_text, handoff_output = _generate_handoff()
     if handoff_code == 0 and handoff_text:
-        checks[48].pass_("generated")
+        checks[49].pass_("generated")
     else:
-        checks[48].fail(handoff_output[:160])
+        checks[49].fail(handoff_output[:160])
 
     missing_markers = [marker for marker in HANDOFF_MARKERS if marker not in handoff_text]
     if not missing_markers:
-        checks[49].pass_("commands and safety boundaries")
+        checks[50].pass_("commands and safety boundaries")
     else:
-        checks[49].fail(", ".join(missing_markers))
+        checks[50].fail(", ".join(missing_markers))
 
     print("D8 Staging Execution Pack Check")
     for check in checks:

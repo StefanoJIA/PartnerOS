@@ -1,7 +1,7 @@
 # D8 Strict Staging Operator Handoff
 
-Generated at: 2026-05-31T02:25:06.336540+00:00
-Repository commit: `d471f08`
+Generated at: 2026-05-31T02:46:28.389821+00:00
+Repository commit: `d6b4d3a`
 Readiness status: `READY_FOR_STAGING`
 
 ## Purpose
@@ -73,6 +73,7 @@ python scripts/d9_operating_records_check.py
 python scripts/phase3_roadmap_check.py
 python scripts/ie_auto_project_plan_check.py
 python scripts/operator_guide_check.py
+python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
 python scripts/project_execution_status.py
 python scripts/project_execution_acceptance_audit_check.py
