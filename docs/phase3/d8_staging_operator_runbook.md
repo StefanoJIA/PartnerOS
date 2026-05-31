@@ -24,6 +24,7 @@ This runbook gives the staging operator the exact execution order for moving fro
 ```powershell
 cd backend
 python scripts/project_execution_status.py
+python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
 python scripts/d8_staging_execution_pack_check.py
 ```

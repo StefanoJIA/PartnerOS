@@ -27,6 +27,7 @@ REQUIRED_MARKERS = (
     "SERVICE_PORTAL_PARTNEROS_TOKEN",
     "SERVICE_PORTAL_ORIGIN",
     "python scripts/project_execution_status.py",
+    "python scripts/project_execution_chain_gate_check.py",
     "python scripts/project_execution_chain_check.py",
     "python scripts/d8_staging_execution_pack_check.py",
     "python scripts/d8_staging_input_preflight_check.py",
