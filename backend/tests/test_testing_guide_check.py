@@ -35,14 +35,31 @@ def test_testing_guide_check_flags_missing_matrix_marker(monkeypatch, tmp_path, 
     assert "testing guide contains current D7.6+/D8 validation matrix" in output
 
 
+def test_testing_guide_check_flags_stale_codex_matrix(monkeypatch, tmp_path, capsys):
+    module = _load_module()
+    doc = tmp_path / "testing.md"
+    matrix = tmp_path / "testing_matrix.md"
+    doc.write_text("\n".join(module.REQUIRED_MARKERS), encoding="utf-8")
+    matrix.write_text("Backend D7.7 acceptance\n", encoding="utf-8")
+    monkeypatch.setattr(module, "DOC", doc)
+    monkeypatch.setattr(module, "MATRIX_DOC", matrix)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "Codex testing matrix mirrors current validation matrix" in output
+
+
 def test_testing_guide_check_flags_stale_primary_matrix(monkeypatch, tmp_path, capsys):
     module = _load_module()
     doc = tmp_path / "testing.md"
+    matrix = tmp_path / "testing_matrix.md"
     doc.write_text(
         "\n".join([*module.REQUIRED_MARKERS, "D5.2.11 Internal MVP Release Pack"]),
         encoding="utf-8",
     )
+    matrix.write_text("\n".join(module.REQUIRED_MARKERS), encoding="utf-8")
     monkeypatch.setattr(module, "DOC", doc)
+    monkeypatch.setattr(module, "MATRIX_DOC", matrix)
 
     assert module.main() == 1
     output = capsys.readouterr().out

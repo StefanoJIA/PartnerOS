@@ -12,6 +12,7 @@ except ModuleNotFoundError:
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC = REPO_ROOT / "docs" / "testing.md"
+MATRIX_DOC = REPO_ROOT / "docs" / "codex_skills" / "testing_matrix.md"
 
 REQUIRED_MARKERS = (
     "Testing Guide",
@@ -41,6 +42,7 @@ REQUIRED_MARKERS = (
     "service.intelli-opus.com",
 )
 FORBIDDEN_MARKERS = (
+    "Backend D7.7 acceptance",
     "D5.2.11 Internal MVP Release Pack",
     "D5.2.2 smoke test",
     "8010 示例",
@@ -79,6 +81,13 @@ def _text() -> str:
         return ""
 
 
+def _matrix_text() -> str:
+    try:
+        return MATRIX_DOC.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+
+
 def _redaction_issues(text: str) -> list[str]:
     issues: list[str] = []
     for marker in FORBIDDEN_MARKERS[3:]:
@@ -95,21 +104,41 @@ def main() -> int:
     checks = [
         Check("testing guide exists"),
         Check("testing guide contains current D7.6+/D8 validation matrix"),
+        Check("Codex testing matrix mirrors current validation matrix"),
         Check("testing guide avoids stale primary D5/D6 test matrix"),
         Check("testing guide is redacted"),
     ]
 
     text = _text()
+    matrix_text = _matrix_text()
     checks[0].pass_("docs/testing.md") if text else checks[0].fail(str(DOC))
 
     missing = [marker for marker in REQUIRED_MARKERS if marker not in text]
     checks[1].pass_(f"{len(REQUIRED_MARKERS)} markers") if not missing else checks[1].fail(", ".join(missing))
 
-    stale = [marker for marker in FORBIDDEN_MARKERS[:3] if marker in text]
-    checks[2].pass_("no stale primary D5/D6 matrix markers") if not stale else checks[2].fail(", ".join(stale))
+    matrix_missing = [
+        marker
+        for marker in (
+            "D7.6+ and D8 handoff",
+            '$env:BACKEND_BASE_URL="http://127.0.0.1:8014"',
+            '$env:VITE_API_PROXY_TARGET="http://127.0.0.1:8014"',
+            "testing_guide_check.py",
+            "project_execution_status.py",
+            "READY_FOR_STAGING_HANDOFF",
+            "Local validation does not prove `STAGING_VALIDATED`",
+        )
+        if marker not in matrix_text
+    ]
+    checks[2].pass_("docs/codex_skills/testing_matrix.md") if not matrix_missing else checks[2].fail(
+        ", ".join(matrix_missing)
+    )
+
+    stale = [marker for marker in FORBIDDEN_MARKERS[:4] if marker in text or marker in matrix_text]
+    checks[3].pass_("no stale primary D5/D6 matrix markers") if not stale else checks[3].fail(", ".join(stale))
 
     redaction = _redaction_issues(text)
-    checks[3].pass_("no secret-like markers") if not redaction else checks[3].fail(", ".join(redaction[:8]))
+    redaction.extend(_redaction_issues(matrix_text))
+    checks[4].pass_("no secret-like markers") if not redaction else checks[4].fail(", ".join(redaction[:8]))
 
     print("Testing Guide Check")
     for check in checks:
