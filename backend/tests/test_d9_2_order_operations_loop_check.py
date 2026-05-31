@@ -24,6 +24,12 @@ def test_d9_2_order_operations_loop_check_passes_for_repo_doc(capsys):
     assert "Result: PASS" in output
 
 
+def test_d9_2_order_operations_loop_requires_real_evidence_wait_gate():
+    module = _load_module()
+
+    assert "WAITING_FOR_REAL_STAGING_EVIDENCE" in module.REQUIRED_MARKERS
+
+
 def test_d9_2_order_operations_loop_check_flags_raw_body(monkeypatch, tmp_path, capsys):
     module = _load_module()
     doc = tmp_path / "orders.md"

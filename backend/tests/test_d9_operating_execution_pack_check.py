@@ -25,6 +25,12 @@ def test_d9_operating_execution_pack_check_passes(capsys):
     assert "Result: PASS" in output
 
 
+def test_d9_operating_execution_pack_requires_real_evidence_wait_gate():
+    module = _load_module()
+
+    assert "WAITING_FOR_REAL_STAGING_EVIDENCE" in module.REQUIRED_DOC_MARKERS
+
+
 def test_d9_operating_execution_pack_check_flags_missing_doc_marker(monkeypatch, tmp_path, capsys):
     module = _load_module()
     doc = tmp_path / "pack.md"

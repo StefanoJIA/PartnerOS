@@ -24,6 +24,12 @@ def test_d9_post_launch_plan_check_passes_for_current_plan(capsys):
     assert "Result: PASS" in output
 
 
+def test_d9_post_launch_plan_requires_real_evidence_wait_gate():
+    module = _load_module()
+
+    assert "WAITING_FOR_REAL_STAGING_EVIDENCE" in module.REQUIRED_MARKERS
+
+
 def test_d9_post_launch_plan_check_fails_without_safety_markers(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "PLAN_DOC", tmp_path / "d9_post_launch_operating_loop.md")

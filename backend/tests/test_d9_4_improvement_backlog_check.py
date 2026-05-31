@@ -24,6 +24,12 @@ def test_d9_4_improvement_backlog_check_passes_for_repo_doc(capsys):
     assert "Result: PASS" in output
 
 
+def test_d9_4_improvement_backlog_requires_real_evidence_wait_gate():
+    module = _load_module()
+
+    assert "WAITING_FOR_REAL_STAGING_EVIDENCE" in module.REQUIRED_MARKERS
+
+
 def test_d9_4_improvement_backlog_check_flags_bearer(monkeypatch, tmp_path, capsys):
     module = _load_module()
     doc = tmp_path / "backlog.md"
