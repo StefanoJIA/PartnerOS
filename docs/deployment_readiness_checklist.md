@@ -14,7 +14,7 @@ Use this checklist to keep deployment readiness aligned with the current project
 - `READY_FOR_STAGING` means local D8 readiness prerequisites are present.
 - `STAGING_VALIDATED` requires saved strict staging evidence from the real deployed staging backend.
 - `READY_FOR_PRODUCTION_COORDINATION_REVIEW` requires the saved evidence review gate to pass.
-- D9 operating-loop work remains gated behind staging validation, evidence review, and production coordination.
+- D9 operating-loop work remains gated behind staging validation, evidence review, production coordination, and the human Go / No-Go handoff.
 
 Do not use this repository to deploy or modify `service.intelli-opus.com`, edit nginx/cloud upstreams, or run production release steps.
 
@@ -82,6 +82,7 @@ Production coordination can start only when all of these are true:
 - `d8_staging_evidence_review_check.py` reports `READY_FOR_PRODUCTION_COORDINATION_REVIEW`.
 - `d8_production_coordination_check.py` moves out of `WAITING_FOR_STAGING_VALIDATION`.
 - The human operator has reviewed the saved evidence and gap records.
+- If the Go / No-Go decision is committed, it uses the redacted canonical record `docs/records/d8_production_go_no_go_YYYYMMDD.md`.
 
 Then run:
 
@@ -95,7 +96,7 @@ This gate prepares a human Go / No-Go and rollback handoff. It does not perform 
 
 ## D9 Gate
 
-D9 operating-loop execution starts only after `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, and production coordination are all ready.
+D9 operating-loop execution starts only after `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, production coordination, and the human Go / No-Go handoff are all ready.
 
 ```powershell
 cd backend

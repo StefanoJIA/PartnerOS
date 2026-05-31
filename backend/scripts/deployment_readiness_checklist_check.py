@@ -20,6 +20,8 @@ REQUIRED_MARKERS = (
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "WAITING_FOR_STAGING_VALIDATION",
     "D9 operating-loop work remains gated",
+    "human Go / No-Go handoff",
+    "docs/records/d8_production_go_no_go_YYYYMMDD.md",
     "BACKEND_BASE_URL",
     "SERVICE_PORTAL_PARTNEROS_TOKEN",
     "SERVICE_PORTAL_ORIGIN",
