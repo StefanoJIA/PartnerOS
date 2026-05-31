@@ -33,6 +33,7 @@ The report stores gate labels, pass/fail status, and one-line summaries only. It
 | Agent guide | Confirms `AGENTS.md` names the current runtime port, D7 boundaries, validation matrix, and safety rules for future agents |
 | README | Confirms the repository entrypoint names the current D8/D9 handoff state and next action |
 | Desktop transition roadmap | Confirms the desktop-first product roadmap is reconciled with the current D7-D9 execution state |
+| Project reorientation summary | Confirms the strategic reorientation summary no longer points to stale D0/D1 kickoff priorities |
 | Deployment readiness checklist | Confirms the staging handoff checklist matches D8/D9 evidence gates and no longer carries D5-era deploy steps |
 | Testing guide | Confirms the local validation matrix uses the current D7.6+/D8 `8014` checks and separates local validation from strict staging evidence |
 | IE Auto project plan | Confirms product positioning, lifecycle, safety rules, and current D7-D9 execution order |
