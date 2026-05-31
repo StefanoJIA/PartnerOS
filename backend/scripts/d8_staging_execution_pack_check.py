@@ -181,7 +181,10 @@ HANDOFF_MARKERS = (
     "Do not deploy or modify `service.intelli-opus.com`",
     "Do not print, screenshot, commit, or paste portal tokens",
 )
-FORBIDDEN_DOC_MARKERS = ("partneros-staging.example.com",)
+FORBIDDEN_DOC_MARKERS = (
+    "partneros-staging.example.com",
+    "local rehearsal URLs may remain local",
+)
 
 
 class Check:
