@@ -44,6 +44,7 @@ REQUIRED_QUESTIONS_MARKERS = (
     "Do not require final users to run PostgreSQL, pgAdmin, Docker, Alembic, or raw SQL",
     "service.intelli-opus.com",
     "python scripts/desktop_packaging_docs_check.py",
+    "python scripts/project_execution_chain_gate_check.py",
 )
 FORBIDDEN_MARKERS = (
     "娑?",

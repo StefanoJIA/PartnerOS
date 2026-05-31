@@ -65,5 +65,6 @@ Use `oem_odm_fit`; do not invent `oem_odm_signal` without a migration plan.
 cd backend
 python scripts/manual_a_domain_test_plan_check.py
 python scripts/lead_intelligence_docs_check.py
+python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
 ```

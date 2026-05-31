@@ -41,6 +41,7 @@ REQUIRED_TEMPLATE_MARKERS = (
     "safety_boundary",
     "redacted UAT summaries only",
     "python scripts/manual_a_domain_test_plan_check.py",
+    "python scripts/project_execution_chain_gate_check.py",
 )
 REQUIRED_IMPORT_TEMPLATE_MARKERS = (
     "Lead Import Template Guide",
@@ -49,6 +50,7 @@ REQUIRED_IMPORT_TEMPLATE_MARKERS = (
     "No LinkedIn automation",
     "oem_odm_fit",
     "python scripts/manual_a_domain_test_plan_check.py",
+    "python scripts/project_execution_chain_gate_check.py",
 )
 FORBIDDEN_MARKERS = (
     "娑?",
