@@ -36,6 +36,27 @@ def test_project_execution_records_check_rejects_noncanonical_name(tmp_path, mon
     assert "project_execution_chain_latest.md" in output
 
 
+def test_project_execution_records_check_requires_chain_gate_row(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "project_execution_chain_20260530.md").write_text(
+        """
+# Project Execution Chain Report
+State: `READY_FOR_STAGING_HANDOFF`
+| Gate | Status | Summary |
+|---|---|---|
+| README | PASS | Result: PASS |
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "project execution reports contain required markers" in output
+    assert "missing Project execution chain gate" in output
+
+
 def test_project_execution_records_check_rejects_token_assignment(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)

@@ -19,7 +19,10 @@ REQUIRED_MARKERS = (
     "State:",
     "| Gate | Status | Summary |",
     "READY_FOR_STAGING_HANDOFF",
+    "Project execution chain gate",
 )
+
+
 class Check:
     def __init__(self, label: str) -> None:
         self.label = label
