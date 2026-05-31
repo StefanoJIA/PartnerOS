@@ -34,3 +34,11 @@ def test_portal_live_forbidden_scan_tolerates_non_json_response():
     response = SimpleNamespace(json=lambda: (_ for _ in ()).throw(ValueError("not json")))
 
     assert module._no_forbidden_blob(response) == (True, "clean")
+
+
+def test_portal_live_json_helper_tolerates_non_json_response():
+    module = _load_module()
+
+    response = SimpleNamespace(json=lambda: (_ for _ in ()).throw(ValueError("not json")))
+
+    assert module._json(response) == {}

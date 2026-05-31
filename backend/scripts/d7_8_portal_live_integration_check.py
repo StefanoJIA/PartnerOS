@@ -86,6 +86,14 @@ def _no_forbidden_blob(*responses) -> tuple[bool, str]:
     return True, "clean"
 
 
+def _json(response) -> dict:
+    try:
+        data = response.json()
+    except ValueError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
 def _redacted_backend_url(value: str) -> str:
     parsed = urlparse(value)
     if parsed.scheme in {"http", "https"} and parsed.hostname not in {"localhost", "127.0.0.1", "::1"}:
@@ -145,7 +153,7 @@ def main() -> int:
             orders.text[:160]
         )
 
-        order_items = orders.json().get("data", {}).get("items", []) if orders.status_code == 200 else []
+        order_items = _json(orders).get("data", {}).get("items", []) if orders.status_code == 200 else []
         detail = production = shipment = resources = None
         if order_items:
             order_id = order_items[0]["id"]
@@ -184,7 +192,7 @@ def main() -> int:
                 "customer_email": "portal-uat@example.com",
             },
         )
-        fdata = feedback.json().get("data", {}) if feedback.status_code == 201 else {}
+        fdata = _json(feedback).get("data", {}) if feedback.status_code == 201 else {}
         if (
             feedback.status_code == 201
             and fdata.get("feedback_received") is True
@@ -200,7 +208,7 @@ def main() -> int:
         clean, detail_text = _no_forbidden_blob(*responses)
         checks[11].pass_(detail_text) if clean else checks[11].fail(detail_text)
 
-        rdata = readiness.json().get("data", {}) if readiness.status_code == 200 else {}
+        rdata = _json(readiness).get("data", {}) if readiness.status_code == 200 else {}
         if rdata.get("allowed_origins_configured") is True and "https://service.intelli-opus.com" in rdata.get(
             "cors_origins", []
         ):
