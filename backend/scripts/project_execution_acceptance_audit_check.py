@@ -19,6 +19,8 @@ REQUIRED_MARKERS = (
     "STAGING_VALIDATED",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "d8_staging_evidence_review_check.py",
+    "Agent Guide",
+    "agent_guide_check.py",
     "README",
     "readme_check.py",
     "Deployment Readiness Checklist",

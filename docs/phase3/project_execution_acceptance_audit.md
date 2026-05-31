@@ -10,6 +10,7 @@ This audit maps the current project-planning objective to concrete evidence. It 
 
 | Requirement | Evidence | Current result |
 |---|---|---|
+| Agent guide preserves execution rules | [Agent Guide](../../AGENTS.md), `python scripts/agent_guide_check.py` | PASS |
 | Repository entrypoint states the current stage | [README](../../README.md), `python scripts/readme_check.py` | PASS |
 | Deployment readiness checklist matches current gates | [Deployment Readiness Checklist](../deployment_readiness_checklist.md), `python scripts/deployment_readiness_checklist_check.py` | PASS |
 | Testing guide matches current validation matrix | [Testing Guide](../testing.md), `python scripts/testing_guide_check.py` | PASS |
@@ -58,6 +59,7 @@ Until that evidence exists, the correct state is `READY_FOR_STAGING_HANDOFF`, no
 ```powershell
 cd backend
 python scripts/project_execution_acceptance_audit_check.py
+python scripts/agent_guide_check.py
 python scripts/deployment_readiness_checklist_check.py
 python scripts/testing_guide_check.py
 python scripts/project_execution_status.py
