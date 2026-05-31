@@ -96,6 +96,7 @@ REQUIRED_MARKERS = (
     "docs/records/d8_staging_access_request_20260531.md",
     "redacted access request record committed",
     "WAITING_FOR_PRIVATE_VALUES",
+    "LOCAL_REHEARSAL_READY",
     "real `BACKEND_BASE_URL`",
     "real `SERVICE_PORTAL_PARTNEROS_TOKEN`",
     "d8_strict_staging_evidence_YYYYMMDD.json",

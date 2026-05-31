@@ -38,7 +38,7 @@ This audit maps the current project-planning objective to concrete evidence. It 
 | Local strict staging rehearsal is available | [D8 Local Staging Rehearsal](d8_local_staging_rehearsal.md), `python scripts/d8_local_staging_rehearsal_check.py` | PASS, but not staging proof |
 | Operator handoff bundle is defined | [D8 Staging Handoff Bundle](d8_staging_handoff_bundle.md), `python scripts/d8_staging_handoff_bundle_check.py` | PASS |
 | Operator runbook defines evidence sequence | [D8 Staging Operator Runbook](d8_staging_operator_runbook.md), `python scripts/d8_staging_operator_runbook_check.py` | PASS |
-| Private staging inputs can be preflighted locally | [D8 Staging Input Preflight](d8_staging_input_preflight.md), `python scripts/d8_staging_input_preflight_check.py` | `WAITING_FOR_PRIVATE_VALUES` until values arrive |
+| Private staging inputs can be preflighted locally | [D8 Staging Input Preflight](d8_staging_input_preflight.md), `python scripts/d8_staging_input_preflight_check.py` | `WAITING_FOR_PRIVATE_VALUES` until values arrive; `LOCAL_REHEARSAL_READY` is rehearsal-only |
 | Private staging inputs are requested safely | [D8 Staging Access Request](d8_staging_access_request.md), [D8 Staging Access Request Record](../records/d8_staging_access_request_20260531.md), `python scripts/d8_staging_access_request_check.py` | PASS; redacted access request record committed |
 | Operator response intake is redaction-gated | [D8 Staging Operator Response Intake](d8_staging_operator_response_intake.md), `python scripts/d8_staging_operator_response_intake_check.py` | PASS |
 | Failed staging evidence has a triage loop | [D8 Staging Gap Triage](d8_staging_gap_triage.md), `python scripts/d8_staging_gap_triage_check.py` | PASS |
