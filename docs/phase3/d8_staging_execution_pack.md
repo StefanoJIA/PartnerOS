@@ -72,6 +72,7 @@ For a redacted top-level execution-chain report:
 
 ```powershell
 cd backend
+python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py --report-markdown ../docs/records/project_execution_chain_YYYYMMDD.md
 ```
 
