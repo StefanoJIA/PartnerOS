@@ -12,6 +12,7 @@ This audit maps the current project-planning objective to concrete evidence. It 
 |---|---|---|
 | Agent guide preserves execution rules | [Agent Guide](../../AGENTS.md), `python scripts/agent_guide_check.py` | PASS |
 | Repository entrypoint states the current stage | [README](../../README.md), `python scripts/readme_check.py` | PASS |
+| Product vision matches current execution state | [Product Vision](../product_vision.md), `python scripts/product_vision_check.py` | PASS |
 | Desktop transition roadmap matches current execution state | [Desktop Transition Roadmap](../roadmap_desktop_transition.md), `python scripts/desktop_transition_roadmap_check.py` | PASS |
 | Project reorientation summary matches current priority | [Project Reorientation Summary](../project_reorientation_summary.md), `python scripts/project_reorientation_summary_check.py` | PASS |
 | Developer guide matches current local workflow | [Developer Guide](../dev_guide.md), `python scripts/dev_guide_check.py` | PASS |
@@ -65,6 +66,7 @@ Until that evidence exists, the correct state is `READY_FOR_STAGING_HANDOFF`, no
 cd backend
 python scripts/project_execution_acceptance_audit_check.py
 python scripts/agent_guide_check.py
+python scripts/product_vision_check.py
 python scripts/desktop_transition_roadmap_check.py
 python scripts/project_reorientation_summary_check.py
 python scripts/dev_guide_check.py

@@ -21,6 +21,7 @@ REPORT_NAME_PATTERN = re.compile(r"^project_execution_chain_\d{8}\.md$")
 CHAIN = (
     ("Agent guide", "scripts/agent_guide_check.py"),
     ("README", "scripts/readme_check.py"),
+    ("Product vision", "scripts/product_vision_check.py"),
     ("Desktop transition roadmap", "scripts/desktop_transition_roadmap_check.py"),
     ("Project reorientation summary", "scripts/project_reorientation_summary_check.py"),
     ("Developer guide", "scripts/dev_guide_check.py"),

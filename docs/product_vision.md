@@ -1,48 +1,92 @@
-# intelliOffice 产品愿景
+# Product Vision
 
-## 1. 项目本质（重新定义）
+**Status:** current on 2026-05-30. This document describes the product direction for intelliOffice PartnerOS. It is a product framing document, not a staging proof, production deploy runbook, or final-user installation guide.
 
-**intelliOffice PartnerOS** 是面向 **Windows** 的、**本地优先（local-first）**、**AI 辅助**、**供应链贯通**的家具行业 **桌面商业操作系统**——统一承载市场情报、销售执行、产品与伙伴、项目流转、知识与 AI、系统服务六大域。
+## Product Definition
 
-它不是：
+intelliOffice PartnerOS is a local-first, AI-assisted operations system for U.S.-facing furniture and workspace supply-chain work. It keeps market intelligence, sales execution, partner/product matching, quote/order execution, production/shipment tracking, customer-visible bridge data, and operating records in one internal source of truth.
 
-- 单纯的 CRM 或 Web 网站  
-- 单纯的供应商数据库或独立 Lead 工具  
-- 需要最终用户自行安装 PostgreSQL、使用 pgAdmin、理解 Docker 或命令行的「开发者部署型网站」
+The public customer-facing portal remains `service.intelli-opus.com`. PartnerOS must not deploy or modify that service from this repository; it provides internal workflows and carefully whitelisted bridge APIs.
 
-最终交付形态见 [architecture_desktop_target.md](architecture_desktop_target.md) 与根目录 [](../README.md) 中 **Product vision** 小节。
+PartnerOS is not:
 
-## 2. 价值闭环（端到端）
+- a generic CRM-only website
+- a supplier database detached from orders and market response
+- a customer portal replacement
+- a system that requires final users to run PostgreSQL, pgAdmin, Docker, Alembic, or raw SQL
+- an automation layer that sends email, webhooks, carrier API calls, supplier notifications, or customer notifications without an explicit future safety design
 
-在统一平台内贯通（概念顺序，非独立产品）：
+## Current Execution State
 
-市场需求采集 → 客户情报 → Lead 评分与排序 → LinkedIn / Email 沟通 → 地推安排 → 产品匹配 → **平级**制造伙伴匹配 → RFQ → 报价与比价 → 样品 → 订单 → 生产里程碑 → 海运 → 客户更新 → 售后与复购 → 市场趋势判断。
+D5 Lead Intelligence is closed. D6 Quote MVP is closed. D7 is closed through D7.9, covering order lifecycle, confirmations, partner/supplier execution, production milestones, shipment plans, customer portal bridge APIs, feedback intake, and resource center foundations.
 
-**Lead Intelligence**（公司发现、网站分析、Segment、评分等）属于 **A 域（市场与客户情报）** 的核心引擎，**不得**做成与 RFQ、伙伴、样品、订单割裂的外部孤岛；数据与动作应可直接流入 B/C/D 域。
+D8 is currently `READY_FOR_STAGING_HANDOFF`: local docs, gates, and handoff runbooks agree, but real strict staging evidence still requires private staging values. D9 operating loops remain planned behind `STAGING_VALIDATED`, evidence review, and production coordination.
 
-## 3. 商业与架构规则
+## Value Loop
 
-| 规则 | 说明 |
-|------|------|
-| 品牌主体 | **intelliOffice** 为对美销售与项目品牌。 |
-| 伙伴平级 | **HOSUN** 为早期合作制造伙伴之一；**重庆汇聚 / JOOBOO** 等为另一制造伙伴；未来可接入更多中国制造商。**全部为 `manufacturing_partners` 表中的平级行。** |
-| 禁止厂牌偏向 | 不得 hard-code HOSUN；不得默认 HOSUN 优先。推荐、排序、AI 比较须基于：product fit、quality、certification、price、MOQ、lead time、sample support、communication、project suitability、U.S. market readiness 等 **结构化字段**，而非厂牌名称。 |
-| 市场焦点 | 客户与市场情报须特别关注市场对 **升降与人体工学支撑** 的响应：adjustable desk frames、lifting columns、desk legs、heavy-duty lifting systems、sit-stand workstations、ergonomic height-adjustable solutions 等（与产品/伙伴能力标签、RFQ 需求解析联动）。 |
+The product value loop is:
 
-## 4. 功能六域（防割裂）
+Market demand signals -> customer intelligence -> lead scoring and segmentation -> human-reviewed outreach -> product fit -> peer manufacturing partner matching -> RFQ -> quote -> customer decision -> order -> production milestones -> shipment plans -> customer-visible portal summaries -> feedback -> operating review -> market response and improvement backlog.
 
-| 域 | 主要内容 |
-|----|----------|
-| **A — 市场与客户情报** | Company finder、网站分析、Lead scoring、联系人发现、市场情报、升降系统需求识别、地推候选、Segment builder；**Lead Intelligence 归属本域** |
-| **B — 销售执行** | Leads、Companies、Contacts、Interactions、Tasks、LinkedIn/Email 助手、跟进、Dashboard、Field visit（能力可渐进完善） |
-| **C — 产品与制造伙伴** | Products、Manufacturing partners、产品-伙伴链接、认证与质量文档、伙伴风险、**平级匹配逻辑** |
-| **D — 项目流转** | RFQ、行项目、候选伙伴、报价、比价、样品、订单、生产里程碑、海运记录 |
-| **E — AI 与知识** | AI outputs、提示模板、RAG 知识库、产品与伙伴推荐、客户画像、市场趋势、RFQ/订单相关分析 |
-| **F — 系统服务** | 认证、设置、文件、标签、备注、活动日志、备份恢复、Bootstrap、本地 DB 管理、诊断、打包与更新 |
+Lead Intelligence belongs inside this loop. It must not become an isolated lead database or standalone scraping tool; its outputs should feed quote preparation, order readiness, partner matching, and operating review.
 
-路线图与阶段见 [roadmap_desktop_transition.md](roadmap_desktop_transition.md)。
+## Operating Domains
 
-## 5. 相关文档
+| Domain | Purpose |
+|---|---|
+| Market and Customer Intelligence | Company discovery, lead scoring, segmentation, market signals, and response intelligence |
+| Sales Execution | Leads, companies, contacts, interactions, tasks, follow-up rhythm, and human-reviewed outreach |
+| Product and Manufacturing Partners | Products, manufacturing partners, capabilities, certificates, quality signals, and peer partner matching |
+| Quote and Order Execution | RFQs, quote records, quote versions, quote PDFs, manual delivery tracking, order readiness, orders, confirmations, production milestones, shipment plans, and feedback intake |
+| AI and Knowledge | Advisory AI outputs, prompts, knowledge records, product/partner suggestions, and market trend analysis |
+| System Services | Authentication, runtime health, readiness, files, activity logs, diagnostics, staging handoff, records hygiene, and packaging support |
 
-- [project_reorientation_summary.md](project_reorientation_summary.md) — 路线调整动机与总述  
-- [migration_from_web_to_desktop.md](migration_from_web_to_desktop.md) — 当前仓库与未来桌面产品关系  
+## Business Rules
+
+The intelliOffice brand is the U.S.-facing sales and project platform. HOSUN, JOOBOO, and any future factories are peer manufacturing partner rows in `manufacturing_partners`.
+
+Do not hard-code, default, or prioritize any partner by trade name. Matching and ranking must use structured signals such as product fit, quality, certification, price, MOQ, lead time, sample support, communication, project suitability, and U.S. market readiness.
+
+AI is advisory. It may draft, summarize, classify, or recommend, but human operators own outreach, customer commitments, supplier coordination, production status, shipment status, and feedback responses.
+
+## Customer Portal Boundary
+
+Customer-visible data must be explicitly whitelisted. Bridge APIs may expose customer-safe summaries for orders, confirmations, production, shipment plans, resources, and feedback intake.
+
+Bridge APIs must not expose internal cost, margin, pricing breakdowns, cost snapshots, supplier private notes, backend storage paths, storage keys, raw response bodies, tokens, or internal operator-only comments.
+
+Feedback intake creates internal review work only. It must not auto-reply, notify customers, upload attachments, or promise resolution times.
+
+## Manual-Only Safety
+
+The following remain manual operator records unless a future stage explicitly changes the rule and adds safety gates:
+
+- customer confirmations
+- partner splits
+- supplier confirmations
+- production milestones
+- shipment plans and shipment status summaries
+- feedback handling records
+
+Shipment plans do not call carriers, send webhooks or email, notify suppliers/customers, or automatically change an order to shipped/delivered.
+
+## Current Roadmap Direction
+
+The current path is:
+
+1. Preserve D5-D7 closed behavior.
+2. Complete D8 staging handoff with real private staging evidence.
+3. Use production coordination only after `STAGING_VALIDATED` and evidence review.
+4. Start D9 operating loops after production coordination.
+5. Keep future desktop packaging and local-first polish aligned with the current runtime and data lifecycle docs.
+
+## Related Documents
+
+- [Project Reorientation Summary](project_reorientation_summary.md)
+- [Desktop Target Architecture](architecture_desktop_target.md)
+- [Desktop Transition Roadmap](roadmap_desktop_transition.md)
+- [Developer Guide](dev_guide.md)
+- [Operator Guide](operator_guide.md)
+- [Testing Guide](testing.md)
+- [Integrated Backend Standards](integrated_backend_standards.md)
+- [Phase 3 Roadmap](phase3/phase3_roadmap.md)

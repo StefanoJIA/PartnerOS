@@ -23,6 +23,8 @@ REQUIRED_MARKERS = (
     "agent_guide_check.py",
     "README",
     "readme_check.py",
+    "Product Vision",
+    "product_vision_check.py",
     "Desktop Transition Roadmap",
     "desktop_transition_roadmap_check.py",
     "Project Reorientation Summary",

@@ -35,6 +35,7 @@ REQUIRED_MARKERS = (
     "d9_operating_records_check.py",
     "project_execution_status.py",
     "project_execution_acceptance_audit_check.py",
+    "product_vision_check.py",
     "desktop_transition_roadmap_check.py",
     "project_reorientation_summary_check.py",
     "dev_guide_check.py",
