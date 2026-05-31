@@ -18,6 +18,7 @@ REQUIRED_MARKERS = (
     "D8_STRICT_ALLOW_LOCAL_HTTP",
     "python scripts/d8_staging_input_preflight_check.py",
     "python scripts/d8_strict_staging_evidence_check.py",
+    "LOCAL_REHEARSAL_READY",
     "$env:TEMP",
     "d8_strict_staging_evidence_YYYYMMDD.json",
     "outside `docs/records`",

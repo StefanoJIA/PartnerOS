@@ -35,6 +35,7 @@ Do not commit rehearsal evidence as staging proof. The strict evidence script re
 ## Expected Result
 
 - `d8_staging_input_preflight_check.py` may report `INPUTS_UNSAFE` for local HTTP unless the rehearsal intentionally uses `D8_STRICT_ALLOW_LOCAL_HTTP=true`.
+- With explicit local HTTP enabled, `d8_staging_input_preflight_check.py` reports `LOCAL_REHEARSAL_READY`, not `INPUTS_READY`.
 - `d8_strict_staging_evidence_check.py` may pass or fail depending on local backend, DB, token, and sample data.
 - `d8_readiness_audit.py` must remain `READY_FOR_STAGING` unless real staging evidence is saved.
 
