@@ -185,6 +185,7 @@ python scripts/testing_guide_check.py  # testing guide D7.6+/D8 validation matri
 python scripts/dev_guide_check.py  # developer guide current local workflow gate check
 python scripts/integrated_backend_standards_check.py  # backend standards and portal bridge safety gate check
 python scripts/codex_skill_pack_check.py  # Codex agent rule pack current-stage gate check
+python scripts/activity_actions_doc_check.py  # canonical activity/timeline action gate check
 python scripts/operator_guide_check.py  # operator guide D8/D9 handoff and safety gate check
 python scripts/d7_4_partner_supplier_check.py   # D7.4 partner split & supplier confirmation smoke
 python scripts/d7_3_customer_confirmation_check.py  # D7.3 customer confirmation smoke
