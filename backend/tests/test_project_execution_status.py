@@ -177,6 +177,47 @@ def test_project_execution_status_fails_when_chain_gate_fails(monkeypatch, capsy
     assert "gate doc missing" in output
 
 
+def test_project_execution_status_uses_final_result_line(monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "_latest_access_request_record", lambda: "docs/records/d8_staging_access_request_20260531.md")
+
+    def fake_run(script: str):
+        outputs = {
+            "scripts/project_execution_chain_gate_check.py": "nested Result: PASS\nResult: FAIL\n",
+            "scripts/project_execution_chain_check.py": "State: READY_FOR_STAGING_HANDOFF\nResult: PASS\n",
+            "scripts/d8_readiness_audit.py": "Overall: READY_FOR_STAGING\n",
+            "scripts/d8_production_coordination_check.py": "Coordination State: WAITING_FOR_STAGING_VALIDATION\n",
+        }
+        return SimpleNamespace(returncode=0, stdout=outputs[script], stderr="")
+
+    monkeypatch.setattr(module, "_run_script", fake_run)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "[FAIL] project execution chain gate" in output
+    assert "Current Stage: LOCAL_EXECUTION_CHAIN_INCOMPLETE" in output
+
+
+def test_project_execution_status_accepts_resultless_state_outputs(monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "_latest_access_request_record", lambda: "docs/records/d8_staging_access_request_20260531.md")
+
+    def fake_run(script: str):
+        outputs = {
+            "scripts/project_execution_chain_gate_check.py": "Result: PASS\n",
+            "scripts/project_execution_chain_check.py": "State: READY_FOR_STAGING_HANDOFF\n",
+            "scripts/d8_readiness_audit.py": "Overall: READY_FOR_STAGING\n",
+            "scripts/d8_production_coordination_check.py": "Coordination State: WAITING_FOR_STAGING_VALIDATION\n",
+        }
+        return SimpleNamespace(returncode=0, stdout=outputs[script], stderr="")
+
+    monkeypatch.setattr(module, "_run_script", fake_run)
+
+    assert module.main() == 0
+    output = capsys.readouterr().out
+    assert "[PASS] project execution chain (READY_FOR_STAGING_HANDOFF)" in output
+
+
 def test_latest_access_request_record_uses_latest_canonical_record(tmp_path, monkeypatch):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)

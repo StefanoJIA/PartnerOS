@@ -54,6 +54,13 @@ def _extract_line(output: str, prefix: str) -> str:
     return "UNKNOWN"
 
 
+def _result_pass(result: subprocess.CompletedProcess[str], output: str) -> bool:
+    if result.returncode != 0:
+        return False
+    result_lines = [line.strip() for line in output.splitlines() if line.strip().startswith("Result:")]
+    return not result_lines or result_lines[-1] == "Result: PASS"
+
+
 def _latest_access_request_record() -> str:
     if not RECORDS_ROOT.exists():
         return "docs/records/d8_staging_access_request_YYYYMMDD.md"
@@ -111,7 +118,7 @@ def main() -> int:
 
     chain_gate = _run_script("scripts/project_execution_chain_gate_check.py")
     chain_gate_output = _combined_output(chain_gate)
-    if chain_gate.returncode == 0 and "Result: PASS" in chain_gate_output:
+    if _result_pass(chain_gate, chain_gate_output):
         checks[0].pass_("PASS")
     else:
         checks[0].fail(next((line for line in chain_gate_output.splitlines() if line.startswith("[FAIL]")), "gate failed"))
@@ -119,7 +126,7 @@ def main() -> int:
     chain = _run_script("scripts/project_execution_chain_check.py")
     chain_output = _combined_output(chain)
     chain_state = _extract_line(chain_output, "State:")
-    if chain.returncode == 0 and chain_state != "UNKNOWN":
+    if _result_pass(chain, chain_output) and chain_state != "UNKNOWN":
         checks[1].pass_(chain_state)
     else:
         checks[1].fail(next((line for line in chain_output.splitlines() if line.startswith("[FAIL]")), chain_state))
@@ -127,7 +134,7 @@ def main() -> int:
     readiness = _run_script("scripts/d8_readiness_audit.py")
     readiness_output = _combined_output(readiness)
     readiness_state = _extract_line(readiness_output, "Overall:")
-    if readiness.returncode == 0 and readiness_state != "UNKNOWN":
+    if _result_pass(readiness, readiness_output) and readiness_state != "UNKNOWN":
         checks[2].pass_(readiness_state)
     else:
         checks[2].fail(next((line for line in readiness_output.splitlines() if line.startswith("[FAIL]")), readiness_state))
@@ -135,7 +142,7 @@ def main() -> int:
     production = _run_script("scripts/d8_production_coordination_check.py")
     production_output = _combined_output(production)
     coordination_state = _extract_line(production_output, "Coordination State:")
-    if production.returncode == 0 and coordination_state != "UNKNOWN":
+    if _result_pass(production, production_output) and coordination_state != "UNKNOWN":
         checks[3].pass_(coordination_state)
     else:
         checks[3].fail(next((line for line in production_output.splitlines() if line.startswith("[FAIL]")), coordination_state))
