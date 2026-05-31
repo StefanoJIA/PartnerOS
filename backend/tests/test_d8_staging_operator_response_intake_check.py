@@ -54,6 +54,22 @@ def test_d8_staging_operator_response_intake_check_flags_token_status_value(
     assert "SERVICE_PORTAL_PARTNEROS_TOKEN:<non-private-status>" in output
 
 
+def test_d8_staging_operator_response_intake_check_flags_backend_url_status_value(
+    monkeypatch, tmp_path, capsys
+):
+    module = _load_module()
+    doc = tmp_path / "intake.md"
+    doc.write_text(
+        "\n".join([*module.REQUIRED_MARKERS, "BACKEND_BASE_URL: https://private-staging.example.com"]),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "DOC", doc)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "BACKEND_BASE_URL:<non-private-status>" in output
+
+
 def test_d8_staging_operator_response_intake_check_flags_generic_api_key(
     monkeypatch, tmp_path, capsys
 ):

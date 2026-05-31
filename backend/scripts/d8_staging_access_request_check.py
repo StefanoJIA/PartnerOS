@@ -42,6 +42,7 @@ FORBIDDEN_MARKERS = (
 )
 TOKEN_ASSIGNMENT = re.compile(r"SERVICE_PORTAL_PARTNEROS_TOKEN\s*=")
 TOKEN_STATUS = re.compile(r"^\s*SERVICE_PORTAL_PARTNEROS_TOKEN\s*:\s*(?P<value>.+?)\s*$", re.IGNORECASE)
+BACKEND_URL_STATUS = re.compile(r"^\s*BACKEND_BASE_URL\s*:\s*(?P<value>.+?)\s*$", re.IGNORECASE)
 
 
 class Check:
@@ -76,6 +77,9 @@ def _forbidden(text: str) -> list[str]:
     forbidden = [marker for marker in FORBIDDEN_MARKERS if marker in text]
     forbidden.extend(redaction_issues(DOC, text, include_common_markers=False))
     for line in text.splitlines():
+        backend_url = BACKEND_URL_STATUS.match(line)
+        if backend_url and backend_url.group("value").strip() != "provided privately":
+            forbidden.append("BACKEND_BASE_URL:<non-private-status>")
         status = TOKEN_STATUS.match(line)
         if status and status.group("value").strip() != "provided privately":
             forbidden.append("SERVICE_PORTAL_PARTNEROS_TOKEN:<non-private-status>")

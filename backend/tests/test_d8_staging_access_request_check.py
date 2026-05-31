@@ -66,6 +66,27 @@ def test_d8_staging_access_request_check_fails_for_token_status_value(monkeypatc
     assert "SERVICE_PORTAL_PARTNEROS_TOKEN:<non-private-status>" in output
 
 
+def test_d8_staging_access_request_check_fails_for_backend_url_status_value(monkeypatch, tmp_path, capsys):
+    module = _load_module()
+    doc = tmp_path / "request.md"
+    doc.write_text(
+        "\n".join(
+            [
+                *module.REQUIRED_MARKERS,
+                *module.REQUIRED_BOUNDARIES,
+                "BACKEND_BASE_URL: https://private-staging.example.com",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "DOC", doc)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "no secret-like or local-path markers" in output
+    assert "BACKEND_BASE_URL:<non-private-status>" in output
+
+
 def test_d8_staging_access_request_check_fails_for_generic_api_key(
     monkeypatch, tmp_path, capsys
 ):
