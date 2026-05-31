@@ -11,6 +11,8 @@ except ModuleNotFoundError:
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC = REPO_ROOT / "docs" / "manual_a_domain_test_plan.md"
+TEMPLATE_DOC = REPO_ROOT / "docs" / "templates" / "manual_test_record_template.md"
+IMPORT_TEMPLATE_DOC = REPO_ROOT / "docs" / "templates" / "lead_import_template.md"
 
 REQUIRED_MARKERS = (
     "Manual A-Domain Test Plan",
@@ -31,6 +33,21 @@ REQUIRED_MARKERS = (
     "must not",
     "python scripts/manual_a_domain_test_plan_check.py",
     "python scripts/lead_intelligence_docs_check.py",
+)
+REQUIRED_TEMPLATE_MARKERS = (
+    "Manual Test Record Template",
+    "Allowed Issue Type values",
+    "safety_boundary",
+    "redacted UAT summaries only",
+    "python scripts/manual_a_domain_test_plan_check.py",
+)
+REQUIRED_IMPORT_TEMPLATE_MARKERS = (
+    "Lead Import Template Guide",
+    "lead_import_template.csv",
+    "Company -> Contact -> Lead -> Score / Segments -> Interaction -> Next Action",
+    "No LinkedIn automation",
+    "oem_odm_fit",
+    "python scripts/manual_a_domain_test_plan_check.py",
 )
 FORBIDDEN_MARKERS = (
     "娑?",
@@ -78,26 +95,47 @@ def _text() -> str:
         return ""
 
 
+def _read(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+
+
 def main() -> int:
     checks = [
         Check("manual A-domain test plan exists"),
         Check("manual A-domain test plan matches current UAT contract"),
+        Check("manual A-domain templates match current UAT contract"),
         Check("manual A-domain test plan avoids stale or mojibake markers"),
         Check("manual A-domain test plan is redacted"),
     ]
 
     text = _text()
+    template = _read(TEMPLATE_DOC)
+    import_template = _read(IMPORT_TEMPLATE_DOC)
     checks[0].pass_("docs/manual_a_domain_test_plan.md") if text else checks[0].fail(str(DOC))
 
     missing = [marker for marker in REQUIRED_MARKERS if marker not in text]
     checks[1].pass_(f"{len(REQUIRED_MARKERS)} markers") if not missing else checks[1].fail(", ".join(missing))
 
-    stale = [marker for marker in FORBIDDEN_MARKERS[:9] if marker in text]
-    checks[2].pass_("no stale stage or mojibake markers") if not stale else checks[2].fail(", ".join(stale))
+    template_missing = [marker for marker in REQUIRED_TEMPLATE_MARKERS if marker not in template]
+    template_missing.extend(marker for marker in REQUIRED_IMPORT_TEMPLATE_MARKERS if marker not in import_template)
+    if template and import_template and not template_missing:
+        checks[2].pass_(f"{len(REQUIRED_TEMPLATE_MARKERS) + len(REQUIRED_IMPORT_TEMPLATE_MARKERS)} markers")
+    else:
+        missing_detail = template_missing or [str(path) for path, content in ((TEMPLATE_DOC, template), (IMPORT_TEMPLATE_DOC, import_template)) if not content]
+        checks[2].fail(", ".join(missing_detail))
 
-    redaction = [marker for marker in FORBIDDEN_MARKERS[9:] if marker.lower() in text.lower()]
+    combined = "\n".join((text, template, import_template))
+    stale = [marker for marker in FORBIDDEN_MARKERS[:9] if marker in combined]
+    checks[3].pass_("no stale stage or mojibake markers") if not stale else checks[3].fail(", ".join(stale))
+
+    redaction = [marker for marker in FORBIDDEN_MARKERS[9:] if marker.lower() in combined.lower()]
     redaction.extend(redaction_issues(DOC, text, include_common_markers=False))
-    checks[3].pass_("no secret-like markers") if not redaction else checks[3].fail(", ".join(redaction[:8]))
+    redaction.extend(redaction_issues(TEMPLATE_DOC, template, include_common_markers=False))
+    redaction.extend(redaction_issues(IMPORT_TEMPLATE_DOC, import_template, include_common_markers=False))
+    checks[4].pass_("no secret-like markers") if not redaction else checks[4].fail(", ".join(redaction[:8]))
 
     print("Manual A-Domain Test Plan Check")
     for check in checks:
