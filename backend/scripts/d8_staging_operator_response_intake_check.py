@@ -16,6 +16,8 @@ DOC = REPO_ROOT / "docs" / "phase3" / "d8_staging_operator_response_intake.md"
 REQUIRED_MARKERS = (
     "D8 Staging Operator Response Intake",
     "READY_FOR_STAGING",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "until strict staging evidence from real staging values replaces it",
     "WAITING_FOR_OPERATOR_RESPONSE",
     "READY_FOR_STRICT_EVIDENCE_RUN",
     "READY_FOR_EVIDENCE_REVIEW",

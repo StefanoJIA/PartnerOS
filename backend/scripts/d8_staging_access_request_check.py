@@ -16,6 +16,8 @@ DOC = REPO_ROOT / "docs" / "phase3" / "d8_staging_access_request.md"
 REQUIRED_MARKERS = (
     "READY_FOR_STAGING_HANDOFF",
     "STAGING_VALIDATED",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "until strict staging evidence from real staging values replaces it",
     "BACKEND_BASE_URL",
     "SERVICE_PORTAL_PARTNEROS_TOKEN",
     "SERVICE_PORTAL_ORIGIN",

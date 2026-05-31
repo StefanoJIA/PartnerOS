@@ -8,6 +8,8 @@ This intake gate defines what the repository may receive after a staging operato
 
 It is not staging proof by itself and must not be used as `STAGING_VALIDATED` or `STAGING_GAPS_OPEN` evidence. The repository remains `READY_FOR_STAGING` until strict staging evidence is saved and reviewed.
 
+If local rehearsal output is saved where strict staging evidence is expected, production coordination remains at `WAITING_FOR_REAL_STAGING_EVIDENCE` until strict staging evidence from real staging values replaces it.
+
 ## Acceptable Repository Inputs
 
 | Item | Acceptable value | Reject if |

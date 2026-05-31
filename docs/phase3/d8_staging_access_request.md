@@ -8,6 +8,8 @@ This request gives the staging operator the exact inputs needed to run strict st
 
 It is the handoff before `STAGING_VALIDATED`, not a substitute for evidence. The repository remains at `READY_FOR_STAGING` until `scripts/d8_strict_staging_evidence_check.py` runs against real staging values and saves redacted evidence.
 
+If local rehearsal output is saved where strict staging evidence is expected, production coordination remains at `WAITING_FOR_REAL_STAGING_EVIDENCE` until strict staging evidence from real staging values replaces it.
+
 ## Requested Inputs
 
 | Input | Required shape | Commit policy |

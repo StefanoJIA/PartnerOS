@@ -16,6 +16,8 @@ REQUIRED_MARKERS = (
     "Project Execution Chain Gate",
     "READY_FOR_STAGING_HANDOFF",
     "LOCAL_EXECUTION_CHAIN_INCOMPLETE",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "Replace it with strict staging evidence from real staging values before production coordination",
     "project_execution_chain_gate_check.py",
     "project_execution_chain_check.py",
     "d8_staging_execution_pack_check.py",

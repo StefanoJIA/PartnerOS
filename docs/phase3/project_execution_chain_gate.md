@@ -95,6 +95,7 @@ The report stores gate labels, pass/fail status, and one-line summaries only. It
 | State | Meaning | Next action |
 |---|---|---|
 | `READY_FOR_STAGING_HANDOFF` | Local planning, readiness, handoff, and records gates passed | Give the staging operator the D8 handoff and run strict staging evidence with real values |
+| `WAITING_FOR_REAL_STAGING_EVIDENCE` | Local rehearsal output was saved where strict staging evidence is expected | Replace it with strict staging evidence from real staging values before production coordination |
 | `LOCAL_EXECUTION_CHAIN_INCOMPLETE` | At least one local gate failed or the optional report could not be written safely | Fix the failed gate before staging handoff |
 
 This state is not the same as `STAGING_VALIDATED`. The repository can be ready for handoff while still waiting for real `BACKEND_BASE_URL`, `SERVICE_PORTAL_PARTNEROS_TOKEN`, and `SERVICE_PORTAL_ORIGIN` values.
