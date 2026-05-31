@@ -29,6 +29,8 @@ REQUIRED_MARKERS = (
     "desktop_target_architecture_check.py",
     "Runtime Modes",
     "runtime_modes_check.py",
+    "Database Lifecycle",
+    "database_lifecycle_doc_check.py",
     "Desktop Transition Roadmap",
     "desktop_transition_roadmap_check.py",
     "Project Reorientation Summary",

@@ -35,6 +35,7 @@ The report stores gate labels, pass/fail status, and one-line summaries only. It
 | Product vision | Confirms the top-level product framing matches current D7-D9 execution, portal boundaries, and manual-only safety rules |
 | Desktop target architecture | Confirms the desktop/local-first target architecture is reconciled with current D8 staging handoff boundaries |
 | Runtime modes | Confirms runtime mode semantics, local port guidance, health contract, and staging boundaries are current |
+| Database lifecycle | Confirms PostgreSQL lifecycle semantics, health fields, migration behavior, and final-user database boundaries are current |
 | Desktop transition roadmap | Confirms the desktop-first product roadmap is reconciled with the current D7-D9 execution state |
 | Project reorientation summary | Confirms the strategic reorientation summary no longer points to stale D0/D1 kickoff priorities |
 | Developer guide | Confirms the developer workflow uses current `8014` D7.6+/D8 handoff validation and avoids stale D0/D5 setup guidance |

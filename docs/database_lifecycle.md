@@ -1,57 +1,95 @@
-# Database lifecycle（数据库生命周期）
+# Database Lifecycle
 
-## 1. 目标
+**Status:** current on 2026-05-30.
 
-在 **产品模式（desktop）** 下，PostgreSQL + **pgvector** 仍是权威数据与向量层（不将全量栈替换为 SQLite）。差别在于：数据库从「用户自行安装的依赖」变为由 **Database Lifecycle Manager**（DLM）与应用协同 **托管或自动初始化** 的本地服务。
+## Purpose
 
-**pgAdmin、psql、Docker** 仅作为 **开发与排障工具**，不是最终用户流程的一部分。
+PostgreSQL + pgvector remains the authoritative data and vector store for PartnerOS. This document defines the current database lifecycle contract for local development, desktop-target planning, D8 staging handoff, and future packaging work.
 
-## 2. DLM 职责（目标能力清单）
+This is a runtime architecture reference. It is not staging proof, not a production deployment runbook, and not permission to change cloud infrastructure.
 
-| 能力 | 说明 |
-|------|------|
-| 检查数据目录 / 集群状态 | 首次启动判断是否需要初始化 |
-| 初始化数据库集群（如内嵌或捆绑的 Postgres） | 具体技术选型见 [packaging_strategy.md](packaging_strategy.md) 与 [open_questions_desktop.md](open_questions_desktop.md) |
-| 启动 / 停止数据库进程 | 与桌面应用生命周期绑定（安装/退出策略 D3+ 定稿） |
-| 创建业务库与用户 | 使用应用生成凭证，**不要求用户设 postgres 密码** |
-| 执行扩展 | 至少 `vector`；与当前 Alembic 模型一致 |
-| 运行迁移 | 等价于生产环境的 `alembic upgrade head`，由后端在 bootstrap 阶段调用 |
-| 备份 / 恢复 | D6 产品化加强；接口先在架构上预留 |
-| 健康检查 | 端口、连接、扩展存在性、迁移版本 |
-| 故障诊断 | 日志路径、可导出诊断包；**可选**「修复数据库」向导（重建副本等，需谨慎） |
+Current local project state is `READY_FOR_STAGING_HANDOFF`. `STAGING_VALIDATED` still requires the strict staging evidence workflow with real private environment values and redacted saved records.
 
-## 3. 开发期 vs 产品期（流程对比）
+## Current Implementation
 
-| 步骤 | 当前开发期（可接受） | 产品期（目标） |
-|------|----------------------|----------------|
-| 安装数据库 | 开发者安装 Postgres / Docker / 云实例 | **用户不单独安装**；由安装包或应用首次运行完成 |
-| 建库建用户 | pgAdmin / psql / 脚本 | **DLM + Bootstrap** |
-| 迁移 | 手动 `alembic upgrade head` | **自动**在启动链中执行 |
-| 基础数据 | `python -m app.scripts.seed` | **Bootstrap** 创建管理员与角色；demo 数据由 **demo 模式** 或首次运行可选流程触发 |
-| 排障 | 开发者查日志、连 pgAdmin | **诊断 UI + 日志导出**；高级用户可选暴露连接信息（D6） |
+The database lifecycle manager lives in `backend/app/core/database_lifecycle.py`. It coordinates:
 
-## 4. 与现有仓库的关系
+- database URL detection without implicit default credentials
+- connectivity classification
+- Alembic current/head revision comparison
+- product-like automatic migration with `alembic upgrade head`
+- health payload fields for runtime diagnostics
 
-- 今日 **`alembic/`** 与 **SQLAlchemy 模型** 继续作为 **唯一结构真相**；DLM 调用相同迁移，不平行维护第二套 DDL。
-- 集成测试用 **`PARTNEROS_TEST_DATABASE_URL`** 等仍只属于 **development**；见 [testing.md](testing.md)。
+The health contract includes `database_status`, `database_lifecycle_phase`, `migration_pending`, `alembic_current_revision`, and `alembic_head_revision`. Optional diagnostic detail may be present, but it must not expose passwords, tokens, raw connection strings, backend storage paths, or private files.
 
-## 5. 缺配置 vs 认证失败（development 与产品模式）
+Related tests and checks include `backend/tests/test_database_lifecycle.py`, `backend/tests/test_health.py`, `backend/tests/test_database_connection_diag.py`, and `backend/scripts/dev_runtime_doctor.py`.
 
-- **未设置 `DATABASE_URL`**（无有效连接串）：应用 **不**再使用内嵌默认用户/口令去尝试连接。`/health` 中 **`database_status`** 为 **`not_configured`**，`database_lifecycle_phase` 为 **`not_configured`**，`errors` 提示从 `backend/.env.example` 创建 `backend/.env` 或运行 `python scripts/init_local_env.py`。**development** 下顶层 **`status` / `bootstrap_status`** 多为 **degraded**。
-- **已配置 `DATABASE_URL` 但认证失败**：**`database_status`** 为 **`auth_failed`**，错误信息会指向核对 **`backend/.env`** 中的用户与密码。**development** 下顶层 **`status` / `bootstrap_status`** 为 **error**（与「未配置」区分）。
-- **数据库不存在** 等：**`database_status: database_missing`**（或连接不可达 **`unavailable`**），详见 `/health` 的 `errors`。
-- **`desktop` / `demo` / `future_cloud`**：数据库未配置、认证失败或迁移失败时 **`/health` 保持 error**，语义不因 development 而放宽。
-- **pgAdmin** 仍仅为可选开发工具，**不是**产品依赖。
+## Mode Behavior
 
-## 6. D4 已落地（仓库事实：PostgreSQL + Alembic）
+`development` is inspect-only. If no database URL is configured, `/health` reports `database_status: not_configured` and `database_lifecycle_phase: not_configured`; it must not silently fall back to a bundled username or password. If configured credentials fail, the status is `auth_failed`. If the configured database is missing, the status is `database_missing`. Other connection failures are classified as unavailable with redacted detail.
 
-- **DLM 实现**：`backend/app/core/database_lifecycle.py`；**产品运行态**（`desktop` / `demo` / `future_cloud`，见 `PRODUCT_AUTO_MIGRATE_MODES`）在 **后台线程** 中执行连接检查、迁移比对、按需 **`alembic upgrade head`**；失败时 `/health` 为严格 **error** 语义，**不**伪装为 development **degraded**。  
-- **development**：只读检视；**未配置 `DATABASE_URL` 时** `database_status: not_configured`（非误导性默认连接）；**已连接但 schema 落后** 时 `migration_pending: true`、`bootstrap_status: degraded`，需手动 `alembic upgrade head`。  
-- **未包含**：Postgres 二进制捆绑、`initdb`、Windows 服务、备份恢复中心 — 仍为后续阶段。  
-- **长期决策**：是否在部分 SKU 采用 **SQLite** 或 **PostgreSQL + SQLite 双路径** 须通过明确 ADR；**当前 D4 仅针对本仓库既有 PostgreSQL 栈**。
+Product-like modes such as `desktop`, `demo`, and `future_cloud` are strict. Missing configuration, authentication failure, database absence, migration failure, or migration mismatch keeps `/health` in an error state. Product-like modes may run `alembic upgrade head` through the lifecycle manager; they must not hide failures as a development-only degraded state.
 
-## 7. 相关文档
+Local D7.6+/D8 validation uses:
 
-- [architecture_desktop_target.md](architecture_desktop_target.md)  
-- [runtime_modes.md](runtime_modes.md)  
-- [roadmap_desktop_transition.md](roadmap_desktop_transition.md)  
+```powershell
+cd backend
+$env:BACKEND_BASE_URL="http://127.0.0.1:8014"
+python scripts/dev_runtime_doctor.py
+```
+
+## Responsibilities
+
+The database lifecycle manager owns:
+
+- configuration detection
+- connection diagnostics
+- migration revision comparison
+- product-like migration execution
+- health snapshot fields
+- redacted diagnostics for operator troubleshooting
+- future backup/restore extension points
+
+It does not own final-user installation UX yet. Packaging decisions, embedded PostgreSQL service management, backup/restore UI, and desktop installer behavior remain future desktop-delivery work.
+
+## Final User Boundary
+
+Do not require final users to run PostgreSQL, pgAdmin, Docker, Alembic, or raw SQL. Those tools are developer and operator utilities only.
+
+Final desktop users should eventually install and launch the application without manually creating databases, running migrations, editing connection strings, or using pgAdmin. Until that packaging work is complete, local developers and staging operators still use the documented backend commands.
+
+## Staging Boundary
+
+Local database checks do not prove `STAGING_VALIDATED`. They only support `READY_FOR_STAGING_HANDOFF`.
+
+Strict staging validation must use real, private values supplied outside the repository:
+
+- `BACKEND_BASE_URL`
+- `SERVICE_PORTAL_PARTNEROS_TOKEN`
+- `SERVICE_PORTAL_ORIGIN`
+
+The D8 Staging Operator Runbook and strict evidence runner decide whether saved redacted evidence is production-coordination-ready. Do not commit `.env`, local database dumps, `local_data/`, `backend/storage/`, raw response bodies, screenshots containing tokens, or private customer files.
+
+## Safety Boundaries
+
+The database lifecycle path must remain infrastructure-only. It must not:
+
+- call carrier APIs
+- send email or webhooks
+- notify customers or suppliers
+- create shipments
+- create feedback tickets
+- mutate quote, order, shipment, delivery, payment, inventory, or partner-selection state
+- deploy or modify `service.intelli-opus.com`
+- edit nginx or cloud upstreams
+
+Order status changes such as shipped or delivered remain manual business actions outside the lifecycle manager.
+
+## Related Docs
+
+- [Runtime Modes](runtime_modes.md)
+- [Desktop Target Architecture](architecture_desktop_target.md)
+- [Developer Guide](dev_guide.md)
+- [Testing Guide](testing.md)
+- [D8 Staging Handoff Bundle](phase3/d8_staging_handoff_bundle.md)
+- [D8 Staging Operator Runbook](phase3/d8_staging_operator_runbook.md)

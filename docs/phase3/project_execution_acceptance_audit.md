@@ -15,6 +15,7 @@ This audit maps the current project-planning objective to concrete evidence. It 
 | Product vision matches current execution state | [Product Vision](../product_vision.md), `python scripts/product_vision_check.py` | PASS |
 | Desktop target architecture matches current runtime boundary | [Desktop Target Architecture](../architecture_desktop_target.md), `python scripts/desktop_target_architecture_check.py` | PASS |
 | Runtime modes match current staging boundary | [Runtime Modes](../runtime_modes.md), `python scripts/runtime_modes_check.py` | PASS |
+| Database lifecycle matches current health and migration boundary | [Database Lifecycle](../database_lifecycle.md), `python scripts/database_lifecycle_doc_check.py` | PASS |
 | Desktop transition roadmap matches current execution state | [Desktop Transition Roadmap](../roadmap_desktop_transition.md), `python scripts/desktop_transition_roadmap_check.py` | PASS |
 | Project reorientation summary matches current priority | [Project Reorientation Summary](../project_reorientation_summary.md), `python scripts/project_reorientation_summary_check.py` | PASS |
 | Developer guide matches current local workflow | [Developer Guide](../dev_guide.md), `python scripts/dev_guide_check.py` | PASS |
@@ -71,6 +72,7 @@ python scripts/agent_guide_check.py
 python scripts/product_vision_check.py
 python scripts/desktop_target_architecture_check.py
 python scripts/runtime_modes_check.py
+python scripts/database_lifecycle_doc_check.py
 python scripts/desktop_transition_roadmap_check.py
 python scripts/project_reorientation_summary_check.py
 python scripts/dev_guide_check.py

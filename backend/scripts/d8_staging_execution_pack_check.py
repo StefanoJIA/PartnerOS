@@ -46,6 +46,7 @@ REQUIRED_FILES = (
     "backend/scripts/product_vision_check.py",
     "backend/scripts/desktop_target_architecture_check.py",
     "backend/scripts/runtime_modes_check.py",
+    "backend/scripts/database_lifecycle_doc_check.py",
     "backend/scripts/desktop_transition_roadmap_check.py",
     "backend/scripts/project_reorientation_summary_check.py",
     "backend/scripts/dev_guide_check.py",
@@ -59,6 +60,7 @@ REQUIRED_FILES = (
     "docs/product_vision.md",
     "docs/architecture_desktop_target.md",
     "docs/runtime_modes.md",
+    "docs/database_lifecycle.md",
     "docs/roadmap_desktop_transition.md",
     "docs/project_reorientation_summary.md",
     "docs/dev_guide.md",
@@ -137,6 +139,7 @@ HANDOFF_MARKERS = (
     "python scripts/product_vision_check.py",
     "python scripts/desktop_target_architecture_check.py",
     "python scripts/runtime_modes_check.py",
+    "python scripts/database_lifecycle_doc_check.py",
     "python scripts/desktop_transition_roadmap_check.py",
     "python scripts/project_reorientation_summary_check.py",
     "python scripts/dev_guide_check.py",
@@ -234,6 +237,7 @@ def main() -> int:
         Check("product vision check runs"),
         Check("desktop target architecture check runs"),
         Check("runtime modes check runs"),
+        Check("database lifecycle doc check runs"),
         Check("desktop transition roadmap check runs"),
         Check("project reorientation summary check runs"),
         Check("developer guide check runs"),
@@ -441,65 +445,71 @@ def main() -> int:
     else:
         checks[32].fail((runtime_modes.stdout + runtime_modes.stderr)[:160])
 
-    desktop_transition = _run_script("scripts/desktop_transition_roadmap_check.py")
-    if desktop_transition.returncode == 0 and "Result: PASS" in desktop_transition.stdout:
+    database_lifecycle = _run_script("scripts/database_lifecycle_doc_check.py")
+    if database_lifecycle.returncode == 0 and "Result: PASS" in database_lifecycle.stdout:
         checks[33].pass_("PASS")
     else:
-        checks[33].fail((desktop_transition.stdout + desktop_transition.stderr)[:160])
+        checks[33].fail((database_lifecycle.stdout + database_lifecycle.stderr)[:160])
+
+    desktop_transition = _run_script("scripts/desktop_transition_roadmap_check.py")
+    if desktop_transition.returncode == 0 and "Result: PASS" in desktop_transition.stdout:
+        checks[34].pass_("PASS")
+    else:
+        checks[34].fail((desktop_transition.stdout + desktop_transition.stderr)[:160])
 
     reorientation = _run_script("scripts/project_reorientation_summary_check.py")
     if reorientation.returncode == 0 and "Result: PASS" in reorientation.stdout:
-        checks[34].pass_("PASS")
+        checks[35].pass_("PASS")
     else:
-        checks[34].fail((reorientation.stdout + reorientation.stderr)[:160])
+        checks[35].fail((reorientation.stdout + reorientation.stderr)[:160])
 
     dev_guide = _run_script("scripts/dev_guide_check.py")
     if dev_guide.returncode == 0 and "Result: PASS" in dev_guide.stdout:
-        checks[35].pass_("PASS")
+        checks[36].pass_("PASS")
     else:
-        checks[35].fail((dev_guide.stdout + dev_guide.stderr)[:160])
+        checks[36].fail((dev_guide.stdout + dev_guide.stderr)[:160])
 
     backend_standards = _run_script("scripts/integrated_backend_standards_check.py")
     if backend_standards.returncode == 0 and "Result: PASS" in backend_standards.stdout:
-        checks[36].pass_("PASS")
+        checks[37].pass_("PASS")
     else:
-        checks[36].fail((backend_standards.stdout + backend_standards.stderr)[:160])
+        checks[37].fail((backend_standards.stdout + backend_standards.stderr)[:160])
 
     codex_skills = _run_script("scripts/codex_skill_pack_check.py")
     if codex_skills.returncode == 0 and "Result: PASS" in codex_skills.stdout:
-        checks[37].pass_("PASS")
+        checks[38].pass_("PASS")
     else:
-        checks[37].fail((codex_skills.stdout + codex_skills.stderr)[:160])
+        checks[38].fail((codex_skills.stdout + codex_skills.stderr)[:160])
 
     deployment_readiness = _run_script("scripts/deployment_readiness_checklist_check.py")
     if deployment_readiness.returncode == 0 and "Result: PASS" in deployment_readiness.stdout:
-        checks[38].pass_("PASS")
+        checks[39].pass_("PASS")
     else:
-        checks[38].fail((deployment_readiness.stdout + deployment_readiness.stderr)[:160])
+        checks[39].fail((deployment_readiness.stdout + deployment_readiness.stderr)[:160])
 
     testing_guide = _run_script("scripts/testing_guide_check.py")
     if testing_guide.returncode == 0 and "Result: PASS" in testing_guide.stdout:
-        checks[39].pass_("PASS")
+        checks[40].pass_("PASS")
     else:
-        checks[39].fail((testing_guide.stdout + testing_guide.stderr)[:160])
+        checks[40].fail((testing_guide.stdout + testing_guide.stderr)[:160])
 
     operator_guide = _run_script("scripts/operator_guide_check.py")
     if operator_guide.returncode == 0 and "Result: PASS" in operator_guide.stdout:
-        checks[40].pass_("PASS")
+        checks[41].pass_("PASS")
     else:
-        checks[40].fail((operator_guide.stdout + operator_guide.stderr)[:160])
+        checks[41].fail((operator_guide.stdout + operator_guide.stderr)[:160])
 
     handoff_code, handoff_text, handoff_output = _generate_handoff()
     if handoff_code == 0 and handoff_text:
-        checks[41].pass_("generated")
+        checks[42].pass_("generated")
     else:
-        checks[41].fail(handoff_output[:160])
+        checks[42].fail(handoff_output[:160])
 
     missing_markers = [marker for marker in HANDOFF_MARKERS if marker not in handoff_text]
     if not missing_markers:
-        checks[42].pass_("commands and safety boundaries")
+        checks[43].pass_("commands and safety boundaries")
     else:
-        checks[42].fail(", ".join(missing_markers))
+        checks[43].fail(", ".join(missing_markers))
 
     print("D8 Staging Execution Pack Check")
     for check in checks:
