@@ -14,6 +14,8 @@ It is intentionally local and read-only. It does not call staging, read `.env`, 
 cd backend
 python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
+python scripts/d8_staging_execution_pack_check.py
+python scripts/project_execution_acceptance_audit_check.py
 python scripts/project_execution_status.py
 ```
 
@@ -22,6 +24,7 @@ For a redacted handoff report:
 ```powershell
 cd backend
 python scripts/project_execution_chain_check.py --report-markdown ../docs/records/project_execution_chain_YYYYMMDD.md
+python scripts/project_execution_acceptance_audit_check.py
 python scripts/project_execution_records_check.py
 ```
 
@@ -61,6 +64,7 @@ The report stores gate labels, pass/fail status, and one-line summaries only. It
 | IE Auto project plan | Confirms product positioning, lifecycle, safety rules, and current D7-D9 execution order |
 | Phase 3 roadmap | Confirms D7-D9 stages, dependency graph, related docs, and safety boundaries |
 | D8 stage goal matrix | Confirms stage artifacts, smoke commands, evidence state, and next gaps |
+| D8 staging execution pack | Confirms the full local D8/D9 handoff chain, acceptance audit, records checks, and generated handoff safety markers run together |
 | Operator guide | Confirms operator-facing D8/D9 handoff instructions, evidence gates, and safety boundaries |
 | D8 readiness audit | Classifies local readiness and saved strict staging evidence |
 | D8 local staging rehearsal | Confirms the optional local command-order rehearsal is documented and not treated as staging proof |
