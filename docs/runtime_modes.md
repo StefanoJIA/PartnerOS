@@ -4,7 +4,7 @@
 
 ## Current State
 
-The current repository state is `READY_FOR_STAGING_HANDOFF` when the local execution chain passes. Local D7.6+/D8 validation uses backend port `8014`. This does not prove `STAGING_VALIDATED`; strict staging evidence requires real staging values supplied outside the repository.
+The current repository state is `READY_FOR_STAGING_HANDOFF` when the local execution chain passes. Local D7.6+/D8 validation uses backend port `8014`. This does not prove `STAGING_VALIDATED`; strict staging evidence requires real staging values supplied outside the repository. If local rehearsal output is saved where strict evidence is expected, production coordination remains at `WAITING_FOR_REAL_STAGING_EVIDENCE` until real staging evidence replaces it.
 
 ## Mode List
 

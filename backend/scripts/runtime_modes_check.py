@@ -18,6 +18,8 @@ REQUIRED_MARKERS = (
     "current on 2026-05-30",
     "READY_FOR_STAGING_HANDOFF",
     "does not prove `STAGING_VALIDATED`",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "until real staging evidence replaces it",
     "`development`",
     "`desktop`",
     "`demo`",

@@ -18,6 +18,8 @@ REQUIRED_MARKERS = (
     "current on 2026-05-30",
     "service.intelli-opus.com",
     "READY_FOR_STAGING_HANDOFF",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "until real staging evidence replaces it",
     "STAGING_VALIDATED",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "human Go / No-Go handoff",

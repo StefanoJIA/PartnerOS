@@ -20,7 +20,7 @@ PartnerOS is not:
 
 D5 Lead Intelligence is closed. D6 Quote MVP is closed. D7 is closed through D7.9, covering order lifecycle, confirmations, partner/supplier execution, production milestones, shipment plans, customer portal bridge APIs, feedback intake, and resource center foundations.
 
-D8 is currently `READY_FOR_STAGING_HANDOFF`: local docs, gates, and handoff runbooks agree, but real strict staging evidence still requires private staging values. D9 operating loops remain planned behind `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, production coordination, and the human Go / No-Go handoff.
+D8 is currently `READY_FOR_STAGING_HANDOFF`: local docs, gates, and handoff runbooks agree, but real strict staging evidence still requires private staging values. If local rehearsal output is saved where strict staging evidence is expected, production coordination remains at `WAITING_FOR_REAL_STAGING_EVIDENCE` until real staging evidence replaces it. D9 operating loops remain planned behind `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, production coordination, and the human Go / No-Go handoff.
 
 Local handoff claims must be backed by `python scripts/d8_staging_execution_pack_check.py`, `python scripts/d9_operating_execution_pack_check.py`, and `python scripts/project_execution_acceptance_audit_check.py`. These checks prove internal alignment only; they do not replace strict staging evidence.
 
