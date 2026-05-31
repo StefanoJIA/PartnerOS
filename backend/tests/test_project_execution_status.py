@@ -95,11 +95,11 @@ def test_project_execution_status_reports_local_rehearsal_evidence(monkeypatch, 
             "scripts/project_execution_chain_gate_check.py": "Result: PASS\n",
             "scripts/project_execution_chain_check.py": "State: READY_FOR_STAGING_HANDOFF\nResult: PASS\n",
             "scripts/d8_readiness_audit.py": "Overall: STAGING_EVIDENCE_LOCAL_REHEARSAL\nResult: FAIL\n",
-            "scripts/d8_production_coordination_check.py": "Coordination State: BLOCKED_BY_READINESS_AUDIT\nResult: FAIL\n",
+            "scripts/d8_production_coordination_check.py": "Coordination State: WAITING_FOR_REAL_STAGING_EVIDENCE\nResult: PASS\n",
         }
         return SimpleNamespace(
             returncode=1
-            if script in {"scripts/d8_readiness_audit.py", "scripts/d8_production_coordination_check.py"}
+            if script == "scripts/d8_readiness_audit.py"
             else 0,
             stdout=outputs[script],
             stderr="",
