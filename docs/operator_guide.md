@@ -475,7 +475,7 @@ python scripts/d9_3_market_response_loop_check.py
 python scripts/d9_4_improvement_backlog_check.py
 ```
 
-D9 starts only after `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, and production coordination. It keeps Portal feedback, order operations, Market response intelligence, and improvement backlog under human review. The execution pack runs the full D9 gate set, including the saved evidence review check; the kickoff check defines the first redacted D9 operating review session; D9.1 defines health signals; D9.2 defines order operations follow-up; D9.3 defines advisory market response signals; D9.4 converts repeated gaps into reviewed backlog candidates without automatic ticket creation.
+D9 starts only after `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, production coordination, and the human Go / No-Go handoff. If that handoff is committed, use the redacted `docs/records/d8_production_go_no_go_YYYYMMDD.md` record. D9 keeps Portal feedback, order operations, Market response intelligence, and improvement backlog under human review. The execution pack runs the full D9 gate set, including the saved evidence review check; the kickoff check defines the first redacted D9 operating review session; D9.1 defines health signals; D9.2 defines order operations follow-up; D9.3 defines advisory market response signals; D9.4 converts repeated gaps into reviewed backlog candidates without automatic ticket creation.
 
 Before committing D9 operating review records, run:
 
