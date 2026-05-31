@@ -45,6 +45,12 @@ REQUIRED_MARKERS = (
     "python scripts/codex_skill_pack_check.py",
     "Do not expose internal costs",
 )
+PROJECT_EXECUTION_RULE_MARKERS = (
+    "python scripts/project_execution_chain_gate_check.py",
+    "python scripts/d8_staging_execution_pack_check.py",
+    "python scripts/project_execution_acceptance_audit_check.py",
+    "python scripts/project_execution_status.py",
+)
 FORBIDDEN_MARKERS = (
     "D7.1-D7.6 cover internal order lifecycle through shipment tracking",
     "D7.7 covers customer portal bridge APIs and feedback intake",
@@ -107,6 +113,7 @@ def main() -> int:
     checks = [
         Check("Codex skill pack files exist"),
         Check("Codex skill pack matches current D7-D9 execution state"),
+        Check("project execution rules require full current-stage gates"),
         Check("Codex skill pack avoids stale stage guidance"),
         Check("Codex skill pack is redacted"),
     ]
@@ -119,12 +126,18 @@ def main() -> int:
     missing = [marker for marker in REQUIRED_MARKERS if marker not in combined]
     checks[1].pass_(f"{len(REQUIRED_MARKERS)} markers") if not missing else checks[1].fail(", ".join(missing))
 
+    rule_text = texts.get("project_execution_rules.md", "")
+    missing_rule_markers = [marker for marker in PROJECT_EXECUTION_RULE_MARKERS if marker not in rule_text]
+    checks[2].pass_("documented") if not missing_rule_markers else checks[2].fail(
+        ", ".join(missing_rule_markers)
+    )
+
     stale = [marker for marker in FORBIDDEN_MARKERS[:4] if marker in combined]
-    checks[2].pass_("no stale D7 or port markers") if not stale else checks[2].fail(", ".join(stale))
+    checks[3].pass_("no stale D7 or port markers") if not stale else checks[3].fail(", ".join(stale))
 
     redaction = [marker for marker in FORBIDDEN_MARKERS[4:] if marker in combined]
     redaction.extend(_redaction_issues(texts))
-    checks[3].pass_("no secret-like markers") if not redaction else checks[3].fail(", ".join(redaction[:8]))
+    checks[4].pass_("no secret-like markers") if not redaction else checks[4].fail(", ".join(redaction[:8]))
 
     print("Codex Skill Pack Check")
     for check in checks:
