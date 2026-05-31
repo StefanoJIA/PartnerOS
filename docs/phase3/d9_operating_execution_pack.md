@@ -1,6 +1,6 @@
 # D9 Operating Execution Pack
 
-**Status:** planned on 2026-05-30; run after D8 production coordination and evidence review, before the first D9 operating review.
+**Status:** planned on 2026-05-30; run after D8 production coordination, evidence review, and human Go / No-Go handoff, before the first D9 operating review.
 
 ## Purpose
 
@@ -34,7 +34,7 @@ python scripts/d9_operating_records_check.py
 
 | Result | Meaning |
 |---|---|
-| `PASS` | D9 operating plans, review templates, and redaction gates are ready for a human operator after D8 validation and `READY_FOR_PRODUCTION_COORDINATION_REVIEW` evidence review |
+| `PASS` | D9 operating plans, review templates, and redaction gates are ready for a human operator after D8 validation, `READY_FOR_PRODUCTION_COORDINATION_REVIEW` evidence review, and the human Go / No-Go handoff |
 | `FAIL` | A D9 plan, command, record policy, or safety boundary is missing |
 
 ## Boundaries

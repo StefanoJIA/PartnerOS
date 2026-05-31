@@ -17,6 +17,8 @@ REQUIRED_MARKERS = (
     "STAGING_VALIDATED",
     "READY_FOR_PRODUCTION_COORDINATION",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
+    "human Go / No-Go handoff",
+    "docs/records/d8_production_go_no_go_YYYYMMDD.md",
     "python scripts/d9_1_operating_health_review_check.py",
     "python scripts/d9_operating_loop_kickoff_check.py",
     "python scripts/d9_operating_records_check.py",

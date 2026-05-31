@@ -37,6 +37,7 @@ REQUIRED_FILES = (
 REQUIRED_DOC_MARKERS = (
     "D9 Operating Execution Pack",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
+    "human Go / No-Go handoff",
     "docs/records/d8_production_go_no_go_YYYYMMDD.md",
     "python scripts/d8_staging_evidence_review_check.py",
     "python scripts/d9_post_launch_plan_check.py",

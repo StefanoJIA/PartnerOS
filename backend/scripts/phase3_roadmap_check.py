@@ -74,7 +74,9 @@ REQUIRED_GRAPH_MARKERS = (
 REQUIRED_GATE_MARKERS = (
     "evidence review",
     "production coordination plan",
-    "coordination evidence review",
+    "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
+    "human Go / No-Go handoff",
+    "docs/records/d8_production_go_no_go_YYYYMMDD.md",
 )
 
 
@@ -149,7 +151,7 @@ def main() -> int:
     )
 
     missing_gates = [marker for marker in REQUIRED_GATE_MARKERS if marker not in text]
-    checks[6].pass_("production coordination and evidence review") if not missing_gates else checks[6].fail(
+    checks[6].pass_("production coordination, evidence review, and Go / No-Go") if not missing_gates else checks[6].fail(
         ", ".join(missing_gates)
     )
 

@@ -18,6 +18,8 @@ REQUIRED_MARKERS = (
     "WAITING_FOR_STAGING_VALIDATION",
     "STAGING_VALIDATED",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
+    "human Go / No-Go handoff",
+    "docs/records/d8_production_go_no_go_YYYYMMDD.md",
     "d8_staging_evidence_review_check.py",
     "Agent Guide",
     "agent_guide_check.py",

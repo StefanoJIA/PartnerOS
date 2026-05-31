@@ -15,6 +15,7 @@ DOC = REPO_ROOT / "docs" / "phase3" / "d9_operating_loop_kickoff.md"
 REQUIRED_MARKERS = (
     "D9 Operating Loop Kickoff",
     "D8 production coordination",
+    "human Go / No-Go handoff",
     "STAGING_VALIDATED",
     "READY_FOR_PRODUCTION_COORDINATION",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",

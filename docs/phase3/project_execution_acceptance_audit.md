@@ -45,9 +45,9 @@ This audit maps the current project-planning objective to concrete evidence. It 
 | Saved staging evidence has a review gate | [D8 Staging Evidence Review](d8_staging_evidence_review.md), `python scripts/d8_staging_evidence_review_check.py` | `WAITING_FOR_STAGING_EVIDENCE` until evidence arrives |
 | Production coordination is gated behind staging and evidence review | [D8 Production Coordination Plan](d8_production_coordination_plan.md), `python scripts/d8_production_coordination_check.py` | `WAITING_FOR_STAGING_VALIDATION`; later requires `READY_FOR_PRODUCTION_COORDINATION_REVIEW` |
 | Production coordination runbook is ready | [D8 Production Coordination Runbook](d8_production_coordination_runbook.md), `python scripts/d8_production_coordination_runbook_check.py` | PASS, but gated behind `STAGING_VALIDATED` and `READY_FOR_PRODUCTION_COORDINATION_REVIEW` |
-| D9 is planned but gated | [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md), `python scripts/d9_post_launch_plan_check.py` | PASS, gated behind production coordination and evidence review |
-| D9 operating execution pack is planned but gated | [D9 Operating Execution Pack](d9_operating_execution_pack.md), `python scripts/d9_operating_execution_pack_check.py` | PASS, runs `d8_staging_evidence_review_check.py` |
-| D9 kickoff is planned but gated | [D9 Operating Loop Kickoff](d9_operating_loop_kickoff.md), `python scripts/d9_operating_loop_kickoff_check.py` | PASS, requires `READY_FOR_PRODUCTION_COORDINATION_REVIEW` |
+| D9 is planned but gated | [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md), `python scripts/d9_post_launch_plan_check.py` | PASS, gated behind `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, production coordination, and human Go / No-Go handoff |
+| D9 operating execution pack is planned but gated | [D9 Operating Execution Pack](d9_operating_execution_pack.md), `python scripts/d9_operating_execution_pack_check.py` | PASS, runs `d8_staging_evidence_review_check.py` and references `docs/records/d8_production_go_no_go_YYYYMMDD.md` |
+| D9 kickoff is planned but gated | [D9 Operating Loop Kickoff](d9_operating_loop_kickoff.md), `python scripts/d9_operating_loop_kickoff_check.py` | PASS, requires `READY_FOR_PRODUCTION_COORDINATION_REVIEW` and the human Go / No-Go handoff |
 | D9.1 health review is planned but gated | [D9.1 Operating Health Review](d9_1_operating_health_review.md), `python scripts/d9_1_operating_health_review_check.py` | PASS |
 | D9.2 order operations loop is planned but gated | [D9.2 Order Operations Loop](d9_2_order_operations_loop.md), `python scripts/d9_2_order_operations_loop_check.py` | PASS |
 | D9.3 market response loop is planned but gated | [D9.3 Market Response Loop](d9_3_market_response_loop.md), `python scripts/d9_3_market_response_loop_check.py` | PASS |
@@ -67,7 +67,7 @@ The overall project objective is not complete because real staging validation ha
 - representative TEST fixture scope
 - saved `docs/records/d8_strict_staging_evidence_YYYYMMDD.json`
 
-Until that evidence exists, the correct state is `READY_FOR_STAGING_HANDOFF`, not `STAGING_VALIDATED`; D9 remains gated until production coordination and evidence review are both ready.
+Until that evidence exists, the correct state is `READY_FOR_STAGING_HANDOFF`, not `STAGING_VALIDATED`; D9 remains gated until staging validation, evidence review, production coordination, and the human Go / No-Go handoff are all ready. If committed, the redacted decision record uses `docs/records/d8_production_go_no_go_YYYYMMDD.md`.
 
 ## Command
 

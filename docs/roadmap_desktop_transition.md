@@ -29,7 +29,7 @@ Development mode may still use Vue, FastAPI, PostgreSQL, Docker, and manual comm
 |---|---|---|
 | D7 | Orders, confirmations, partners/suppliers, production milestones, shipment plans, portal bridge, resources | Closed through D7.9 |
 | D8 | Runtime hardening, service portal staging integration, strict staging evidence, production coordination readiness | Local gates ready; waiting for real staging values and evidence |
-| D9 | Post-launch operating loop, health review, order operations, market response, improvement backlog | Planned behind `STAGING_VALIDATED`, evidence review, and production coordination |
+| D9 | Post-launch operating loop, health review, order operations, market response, improvement backlog | Planned behind `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, production coordination, and human Go / No-Go handoff; if committed, the record uses `docs/records/d8_production_go_no_go_YYYYMMDD.md` |
 
 Current local proof is `READY_FOR_STAGING_HANDOFF`, not `STAGING_VALIDATED`.
 

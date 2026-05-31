@@ -1,10 +1,10 @@
 # D9.1 Operating Health Review
 
-**Status:** planned on 2026-05-30; starts only after D8 production coordination, evidence review, and D9 kickoff.
+**Status:** planned on 2026-05-30; starts only after D8 production coordination, evidence review, human Go / No-Go handoff, and D9 kickoff.
 
 ## Purpose
 
-D9.1 is the first post-launch operating review track. It checks whether the PartnerOS backend and existing service portal bridge remain healthy after production coordination and evidence review, without exposing tokens, raw API payloads, customer files, or deployment details.
+D9.1 is the first post-launch operating review track. It checks whether the PartnerOS backend and existing service portal bridge remain healthy after production coordination, evidence review, and the human Go / No-Go handoff, without exposing tokens, raw API payloads, customer files, or deployment details.
 
 It is a review loop, not a deployment or remediation mechanism.
 
@@ -15,6 +15,7 @@ It is a review loop, not a deployment or remediation mechanism.
 | D8 staging validation | `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED` |
 | D8 production coordination | `python scripts/d8_production_coordination_check.py` reports `READY_FOR_PRODUCTION_COORDINATION` |
 | D8 evidence review | `python scripts/d8_staging_evidence_review_check.py` reports `READY_FOR_PRODUCTION_COORDINATION_REVIEW` |
+| D8 Go / No-Go record | If committed, the redacted decision record uses `docs/records/d8_production_go_no_go_YYYYMMDD.md` |
 | D9 kickoff | `python scripts/d9_operating_loop_kickoff_check.py` passes |
 | D9 records hygiene | `python scripts/d9_operating_records_check.py` passes |
 

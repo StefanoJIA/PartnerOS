@@ -1,10 +1,10 @@
 # D9 Operating Loop Kickoff
 
-**Status:** planned on 2026-05-30; starts only after D8 production coordination and evidence review complete.
+**Status:** planned on 2026-05-30; starts only after D8 production coordination, evidence review, and human Go / No-Go handoff complete.
 
 ## Purpose
 
-This kickoff checklist turns the D9 post-launch operating loop into the first concrete review session after D8 staging evidence and production coordination are complete. It keeps the first production-era review focused, redacted, and human-owned.
+This kickoff checklist turns the D9 post-launch operating loop into the first concrete review session after D8 staging evidence, production coordination, and human Go / No-Go handoff are complete. It keeps the first production-era review focused, redacted, and human-owned.
 
 It does not authorize service portal deployment, nginx edits, notifications, external sends, carrier calls, or business-record mutations.
 

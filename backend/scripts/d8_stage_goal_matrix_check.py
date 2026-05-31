@@ -108,6 +108,8 @@ REQUIRED_MATRIX_MARKERS = (
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "D8 Production Coordination",
     "D8 Production Coordination Runbook",
+    "human Go / No-Go handoff",
+    "docs/records/d8_production_go_no_go_YYYYMMDD.md",
     "D9 Post-Launch Operating Loop",
     "D9 Operating Execution Pack",
     "D9 Operating Loop Kickoff",

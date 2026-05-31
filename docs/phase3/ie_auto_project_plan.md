@@ -329,7 +329,7 @@ Use [D8 Production Coordination Plan](d8_production_coordination_plan.md) after 
 Use [D8 Production Coordination Runbook](d8_production_coordination_runbook.md) after `STAGING_VALIDATED` to sequence the human Go / No-Go, rollback handoff, and D9 kickoff gates without deploying from this repo.
 Use [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md) after production coordination and `READY_FOR_PRODUCTION_COORDINATION_REVIEW` evidence review to keep health review, order operations, feedback, market intelligence, and improvement backlog under human review.
 Use [D9 Operating Execution Pack](d9_operating_execution_pack.md) to verify all D9 review tracks and record gates before the first operating review.
-Use [D9 Operating Loop Kickoff](d9_operating_loop_kickoff.md) for the first redacted D9 review session after D8 production coordination and evidence review.
+Use [D9 Operating Loop Kickoff](d9_operating_loop_kickoff.md) for the first redacted D9 review session after D8 production coordination, evidence review, and human Go / No-Go handoff.
 Use [D9.1 Operating Health Review](d9_1_operating_health_review.md) to review readiness, manifest, auth rejection, CORS, customer-safe reads, and forbidden-field safety.
 Use [D9.2 Order Operations Loop](d9_2_order_operations_loop.md) to review customer confirmation, partner split, supplier confirmation, production, shipment, resources, and feedback follow-up signals without automation.
 Use [D9.3 Market Response Loop](d9_3_market_response_loop.md) to review feedback, quote outcomes, product gaps, demand signals, partner fit, and advisory recommendations without automatic customer replies or mutations.
