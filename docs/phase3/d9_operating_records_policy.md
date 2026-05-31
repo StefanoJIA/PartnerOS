@@ -39,7 +39,7 @@ cd backend
 python scripts/d9_operating_records_check.py
 ```
 
-The check verifies canonical names, requires a redacted D8 Go / No-Go record before any D9 record exists, requires each committed D9 record to include the Safety section markers below, and scans D9 records for token assignments, internal cost/margin markers, storage paths, local data paths, backend secrets, and raw response body markers.
+The check verifies canonical names, requires a redacted D8 Go / No-Go record before any D9 record exists, requires Owner and Status fields, requires each committed D9 record to include the Safety section markers below, and scans D9 records for token assignments, internal cost/margin markers, storage paths, local data paths, backend secrets, and raw response body markers. Status must be `open`, `blocked`, `closed`, or `superseded`.
 
 ## Template
 

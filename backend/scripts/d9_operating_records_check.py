@@ -17,6 +17,7 @@ POLICY_MARKERS = (
     "D9 Operating Records Policy",
     "D9 operating records may be committed only after a redacted D8 Go / No-Go decision record exists",
     "requires each committed D9 record to include the Safety section markers",
+    "Status must be `open`, `blocked`, `closed`, or `superseded`",
     "Owner: TBD` is allowed only as a human owner placeholder",
     "not an auto-assignee, notification target, or permission to create tickets",
 )
@@ -31,6 +32,7 @@ D9_RECORD_PATTERN = re.compile(
     r"^d9_(?:operating_review|operating_health|order_operations|market_response|improvement_backlog)_\d{8}\.md$"
 )
 D8_GO_NO_GO_PATTERN = re.compile(r"^d8_production_go_no_go_\d{8}\.md$")
+ALLOWED_RECORD_STATUSES = {"open", "blocked", "closed", "superseded"}
 
 
 class Check:
@@ -104,6 +106,23 @@ def _safety_marker_issues(records: list[Path]) -> list[str]:
     return issues
 
 
+def _owner_status_issues(records: list[Path]) -> list[str]:
+    issues: list[str] = []
+    for path in records:
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            issues.append(f"{path.name}:unreadable")
+            continue
+        owner = next((line.split(":", 1)[1].strip() for line in lines if line.startswith("Owner:")), "")
+        status = next((line.split(":", 1)[1].strip().strip("` ").lower() for line in lines if line.startswith("Status:")), "")
+        if not owner:
+            issues.append(f"{path.name}:missing Owner")
+        if status not in ALLOWED_RECORD_STATUSES:
+            issues.append(f"{path.name}:invalid Status {status or '<missing>'}")
+    return issues
+
+
 def _policy_text() -> str:
     try:
         return POLICY_DOC.read_text(encoding="utf-8")
@@ -117,6 +136,7 @@ def main() -> int:
         Check("D9 operating records policy is explicit"),
         Check("D9 operating record names are canonical"),
         Check("D9 operating records are gated by D8 Go / No-Go"),
+        Check("D9 operating records have owner and status"),
         Check("D9 operating records include safety markers"),
         Check("D9 operating records are redacted"),
     ]
@@ -144,11 +164,16 @@ def main() -> int:
     else:
         checks[3].fail("D9 records require docs/records/d8_production_go_no_go_YYYYMMDD.md")
 
+    owner_status = _owner_status_issues(records)
+    checks[4].pass_("required owner/status markers") if not owner_status else checks[4].fail(
+        ", ".join(owner_status[:6])
+    )
+
     safety = _safety_marker_issues(records)
-    checks[4].pass_("required record safety markers") if not safety else checks[4].fail(", ".join(safety[:4]))
+    checks[5].pass_("required record safety markers") if not safety else checks[5].fail(", ".join(safety[:4]))
 
     redaction = _redaction_issues(records)
-    checks[5].pass_("no token assignments or forbidden markers") if not redaction else checks[5].fail(
+    checks[6].pass_("no token assignments or forbidden markers") if not redaction else checks[6].fail(
         ", ".join(redaction[:8])
     )
 

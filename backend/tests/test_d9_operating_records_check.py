@@ -95,6 +95,36 @@ def test_d9_operating_records_check_rejects_missing_safety_markers(tmp_path, mon
     assert "d9_operating_review_20260530.md:missing" in output
 
 
+def test_d9_operating_records_check_rejects_missing_owner(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d8_production_go_no_go_20260530.md").write_text("redacted go/no-go\n", encoding="utf-8")
+    (tmp_path / "d9_operating_review_20260530.md").write_text(
+        _valid_record_body(module).replace("Owner: TBD\n", ""),
+        encoding="utf-8",
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "D9 operating records have owner and status" in output
+    assert "missing Owner" in output
+
+
+def test_d9_operating_records_check_rejects_invalid_status(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d8_production_go_no_go_20260530.md").write_text("redacted go/no-go\n", encoding="utf-8")
+    (tmp_path / "d9_operating_review_20260530.md").write_text(
+        _valid_record_body(module).replace("Status: open", "Status: investigating"),
+        encoding="utf-8",
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "D9 operating records have owner and status" in output
+    assert "invalid Status investigating" in output
+
+
 def test_d9_operating_records_check_rejects_noncanonical_name(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
