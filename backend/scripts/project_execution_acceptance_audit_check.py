@@ -82,6 +82,7 @@ REQUIRED_MARKERS = (
     "D9.3 Market Response Loop",
     "D9.4 Improvement Backlog",
     "Project Execution Chain Gate",
+    "project_execution_chain_gate_check.py",
     "project_execution_status.py",
     "project_execution_acceptance_audit_check.py",
     "d8_staging_handoff_bundle.md",
