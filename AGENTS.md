@@ -46,6 +46,9 @@ python scripts/codex_skill_pack_check.py
 python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
 python scripts/project_execution_status.py
+python scripts/d8_staging_execution_pack_check.py
+python scripts/d9_operating_execution_pack_check.py
+python scripts/project_execution_acceptance_audit_check.py
 python -m pytest -q
 
 cd ../frontend
