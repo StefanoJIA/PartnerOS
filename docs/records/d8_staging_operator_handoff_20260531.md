@@ -1,7 +1,7 @@
 # D8 Strict Staging Operator Handoff
 
-Generated at: 2026-05-31T21:27:56.026207+00:00
-Repository commit: `1fb5b70`
+Generated at: 2026-05-31T21:30:31.886326+00:00
+Repository commit: `b3b752e`
 Readiness status: `READY_FOR_STAGING`
 
 ## Purpose
@@ -96,6 +96,12 @@ python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/recor
 - Console result is `PASS` or `FAIL`.
 - Evidence JSON is redacted and contains check labels, statuses, sanitized URLs, and safety metadata.
 - Gap Markdown is generated when checks fail and can be used as the next fix list.
+
+## Local Rehearsal Boundary
+
+- Local rehearsal output is command-order practice only.
+- Keep local rehearsal scratch artifacts outside `docs/records`.
+- Do not use local rehearsal output as `STAGING_VALIDATED` or `STAGING_GAPS_OPEN` evidence.
 
 ## Safety Boundaries
 

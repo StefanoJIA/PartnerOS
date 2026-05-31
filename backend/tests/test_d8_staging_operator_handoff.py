@@ -31,6 +31,9 @@ def test_handoff_text_contains_runbooks_commands_and_boundaries(monkeypatch):
     assert "python scripts/project_execution_status.py" in text
     assert '$env:BACKEND_BASE_URL="<partneros-staging-backend-origin>"' in text
     assert "partneros-staging.example.com" not in text
+    assert "Local rehearsal output is command-order practice only" in text
+    assert "outside `docs/records`" in text
+    assert "Do not use local rehearsal output as `STAGING_VALIDATED` or `STAGING_GAPS_OPEN` evidence" in text
     assert "Do not deploy or modify `service.intelli-opus.com`" in text
     assert "Do not print, screenshot, commit, or paste portal tokens" in text
     assert "SERVICE_PORTAL_PARTNEROS_TOKEN=<" not in text

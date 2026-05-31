@@ -190,6 +190,12 @@ python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/recor
 - Evidence JSON is redacted and contains check labels, statuses, sanitized URLs, and safety metadata.
 - Gap Markdown is generated when checks fail and can be used as the next fix list.
 
+## Local Rehearsal Boundary
+
+- Local rehearsal output is command-order practice only.
+- Keep local rehearsal scratch artifacts outside `docs/records`.
+- Do not use local rehearsal output as `STAGING_VALIDATED` or `STAGING_GAPS_OPEN` evidence.
+
 ## Safety Boundaries
 
 - Do not deploy or modify `service.intelli-opus.com` from PartnerOS.
