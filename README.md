@@ -187,6 +187,7 @@ python scripts/project_reorientation_summary_check.py  # project reorientation c
 python scripts/readme_check.py  # README current-stage and D8/D9 handoff gate check
 python scripts/deployment_readiness_checklist_check.py  # deployment readiness checklist D8/D9 handoff gate check
 python scripts/testing_guide_check.py  # testing guide D7.6+/D8 validation matrix gate check
+python scripts/staging_evidence_boundary_check.py  # staging docs real-evidence boundary gate check
 python scripts/dev_guide_check.py  # developer guide current local workflow gate check
 python scripts/integrated_backend_standards_check.py  # backend standards and portal bridge safety gate check
 python scripts/lead_intelligence_docs_check.py  # Lead Intelligence evidence and human-review doc gate check

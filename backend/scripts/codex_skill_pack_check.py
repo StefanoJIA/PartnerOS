@@ -31,6 +31,7 @@ REQUIRED_MARKERS = (
     "human Go / No-Go handoff",
     "docs/records/d8_production_go_no_go_YYYYMMDD.md",
     "python scripts/project_execution_chain_gate_check.py",
+    "python scripts/staging_evidence_boundary_check.py",
     "python scripts/project_execution_status.py",
     "python scripts/d8_staging_execution_pack_check.py",
     "python scripts/d9_operating_execution_pack_check.py",
@@ -49,6 +50,7 @@ REQUIRED_MARKERS = (
 PROJECT_EXECUTION_RULE_MARKERS = (
     "WAITING_FOR_REAL_STAGING_EVIDENCE",
     "python scripts/project_execution_chain_gate_check.py",
+    "python scripts/staging_evidence_boundary_check.py",
     "python scripts/d8_staging_execution_pack_check.py",
     "python scripts/project_execution_acceptance_audit_check.py",
     "python scripts/project_execution_status.py",
