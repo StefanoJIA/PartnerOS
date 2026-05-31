@@ -23,6 +23,7 @@ PartnerOS is the internal source of truth for intelliOffice operations. The publ
 - D7 is closed through D7.9: orders, customer confirmations, partner splits, supplier confirmations, production milestones, shipment plans, customer portal bridge APIs, UAT, and resource center.
 - Feedback tickets do not auto-reply, notify customers, or promise resolution time.
 - Current D8 state is `READY_FOR_STAGING_HANDOFF`, not `STAGING_VALIDATED`.
+- `WAITING_FOR_REAL_STAGING_EVIDENCE` means local rehearsal evidence must be replaced with real staging evidence before production coordination.
 - D9 remains gated behind `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, production coordination, and the human Go/No-Go handoff.
 
 ## Validation

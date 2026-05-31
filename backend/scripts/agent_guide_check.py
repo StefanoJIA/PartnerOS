@@ -27,6 +27,7 @@ REQUIRED_MARKERS = (
     "Feedback tickets do not auto-reply",
     "READY_FOR_STAGING_HANDOFF",
     "STAGING_VALIDATED",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "human Go/No-Go handoff",
     '$env:BACKEND_BASE_URL="http://127.0.0.1:8014"',
