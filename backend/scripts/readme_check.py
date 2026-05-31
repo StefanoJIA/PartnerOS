@@ -33,6 +33,7 @@ REQUIRED_MARKERS = (
     "python scripts/d8_staging_evidence_review_check.py",
     "python scripts/project_execution_status.py",
     "python scripts/project_execution_acceptance_audit_check.py",
+    "python scripts/desktop_transition_roadmap_check.py",
     "python scripts/readme_check.py",
     "python scripts/deployment_readiness_checklist_check.py",
     "python scripts/testing_guide_check.py",

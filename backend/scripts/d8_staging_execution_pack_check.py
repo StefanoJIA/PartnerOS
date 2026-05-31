@@ -43,11 +43,13 @@ REQUIRED_FILES = (
     "backend/scripts/project_execution_records_check.py",
     "backend/scripts/agent_guide_check.py",
     "backend/scripts/readme_check.py",
+    "backend/scripts/desktop_transition_roadmap_check.py",
     "backend/scripts/deployment_readiness_checklist_check.py",
     "backend/scripts/testing_guide_check.py",
     "backend/scripts/operator_guide_check.py",
     "README.md",
     "AGENTS.md",
+    "docs/roadmap_desktop_transition.md",
     "docs/deployment_readiness_checklist.md",
     "docs/testing.md",
     "docs/operator_guide.md",
@@ -112,6 +114,7 @@ HANDOFF_MARKERS = (
     "python scripts/ie_auto_project_plan_check.py",
     "python scripts/agent_guide_check.py",
     "python scripts/readme_check.py",
+    "python scripts/desktop_transition_roadmap_check.py",
     "python scripts/deployment_readiness_checklist_check.py",
     "python scripts/testing_guide_check.py",
     "python scripts/operator_guide_check.py",
@@ -201,6 +204,7 @@ def main() -> int:
         Check("project execution records check runs"),
         Check("agent guide check runs"),
         Check("README check runs"),
+        Check("desktop transition roadmap check runs"),
         Check("deployment readiness checklist check runs"),
         Check("testing guide check runs"),
         Check("operator guide check runs"),
@@ -385,35 +389,41 @@ def main() -> int:
     else:
         checks[29].fail((readme.stdout + readme.stderr)[:160])
 
-    deployment_readiness = _run_script("scripts/deployment_readiness_checklist_check.py")
-    if deployment_readiness.returncode == 0 and "Result: PASS" in deployment_readiness.stdout:
+    desktop_transition = _run_script("scripts/desktop_transition_roadmap_check.py")
+    if desktop_transition.returncode == 0 and "Result: PASS" in desktop_transition.stdout:
         checks[30].pass_("PASS")
     else:
-        checks[30].fail((deployment_readiness.stdout + deployment_readiness.stderr)[:160])
+        checks[30].fail((desktop_transition.stdout + desktop_transition.stderr)[:160])
+
+    deployment_readiness = _run_script("scripts/deployment_readiness_checklist_check.py")
+    if deployment_readiness.returncode == 0 and "Result: PASS" in deployment_readiness.stdout:
+        checks[31].pass_("PASS")
+    else:
+        checks[31].fail((deployment_readiness.stdout + deployment_readiness.stderr)[:160])
 
     testing_guide = _run_script("scripts/testing_guide_check.py")
     if testing_guide.returncode == 0 and "Result: PASS" in testing_guide.stdout:
-        checks[31].pass_("PASS")
+        checks[32].pass_("PASS")
     else:
-        checks[31].fail((testing_guide.stdout + testing_guide.stderr)[:160])
+        checks[32].fail((testing_guide.stdout + testing_guide.stderr)[:160])
 
     operator_guide = _run_script("scripts/operator_guide_check.py")
     if operator_guide.returncode == 0 and "Result: PASS" in operator_guide.stdout:
-        checks[32].pass_("PASS")
+        checks[33].pass_("PASS")
     else:
-        checks[32].fail((operator_guide.stdout + operator_guide.stderr)[:160])
+        checks[33].fail((operator_guide.stdout + operator_guide.stderr)[:160])
 
     handoff_code, handoff_text, handoff_output = _generate_handoff()
     if handoff_code == 0 and handoff_text:
-        checks[33].pass_("generated")
+        checks[34].pass_("generated")
     else:
-        checks[33].fail(handoff_output[:160])
+        checks[34].fail(handoff_output[:160])
 
     missing_markers = [marker for marker in HANDOFF_MARKERS if marker not in handoff_text]
     if not missing_markers:
-        checks[34].pass_("commands and safety boundaries")
+        checks[35].pass_("commands and safety boundaries")
     else:
-        checks[34].fail(", ".join(missing_markers))
+        checks[35].fail(", ".join(missing_markers))
 
     print("D8 Staging Execution Pack Check")
     for check in checks:

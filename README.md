@@ -171,6 +171,7 @@ python scripts/project_execution_acceptance_audit_check.py  # project objective 
 python scripts/project_execution_chain_check.py --report-markdown ../docs/records/project_execution_chain_YYYYMMDD.md  # redacted local planning report
 python scripts/project_execution_records_check.py  # project execution report naming/redaction check
 python scripts/agent_guide_check.py  # AGENTS.md runtime, validation, and safety gate check
+python scripts/desktop_transition_roadmap_check.py  # desktop transition roadmap current-state gate check
 python scripts/readme_check.py  # README current-stage and D8/D9 handoff gate check
 python scripts/deployment_readiness_checklist_check.py  # deployment readiness checklist D8/D9 handoff gate check
 python scripts/testing_guide_check.py  # testing guide D7.6+/D8 validation matrix gate check

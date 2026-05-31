@@ -540,6 +540,7 @@ After changing this operator guide or the D8/D9 handoff gates, run:
 
 ```powershell
 python scripts/agent_guide_check.py
+python scripts/desktop_transition_roadmap_check.py
 python scripts/deployment_readiness_checklist_check.py
 python scripts/testing_guide_check.py
 python scripts/operator_guide_check.py

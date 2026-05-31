@@ -119,6 +119,7 @@ Run the PartnerOS D8 strict staging evidence flow against the real deployed stag
 cd backend
 python scripts/agent_guide_check.py
 python scripts/readme_check.py
+python scripts/desktop_transition_roadmap_check.py
 python scripts/deployment_readiness_checklist_check.py
 python scripts/testing_guide_check.py
 python scripts/d8_readiness_audit.py

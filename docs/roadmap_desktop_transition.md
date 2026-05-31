@@ -1,142 +1,79 @@
-# Desktop transition roadmap（桌面化路线）
+# Desktop Transition Roadmap
 
-## 总原则
+**Status:** current on 2026-05-30 as a product-strategy roadmap.
+**Current execution state:** `READY_FOR_STAGING_HANDOFF`.
 
-- **最终产品** = Windows 桌面一体化应用；**当前 Web 联调** = 开发模式。  
-- **先夯实桌面基础（D1–D4）**，再扩展 A 域情报深化与横向功能。  
-- 伙伴 **平级**、**升降系统/人体工学** 市场焦点、Lead Intelligence **归属 A 域且不孤岛** —— 见 [product_vision.md](product_vision.md)。
+This roadmap explains the desktop-first product direction and how the earlier D0-D6 transition work maps into the current D7-D9 execution chain. It is not the active staging runbook; use [D8 Staging Handoff Bundle](phase3/d8_staging_handoff_bundle.md) and [D8 Staging Operator Runbook](phase3/d8_staging_operator_runbook.md) for that.
 
-## Phase D0 — Project reorientation（已完成）
+## Product Principle
 
-**目标**：文档与愿景统一为 desktop-first；团队不再将「pgAdmin / 手工建库」视为产品假设。
+PartnerOS is the internal source of truth for intelliOffice operations. The final customer/operator product remains Windows-first and desktop-oriented: users should not need to install or manage PostgreSQL, pgAdmin, Docker, Alembic, seed scripts, or multiple terminals to use the packaged product.
 
-**验收**：
+Development mode may still use Vue, FastAPI, PostgreSQL, Docker, and manual commands. That is the implementation stack, not the end-user deployment assumption.
 
-- [ ] README 明确 Product vision vs Development mode  
-- [ ] `docs/product_vision.md`、`architecture_desktop_target.md`、`runtime_modes.md`、`database_lifecycle.md`、`packaging_strategy.md`、`migration_from_web_to_desktop.md`、`open_questions_desktop.md`、`project_reorientation_summary.md` 可用且交叉链接  
-- [ ] `docs/testing.md` 标明「仅开发者/CI」  
+## Historical Transition Stages
 
-**依赖**：无。
+| Stage | Intent | Current result |
+|---|---|---|
+| D0 | Reorient docs from web-first to desktop-first | Superseded by current README, product vision, testing guide, and execution gates |
+| D1 | Make backend runtime and health checks desktop-ready | Implemented through runtime mode, health, doctor, and database lifecycle checks |
+| D2 | Add desktop shell path and frontend health behavior | Implemented enough for development/test coverage; product packaging remains a later productization concern |
+| D3 | Add backend sidecar and managed runtime direction | Implemented through sidecar entry, packaging scripts, and runtime docs |
+| D4 | Define database lifecycle manager and bootstrap boundaries | Implemented through database lifecycle docs, health fields, and tests |
+| D5 | Close lead intelligence, enrichment, manual outreach, and pre-quote handoff | Closed as D5 Final |
+| D6 | Close quote MVP through quote-to-order readiness | Closed as D6 Final |
 
----
+## Current Execution Stages
 
-## Phase D1 — Desktop-ready backend
+| Stage | Scope | Current result |
+|---|---|---|
+| D7 | Orders, confirmations, partners/suppliers, production milestones, shipment plans, portal bridge, resources | Closed through D7.9 |
+| D8 | Runtime hardening, service portal staging integration, strict staging evidence, production coordination readiness | Local gates ready; waiting for real staging values and evidence |
+| D9 | Post-launch operating loop, health review, order operations, market response, improvement backlog | Planned behind `STAGING_VALIDATED`, evidence review, and production coordination |
 
-**目标**：Runtime mode 抽象；App Bootstrap Manager 设计与最小实现；迁移与 seed 在 **开发模式** 下可 **单命令** 达成；健康检查可被未来 shell 消费；bootstrap seed 与 demo seed 职责分离设计。
+Current local proof is `READY_FOR_STAGING_HANDOFF`, not `STAGING_VALIDATED`.
 
-**验收**：
+## Active Validation Chain
 
-- [ ] `development` / `desktop`（可选桩）模式在配置层可区分  
-- [ ] 单一入口（CLI 或 API）可：**检测 DB → 迁移 → 确保管理员存在**（开发环境可打通）  
-- [ ] `/health`（或等价）返回结构化就绪信息（字段在实现时冻结文档）  
-- [ ] 不在此阶段要求最终用户手工 Alembic/seed  
+```powershell
+cd backend
+python scripts/agent_guide_check.py
+python scripts/readme_check.py
+python scripts/deployment_readiness_checklist_check.py
+python scripts/testing_guide_check.py
+python scripts/desktop_transition_roadmap_check.py
+python scripts/project_execution_chain_check.py
+python scripts/project_execution_status.py
+```
 
-**依赖**：D0。
+For D7.6+ smoke and current D8 local validation, use backend port `8014` and follow [Testing Guide](testing.md).
 
----
+## Deferred Productization Work
 
-## Phase D2 — Desktop shell MVP
+These remain valid product goals, but they are not authorized by the current staging handoff and should not be mixed into D8 evidence work:
 
-**目标**：Tauri（或备选 Electron）壳：**加载构建后的前端**、**启动 FastAPI sidecar**、Splash、基础错误 UI；登录后可达 Dashboard。
+- Packaged Windows installer polish and auto-update decisions.
+- End-user database provisioning UX beyond the current lifecycle foundation.
+- Backup/restore product UX and support diagnostics export.
+- Full enterprise RBAC productization beyond current scoped access foundations.
+- Cloud sync and multi-site deployment.
+- Heavy web scraping, local LLM training, and campaign automation.
+- Large Field Visit detail workspace and Constant Contact/Campaign features.
 
-**验收**：
+## Safety Boundaries
 
-- [ ] 双击应用进入 UI，**无需**用户手动 `uvicorn` / `npm run dev`  
-- [ ] 后端异常时有可读错误（非空白页）  
-- [ ] **开发模式** 仍可浏览器 + 手工后端（并行不破坏）  
+- No final-user workflow may require pgAdmin, manual PostgreSQL administration, Docker CLI, Alembic, or seed scripts.
+- No automatic email, webhook, carrier API, supplier notification, customer notification, order/shipment/payment mutation, nginx edit, cloud upstream edit, or `service.intelli-opus.com` deployment is authorized by this roadmap.
+- No internal cost, margin, pricing breakdown, supplier private note, backend path, storage key, token, cookie, or raw response body may be exposed through customer-facing APIs or committed records.
 
-**依赖**：D1（至少 health + 稳定本机 API 端口策略）。
+## References
 
----
-
-## Phase D3 — Managed local database prototype
-
-**目标**：Database Lifecycle Manager **原型**：在**无 pgAdmin** 的干净 Windows 上完成：首次运行 → 数据目录 → 初始化/连接数据库 → 扩展 → 迁移 → 健康。
-
-**验收**：
-
-- [ ] 普通用户无需输入 PostgreSQL 超级用户密码即可完成首启（或等价「一键修复」）  
-- [ ] 应用能判定 DB 健康/不健康并记录日志  
-
-**依赖**：D2（壳要能展示长时间启动与失败）。
-
----
-
-## Phase D4 — Desktop beta（现有主链）
-
-**目标**：Dashboard → Lead → RFQ → Sample → Order 全链路在 **桌面产品模式** 下可跑；demo 数据由 **demo 模式** 或首次向导触发，**非** 用户运行 `seed_business_flow` 脚本。
-
-**验收**：
-
-- [ ] 安装后即可完成当前主流程（与开发模式功能对等）  
-- [ ] 无命令行依赖；无 pgAdmin 依赖  
-
-**依赖**：D3。
-
----
-
-## Phase D5 — Lead intelligence integration（进行中 → 最小闭环已落地）
-
-**目标**：A 域能力（**升降系统 / 人体工学** 相关信号、可解释 Lead score、公司与市场情报关联）与 `Company` / `Lead` / `Interaction` **数据流贯通**；工作台形态区别于「仅 Web 列表页」。
-
-**验收（D5 本仓库当前增量）**：
-
-- [x] **Lead Intelligence 工作台**：`/lead-intelligence`，聚合公司与主联系人、市场情报计数、评分与建议，并支持记录 `Interaction` + 更新 `Lead.next_action`。  
-- [x] **API**：`GET /api/a-domain/leads/{id}/workflow`、`POST /api/a-domain/leads/{id}/touchpoint`；`GET /api/market-intelligence?related_company_id=`。  
-- [x] **市场匹配维度**：`market_fit_segments`（升降信号、**D5.1** `general_office_furniture_only` 弱分层、OEM/ODM、医疗/教育/重载等可解释标签）与关键词集对齐产品愿景。  
-- [x] **迁移审查文档**：`migration_from_web_to_desktop.md` §7.1 覆盖保留 / 重构 / 暂缓 / 不宜直入 / 差异 / 推进顺序六项。  
-- [ ] **推荐动作与 B/C/D 域对象一键关联**（可在后续用深链/快捷创建承接）。
-
-**依赖**：D4。
-
----
-
-## Phase D5.2 — Public-source enrichment MVP（已完成）
-
-**目标**：在公司详情链路上增加 **官网等有限公开页 → 证据落库 → 规则建议 → 人工审阅 → 显式 apply** 的最小闭环，复用 D5 `infer_market_fit_segments` / `compute_intelligence_score`，**不**静默写正式评分或标签。
-
-**验收**：
-
-- [x] 三张表 `CompanyEnrichmentRun` / `CompanyEnrichmentSource` / `CompanyEnrichmentSuggestion` + Alembic 迁移。
-- [x] 抓取：同源主机 + SSRF 防护、固定路径 MVP、超时与体积上限、hash 去重。
-- [x] API：`POST/GET .../enrichment/runs`、run 详情、单条与批量 review、仅 `accepted` 的 `apply` + activity。
-- [x] 前端：公司详情 **Enrichment** 面板；可启动 run、审阅来源与建议、接受/拒绝/批量、对已接受项写入画像。
-- [x] 文档：[public_source_enrichment_mvp.md](public_source_enrichment_mvp.md)、[lead_intelligence_mvp.md](lead_intelligence_mvp.md)。
-- [x] 单测：后端 `test_enrichment_unit.py`；前端 `CompanyEnrichmentPanel.spec.ts`（mock API）。
-- [x] **可选关断**：`PUBLIC_ENRICHMENT_ENABLED=false` 禁止创建外网 run（CI/无网环境）。
-
-**依赖**：D5（规则与 Lead Intelligence 语义对齐）。
-
----
-
-## Phase D6 — Productization
-
-**目标**：安装包定稿、自动更新、备份/恢复、诊断包、导入导出、崩溃日志、配置 UI、权限增强。
-
-**验收**：
-
-- [ ] 可分发、可恢复、可支撑客服诊断  
-
-**依赖**：D4–D5 按需并行。
-
----
-
-## 暂缓（explicit defer）
-
-在 **D4 桌面 foundation 未完成前**，默认 **不启动** 以下产品级深度实现：
-
-- Field Visit **Detail workspace**（大规模）  
-- Constant Contact / **Campaign**  
-- 正式 **报价 PDF**  
-- **复杂网页采集**  
-- **本地大模型训练**  
-- **云同步**  
-- **完整 RBAC** 产品化  
-- **任何**要求最终用户手动操作 **pgAdmin / PostgreSQL 安装 / Docker CLI** 的设计  
-
-（调查研究可在设计文档中准备，但不落地为面向用户的依赖。）
-
-## 相关文档
-
-- [project_reorientation_summary.md](project_reorientation_summary.md)  
-- [open_questions_desktop.md](open_questions_desktop.md)  
+- [Product Vision](product_vision.md)
+- [Architecture Desktop Target](architecture_desktop_target.md)
+- [Runtime Modes](runtime_modes.md)
+- [Database Lifecycle](database_lifecycle.md)
+- [Packaging Strategy](packaging_strategy.md)
+- [Migration From Web To Desktop](migration_from_web_to_desktop.md)
+- [Project Reorientation Summary](project_reorientation_summary.md)
+- [Phase 3 Roadmap](phase3/phase3_roadmap.md)
+- [Project Execution Chain Gate](phase3/project_execution_chain_gate.md)
