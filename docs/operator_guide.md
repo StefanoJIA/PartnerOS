@@ -398,6 +398,7 @@ Before sharing the staging package, use [D8 Staging Handoff Bundle](phase3/d8_st
 
 ```powershell
 python scripts/d8_staging_handoff_bundle_check.py
+python scripts/d8_staging_execution_pack_check.py
 ```
 
 Use [D8 Staging Operator Runbook](phase3/d8_staging_operator_runbook.md) for the exact sequence from `READY_FOR_STAGING_HANDOFF` through input preflight, strict evidence, records review, and production-coordination state:
