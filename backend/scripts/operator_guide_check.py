@@ -25,6 +25,7 @@ REQUIRED_MARKERS = (
     "d8_staging_access_request_check.py",
     "d8_staging_operator_response_intake_check.py",
     "d8_staging_records_check.py",
+    "staging_evidence_boundary_check.py",
     "d8_staging_execution_pack_check.py",
     "https://<redacted-backend>",
     "d8_staging_evidence_review_check.py",

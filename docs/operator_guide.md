@@ -397,6 +397,7 @@ Add `--gap-markdown ../docs/records/d8_strict_staging_gaps_YYYYMMDD.md` to gener
 Before sharing the staging package, use [D8 Staging Handoff Bundle](phase3/d8_staging_handoff_bundle.md) and verify it with:
 
 ```powershell
+python scripts/staging_evidence_boundary_check.py
 python scripts/d8_staging_handoff_bundle_check.py
 python scripts/d8_staging_execution_pack_check.py
 ```
@@ -507,6 +508,7 @@ For a single local planning gate, run:
 
 ```powershell
 python scripts/project_execution_chain_gate_check.py
+python scripts/staging_evidence_boundary_check.py
 python scripts/project_execution_chain_check.py
 ```
 
