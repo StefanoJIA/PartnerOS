@@ -1,7 +1,7 @@
 # D8 Strict Staging Operator Handoff
 
-Generated at: 2026-05-31T22:38:37.220340+00:00
-Repository commit: `4b4c270`
+Generated at: 2026-05-31T22:41:25.396409+00:00
+Repository commit: `ca0e1b8`
 Readiness status: `READY_FOR_STAGING`
 
 ## Purpose
@@ -102,6 +102,7 @@ python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/recor
 - Local rehearsal output is command-order practice only.
 - Keep local rehearsal scratch artifacts outside `docs/records`.
 - Do not use local rehearsal output as `STAGING_VALIDATED` or `STAGING_GAPS_OPEN` evidence.
+- If local rehearsal output is saved where evidence is expected, production coordination remains at `WAITING_FOR_REAL_STAGING_EVIDENCE` until strict staging evidence from real staging values replaces it.
 
 ## Safety Boundaries
 

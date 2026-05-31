@@ -24,7 +24,7 @@ This bundle is the exact local package to hand to the staging operator before re
 | [D8 Staging Gap Triage](d8_staging_gap_triage.md) | Defines the owner/status/rerun loop if evidence fails |
 | [D8 Staging Records Policy](d8_staging_records_policy.md) | Defines canonical record names and redaction rules |
 | [D8 Staging Evidence Review](d8_staging_evidence_review.md) | Defines how to interpret saved PASS/FAIL evidence before production coordination |
-| [D8 Production Coordination Plan](d8_production_coordination_plan.md) | Defines the path after `STAGING_VALIDATED` |
+| [D8 Production Coordination Plan](d8_production_coordination_plan.md) | Defines the path after `STAGING_VALIDATED`; `WAITING_FOR_REAL_STAGING_EVIDENCE` keeps local rehearsal output from unlocking coordination |
 | [D8 Production Coordination Runbook](d8_production_coordination_runbook.md) | Defines the human Go / No-Go and rollback handoff after staging validation |
 
 ## Committed Records
@@ -73,6 +73,8 @@ When private staging values are available, run [D8 Staging Input Preflight](d8_s
 When operations replies, use [D8 Staging Operator Response Intake](d8_staging_operator_response_intake.md) to accept only redacted confirmation fields and canonical evidence artifact names.
 
 [D8 Local Staging Rehearsal](d8_local_staging_rehearsal.md) is optional for command-order practice against local `127.0.0.1:8014`. It is not staging proof and must not be committed as `STAGING_VALIDATED` or `STAGING_GAPS_OPEN` evidence. Keep rehearsal scratch artifacts outside `docs/records`.
+
+If local rehearsal output is saved where evidence is expected, do not proceed to production coordination. `d8_production_coordination_check.py` remains at `WAITING_FOR_REAL_STAGING_EVIDENCE` until the operator replaces it with strict staging evidence from real staging values.
 
 ## Strict Evidence Command
 

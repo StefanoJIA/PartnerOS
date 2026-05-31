@@ -195,6 +195,7 @@ python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/recor
 - Local rehearsal output is command-order practice only.
 - Keep local rehearsal scratch artifacts outside `docs/records`.
 - Do not use local rehearsal output as `STAGING_VALIDATED` or `STAGING_GAPS_OPEN` evidence.
+- If local rehearsal output is saved where evidence is expected, production coordination remains at `WAITING_FOR_REAL_STAGING_EVIDENCE` until strict staging evidence from real staging values replaces it.
 
 ## Safety Boundaries
 

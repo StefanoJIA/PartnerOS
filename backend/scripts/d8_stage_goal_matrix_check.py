@@ -112,6 +112,7 @@ REQUIRED_MATRIX_MARKERS = (
     "D8 Staging Records Policy",
     "D8 Staging Evidence Review",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
     "D8 Production Coordination",
     "D8 Production Coordination Runbook",
     "human Go / No-Go handoff",
@@ -138,6 +139,7 @@ REQUIRED_MATRIX_MARKERS = (
     "--gap-markdown",
     "No automatic customer or supplier notification",
     "Rehearsal output is not staging proof and must not change the readiness state to `STAGING_VALIDATED` or `STAGING_GAPS_OPEN`",
+    "until the operator replaces it with strict staging evidence from real staging values",
 )
 
 

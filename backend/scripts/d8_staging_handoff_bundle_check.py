@@ -64,6 +64,7 @@ REQUIRED_MARKERS = (
     "SERVICE_PORTAL_ORIGIN",
     "not staging proof",
     "LOCAL_REHEARSAL_READY",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
     "STAGING_GAPS_OPEN",
     "outside `docs/records`",
     "Exclude",
@@ -74,6 +75,7 @@ REQUIRED_MARKERS = (
     "Committed Records",
     "D8 Staging Operator Handoff Record",
     "D8 Staging Access Request Record",
+    "strict staging evidence from real staging values",
 )
 FORBIDDEN_MARKERS = (
     "PORTAL_CUSTOMER_API_TOKEN=",
