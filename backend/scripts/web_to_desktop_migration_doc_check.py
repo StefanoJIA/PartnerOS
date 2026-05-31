@@ -34,6 +34,8 @@ REQUIRED_MARKERS = (
     "service.intelli-opus.com",
     "python scripts/web_to_desktop_migration_doc_check.py",
     "python scripts/project_execution_chain_gate_check.py",
+    "python scripts/d8_staging_execution_pack_check.py",
+    "python scripts/project_execution_acceptance_audit_check.py",
 )
 FORBIDDEN_MARKERS = (
     "娑?",

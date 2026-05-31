@@ -50,6 +50,8 @@ cd backend
 python scripts/desktop_packaging_docs_check.py
 python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
+python scripts/d8_staging_execution_pack_check.py
+python scripts/project_execution_acceptance_audit_check.py
 ```
 
 ## Related Docs

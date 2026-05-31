@@ -30,6 +30,8 @@ REQUIRED_PACKAGING_MARKERS = (
     "service.intelli-opus.com",
     "python scripts/desktop_packaging_docs_check.py",
     "python scripts/project_execution_chain_gate_check.py",
+    "python scripts/d8_staging_execution_pack_check.py",
+    "python scripts/project_execution_acceptance_audit_check.py",
     "STAGING_VALIDATED",
 )
 REQUIRED_QUESTIONS_MARKERS = (
@@ -45,6 +47,8 @@ REQUIRED_QUESTIONS_MARKERS = (
     "service.intelli-opus.com",
     "python scripts/desktop_packaging_docs_check.py",
     "python scripts/project_execution_chain_gate_check.py",
+    "python scripts/d8_staging_execution_pack_check.py",
+    "python scripts/project_execution_acceptance_audit_check.py",
 )
 FORBIDDEN_MARKERS = (
     "娑?",
