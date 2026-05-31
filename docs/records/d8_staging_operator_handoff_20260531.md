@@ -1,7 +1,7 @@
 # D8 Strict Staging Operator Handoff
 
-Generated at: 2026-05-31T22:34:59.377336+00:00
-Repository commit: `fa753e6`
+Generated at: 2026-05-31T22:36:22.282945+00:00
+Repository commit: `fdc32c7`
 Readiness status: `READY_FOR_STAGING`
 
 ## Purpose
