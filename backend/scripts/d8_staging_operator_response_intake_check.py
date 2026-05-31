@@ -24,6 +24,7 @@ REQUIRED_MARKERS = (
     "SERVICE_PORTAL_ORIGIN",
     "DEPLOYED_COMMIT",
     "TEST_DATA_SCOPE",
+    "EVIDENCE_ARTIFACTS",
     "provided privately",
     "d8_strict_staging_evidence_YYYYMMDD.json",
     "d8_strict_staging_gaps_YYYYMMDD.md",
@@ -47,6 +48,7 @@ FORBIDDEN_MARKERS = (
 )
 TOKEN_STATUS = re.compile(r"^\s*SERVICE_PORTAL_PARTNEROS_TOKEN\s*:\s*(?P<value>.+?)\s*$", re.IGNORECASE)
 BACKEND_URL_STATUS = re.compile(r"^\s*BACKEND_BASE_URL\s*:\s*(?P<value>.+?)\s*$", re.IGNORECASE)
+EVIDENCE_ARTIFACTS_STATUS = re.compile(r"^\s*EVIDENCE_ARTIFACTS\s*:\s*(?P<value>.+?)\s*$", re.IGNORECASE)
 
 
 class Check:
@@ -90,6 +92,14 @@ def _forbidden(text: str) -> list[str]:
         status = TOKEN_STATUS.match(line)
         if status and status.group("value").strip() != "provided privately":
             issues.append("SERVICE_PORTAL_PARTNEROS_TOKEN:<non-private-status>")
+        artifacts = EVIDENCE_ARTIFACTS_STATUS.match(line)
+        if artifacts:
+            value = artifacts.group("value")
+            if (
+                "d8_strict_staging_evidence_YYYYMMDD.json" not in value
+                or "d8_strict_staging_gaps_YYYYMMDD.md" not in value
+            ):
+                issues.append("EVIDENCE_ARTIFACTS:<noncanonical-name>")
         if "SERVICE_PORTAL_PARTNEROS_TOKEN" in line and "=" in line and "<portal-server-token>" not in line:
             issues.append("SERVICE_PORTAL_PARTNEROS_TOKEN=<non-placeholder>")
     return issues

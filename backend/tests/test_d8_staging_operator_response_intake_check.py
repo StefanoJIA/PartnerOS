@@ -70,6 +70,23 @@ def test_d8_staging_operator_response_intake_check_flags_backend_url_status_valu
     assert "BACKEND_BASE_URL:<non-private-status>" in output
 
 
+def test_d8_staging_operator_response_intake_check_flags_noncanonical_evidence_artifacts(
+    monkeypatch, tmp_path, capsys
+):
+    module = _load_module()
+    doc = tmp_path / "intake.md"
+    markers = [marker for marker in module.REQUIRED_MARKERS if marker != "d8_strict_staging_gaps_YYYYMMDD.md"]
+    doc.write_text(
+        "\n".join([*markers, "EVIDENCE_ARTIFACTS: latest.json"]),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "DOC", doc)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "EVIDENCE_ARTIFACTS:<noncanonical-name>" in output
+
+
 def test_d8_staging_operator_response_intake_check_flags_generic_api_key(
     monkeypatch, tmp_path, capsys
 ):
