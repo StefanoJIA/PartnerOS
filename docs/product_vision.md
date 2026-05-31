@@ -20,7 +20,7 @@ PartnerOS is not:
 
 D5 Lead Intelligence is closed. D6 Quote MVP is closed. D7 is closed through D7.9, covering order lifecycle, confirmations, partner/supplier execution, production milestones, shipment plans, customer portal bridge APIs, feedback intake, and resource center foundations.
 
-D8 is currently `READY_FOR_STAGING_HANDOFF`: local docs, gates, and handoff runbooks agree, but real strict staging evidence still requires private staging values. D9 operating loops remain planned behind `STAGING_VALIDATED`, evidence review, and production coordination.
+D8 is currently `READY_FOR_STAGING_HANDOFF`: local docs, gates, and handoff runbooks agree, but real strict staging evidence still requires private staging values. D9 operating loops remain planned behind `STAGING_VALIDATED`, evidence review, production coordination, and the human Go / No-Go handoff.
 
 ## Value Loop
 
@@ -77,7 +77,7 @@ The current path is:
 1. Preserve D5-D7 closed behavior.
 2. Complete D8 staging handoff with real private staging evidence.
 3. Use production coordination only after `STAGING_VALIDATED` and evidence review.
-4. Start D9 operating loops after production coordination.
+4. Start D9 operating loops after production coordination and the human Go / No-Go handoff; if committed, use `docs/records/d8_production_go_no_go_YYYYMMDD.md`.
 5. Keep future desktop packaging and local-first polish aligned with the current runtime and data lifecycle docs.
 
 ## Related Documents

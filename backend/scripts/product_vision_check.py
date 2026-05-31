@@ -19,6 +19,8 @@ REQUIRED_MARKERS = (
     "service.intelli-opus.com",
     "READY_FOR_STAGING_HANDOFF",
     "STAGING_VALIDATED",
+    "human Go / No-Go handoff",
+    "docs/records/d8_production_go_no_go_YYYYMMDD.md",
     "D7 is closed through D7.9",
     "Lead Intelligence belongs inside this loop",
     "peer manufacturing partner rows",

@@ -17,6 +17,8 @@ REQUIRED_MARKERS = (
     "PartnerOS Developer Guide",
     "READY_FOR_STAGING_HANDOFF",
     "does not mean `STAGING_VALIDATED`",
+    "human Go / No-Go handoff",
+    "docs/records/d8_production_go_no_go_YYYYMMDD.md",
     "service.intelli-opus.com",
     "Manufacturing partners are peer rows",
     "No product path may require final users to run pgAdmin",

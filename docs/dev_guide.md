@@ -21,7 +21,7 @@ Current local execution priorities:
 2. Keep D8 handoff gates executable on local port `8014`.
 3. Obtain real staging values through the D8 access request process.
 4. Run strict staging evidence only with those private values.
-5. Start D9 operating loops only after `STAGING_VALIDATED`, evidence review, and production coordination.
+5. Start D9 operating loops only after `STAGING_VALIDATED`, evidence review, production coordination, and the human Go / No-Go handoff. If that decision is committed, use `docs/records/d8_production_go_no_go_YYYYMMDD.md`.
 
 ## Product Boundaries
 
