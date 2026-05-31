@@ -76,6 +76,7 @@ FORBIDDEN_MARKERS = (
     "uvicorn :8000",
 )
 TOKEN_ASSIGNMENT = re.compile(r"SERVICE_PORTAL_PARTNEROS_TOKEN\s*=")
+PROOF_RECORD_MARKERS = tuple(marker for marker in REQUIRED_MARKERS if marker.startswith("docs/records/"))
 
 
 class Check:
@@ -113,10 +114,21 @@ def _token_assignment_issues(text: str) -> list[str]:
     return issues
 
 
+def _proof_record_issues() -> list[str]:
+    issues: list[str] = []
+    for marker in PROOF_RECORD_MARKERS:
+        if "YYYYMMDD" in marker:
+            continue
+        if not (REPO_ROOT / marker).is_file():
+            issues.append(marker)
+    return issues
+
+
 def main() -> int:
     checks = [
         Check("README exists"),
         Check("README contains current stage and handoff gates"),
+        Check("README proof record links exist"),
         Check("README avoids stale stage claims"),
         Check("README is redacted"),
     ]
@@ -127,12 +139,17 @@ def main() -> int:
     missing = [marker for marker in REQUIRED_MARKERS if marker not in text]
     checks[1].pass_(f"{len(REQUIRED_MARKERS)} markers") if not missing else checks[1].fail(", ".join(missing))
 
+    proof_records = _proof_record_issues()
+    checks[2].pass_("current proof records present") if not proof_records else checks[2].fail(
+        ", ".join(proof_records)
+    )
+
     stale = [marker for marker in FORBIDDEN_MARKERS if marker in text]
-    checks[2].pass_("no stale D7/D5.2 boundary markers") if not stale else checks[2].fail(", ".join(stale))
+    checks[3].pass_("no stale D7/D5.2 boundary markers") if not stale else checks[3].fail(", ".join(stale))
 
     redaction = _token_assignment_issues(text)
     redaction.extend(redaction_issues(DOC, text, include_common_markers=False))
-    checks[3].pass_("no secret-like markers") if not redaction else checks[3].fail(", ".join(redaction[:8]))
+    checks[4].pass_("no secret-like markers") if not redaction else checks[4].fail(", ".join(redaction[:8]))
 
     print("README Check")
     for check in checks:

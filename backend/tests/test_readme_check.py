@@ -38,11 +38,17 @@ def test_readme_check_flags_missing_current_stage_marker(monkeypatch, tmp_path, 
 def test_readme_check_flags_stale_d7_boundary(monkeypatch, tmp_path, capsys):
     module = _load_module()
     doc = tmp_path / "README.md"
+    for marker in module.PROOF_RECORD_MARKERS:
+        if "YYYYMMDD" not in marker:
+            path = tmp_path / marker
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("redacted\n", encoding="utf-8")
     doc.write_text(
         "\n".join([*module.REQUIRED_MARKERS, "**D7** is Order / Production / Shipment."]),
         encoding="utf-8",
     )
     monkeypatch.setattr(module, "DOC", doc)
+    monkeypatch.setattr(module, "REPO_ROOT", tmp_path)
 
     assert module.main() == 1
     output = capsys.readouterr().out
@@ -52,12 +58,31 @@ def test_readme_check_flags_stale_d7_boundary(monkeypatch, tmp_path, capsys):
 def test_readme_check_flags_secret_like_assignment(monkeypatch, tmp_path, capsys):
     module = _load_module()
     doc = tmp_path / "README.md"
+    for marker in module.PROOF_RECORD_MARKERS:
+        if "YYYYMMDD" not in marker:
+            path = tmp_path / marker
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("redacted\n", encoding="utf-8")
     doc.write_text(
         "\n".join([*module.REQUIRED_MARKERS, 'SERVICE_PORTAL_PARTNEROS_TOKEN="actual-secret-value"']),
         encoding="utf-8",
     )
     monkeypatch.setattr(module, "DOC", doc)
+    monkeypatch.setattr(module, "REPO_ROOT", tmp_path)
 
     assert module.main() == 1
     output = capsys.readouterr().out
     assert "README is redacted" in output
+
+
+def test_readme_check_flags_missing_proof_record(monkeypatch, tmp_path, capsys):
+    module = _load_module()
+    doc = tmp_path / "README.md"
+    doc.write_text("\n".join(module.REQUIRED_MARKERS), encoding="utf-8")
+    monkeypatch.setattr(module, "DOC", doc)
+    monkeypatch.setattr(module, "REPO_ROOT", tmp_path)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "README proof record links exist" in output
+    assert "docs/records/project_execution_chain_20260531.md" in output
