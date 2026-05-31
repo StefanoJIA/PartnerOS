@@ -12,6 +12,7 @@ It is intentionally local and read-only. It does not call staging, read `.env`, 
 
 ```powershell
 cd backend
+python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
 python scripts/project_execution_status.py
 ```

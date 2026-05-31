@@ -16,6 +16,7 @@ REQUIRED_MARKERS = (
     "Project Execution Chain Gate",
     "READY_FOR_STAGING_HANDOFF",
     "LOCAL_EXECUTION_CHAIN_INCOMPLETE",
+    "project_execution_chain_gate_check.py",
     "project_execution_chain_check.py",
     "project_execution_status.py",
     "project_execution_records_check.py",
