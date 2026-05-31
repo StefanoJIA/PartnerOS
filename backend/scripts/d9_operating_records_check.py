@@ -15,6 +15,7 @@ RECORDS_ROOT = REPO_ROOT / "docs" / "records"
 POLICY_DOC = REPO_ROOT / "docs" / "phase3" / "d9_operating_records_policy.md"
 POLICY_MARKERS = (
     "D9 Operating Records Policy",
+    "D9 operating records may be committed only after a redacted D8 Go / No-Go decision record exists",
     "requires each committed D9 record to include the Safety section markers",
     "Owner: TBD` is allowed only as a human owner placeholder",
     "not an auto-assignee, notification target, or permission to create tickets",
@@ -29,6 +30,9 @@ RECORD_REQUIRED_MARKERS = (
 D9_RECORD_PATTERN = re.compile(
     r"^d9_(?:operating_review|operating_health|order_operations|market_response|improvement_backlog)_\d{8}\.md$"
 )
+D8_GO_NO_GO_PATTERN = re.compile(r"^d8_production_go_no_go_\d{8}\.md$")
+
+
 class Check:
     def __init__(self, label: str) -> None:
         self.label = label
@@ -60,6 +64,14 @@ def _d9_records() -> list[Path]:
     if not RECORDS_ROOT.exists():
         return []
     return sorted(path for path in RECORDS_ROOT.iterdir() if path.is_file() and path.name.startswith("d9_"))
+
+
+def _d8_go_no_go_records() -> list[Path]:
+    if not RECORDS_ROOT.exists():
+        return []
+    return sorted(
+        path for path in RECORDS_ROOT.iterdir() if path.is_file() and D8_GO_NO_GO_PATTERN.match(path.name)
+    )
 
 
 def _naming_issues(records: list[Path]) -> list[str]:
@@ -104,6 +116,7 @@ def main() -> int:
         Check("docs/records exists"),
         Check("D9 operating records policy is explicit"),
         Check("D9 operating record names are canonical"),
+        Check("D9 operating records are gated by D8 Go / No-Go"),
         Check("D9 operating records include safety markers"),
         Check("D9 operating records are redacted"),
     ]
@@ -123,11 +136,19 @@ def main() -> int:
     naming = _naming_issues(records)
     checks[2].pass_(f"{len(records)} D9 records") if not naming else checks[2].fail(", ".join(naming))
 
+    go_no_go_records = _d8_go_no_go_records()
+    if not records:
+        checks[3].pass_("no D9 records")
+    elif go_no_go_records:
+        checks[3].pass_(go_no_go_records[-1].name)
+    else:
+        checks[3].fail("D9 records require docs/records/d8_production_go_no_go_YYYYMMDD.md")
+
     safety = _safety_marker_issues(records)
-    checks[3].pass_("required record safety markers") if not safety else checks[3].fail(", ".join(safety[:4]))
+    checks[4].pass_("required record safety markers") if not safety else checks[4].fail(", ".join(safety[:4]))
 
     redaction = _redaction_issues(records)
-    checks[4].pass_("no token assignments or forbidden markers") if not redaction else checks[4].fail(
+    checks[5].pass_("no token assignments or forbidden markers") if not redaction else checks[5].fail(
         ", ".join(redaction[:8])
     )
 

@@ -41,6 +41,7 @@ def test_d9_operating_records_check_passes_without_d9_records(tmp_path, monkeypa
 def test_d9_operating_records_check_accepts_aggregate_review_record(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d8_production_go_no_go_20260530.md").write_text("redacted go/no-go\n", encoding="utf-8")
     (tmp_path / "d9_operating_review_20260530.md").write_text(
         _valid_record_body(module) + "\n",
         encoding="utf-8",
@@ -55,6 +56,7 @@ def test_d9_operating_records_check_accepts_aggregate_review_record(tmp_path, mo
 def test_d9_operating_records_check_accepts_template_safety_statement(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d8_production_go_no_go_20260530.md").write_text("redacted go/no-go\n", encoding="utf-8")
     (tmp_path / "d9_operating_review_20260530.md").write_text(
         _valid_record_body(module)
         + "\n",
@@ -67,9 +69,24 @@ def test_d9_operating_records_check_accepts_template_safety_statement(tmp_path, 
     assert "Result: PASS" in output
 
 
+def test_d9_operating_records_check_rejects_d9_record_without_d8_go_no_go(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d9_operating_review_20260530.md").write_text(
+        _valid_record_body(module) + "\n",
+        encoding="utf-8",
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "D9 operating records are gated by D8 Go / No-Go" in output
+    assert "d8_production_go_no_go_YYYYMMDD.md" in output
+
+
 def test_d9_operating_records_check_rejects_missing_safety_markers(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d8_production_go_no_go_20260530.md").write_text("redacted go/no-go\n", encoding="utf-8")
     (tmp_path / "d9_operating_review_20260530.md").write_text("redacted summary\n", encoding="utf-8")
 
     assert module.main() == 1
