@@ -19,6 +19,7 @@ REQUIRED_PLAN_MARKERS = (
     "No customer or supplier notification",
     "No email, webhook, carrier API",
     "No automatic order, shipment, delivery, payment, or partner-selection mutation",
+    "docs/records/d8_production_go_no_go_YYYYMMDD.md",
     "Rollback",
     "Go / No-Go",
 )

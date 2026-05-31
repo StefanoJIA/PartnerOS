@@ -17,6 +17,7 @@ Use [D8 Production Coordination Runbook](d8_production_coordination_runbook.md) 
 | Evidence review | `python scripts/d8_staging_evidence_review_check.py` reports `READY_FOR_PRODUCTION_COORDINATION_REVIEW` |
 | Staging evidence | `python scripts/d8_readiness_audit.py` reports `STAGING_VALIDATED` |
 | Gap register | No open D8 strict staging gap register remains for the latest evidence run |
+| Go / No-Go record | Optional redacted decision record uses `docs/records/d8_production_go_no_go_YYYYMMDD.md` |
 
 ## Go / No-Go
 
@@ -36,7 +37,8 @@ Use [D8 Production Coordination Runbook](d8_production_coordination_runbook.md) 
 5. The portal/cloud operator coordinates any production routing outside this repository.
 6. Re-run strict evidence against the production-like endpoint only after the operator confirms the target and token.
 7. Record the final PASS/FAIL evidence under `docs/records` using canonical names.
-8. After production coordination succeeds, use [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md) to monitor operating health, order operations, feedback, market response, and improvement backlog.
+8. If a Go, No-Go, or Pause decision is committed, use `docs/records/d8_production_go_no_go_YYYYMMDD.md` with only redacted summaries and no routing secrets.
+9. After production coordination succeeds, use [D9 Post-Launch Operating Loop](d9_post_launch_operating_loop.md) to monitor operating health, order operations, feedback, market response, and improvement backlog.
 
 ## Rollback
 

@@ -18,7 +18,7 @@ RECORDS_ROOT = REPO_ROOT / "docs" / "records"
 
 EVIDENCE_PATTERN = re.compile(r"^d8_strict_staging_evidence_\d{8}\.json$")
 STAGING_RECORD_PATTERN = re.compile(
-    r"^d8_(?:strict_staging_(?:evidence|gaps)_\d{8}|staging_operator_handoff_\d{8})\.(?:json|md)$"
+    r"^d8_(?:strict_staging_(?:evidence|gaps)_\d{8}|staging_operator_handoff_\d{8}|production_go_no_go_\d{8})\.(?:json|md)$"
 )
 EXTRA_FORBIDDEN_RECORD_MARKERS = ("supplier_reference",)
 

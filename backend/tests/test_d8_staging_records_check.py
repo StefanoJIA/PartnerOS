@@ -68,6 +68,20 @@ def test_d8_staging_records_check_requires_gap_register_for_failed_evidence(tmp_
     assert "missing d8_strict_staging_gaps_20260530.md" in output
 
 
+def test_d8_staging_records_check_accepts_production_go_no_go_record(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d8_production_go_no_go_20260530.md").write_text(
+        "Decision: Pause\nEvidence source: redacted summary only\n",
+        encoding="utf-8",
+    )
+
+    assert module.main() == 0
+    output = capsys.readouterr().out
+    assert "D8 staging record names are canonical" in output
+    assert "Result: PASS" in output
+
+
 def test_d8_staging_records_check_rejects_bearer_token(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)

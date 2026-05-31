@@ -39,7 +39,7 @@ Proceed only when readiness is `STAGING_VALIDATED`, evidence review is `READY_FO
 2. Confirm no matching latest gap register remains open.
 3. Share only the redacted evidence summary, production coordination plan, and rollback signals with the portal/cloud operator.
 4. Confirm the portal/cloud operator owns any routing, cloud upstream, token rotation, and `service.intelli-opus.com` deployment work.
-5. Record the human decision as Go, No-Go, or Pause in an external operations channel or a future redacted record.
+5. Record the human decision as Go, No-Go, or Pause in an external operations channel. If the decision is committed, use the canonical redacted record `docs/records/d8_production_go_no_go_YYYYMMDD.md`.
 6. If Go completes with no open rollback signal, run the D9 readiness checks:
 
 ```powershell

@@ -24,6 +24,7 @@ REQUIRED_MARKERS = (
     "PRODUCTION_COORDINATION_PAUSED",
     "POST_COORDINATION_D9_READY",
     "Go / No-Go",
+    "docs/records/d8_production_go_no_go_YYYYMMDD.md",
     "Rollback Handoff",
     "python scripts/d8_staging_execution_pack_check.py",
     "python scripts/d8_staging_records_check.py",
