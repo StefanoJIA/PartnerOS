@@ -40,6 +40,23 @@ class Check:
         return f"[{status}] {self.label}{suffix}"
 
 
+def _json(response) -> dict:
+    try:
+        data = response.json()
+    except ValueError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _finish(checks: list[Check]) -> int:
+    print("D8.1 RBAC Scoped Access Check")
+    for check in checks:
+        print(check.line())
+    passed = all(c.ok for c in checks)
+    print(f"Result: {'PASS' if passed else 'FAIL'}")
+    return 0 if passed else 1
+
+
 def _user(role_name: str) -> User:
     role = Role(id=uuid4(), name=role_name, permissions=None)
     user = User(
@@ -76,7 +93,7 @@ def main() -> int:
     db = MagicMock()
     app.dependency_overrides[get_db] = lambda: (yield db)
     app.dependency_overrides[get_current_user] = lambda: viewer
-    with TestClient(app) as client:
+    with TestClient(app, raise_server_exceptions=False) as client:
         order_id = uuid4()
         file_id = uuid4()
         denied = client.post(
@@ -91,18 +108,15 @@ def main() -> int:
     admin = _user("Admin")
     app = create_app()
     app.dependency_overrides[get_current_user] = lambda: admin
-    with TestClient(app) as client:
+    with TestClient(app, raise_server_exceptions=False) as client:
         me = client.get("/api/auth/me")
-    data = me.json() if me.status_code == 200 else {}
+    data = _json(me) if me.status_code == 200 else {}
     if me.status_code == 200 and "*" in data.get("permissions", []):
         checks[3].pass_("admin wildcard exposed")
     else:
         checks[3].fail(f"HTTP {me.status_code}: {data}")
 
-    print("D8.1 RBAC Scoped Access Check")
-    for check in checks:
-        print(check.line())
-    return 0 if all(c.ok for c in checks) else 1
+    return _finish(checks)
 
 
 if __name__ == "__main__":
