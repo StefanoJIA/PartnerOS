@@ -24,6 +24,8 @@ REQUIRED_MARKERS = (
     '$env:BACKEND_BASE_URL="http://127.0.0.1:8014"',
     '$env:VITE_API_PROXY_TARGET="http://127.0.0.1:8014"',
     "Current D8/D9 docs",
+    "Current PartnerOS Local Status",
+    "http://127.0.0.1:8014/health",
     "D8 Staging Execution Pack",
     "D8 Staging Evidence Review",
     "D8 Production Coordination Runbook",
@@ -45,6 +47,9 @@ FORBIDDEN_MARKERS = (
     "**D7** is Order / Production / Shipment.",
     "D7.1 design complete",
     "No Phase 2 yet",
+    "Current MVP Status（D5.2.2+ detail）",
+    "§ Changing backend port",
+    "uvicorn :8000",
 )
 TOKEN_ASSIGNMENT = re.compile(r"SERVICE_PORTAL_PARTNEROS_TOKEN\s*=")
 

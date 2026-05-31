@@ -232,13 +232,13 @@ First-time setup: `python scripts/init_local_env.py` → edit `backend/.env` →
 
 ## B. Development mode（开发模式 — 当前仓库日常）
 
-### Current MVP Status（D5.2.2+ detail）
+### Current PartnerOS Local Status
 
-- **阶段**：D5.2.2 Internal MVP Stabilization（demo-ready 半产品 → 可内部试用）
-- **后端**（在 `backend` 目录）：`python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
+- **阶段**：`READY_FOR_STAGING_HANDOFF` after local gates pass; not `STAGING_VALIDATED`.
+- **后端**（在 `backend` 目录）：`python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8014`
 - **前端**（在 `frontend` 目录）：`npm run dev`（端口常见 **5173** 或 **5174**）
-- **健康检查**：默认 `http://127.0.0.1:8000/health` · 备用本地端口 **8010** · 前端只读页 `/system-health`
-- **Backend URL**：脚本 `BACKEND_BASE_URL` · 前端 Vite proxy `VITE_API_PROXY_TARGET`（见 [docs/dev_guide.md](docs/dev_guide.md) § Changing backend port）
+- **健康检查**：当前 D7.6+/D8 验证默认 `http://127.0.0.1:8014/health`；前端只读页 `/system-health`
+- **Backend URL**：脚本 `BACKEND_BASE_URL` 与前端 Vite proxy `VITE_API_PROXY_TARGET` 必须指向同一 backend（见 [docs/dev_guide.md](docs/dev_guide.md)）
 - **Smoke**：`cd backend && python scripts/smoke_demo_ready.py`（需 backend 运行；可先 `python scripts/check_backend_runtime.py`）
 - **Portal 只读集成（D5.2.9–D5.2.10）**：v1 endpoints `/api/v1/portal/*` · UI `/system-health` · mock `/portal-consumer-mock` · 脚本 `portal_readiness_check.py` / `portal_consumer_check.py` / `config_readiness_check.py` · 记录 [docs/records/d5_2_10_portal_consumer_deployment_readiness_20260523.md](docs/records/d5_2_10_portal_consumer_deployment_readiness_20260523.md)
 - **演示脚本**：[docs/records/demo_script_20260523.md](docs/records/demo_script_20260523.md) · **D5.2.2 记录**：[docs/records/d5_2_2_internal_mvp_20260523.md](docs/records/d5_2_2_internal_mvp_20260523.md)
@@ -265,8 +265,8 @@ First-time setup: `python scripts/init_local_env.py` → edit `backend/.env` →
    npm install
    npm run dev
    ```
-   Vite 将 `/api` 与 **`/health`（D2 桌面启动页）** 代理到后端（默认 `http://127.0.0.1:8000`，可通过 `VITE_API_PROXY_TARGET` 改为 **8010** — 见 [frontend/vite.config.ts](frontend/vite.config.ts) 与 [docs/dev_guide.md](docs/dev_guide.md)）。
-5. **桌面壳（D2/D3，可选）**：需本机安装 **Rust** 与（若需本地冻结 sidecar）**Python + PyInstaller**。日常开发可 **只**跑手动 `uvicorn :8000` + `$env:INTELLIOFFICE_EXTERNAL_BACKEND='1'; npm run tauri:dev`（debug 默认 **不**派生 sidecar，`/health` 仍走 Vite 代理）。要验证 **产品路径**：先 `cd frontend; npm run sidecar:prepare`，再例如 `$env:INTELLIOFFICE_MANAGE_SIDECAR='1'; npm run tauri:dev`（sidecar 默认 **`127.0.0.1:17888`**）。正式包 `npm run tauri:build` 会在 `beforeBuildCommand` 中自动 `sidecar:prepare`。详见 **[docs/dev_guide.md](docs/dev_guide.md)**、**[docs/testing.md](docs/testing.md)（D2 Gate + D3 sidecar）**。**不替代**浏览器下的 `npm run dev` 流程。
+   Vite 将 `/api` 与 **`/health`（D2 桌面启动页）** 代理到后端。D7.6+/D8 验证使用 `VITE_API_PROXY_TARGET=http://127.0.0.1:8014`；见 [frontend/vite.config.ts](frontend/vite.config.ts) 与 [docs/dev_guide.md](docs/dev_guide.md)。
+5. **桌面壳（可选）**：仅在验证桌面打包路径时使用 Tauri flow；不替代浏览器下的 `npm run dev` 流程。详见 **[docs/dev_guide.md](docs/dev_guide.md)** 与 **[docs/testing.md](docs/testing.md)**。
 
 Default login after `seed`: `admin@example.com` / `admin123`。
 
@@ -289,7 +289,7 @@ Default login after `seed`: `admin@example.com` / `admin123`。
 
 - Backend: `cd backend && pytest`（含 `test_database_lifecycle`、`test_sidecar_entry`、`test_health` 等）— **[docs/testing.md](docs/testing.md)**  
 - Frontend: `cd frontend && npm run build`；契约单测：`cd frontend && npm run test`（`healthGate`、`backendOrigin`、**`CompanyEnrichmentPanel`**）  
-- Health: **后端自检地址为** `http://127.0.0.1:8000/health`。直接访问根路径 `http://127.0.0.1:8000/` 若得到 `{"detail":"Not Found"}` **属于预期**（未注册 `/` 路由）。开发代理下桌面启动页仍通过 Vite 访问 **`/health`**（见 [frontend/vite.config.ts](frontend/vite.config.ts)）；托管 sidecar 默认 **`http://127.0.0.1:17888/health`** — 返回 JSON：D1 字段 + **D4** `database_lifecycle_phase`、`migration_pending`、`alembic_*`（见 [database_lifecycle.md](docs/database_lifecycle.md)、[runtime_modes.md](docs/runtime_modes.md)）；端口以当前模式为准。
+- Health: **D7.6+/D8 本地验证后端自检地址为** `http://127.0.0.1:8014/health`。直接访问根路径若得到 `{"detail":"Not Found"}` **属于预期**（未注册 `/` 路由）。开发代理下桌面启动页仍通过 Vite 访问 **`/health`**（见 [frontend/vite.config.ts](frontend/vite.config.ts)）；托管 sidecar 默认 **`http://127.0.0.1:17888/health`** — 返回 JSON：D1 字段 + **D4** `database_lifecycle_phase`、`migration_pending`、`alembic_*`（见 [database_lifecycle.md](docs/database_lifecycle.md)、[runtime_modes.md](docs/runtime_modes.md)）；历史 D5/D6 记录中的 8000/8010 端口仅作旧记录参考。
 
 ---
 
