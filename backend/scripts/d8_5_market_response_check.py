@@ -54,6 +54,23 @@ class Check:
         return f"[{status}] {self.label}{suffix}"
 
 
+def _json(response) -> dict:
+    try:
+        data = response.json()
+    except ValueError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _finish(checks: list[Check]) -> int:
+    print("D8.5 Market Response Intelligence Check")
+    for check in checks:
+        print(check.line())
+    passed = all(check.ok for check in checks)
+    print(f"Result: {'PASS' if passed else 'FAIL'}")
+    return 0 if passed else 1
+
+
 class _Query:
     def __init__(self, rows):
         self.rows = rows
@@ -162,7 +179,7 @@ def main() -> int:
     )
     app.dependency_overrides[get_db] = _fake_db
 
-    with TestClient(app) as client:
+    with TestClient(app, raise_server_exceptions=False) as client:
         response = client.get("/api/v1/market/response-intelligence")
 
     if response.status_code == 200:
@@ -170,7 +187,7 @@ def main() -> int:
     else:
         checks[0].fail(response.text[:160])
         data = {}
-    data = response.json().get("data", {}) if response.status_code == 200 else {}
+    data = _json(response).get("data", {}) if response.status_code == 200 else {}
 
     summary = data.get("summary") or {}
     if {"feedback_ticket_count", "market_signal_count", "quote_count", "product_gap_count"}.issubset(summary):
@@ -212,12 +229,7 @@ def main() -> int:
     leaked = next((marker for marker in FORBIDDEN if marker in blob), None)
     checks[7].pass_("clean") if leaked is None else checks[7].fail(leaked)
 
-    print("D8.5 Market Response Intelligence Check")
-    for check in checks:
-        print(check.line())
-    passed = all(check.ok for check in checks)
-    print(f"Result: {'PASS' if passed else 'FAIL'}")
-    return 0 if passed else 1
+    return _finish(checks)
 
 
 if __name__ == "__main__":
