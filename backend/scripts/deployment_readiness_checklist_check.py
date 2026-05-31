@@ -19,6 +19,7 @@ REQUIRED_MARKERS = (
     "STAGING_VALIDATED",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "WAITING_FOR_STAGING_VALIDATION",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
     "D9 operating-loop work remains gated",
     "human Go / No-Go handoff",
     "docs/records/d8_production_go_no_go_YYYYMMDD.md",
