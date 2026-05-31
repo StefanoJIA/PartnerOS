@@ -18,6 +18,8 @@ REQUIRED_MARKERS = (
     "current on 2026-05-30",
     "READY_FOR_STAGING_HANDOFF",
     "does not mean `STAGING_VALIDATED`",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "until real staging evidence replaces it",
     "Vue/Vite frontend with a FastAPI backend and PostgreSQL/pgvector",
     "No final-user path may require users to run PostgreSQL, pgAdmin, Docker, Alembic, or raw SQL",
     '$env:BACKEND_BASE_URL="http://127.0.0.1:8014"',

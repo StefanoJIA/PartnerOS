@@ -18,7 +18,7 @@ The original reorientation focused on moving from web-first assumptions to a des
 | D5 Lead Intelligence | Closed as D5 Final |
 | D6 Quote MVP | Closed as D6 Final |
 | D7 Orders / Production / Shipment / Portal bridge / Resources | Closed through D7.9 |
-| D8 Runtime and staging handoff | Local gates ready; waiting for real staging values and strict evidence |
+| D8 Runtime and staging handoff | Local gates ready; waiting for real staging values and strict evidence; local rehearsal output keeps production coordination at `WAITING_FOR_REAL_STAGING_EVIDENCE` until real staging evidence replaces it |
 | D9 Operating loop | Planned behind `STAGING_VALIDATED`, `READY_FOR_PRODUCTION_COORDINATION_REVIEW`, production coordination, and the human Go / No-Go handoff |
 
 The correct current project state is `READY_FOR_STAGING_HANDOFF`, not D0/D1 kickoff.

@@ -6,7 +6,7 @@
 
 PartnerOS currently runs as a Vue/Vite frontend with a FastAPI backend and PostgreSQL/pgvector data store. The repository is locally ready for D8 staging handoff when `project_execution_status.py` reports `READY_FOR_STAGING_HANDOFF`.
 
-That state means local docs, gates, runbooks, and checks agree. It does not mean `STAGING_VALIDATED`. Strict staging evidence still requires real staging values supplied outside the repository.
+That state means local docs, gates, runbooks, and checks agree. It does not mean `STAGING_VALIDATED`. Strict staging evidence still requires real staging values supplied outside the repository. If local rehearsal output is saved where strict evidence is expected, production coordination remains at `WAITING_FOR_REAL_STAGING_EVIDENCE` until real staging evidence replaces it.
 
 ## Target Layers
 

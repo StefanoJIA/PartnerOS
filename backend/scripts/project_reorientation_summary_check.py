@@ -21,6 +21,8 @@ REQUIRED_MARKERS = (
     "Closed as D6 Final",
     "Closed through D7.9",
     "waiting for real staging values and strict evidence",
+    "WAITING_FOR_REAL_STAGING_EVIDENCE",
+    "until real staging evidence replaces it",
     "Planned behind `STAGING_VALIDATED`",
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "human Go / No-Go handoff",

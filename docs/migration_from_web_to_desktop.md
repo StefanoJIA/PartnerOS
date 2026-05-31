@@ -21,7 +21,7 @@ The repository is the authoritative implementation for:
 - Tauri shell and backend sidecar foundation
 - database lifecycle health fields and migration checks
 
-The correct project state remains `READY_FOR_STAGING_HANDOFF`. Local desktop and runtime checks do not prove `STAGING_VALIDATED`.
+The correct project state remains `READY_FOR_STAGING_HANDOFF`. Local desktop and runtime checks do not prove `STAGING_VALIDATED`. If local rehearsal output is saved where strict evidence is expected, production coordination remains at `WAITING_FOR_REAL_STAGING_EVIDENCE` until real staging evidence replaces it.
 
 ## Preserve
 
