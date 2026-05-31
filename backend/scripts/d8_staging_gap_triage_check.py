@@ -14,6 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC = REPO_ROOT / "docs" / "phase3" / "d8_staging_gap_triage.md"
 RECORDS_ROOT = REPO_ROOT / "docs" / "records"
 GAP_REGISTER_PATTERN = re.compile(r"^d8_strict_staging_gaps_\d{8}\.md$")
+ALLOWED_GAP_STATUSES = {"open", "blocked", "fixed_pending_rerun", "closed"}
 
 REQUIRED_DOC_MARKERS = (
     "D8 Staging Gap Triage",
@@ -88,6 +89,32 @@ def _gap_records() -> list[Path]:
     return sorted(RECORDS_ROOT.glob("d8_strict_staging_gaps_*.md"))
 
 
+def _status_issues(path: Path, text: str) -> list[str]:
+    issues: list[str] = []
+    header: list[str] | None = None
+    for line_no, line in enumerate(text.splitlines(), start=1):
+        stripped = line.strip()
+        if not stripped.startswith("|") or not stripped.endswith("|"):
+            continue
+        cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+        normalized = [cell.lower() for cell in cells]
+        if {"check", "recommended action", "owner", "status"}.issubset(set(normalized)):
+            header = normalized
+            continue
+        if header is None or all(set(cell) <= {"-"} for cell in normalized):
+            continue
+        if "status" not in header:
+            continue
+        status_index = header.index("status")
+        if status_index >= len(cells):
+            issues.append(f"{path.name}:{line_no}:missing status")
+            continue
+        status = cells[status_index].strip("` ").lower()
+        if status not in ALLOWED_GAP_STATUSES:
+            issues.append(f"{path.name}:{line_no}:invalid status {status or '<empty>'}")
+    return issues
+
+
 def _gap_issues(records: list[Path]) -> list[str]:
     issues: list[str] = []
     for path in records:
@@ -97,6 +124,7 @@ def _gap_issues(records: list[Path]) -> list[str]:
         missing = _missing(text, REQUIRED_GAP_MARKERS)
         if missing:
             issues.append(f"{path.name}:missing {','.join(missing)}")
+        issues.extend(_status_issues(path, text))
         lowered = text.lower()
         for marker in FORBIDDEN_MARKERS:
             if marker.lower() in lowered:
