@@ -13,6 +13,7 @@ Use `docs/records` for redacted staging artifacts only. Do not store `.env`, scr
 | Artifact | Path |
 |---|---|
 | Operator handoff | `docs/records/d8_staging_operator_handoff_YYYYMMDD.md` |
+| Staging access request | `docs/records/d8_staging_access_request_YYYYMMDD.md` |
 | Strict staging evidence | `docs/records/d8_strict_staging_evidence_YYYYMMDD.json` |
 | Strict staging gaps | `docs/records/d8_strict_staging_gaps_YYYYMMDD.md` |
 
@@ -29,6 +30,8 @@ The operator handoff should come from:
 cd backend
 python scripts/d8_staging_operator_handoff.py --output ../docs/records/d8_staging_operator_handoff_YYYYMMDD.md
 ```
+
+The staging access request record may be committed only when it contains placeholders or `provided privately` status lines, not the actual backend URL if it reveals private infrastructure and never the portal token.
 
 ## Record Gate
 

@@ -82,6 +82,22 @@ def test_d8_staging_records_check_accepts_production_go_no_go_record(tmp_path, m
     assert "Result: PASS" in output
 
 
+def test_d8_staging_records_check_accepts_staging_access_request_record(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d8_staging_access_request_20260530.md").write_text(
+        "BACKEND_BASE_URL: provided privately\n"
+        "SERVICE_PORTAL_PARTNEROS_TOKEN: provided privately\n"
+        "SERVICE_PORTAL_ORIGIN: https://service.intelli-opus.com\n",
+        encoding="utf-8",
+    )
+
+    assert module.main() == 0
+    output = capsys.readouterr().out
+    assert "D8 staging record names are canonical" in output
+    assert "Result: PASS" in output
+
+
 def test_d8_staging_records_check_rejects_bearer_token(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
