@@ -24,6 +24,7 @@ REQUIRED_MARKERS = (
     "`future_cloud`",
     "Preferred local D7.6+/D8 validation port",
     '$env:BACKEND_BASE_URL="http://127.0.0.1:8014"',
+    "project_execution_chain_gate_check.py",
     "SERVICE_PORTAL_PARTNEROS_TOKEN",
     "SERVICE_PORTAL_ORIGIN",
     "service.intelli-opus.com",

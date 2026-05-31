@@ -36,6 +36,7 @@ REQUIRED_MARKERS = (
     '$env:VITE_API_PROXY_TARGET="http://127.0.0.1:8014"',
     "SERVICE_PORTAL_PARTNEROS_TOKEN",
     "integrated_backend_standards_check.py",
+    "project_execution_chain_gate_check.py",
     "d8_staging_execution_pack_check.py",
 )
 FORBIDDEN_MARKERS = (
