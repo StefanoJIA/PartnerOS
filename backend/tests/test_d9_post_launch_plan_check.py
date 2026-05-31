@@ -50,3 +50,25 @@ def test_d9_post_launch_plan_check_fails_for_generic_api_key(tmp_path, monkeypat
     output = capsys.readouterr().out
     assert "D9 plan is redacted" in output
     assert "d9_post_launch_operating_loop.md" in output
+
+
+def test_records_gate_status_rejects_final_fail(monkeypatch):
+    module = _load_module()
+
+    def fake_run(*args, **kwargs):  # noqa: ARG001
+        return type(
+            "Result",
+            (),
+            {
+                "returncode": 0,
+                "stdout": "[PASS] nested\nResult: PASS\nResult: FAIL\n",
+                "stderr": "",
+            },
+        )()
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    ok, detail = module._records_gate_status()
+
+    assert ok is False
+    assert detail == "[PASS] nested\nResult: PASS\nResult: FAIL"

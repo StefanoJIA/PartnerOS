@@ -79,6 +79,13 @@ def _display_path(path: Path) -> str:
         return str(path)
 
 
+def _result_pass(result: subprocess.CompletedProcess[str]) -> bool:
+    if result.returncode != 0:
+        return False
+    result_lines = [line.strip() for line in result.stdout.splitlines() if line.strip().startswith("Result:")]
+    return bool(result_lines) and result_lines[-1] == "Result: PASS"
+
+
 def _records_gate_status() -> tuple[bool, str]:
     result = subprocess.run(
         [sys.executable, "scripts/d9_operating_records_check.py"],
@@ -88,7 +95,7 @@ def _records_gate_status() -> tuple[bool, str]:
         check=False,
     )
     output = "\n".join(part for part in (result.stdout.strip(), result.stderr.strip()) if part)
-    if result.returncode == 0 and "Result: PASS" in result.stdout:
+    if _result_pass(result):
         return True, "PASS"
     detail = next((line for line in output.splitlines() if line.startswith("[FAIL]")), "")
     return False, detail or output[:160] or "records gate failed"
