@@ -13,6 +13,12 @@ import {
 } from '@/constants/dailyOps'
 import * as dailyOps from '@/api/dailyOps'
 
+const push = vi.fn()
+
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ push }),
+}))
+
 vi.mock('@/api/dailyOps', () => ({
   fetchDailyOpsSummary: vi.fn(),
 }))
@@ -75,21 +81,34 @@ const mockSummary = {
   degraded: false,
 }
 
+const mountPanel = () =>
+  mount(DailyOperationsPanel, {
+    global: {
+      plugins: [ElementPlus],
+      stubs: {
+        RouterLink: {
+          template: '<a><slot /></a>',
+        },
+      },
+    },
+  })
+
 describe('DailyOperationsPanel', () => {
   beforeEach(() => {
     vi.mocked(dailyOps.fetchDailyOpsSummary).mockReset()
+    push.mockReset()
   })
 
   it('renders Daily Operations title', async () => {
     vi.mocked(dailyOps.fetchDailyOpsSummary).mockResolvedValue(mockSummary)
-    const wrapper = mount(DailyOperationsPanel, { global: { plugins: [ElementPlus] } })
+    const wrapper = mountPanel()
     await flushPromises()
     expect(wrapper.text()).toContain(DAILY_OPS_TITLE)
   })
 
   it('renders summary cards', async () => {
     vi.mocked(dailyOps.fetchDailyOpsSummary).mockResolvedValue(mockSummary)
-    const wrapper = mount(DailyOperationsPanel, { global: { plugins: [ElementPlus] } })
+    const wrapper = mountPanel()
     await flushPromises()
     expect(wrapper.text()).toContain('Overdue')
     expect(wrapper.text()).toContain('Due Today')
@@ -98,7 +117,7 @@ describe('DailyOperationsPanel', () => {
 
   it('renders quick actions', async () => {
     vi.mocked(dailyOps.fetchDailyOpsSummary).mockResolvedValue(mockSummary)
-    const wrapper = mount(DailyOperationsPanel, { global: { plugins: [ElementPlus] } })
+    const wrapper = mountPanel()
     await flushPromises()
     expect(wrapper.text()).toContain('Quick Actions')
     expect(wrapper.text()).toContain('Import Leads')
@@ -107,14 +126,14 @@ describe('DailyOperationsPanel', () => {
 
   it('renders safety note', async () => {
     vi.mocked(dailyOps.fetchDailyOpsSummary).mockResolvedValue(mockSummary)
-    const wrapper = mount(DailyOperationsPanel, { global: { plugins: [ElementPlus] } })
+    const wrapper = mountPanel()
     await flushPromises()
     expect(wrapper.text()).toContain(DAILY_OPS_SAFETY_NOTE)
   })
 
   it('renders today focus list', async () => {
     vi.mocked(dailyOps.fetchDailyOpsSummary).mockResolvedValue(mockSummary)
-    const wrapper = mount(DailyOperationsPanel, { global: { plugins: [ElementPlus] } })
+    const wrapper = mountPanel()
     await flushPromises()
     expect(wrapper.text()).toContain('Today Focus')
     expect(wrapper.text()).toContain('Acme Lift')
@@ -123,7 +142,7 @@ describe('DailyOperationsPanel', () => {
 
   it('renders recent activity', async () => {
     vi.mocked(dailyOps.fetchDailyOpsSummary).mockResolvedValue(mockSummary)
-    const wrapper = mount(DailyOperationsPanel, { global: { plugins: [ElementPlus] } })
+    const wrapper = mountPanel()
     await flushPromises()
     expect(wrapper.text()).toContain('Recent Manual Outreach')
     expect(wrapper.text()).toContain('Manual sent')
@@ -136,14 +155,14 @@ describe('DailyOperationsPanel', () => {
       recent_contact_research: [],
       recent_outreach: [],
     })
-    const wrapper = mount(DailyOperationsPanel, { global: { plugins: [ElementPlus] } })
+    const wrapper = mountPanel()
     await flushPromises()
     expect(wrapper.text()).toContain(RECENT_OUTREACH_EMPTY)
   })
 
   it('renders error state', async () => {
     vi.mocked(dailyOps.fetchDailyOpsSummary).mockRejectedValue(new Error('network'))
-    const wrapper = mount(DailyOperationsPanel, { global: { plugins: [ElementPlus] } })
+    const wrapper = mountPanel()
     await flushPromises()
     expect(wrapper.text()).toContain('Daily operations unavailable')
   })
@@ -156,7 +175,7 @@ describe('DailyOperationsPanel', () => {
       today_focus: [],
       summary: { ...mockSummary.summary, overdue: 0 },
     })
-    const wrapper = mount(DailyOperationsPanel, { global: { plugins: [ElementPlus] } })
+    const wrapper = mountPanel()
     await flushPromises()
     expect(wrapper.text()).toContain('Degraded mode')
   })

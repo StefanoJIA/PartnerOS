@@ -13,6 +13,12 @@ import {
 } from '@/constants/dailyWorkSummary'
 import * as dailyWork from '@/api/dailyWorkSummary'
 
+const push = vi.fn()
+
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ push }),
+}))
+
 vi.mock('@/api/dailyWorkSummary', () => ({
   fetchDailyWorkSummary: vi.fn(),
 }))
@@ -55,6 +61,7 @@ const mockData = {
 describe('EndOfDaySummaryPanel', () => {
   beforeEach(() => {
     vi.mocked(dailyWork.fetchDailyWorkSummary).mockReset()
+    push.mockReset()
     vi.stubGlobal('navigator', {
       ...navigator,
       clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
