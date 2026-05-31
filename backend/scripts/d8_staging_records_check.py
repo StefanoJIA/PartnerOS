@@ -20,6 +20,8 @@ EVIDENCE_PATTERN = re.compile(r"^d8_strict_staging_evidence_\d{8}\.json$")
 STAGING_RECORD_PATTERN = re.compile(
     r"^d8_(?:strict_staging_(?:evidence|gaps)_\d{8}|staging_operator_handoff_\d{8}|staging_access_request_\d{8}|production_go_no_go_\d{8})\.(?:json|md)$"
 )
+CURRENT_HANDOFF_PATTERN = re.compile(r"^d8_staging_operator_handoff_\d{8}\.md$")
+CURRENT_ACCESS_REQUEST_PATTERN = re.compile(r"^d8_staging_access_request_\d{8}\.md$")
 EXTRA_FORBIDDEN_RECORD_MARKERS = ("supplier_reference",)
 
 
@@ -84,6 +86,16 @@ def _naming_issues(records: list[Path]) -> list[str]:
     return issues
 
 
+def _required_current_record_issues(records: list[Path]) -> list[str]:
+    names = [path.name for path in records]
+    issues: list[str] = []
+    if not any(CURRENT_HANDOFF_PATTERN.match(name) for name in names):
+        issues.append("d8_staging_operator_handoff_YYYYMMDD.md")
+    if not any(CURRENT_ACCESS_REQUEST_PATTERN.match(name) for name in names):
+        issues.append("d8_staging_access_request_YYYYMMDD.md")
+    return issues
+
+
 def _evidence_issues(records: list[Path]) -> list[str]:
     issues: list[str] = []
     for path in records:
@@ -117,6 +129,7 @@ def main() -> int:
     checks = [
         Check("docs/records exists"),
         Check("D8 staging record names are canonical"),
+        Check("current D8 handoff records exist"),
         Check("D8 staging records are redacted"),
         Check("strict staging evidence schema"),
     ]
@@ -130,13 +143,18 @@ def main() -> int:
     naming = _naming_issues(records)
     checks[1].pass_(f"{len(records)} D8 records") if not naming else checks[1].fail(", ".join(naming))
 
+    required_current = _required_current_record_issues(records)
+    checks[2].pass_("handoff and access request records") if not required_current else checks[2].fail(
+        ", ".join(required_current)
+    )
+
     sensitive = _sensitive_marker_issues(records)
-    checks[2].pass_("no token assignments or internal markers") if not sensitive else checks[2].fail(
+    checks[3].pass_("no token assignments or internal markers") if not sensitive else checks[3].fail(
         ", ".join(sensitive[:8])
     )
 
     evidence = _evidence_issues(records)
-    checks[3].pass_("all evidence JSON valid") if not evidence else checks[3].fail(", ".join(evidence[:8]))
+    checks[4].pass_("all evidence JSON valid") if not evidence else checks[4].fail(", ".join(evidence[:8]))
 
     print("D8 Staging Records Check")
     for check in checks:

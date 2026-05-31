@@ -15,17 +15,34 @@ def _load_module():
     return module
 
 
-def test_d8_staging_records_check_passes_without_d8_records(tmp_path, monkeypatch, capsys):
+def _write_required_current_records(records_root: Path) -> None:
+    (records_root / "d8_staging_operator_handoff_20260530.md").write_text(
+        "Operator handoff: redacted\n",
+        encoding="utf-8",
+    )
+    (records_root / "d8_staging_access_request_20260530.md").write_text(
+        "BACKEND_BASE_URL: provided privately\n"
+        "SERVICE_PORTAL_PARTNEROS_TOKEN: provided privately\n"
+        "SERVICE_PORTAL_ORIGIN: https://service.intelli-opus.com\n",
+        encoding="utf-8",
+    )
+
+
+def test_d8_staging_records_check_rejects_missing_current_records(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
 
-    assert module.main() == 0
-    assert "Result: PASS" in capsys.readouterr().out
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "current D8 handoff records exist" in output
+    assert "d8_staging_operator_handoff_YYYYMMDD.md" in output
+    assert "d8_staging_access_request_YYYYMMDD.md" in output
 
 
 def test_d8_staging_records_check_rejects_noncanonical_name(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    _write_required_current_records(tmp_path)
     (tmp_path / "d8_staging_notes.md").write_text("redacted notes\n", encoding="utf-8")
 
     assert module.main() == 1
@@ -37,6 +54,7 @@ def test_d8_staging_records_check_rejects_noncanonical_name(tmp_path, monkeypatc
 def test_d8_staging_records_check_rejects_undated_operator_handoff(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    _write_required_current_records(tmp_path)
     (tmp_path / "d8_staging_operator_handoff.md").write_text("redacted handoff\n", encoding="utf-8")
 
     assert module.main() == 1
@@ -48,6 +66,7 @@ def test_d8_staging_records_check_rejects_undated_operator_handoff(tmp_path, mon
 def test_d8_staging_records_check_requires_gap_register_for_failed_evidence(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    _write_required_current_records(tmp_path)
     (tmp_path / "d8_strict_staging_evidence_20260530.json").write_text(
         """
 {
@@ -71,6 +90,7 @@ def test_d8_staging_records_check_requires_gap_register_for_failed_evidence(tmp_
 def test_d8_staging_records_check_accepts_production_go_no_go_record(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    _write_required_current_records(tmp_path)
     (tmp_path / "d8_production_go_no_go_20260530.md").write_text(
         "Decision: Pause\nEvidence source: redacted summary only\n",
         encoding="utf-8",
@@ -85,12 +105,7 @@ def test_d8_staging_records_check_accepts_production_go_no_go_record(tmp_path, m
 def test_d8_staging_records_check_accepts_staging_access_request_record(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
-    (tmp_path / "d8_staging_access_request_20260530.md").write_text(
-        "BACKEND_BASE_URL: provided privately\n"
-        "SERVICE_PORTAL_PARTNEROS_TOKEN: provided privately\n"
-        "SERVICE_PORTAL_ORIGIN: https://service.intelli-opus.com\n",
-        encoding="utf-8",
-    )
+    _write_required_current_records(tmp_path)
 
     assert module.main() == 0
     output = capsys.readouterr().out
@@ -101,6 +116,12 @@ def test_d8_staging_records_check_accepts_staging_access_request_record(tmp_path
 def test_d8_staging_records_check_rejects_bearer_token(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d8_staging_access_request_20260530.md").write_text(
+        "BACKEND_BASE_URL: provided privately\n"
+        "SERVICE_PORTAL_PARTNEROS_TOKEN: provided privately\n"
+        "SERVICE_PORTAL_ORIGIN: https://service.intelli-opus.com\n",
+        encoding="utf-8",
+    )
     (tmp_path / "d8_staging_operator_handoff_20260530.md").write_text(
         "Authorization: Bearer actual-secret-value\n",
         encoding="utf-8",
