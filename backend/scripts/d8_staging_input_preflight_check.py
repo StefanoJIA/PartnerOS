@@ -115,7 +115,7 @@ def main() -> int:
     hard_fail = any(not check.ok and check.detail != "missing" for check in checks)
     missing_only = any(not check.ok for check in checks) and not hard_fail
     if all(check.ok for check in checks):
-        state = "INPUTS_READY"
+        state = "LOCAL_REHEARSAL_READY" if allow_local_http and _is_localhost_url(backend_base) else "INPUTS_READY"
     elif missing_only:
         state = "WAITING_FOR_PRIVATE_VALUES"
     else:

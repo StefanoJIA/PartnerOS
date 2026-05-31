@@ -95,7 +95,8 @@ def test_staging_input_preflight_allows_explicit_local_http_rehearsal(monkeypatc
 
     assert module.main() == 0
     output = capsys.readouterr().out
-    assert "INPUTS_READY" in output
+    assert "LOCAL_REHEARSAL_READY" in output
+    assert "Input State: INPUTS_READY" not in output
     assert "local HTTP rehearsal explicitly allowed" in output
 
 
