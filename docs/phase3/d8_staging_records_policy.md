@@ -16,6 +16,7 @@ Use `docs/records` for redacted staging artifacts only. Do not store `.env`, scr
 | Staging access request | `docs/records/d8_staging_access_request_YYYYMMDD.md` |
 | Strict staging evidence | `docs/records/d8_strict_staging_evidence_YYYYMMDD.json` |
 | Strict staging gaps | `docs/records/d8_strict_staging_gaps_YYYYMMDD.md` |
+| Production Go / No-Go decision | `docs/records/d8_production_go_no_go_YYYYMMDD.md` |
 
 The evidence JSON should come from:
 
@@ -42,7 +43,7 @@ cd backend
 python scripts/d8_staging_records_check.py
 ```
 
-The check verifies canonical names, the current operator handoff and staging access request records, redaction markers, strict evidence safety metadata, and the matching gap register for failed evidence. In strict staging evidence, any remote backend host is stored as `https://<redacted-backend>`; local rehearsal URLs such as `http://127.0.0.1:8014` may remain visible because they do not reveal private infrastructure.
+The check verifies canonical names, the current operator handoff and staging access request records, redaction markers, strict evidence safety metadata, required safety markers for any committed production Go / No-Go decision record, and the matching gap register for failed evidence. In strict staging evidence, any remote backend host is stored as `https://<redacted-backend>`; local rehearsal URLs such as `http://127.0.0.1:8014` may remain visible because they do not reveal private infrastructure.
 
 Canonical evidence with `result=PASS` must come from real staging, not local rehearsal. A PASS evidence record with `allow_local_http=true` or a localhost `backend_base_url` is rejected by the records gate and must not produce `STAGING_VALIDATED`.
 
@@ -51,6 +52,8 @@ Strict staging evidence and gap records are not required before the real staging
 For failed evidence, use [D8 Staging Gap Triage](d8_staging_gap_triage.md) before production coordination. Each gap row should retain a recommended action, owner, and status until a rerun proves it fixed or superseded.
 
 After records pass, use [D8 Staging Evidence Review](d8_staging_evidence_review.md) and `python scripts/d8_staging_evidence_review_check.py` to interpret the latest saved evidence as waiting, ready for production coordination review, or requiring gap triage.
+
+If a production Go / No-Go decision record is committed, it must include `Decision:`, `Evidence source: redacted summary only`, and a Safety section confirming no nginx/upstream change from this repository, no customer or supplier notification, no automatic business-status mutation, and no tokens, raw response bodies, internal costs, supplier private notes, backend paths, storage keys, database URLs, or secrets.
 
 ## Boundaries
 

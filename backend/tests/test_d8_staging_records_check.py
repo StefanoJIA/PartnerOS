@@ -37,9 +37,23 @@ REQUIRED_POLICY_MARKERS_FIXTURE = (
     "PASS evidence record with `allow_local_http=true` or a localhost `backend_base_url` is rejected",
     "Strict staging evidence and gap records are not required before the real staging run",
     "WAITING_FOR_STAGING_EVIDENCE",
+    "production Go / No-Go decision record",
     "Do not paste real `SERVICE_PORTAL_PARTNEROS_TOKEN`",
     "Do not store raw API response bodies",
 )
+
+
+def _valid_production_go_no_go_body(module) -> str:
+    return "\n".join(
+        [
+            "# D8 Production Go / No-Go - 2026-05-30",
+            "",
+            "Decision: Pause",
+            "Evidence source: redacted summary only",
+            "",
+            *module.PRODUCTION_DECISION_REQUIRED_MARKERS[2:],
+        ]
+    )
 
 
 def test_d8_staging_records_check_rejects_stale_policy_doc(tmp_path, monkeypatch, capsys):
@@ -199,7 +213,7 @@ def test_d8_staging_records_check_accepts_production_go_no_go_record(tmp_path, m
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
     _write_required_current_records(tmp_path)
     (tmp_path / "d8_production_go_no_go_20260530.md").write_text(
-        "Decision: Pause\nEvidence source: redacted summary only\n",
+        _valid_production_go_no_go_body(module) + "\n",
         encoding="utf-8",
     )
 
@@ -207,6 +221,21 @@ def test_d8_staging_records_check_accepts_production_go_no_go_record(tmp_path, m
     output = capsys.readouterr().out
     assert "D8 staging record names are canonical" in output
     assert "Result: PASS" in output
+
+
+def test_d8_staging_records_check_rejects_production_go_no_go_without_safety(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    _write_required_current_records(tmp_path)
+    (tmp_path / "d8_production_go_no_go_20260530.md").write_text(
+        "Decision: Go\nEvidence source: redacted summary only\n",
+        encoding="utf-8",
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "D8 production decision records include safety markers" in output
+    assert "d8_production_go_no_go_20260530.md:missing" in output
 
 
 def test_d8_staging_records_check_accepts_staging_access_request_record(tmp_path, monkeypatch, capsys):

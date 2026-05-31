@@ -24,9 +24,19 @@ STAGING_RECORD_PATTERN = re.compile(
 )
 CURRENT_HANDOFF_PATTERN = re.compile(r"^d8_staging_operator_handoff_\d{8}\.md$")
 CURRENT_ACCESS_REQUEST_PATTERN = re.compile(r"^d8_staging_access_request_\d{8}\.md$")
+PRODUCTION_GO_NO_GO_PATTERN = re.compile(r"^d8_production_go_no_go_\d{8}\.md$")
 BACKEND_URL_STATUS = re.compile(r"^\s*BACKEND_BASE_URL\s*:\s*(?P<value>.+?)\s*$", re.IGNORECASE)
 PORTAL_TOKEN_STATUS = re.compile(r"^\s*SERVICE_PORTAL_PARTNEROS_TOKEN\s*:\s*(?P<value>.+?)\s*$", re.IGNORECASE)
 EXTRA_FORBIDDEN_RECORD_MARKERS = ("supplier_reference", "partneros-staging.example.com")
+PRODUCTION_DECISION_REQUIRED_MARKERS = (
+    "Decision:",
+    "Evidence source: redacted summary only",
+    "## Safety",
+    "No nginx or upstream change from this repository.",
+    "No customer or supplier notification.",
+    "No automatic order, shipment, delivery, payment, or partner-selection mutation.",
+    "No tokens, raw response bodies, internal cost, margin, supplier private note, backend path, storage key, database URL, or secret included.",
+)
 REQUIRED_POLICY_MARKERS = (
     "D8 Staging Records Policy",
     "d8_staging_operator_handoff_YYYYMMDD.md",
@@ -38,6 +48,7 @@ REQUIRED_POLICY_MARKERS = (
     "PASS evidence record with `allow_local_http=true` or a localhost `backend_base_url` is rejected",
     "Strict staging evidence and gap records are not required before the real staging run",
     "WAITING_FOR_STAGING_EVIDENCE",
+    "production Go / No-Go decision record",
     "Do not paste real `SERVICE_PORTAL_PARTNEROS_TOKEN`",
     "Do not store raw API response bodies",
 )
@@ -132,6 +143,22 @@ def _required_current_record_issues(records: list[Path]) -> list[str]:
     return issues
 
 
+def _production_decision_issues(records: list[Path]) -> list[str]:
+    issues: list[str] = []
+    for path in records:
+        if not PRODUCTION_GO_NO_GO_PATTERN.match(path.name):
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            issues.append(f"{path.name}:unreadable")
+            continue
+        missing = [marker for marker in PRODUCTION_DECISION_REQUIRED_MARKERS if marker not in text]
+        if missing:
+            issues.append(f"{path.name}:missing {', '.join(missing)}")
+    return issues
+
+
 def _evidence_issues(records: list[Path]) -> list[str]:
     issues: list[str] = []
     for path in records:
@@ -179,6 +206,7 @@ def main() -> int:
         Check("D8 staging record names are canonical"),
         Check("current D8 handoff records exist"),
         Check("D8 staging records are redacted"),
+        Check("D8 production decision records include safety markers"),
         Check("strict staging evidence schema"),
     ]
 
@@ -211,8 +239,13 @@ def main() -> int:
         ", ".join(sensitive[:8])
     )
 
+    production_decisions = _production_decision_issues(records)
+    checks[6].pass_("required decision safety markers") if not production_decisions else checks[6].fail(
+        ", ".join(production_decisions[:4])
+    )
+
     evidence = _evidence_issues(records)
-    checks[6].pass_("all evidence JSON valid") if not evidence else checks[6].fail(", ".join(evidence[:8]))
+    checks[7].pass_("all evidence JSON valid") if not evidence else checks[7].fail(", ".join(evidence[:8]))
 
     print("D8 Staging Records Check")
     for check in checks:
