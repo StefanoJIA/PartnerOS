@@ -25,6 +25,7 @@ REQUIRED_FILES = (
     "docs/phase3/d9_4_improvement_backlog.md",
     "docs/phase3/d9_operating_records_policy.md",
     "backend/scripts/d8_staging_evidence_review_check.py",
+    "backend/scripts/d8_production_coordination_check.py",
     "backend/scripts/d9_operating_execution_pack_check.py",
     "backend/scripts/d9_post_launch_plan_check.py",
     "backend/scripts/d9_operating_loop_kickoff_check.py",
@@ -40,6 +41,8 @@ REQUIRED_DOC_MARKERS = (
     "human Go / No-Go handoff",
     "docs/records/d8_production_go_no_go_YYYYMMDD.md",
     "python scripts/d8_staging_evidence_review_check.py",
+    "python scripts/d8_production_coordination_check.py",
+    "python scripts/project_execution_status.py",
     "python scripts/d9_post_launch_plan_check.py",
     "python scripts/d9_operating_loop_kickoff_check.py",
     "python scripts/d9_1_operating_health_review_check.py",
@@ -52,6 +55,7 @@ REQUIRED_DOC_MARKERS = (
 )
 SCRIPTS = (
     "scripts/d8_staging_evidence_review_check.py",
+    "scripts/d8_production_coordination_check.py",
     "scripts/d9_post_launch_plan_check.py",
     "scripts/d9_operating_loop_kickoff_check.py",
     "scripts/d9_1_operating_health_review_check.py",

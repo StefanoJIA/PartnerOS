@@ -15,6 +15,7 @@ D9 starts only after D8 production coordination has a human Go / No-Go decision.
 ```powershell
 cd backend
 python scripts/d9_operating_execution_pack_check.py
+python scripts/project_execution_status.py
 ```
 
 ## Included Gates
@@ -22,6 +23,7 @@ python scripts/d9_operating_execution_pack_check.py
 ```powershell
 python scripts/d9_post_launch_plan_check.py
 python scripts/d9_operating_loop_kickoff_check.py
+python scripts/d8_production_coordination_check.py
 python scripts/d8_staging_evidence_review_check.py
 python scripts/d9_1_operating_health_review_check.py
 python scripts/d9_2_order_operations_loop_check.py
