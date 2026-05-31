@@ -29,6 +29,7 @@ REQUIRED_MARKERS = (
     "READY_FOR_PRODUCTION_COORDINATION_REVIEW",
     "human Go / No-Go handoff",
     "docs/records/d8_production_go_no_go_YYYYMMDD.md",
+    "python scripts/project_execution_chain_gate_check.py",
     "python scripts/project_execution_status.py",
     "Preferred local backend smoke port is `8014`",
     "Historical D5/D6 records may mention `8000` or `8010`",
