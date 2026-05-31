@@ -44,6 +44,8 @@ REQUIRED_DOCS = (
     "docs/phase3/project_execution_acceptance_audit.md",
     "docs/phase3/phase3_roadmap.md",
     "docs/phase3/ie_auto_project_plan.md",
+    "docs/records/d8_staging_operator_handoff_20260531.md",
+    "docs/records/d8_staging_access_request_20260531.md",
 )
 REQUIRED_SCRIPTS = (
     "backend/scripts/d7_9_resource_center_check.py",
@@ -96,10 +98,13 @@ REQUIRED_MATRIX_MARKERS = (
     "STAGING_EVIDENCE_NONCANONICAL",
     "STAGING_EVIDENCE_UNREADABLE",
     "D8 Staging Operator Handoff",
+    "docs/records/d8_staging_operator_handoff_20260531.md",
     "D8 Staging Handoff Bundle",
+    "includes committed handoff and access-request records",
     "D8 Staging Operator Runbook",
     "D8 Staging Input Preflight",
     "D8 Staging Access Request",
+    "docs/records/d8_staging_access_request_20260531.md",
     "D8 Staging Operator Response Intake",
     "D8 Staging Gap Triage",
     "D8 Staging Execution Pack",
