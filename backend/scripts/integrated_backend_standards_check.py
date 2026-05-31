@@ -19,6 +19,8 @@ REQUIRED_MARKERS = (
     "D7 order, confirmation, partner/supplier, production milestone, portal bridge, feedback intake, and shipment plan foundations are closed through D7.9",
     "READY_FOR_STAGING_HANDOFF",
     "STAGING_VALIDATED",
+    "human Go / No-Go handoff",
+    "docs/records/d8_production_go_no_go_YYYYMMDD.md",
     "service.intelli-opus.com",
     "/api/v1/portal/customer/*",
     "Strict customer-visible DTOs only",

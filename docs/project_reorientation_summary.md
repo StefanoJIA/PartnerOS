@@ -19,7 +19,7 @@ The original reorientation focused on moving from web-first assumptions to a des
 | D6 Quote MVP | Closed as D6 Final |
 | D7 Orders / Production / Shipment / Portal bridge / Resources | Closed through D7.9 |
 | D8 Runtime and staging handoff | Local gates ready; waiting for real staging values and strict evidence |
-| D9 Operating loop | Planned behind `STAGING_VALIDATED`, evidence review, and production coordination |
+| D9 Operating loop | Planned behind `STAGING_VALIDATED`, evidence review, production coordination, and the human Go / No-Go handoff |
 
 The correct current project state is `READY_FOR_STAGING_HANDOFF`, not D0/D1 kickoff.
 
@@ -33,7 +33,7 @@ Use the D8 staging handoff package and obtain the private staging values needed 
 - deployed PartnerOS staging commit or release tag
 - representative TEST fixture scope
 
-Then run strict staging evidence and review the saved redacted records before production coordination or D9 kickoff.
+Then run strict staging evidence and review the saved redacted records before production coordination, the human Go / No-Go handoff, or D9 kickoff. If the Go / No-Go decision is committed, use `docs/records/d8_production_go_no_go_YYYYMMDD.md`.
 
 ## Active Proof Chain
 

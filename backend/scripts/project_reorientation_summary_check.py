@@ -22,6 +22,8 @@ REQUIRED_MARKERS = (
     "Closed through D7.9",
     "waiting for real staging values and strict evidence",
     "Planned behind `STAGING_VALIDATED`",
+    "human Go / No-Go handoff",
+    "docs/records/d8_production_go_no_go_YYYYMMDD.md",
     "not D0/D1 kickoff",
     "real `BACKEND_BASE_URL`",
     "real `SERVICE_PORTAL_PARTNEROS_TOKEN`",
