@@ -107,6 +107,9 @@ REQUIRED_MARKERS = (
     "No `.env`",
     "No email, webhook, carrier API",
 )
+PROOF_RECORD_MARKERS = tuple(
+    marker for marker in REQUIRED_MARKERS if marker.startswith("docs/records/") and "YYYYMMDD" not in marker
+)
 FORBIDDEN_MARKERS = (
     "SERVICE_PORTAL_PARTNEROS_TOKEN=",
     "PORTAL_CUSTOMER_API_TOKEN=",
@@ -148,6 +151,10 @@ def _missing(text: str, markers: tuple[str, ...]) -> list[str]:
     return [marker for marker in markers if marker not in text]
 
 
+def _proof_record_issues() -> list[str]:
+    return [marker for marker in PROOF_RECORD_MARKERS if not (REPO_ROOT / marker).is_file()]
+
+
 def _run_script(script: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, script],
@@ -178,6 +185,7 @@ def main() -> int:
     checks = [
         Check("acceptance audit doc exists"),
         Check("acceptance audit maps requirements to evidence"),
+        Check("acceptance audit proof records exist"),
         Check("acceptance audit is redacted"),
         Check("D8 readiness remains pre-staging"),
         Check("production coordination remains gated"),
@@ -190,24 +198,29 @@ def main() -> int:
     missing = _missing(text, REQUIRED_MARKERS)
     checks[1].pass_(f"{len(REQUIRED_MARKERS)} markers") if not missing else checks[1].fail(", ".join(missing))
 
+    proof_records = _proof_record_issues()
+    checks[2].pass_("current proof records present") if not proof_records else checks[2].fail(
+        ", ".join(proof_records)
+    )
+
     forbidden = [marker for marker in FORBIDDEN_MARKERS if marker.lower() in text.lower()]
-    checks[2].pass_("no secret-like markers") if not forbidden else checks[2].fail(", ".join(forbidden))
+    checks[3].pass_("no secret-like markers") if not forbidden else checks[3].fail(", ".join(forbidden))
 
     readiness = _run_script("scripts/d8_readiness_audit.py")
     readiness_output = "\n".join(part for part in (readiness.stdout.strip(), readiness.stderr.strip()) if part)
     readiness_state = _extract(readiness_output, "Overall:")
     if readiness.returncode == 0 and readiness_state == "READY_FOR_STAGING":
-        checks[3].pass_(readiness_state)
+        checks[4].pass_(readiness_state)
     else:
-        checks[3].fail(readiness_state)
+        checks[4].fail(readiness_state)
 
     production = _run_script("scripts/d8_production_coordination_check.py")
     production_output = "\n".join(part for part in (production.stdout.strip(), production.stderr.strip()) if part)
     coordination_state = _extract(production_output, "Coordination State:")
     if production.returncode == 0 and coordination_state == "WAITING_FOR_STAGING_VALIDATION":
-        checks[4].pass_(coordination_state)
+        checks[5].pass_(coordination_state)
     else:
-        checks[4].fail(coordination_state)
+        checks[5].fail(coordination_state)
 
     current_stage, next_action = _status_next_action(
         "READY_FOR_STAGING_HANDOFF",
@@ -224,9 +237,9 @@ def main() -> int:
     )
     missing_next_action = [marker for marker in next_action_markers if marker not in status_output]
     if not missing_next_action:
-        checks[5].pass_("staging handoff runbook path")
+        checks[6].pass_("staging handoff runbook path")
     else:
-        checks[5].fail(", ".join(missing_next_action))
+        checks[6].fail(", ".join(missing_next_action))
 
     print("Project Execution Acceptance Audit Check")
     for check in checks:
