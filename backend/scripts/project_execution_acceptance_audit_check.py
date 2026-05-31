@@ -88,6 +88,7 @@ REQUIRED_MARKERS = (
     "d8_staging_handoff_bundle.md",
     "d8_staging_operator_runbook.md",
     "d8_staging_access_request.md",
+    "latest committed `docs/records/d8_staging_access_request_YYYYMMDD.md`",
     "docs/records/d8_staging_access_request_20260531.md",
     "redacted access request record committed",
     "WAITING_FOR_PRIVATE_VALUES",
@@ -218,7 +219,7 @@ def main() -> int:
         "Current Stage: READY_FOR_STAGING_HANDOFF",
         "d8_staging_handoff_bundle.md",
         "d8_staging_operator_runbook.md",
-        "docs/records/d8_staging_access_request_20260531.md",
+        "latest committed request at docs/records/d8_staging_access_request_",
         "d8_staging_access_request.md",
     )
     missing_next_action = [marker for marker in next_action_markers if marker not in status_output]

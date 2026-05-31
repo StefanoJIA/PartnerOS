@@ -18,6 +18,7 @@ def _load_module():
 
 def test_project_execution_status_reports_staging_handoff(monkeypatch, capsys):
     module = _load_module()
+    monkeypatch.setattr(module, "_latest_access_request_record", lambda: "docs/records/d8_staging_access_request_20260531.md")
 
     def fake_run(script: str):
         outputs = {
@@ -43,6 +44,7 @@ def test_project_execution_status_reports_staging_handoff(monkeypatch, capsys):
 
 def test_project_execution_status_reports_production_coordination(monkeypatch, capsys):
     module = _load_module()
+    monkeypatch.setattr(module, "_latest_access_request_record", lambda: "docs/records/d8_staging_access_request_20260531.md")
 
     def fake_run(script: str):
         outputs = {
@@ -64,6 +66,7 @@ def test_project_execution_status_reports_production_coordination(monkeypatch, c
 
 def test_project_execution_status_reports_staging_gaps_open(monkeypatch, capsys):
     module = _load_module()
+    monkeypatch.setattr(module, "_latest_access_request_record", lambda: "docs/records/d8_staging_access_request_20260531.md")
 
     def fake_run(script: str):
         outputs = {
@@ -85,6 +88,7 @@ def test_project_execution_status_reports_staging_gaps_open(monkeypatch, capsys)
 
 def test_project_execution_status_reports_staging_validated_before_coordination(monkeypatch, capsys):
     module = _load_module()
+    monkeypatch.setattr(module, "_latest_access_request_record", lambda: "docs/records/d8_staging_access_request_20260531.md")
 
     def fake_run(script: str):
         outputs = {
@@ -106,6 +110,7 @@ def test_project_execution_status_reports_staging_validated_before_coordination(
 
 def test_project_execution_status_reports_evidence_review_block(monkeypatch, capsys):
     module = _load_module()
+    monkeypatch.setattr(module, "_latest_access_request_record", lambda: "docs/records/d8_staging_access_request_20260531.md")
 
     def fake_run(script: str):
         outputs = {
@@ -127,6 +132,7 @@ def test_project_execution_status_reports_evidence_review_block(monkeypatch, cap
 
 def test_project_execution_status_fails_when_chain_fails(monkeypatch, capsys):
     module = _load_module()
+    monkeypatch.setattr(module, "_latest_access_request_record", lambda: "docs/records/d8_staging_access_request_20260531.md")
 
     def fake_run(script: str):
         if script == "scripts/project_execution_chain_gate_check.py":
@@ -147,6 +153,7 @@ def test_project_execution_status_fails_when_chain_fails(monkeypatch, capsys):
 
 def test_project_execution_status_fails_when_chain_gate_fails(monkeypatch, capsys):
     module = _load_module()
+    monkeypatch.setattr(module, "_latest_access_request_record", lambda: "docs/records/d8_staging_access_request_20260531.md")
 
     def fake_run(script: str):
         outputs = {
@@ -168,3 +175,20 @@ def test_project_execution_status_fails_when_chain_gate_fails(monkeypatch, capsy
     assert "Current Stage: LOCAL_EXECUTION_CHAIN_INCOMPLETE" in output
     assert "[FAIL] project execution chain gate" in output
     assert "gate doc missing" in output
+
+
+def test_latest_access_request_record_uses_latest_canonical_record(tmp_path, monkeypatch):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d8_staging_access_request_20260531.md").write_text("redacted\n", encoding="utf-8")
+    (tmp_path / "d8_staging_access_request_20260601.md").write_text("redacted\n", encoding="utf-8")
+    (tmp_path / "d8_staging_access_request_latest.md").write_text("ignored\n", encoding="utf-8")
+
+    assert module._latest_access_request_record() == "docs/records/d8_staging_access_request_20260601.md"
+
+
+def test_latest_access_request_record_falls_back_without_records(tmp_path, monkeypatch):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+
+    assert module._latest_access_request_record() == "docs/records/d8_staging_access_request_YYYYMMDD.md"

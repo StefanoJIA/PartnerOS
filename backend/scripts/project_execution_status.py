@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = BACKEND_ROOT.parent
+RECORDS_ROOT = REPO_ROOT / "docs" / "records"
+ACCESS_REQUEST_PATTERN = re.compile(r"^d8_staging_access_request_\d{8}\.md$")
 
 
 class Check:
@@ -50,13 +54,32 @@ def _extract_line(output: str, prefix: str) -> str:
     return "UNKNOWN"
 
 
-def _next_action(chain_state: str, readiness: str, coordination: str) -> tuple[str, str]:
+def _latest_access_request_record() -> str:
+    if not RECORDS_ROOT.exists():
+        return "docs/records/d8_staging_access_request_YYYYMMDD.md"
+    records = sorted(
+        (path for path in RECORDS_ROOT.glob("d8_staging_access_request_*.md") if ACCESS_REQUEST_PATTERN.match(path.name)),
+        key=lambda path: path.name,
+        reverse=True,
+    )
+    if not records:
+        return "docs/records/d8_staging_access_request_YYYYMMDD.md"
+    return f"docs/records/{records[0].name}"
+
+
+def _next_action(
+    chain_state: str,
+    readiness: str,
+    coordination: str,
+    access_request_record: str | None = None,
+) -> tuple[str, str]:
+    access_request_record = access_request_record or _latest_access_request_record()
     if chain_state != "READY_FOR_STAGING_HANDOFF":
         return "LOCAL_EXECUTION_CHAIN_INCOMPLETE", "Fix the failing local gate before staging handoff."
     if readiness == "READY_FOR_STAGING":
         return (
             "READY_FOR_STAGING_HANDOFF",
-            "Use docs/phase3/d8_staging_handoff_bundle.md and docs/phase3/d8_staging_operator_runbook.md, track the committed request at docs/records/d8_staging_access_request_20260531.md, obtain private staging values via d8_staging_access_request.md, then run strict staging evidence.",
+            f"Use docs/phase3/d8_staging_handoff_bundle.md and docs/phase3/d8_staging_operator_runbook.md, track the latest committed request at {access_request_record}, obtain private staging values via d8_staging_access_request.md, then run strict staging evidence.",
         )
     if readiness == "STAGING_GAPS_OPEN":
         return "STAGING_GAPS_OPEN", "Close the latest strict staging gap register, then rerun strict staging evidence."
@@ -118,7 +141,12 @@ def main() -> int:
         checks[3].fail(next((line for line in production_output.splitlines() if line.startswith("[FAIL]")), coordination_state))
 
     status_chain_state = chain_state if checks[0].ok else "LOCAL_EXECUTION_CHAIN_INCOMPLETE"
-    current_stage, next_action = _next_action(status_chain_state, readiness_state, coordination_state)
+    current_stage, next_action = _next_action(
+        status_chain_state,
+        readiness_state,
+        coordination_state,
+        _latest_access_request_record(),
+    )
     passed = all(check.ok for check in checks)
 
     print("Project Execution Status")
