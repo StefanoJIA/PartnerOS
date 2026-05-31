@@ -76,6 +76,24 @@ def test_d8_staging_gap_triage_check_rejects_invalid_gap_status(monkeypatch, tmp
     assert "invalid status investigating" in output
 
 
+def test_d8_staging_gap_triage_check_rejects_missing_gap_owner(monkeypatch, tmp_path, capsys):
+    module = _load_module()
+    records = tmp_path / "records"
+    records.mkdir()
+    (records / "d8_strict_staging_gaps_20260530.md").write_text(
+        "| Check | Detail | Recommended action | Owner | Status |\n"
+        "|---|---|---|---|---|\n"
+        "| token | redacted | rotate token |  | open |\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "RECORDS_ROOT", records)
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "existing D8 gap registers are triage-ready" in output
+    assert "missing owner" in output
+
+
 def test_d8_staging_gap_triage_check_flags_generic_api_key(monkeypatch, tmp_path, capsys):
     module = _load_module()
     records = tmp_path / "records"

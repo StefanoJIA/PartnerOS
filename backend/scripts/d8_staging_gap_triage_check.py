@@ -103,6 +103,10 @@ def _status_issues(path: Path, text: str) -> list[str]:
             continue
         if header is None or all(set(cell) <= {"-"} for cell in normalized):
             continue
+        if "owner" in header:
+            owner_index = header.index("owner")
+            if owner_index >= len(cells) or not cells[owner_index].strip():
+                issues.append(f"{path.name}:{line_no}:missing owner")
         if "status" not in header:
             continue
         status_index = header.index("status")
