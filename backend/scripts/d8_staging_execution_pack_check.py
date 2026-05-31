@@ -46,6 +46,7 @@ REQUIRED_FILES = (
     "backend/scripts/desktop_transition_roadmap_check.py",
     "backend/scripts/project_reorientation_summary_check.py",
     "backend/scripts/dev_guide_check.py",
+    "backend/scripts/integrated_backend_standards_check.py",
     "backend/scripts/deployment_readiness_checklist_check.py",
     "backend/scripts/testing_guide_check.py",
     "backend/scripts/operator_guide_check.py",
@@ -54,6 +55,7 @@ REQUIRED_FILES = (
     "docs/roadmap_desktop_transition.md",
     "docs/project_reorientation_summary.md",
     "docs/dev_guide.md",
+    "docs/integrated_backend_standards.md",
     "docs/deployment_readiness_checklist.md",
     "docs/testing.md",
     "docs/operator_guide.md",
@@ -121,6 +123,7 @@ HANDOFF_MARKERS = (
     "python scripts/desktop_transition_roadmap_check.py",
     "python scripts/project_reorientation_summary_check.py",
     "python scripts/dev_guide_check.py",
+    "python scripts/integrated_backend_standards_check.py",
     "python scripts/deployment_readiness_checklist_check.py",
     "python scripts/testing_guide_check.py",
     "python scripts/operator_guide_check.py",
@@ -213,6 +216,7 @@ def main() -> int:
         Check("desktop transition roadmap check runs"),
         Check("project reorientation summary check runs"),
         Check("developer guide check runs"),
+        Check("integrated backend standards check runs"),
         Check("deployment readiness checklist check runs"),
         Check("testing guide check runs"),
         Check("operator guide check runs"),
@@ -415,35 +419,41 @@ def main() -> int:
     else:
         checks[32].fail((dev_guide.stdout + dev_guide.stderr)[:160])
 
-    deployment_readiness = _run_script("scripts/deployment_readiness_checklist_check.py")
-    if deployment_readiness.returncode == 0 and "Result: PASS" in deployment_readiness.stdout:
+    backend_standards = _run_script("scripts/integrated_backend_standards_check.py")
+    if backend_standards.returncode == 0 and "Result: PASS" in backend_standards.stdout:
         checks[33].pass_("PASS")
     else:
-        checks[33].fail((deployment_readiness.stdout + deployment_readiness.stderr)[:160])
+        checks[33].fail((backend_standards.stdout + backend_standards.stderr)[:160])
+
+    deployment_readiness = _run_script("scripts/deployment_readiness_checklist_check.py")
+    if deployment_readiness.returncode == 0 and "Result: PASS" in deployment_readiness.stdout:
+        checks[34].pass_("PASS")
+    else:
+        checks[34].fail((deployment_readiness.stdout + deployment_readiness.stderr)[:160])
 
     testing_guide = _run_script("scripts/testing_guide_check.py")
     if testing_guide.returncode == 0 and "Result: PASS" in testing_guide.stdout:
-        checks[34].pass_("PASS")
+        checks[35].pass_("PASS")
     else:
-        checks[34].fail((testing_guide.stdout + testing_guide.stderr)[:160])
+        checks[35].fail((testing_guide.stdout + testing_guide.stderr)[:160])
 
     operator_guide = _run_script("scripts/operator_guide_check.py")
     if operator_guide.returncode == 0 and "Result: PASS" in operator_guide.stdout:
-        checks[35].pass_("PASS")
+        checks[36].pass_("PASS")
     else:
-        checks[35].fail((operator_guide.stdout + operator_guide.stderr)[:160])
+        checks[36].fail((operator_guide.stdout + operator_guide.stderr)[:160])
 
     handoff_code, handoff_text, handoff_output = _generate_handoff()
     if handoff_code == 0 and handoff_text:
-        checks[36].pass_("generated")
+        checks[37].pass_("generated")
     else:
-        checks[36].fail(handoff_output[:160])
+        checks[37].fail(handoff_output[:160])
 
     missing_markers = [marker for marker in HANDOFF_MARKERS if marker not in handoff_text]
     if not missing_markers:
-        checks[37].pass_("commands and safety boundaries")
+        checks[38].pass_("commands and safety boundaries")
     else:
-        checks[37].fail(", ".join(missing_markers))
+        checks[38].fail(", ".join(missing_markers))
 
     print("D8 Staging Execution Pack Check")
     for check in checks:

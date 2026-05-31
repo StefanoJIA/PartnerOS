@@ -29,6 +29,8 @@ REQUIRED_MARKERS = (
     "project_reorientation_summary_check.py",
     "Developer Guide",
     "dev_guide_check.py",
+    "Integrated Backend Standards",
+    "integrated_backend_standards_check.py",
     "Deployment Readiness Checklist",
     "deployment_readiness_checklist_check.py",
     "Testing Guide",
