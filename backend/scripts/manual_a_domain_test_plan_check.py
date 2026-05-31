@@ -34,6 +34,8 @@ REQUIRED_MARKERS = (
     "python scripts/manual_a_domain_test_plan_check.py",
     "python scripts/lead_intelligence_docs_check.py",
     "python scripts/project_execution_chain_gate_check.py",
+    "python scripts/d8_staging_execution_pack_check.py",
+    "python scripts/project_execution_acceptance_audit_check.py",
 )
 REQUIRED_TEMPLATE_MARKERS = (
     "Manual Test Record Template",
@@ -42,6 +44,8 @@ REQUIRED_TEMPLATE_MARKERS = (
     "redacted UAT summaries only",
     "python scripts/manual_a_domain_test_plan_check.py",
     "python scripts/project_execution_chain_gate_check.py",
+    "python scripts/d8_staging_execution_pack_check.py",
+    "python scripts/project_execution_acceptance_audit_check.py",
 )
 REQUIRED_IMPORT_TEMPLATE_MARKERS = (
     "Lead Import Template Guide",
@@ -51,6 +55,8 @@ REQUIRED_IMPORT_TEMPLATE_MARKERS = (
     "oem_odm_fit",
     "python scripts/manual_a_domain_test_plan_check.py",
     "python scripts/project_execution_chain_gate_check.py",
+    "python scripts/d8_staging_execution_pack_check.py",
+    "python scripts/project_execution_acceptance_audit_check.py",
 )
 FORBIDDEN_MARKERS = (
     "娑?",

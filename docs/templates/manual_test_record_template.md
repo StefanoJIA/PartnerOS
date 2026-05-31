@@ -77,4 +77,6 @@ cd backend
 python scripts/manual_a_domain_test_plan_check.py
 python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
+python scripts/d8_staging_execution_pack_check.py
+python scripts/project_execution_acceptance_audit_check.py
 ```
