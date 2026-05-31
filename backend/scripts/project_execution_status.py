@@ -80,36 +80,45 @@ def _next_action(chain_state: str, readiness: str, coordination: str) -> tuple[s
 
 def main() -> int:
     checks = [
+        Check("project execution chain gate"),
         Check("project execution chain"),
         Check("D8 readiness audit"),
         Check("D8 production coordination"),
     ]
 
+    chain_gate = _run_script("scripts/project_execution_chain_gate_check.py")
+    chain_gate_output = _combined_output(chain_gate)
+    if chain_gate.returncode == 0 and "Result: PASS" in chain_gate_output:
+        checks[0].pass_("PASS")
+    else:
+        checks[0].fail(next((line for line in chain_gate_output.splitlines() if line.startswith("[FAIL]")), "gate failed"))
+
     chain = _run_script("scripts/project_execution_chain_check.py")
     chain_output = _combined_output(chain)
     chain_state = _extract_line(chain_output, "State:")
     if chain.returncode == 0 and chain_state != "UNKNOWN":
-        checks[0].pass_(chain_state)
+        checks[1].pass_(chain_state)
     else:
-        checks[0].fail(next((line for line in chain_output.splitlines() if line.startswith("[FAIL]")), chain_state))
+        checks[1].fail(next((line for line in chain_output.splitlines() if line.startswith("[FAIL]")), chain_state))
 
     readiness = _run_script("scripts/d8_readiness_audit.py")
     readiness_output = _combined_output(readiness)
     readiness_state = _extract_line(readiness_output, "Overall:")
     if readiness.returncode == 0 and readiness_state != "UNKNOWN":
-        checks[1].pass_(readiness_state)
+        checks[2].pass_(readiness_state)
     else:
-        checks[1].fail(next((line for line in readiness_output.splitlines() if line.startswith("[FAIL]")), readiness_state))
+        checks[2].fail(next((line for line in readiness_output.splitlines() if line.startswith("[FAIL]")), readiness_state))
 
     production = _run_script("scripts/d8_production_coordination_check.py")
     production_output = _combined_output(production)
     coordination_state = _extract_line(production_output, "Coordination State:")
     if production.returncode == 0 and coordination_state != "UNKNOWN":
-        checks[2].pass_(coordination_state)
+        checks[3].pass_(coordination_state)
     else:
-        checks[2].fail(next((line for line in production_output.splitlines() if line.startswith("[FAIL]")), coordination_state))
+        checks[3].fail(next((line for line in production_output.splitlines() if line.startswith("[FAIL]")), coordination_state))
 
-    current_stage, next_action = _next_action(chain_state, readiness_state, coordination_state)
+    status_chain_state = chain_state if checks[0].ok else "LOCAL_EXECUTION_CHAIN_INCOMPLETE"
+    current_stage, next_action = _next_action(status_chain_state, readiness_state, coordination_state)
     passed = all(check.ok for check in checks)
 
     print("Project Execution Status")
