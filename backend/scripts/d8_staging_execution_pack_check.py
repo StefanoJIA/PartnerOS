@@ -181,6 +181,7 @@ HANDOFF_MARKERS = (
     "Do not deploy or modify `service.intelli-opus.com`",
     "Do not print, screenshot, commit, or paste portal tokens",
 )
+FORBIDDEN_DOC_MARKERS = ("partneros-staging.example.com",)
 
 
 class Check:
@@ -224,6 +225,21 @@ def _generate_handoff() -> tuple[int, str, str]:
         text = output.read_text(encoding="utf-8") if output.exists() else ""
         combined_output = "\n".join(part for part in (result.stdout.strip(), result.stderr.strip()) if part)
         return result.returncode, text, combined_output
+
+
+def _doc_marker_issues() -> list[str]:
+    issues: list[str] = []
+    for path_text in REQUIRED_FILES:
+        if not (path_text.startswith("docs/") or path_text in {"README.md", "AGENTS.md"}):
+            continue
+        path = REPO_ROOT / path_text
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8")
+        for marker in FORBIDDEN_DOC_MARKERS:
+            if marker in text:
+                issues.append(f"{path_text}:{marker}")
+    return issues
 
 
 def main() -> int:
@@ -277,6 +293,7 @@ def main() -> int:
         Check("D5.2 testing summary check runs"),
         Check("operator guide check runs"),
         Check("project execution chain gate check runs"),
+        Check("D8 handoff docs avoid deprecated staging host"),
         Check("handoff generator runs"),
         Check("handoff contains required commands and safety markers"),
     ]
@@ -572,17 +589,22 @@ def main() -> int:
     else:
         checks[48].fail((chain_gate.stdout + chain_gate.stderr)[:160])
 
+    doc_marker_issues = _doc_marker_issues()
+    checks[49].pass_("private backend placeholder only") if not doc_marker_issues else checks[49].fail(
+        ", ".join(doc_marker_issues[:8])
+    )
+
     handoff_code, handoff_text, handoff_output = _generate_handoff()
     if handoff_code == 0 and handoff_text:
-        checks[49].pass_("generated")
+        checks[50].pass_("generated")
     else:
-        checks[49].fail(handoff_output[:160])
+        checks[50].fail(handoff_output[:160])
 
     missing_markers = [marker for marker in HANDOFF_MARKERS if marker not in handoff_text]
     if not missing_markers:
-        checks[50].pass_("commands and safety boundaries")
+        checks[51].pass_("commands and safety boundaries")
     else:
-        checks[50].fail(", ".join(missing_markers))
+        checks[51].fail(", ".join(missing_markers))
 
     print("D8 Staging Execution Pack Check")
     for check in checks:
