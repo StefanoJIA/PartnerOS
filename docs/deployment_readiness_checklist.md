@@ -55,7 +55,7 @@ Expected local state before external validation:
 - `project_execution_status.py` reports `READY_FOR_STAGING_HANDOFF`.
 - `d8_readiness_audit.py` reports `READY_FOR_STAGING`.
 - `d8_production_coordination_check.py` reports `WAITING_FOR_STAGING_VALIDATION`.
-- Input preflight may report `WAITING_FOR_PRIVATE_VALUES` until operations supplies the private staging values.
+- Input preflight may report `WAITING_FOR_PRIVATE_VALUES` until operations supplies the private staging values; `LOCAL_REHEARSAL_READY` is rehearsal-only and must not produce committed staging evidence.
 
 ## Strict Staging Evidence
 

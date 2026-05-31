@@ -41,6 +41,7 @@ REQUIRED_MARKERS = (
     "python scripts/d8_production_coordination_check.py",
     "python scripts/d8_production_coordination_runbook_check.py",
     "python scripts/d9_operating_execution_pack_check.py",
+    "LOCAL_REHEARSAL_READY",
     "service.intelli-opus.com",
     "No carrier API, webhook, email",
 )
