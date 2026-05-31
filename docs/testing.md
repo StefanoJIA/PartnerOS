@@ -50,7 +50,7 @@ Strict staging evidence is separate from local validation. Run it only after ope
 
 ```powershell
 cd backend
-$env:BACKEND_BASE_URL="https://partneros-staging.example.com"
+$env:BACKEND_BASE_URL="https://<partneros-staging-backend-origin>"
 $env:SERVICE_PORTAL_PARTNEROS_TOKEN="<portal-server-token>"
 $env:SERVICE_PORTAL_ORIGIN="https://service.intelli-opus.com"
 python scripts/d8_staging_input_preflight_check.py

@@ -10,7 +10,7 @@ D8.3 prepares the existing `service.intelli-opus.com` portal to consume PartnerO
 
 ```powershell
 cd backend
-$env:BACKEND_BASE_URL="https://partneros-staging.example.com"
+$env:BACKEND_BASE_URL="https://<partneros-staging-backend-origin>"
 $env:SERVICE_PORTAL_PARTNEROS_TOKEN="<portal-server-token>"
 $env:SERVICE_PORTAL_ORIGIN="https://service.intelli-opus.com"
 python scripts/d8_3_service_portal_staging_check.py

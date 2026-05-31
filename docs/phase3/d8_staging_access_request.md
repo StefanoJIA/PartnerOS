@@ -36,7 +36,7 @@ After the operator replies, validate the allowed response shape with [D8 Staging
 
 ```powershell
 cd backend
-$env:BACKEND_BASE_URL="https://partneros-staging.example.com"
+$env:BACKEND_BASE_URL="https://<partneros-staging-backend-origin>"
 $env:SERVICE_PORTAL_PARTNEROS_TOKEN="<portal-server-token>"
 $env:SERVICE_PORTAL_ORIGIN="https://service.intelli-opus.com"
 python scripts/d8_strict_staging_evidence_check.py --evidence-json ../docs/records/d8_strict_staging_evidence_YYYYMMDD.json --gap-markdown ../docs/records/d8_strict_staging_gaps_YYYYMMDD.md
