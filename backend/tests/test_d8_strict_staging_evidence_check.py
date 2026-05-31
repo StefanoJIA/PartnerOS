@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import httpx
 
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "d8_strict_staging_evidence_check.py"
@@ -229,3 +230,23 @@ def test_strict_staging_evidence_rejects_placeholder_token_without_network(
     assert health_check["detail"] == "not attempted; staging inputs unsafe"
     assert "private-token-from-operator" not in output
     assert "private-token-from-operator" not in evidence.read_text(encoding="utf-8")
+
+
+def test_strict_staging_forbidden_scan_handles_httpx_json_response():
+    module = _load_module()
+    response = httpx.Response(200, json={"data": {"storage_key": "backend/storage/private.txt"}})
+
+    clean, detail = module._no_forbidden_blob("portal-secret", response)
+
+    assert clean is False
+    assert detail == "storage_key"
+
+
+def test_strict_staging_forbidden_scan_handles_httpx_text_response():
+    module = _load_module()
+    response = httpx.Response(500, text="temporary error included portal-secret")
+
+    clean, detail = module._no_forbidden_blob("portal-secret", response)
+
+    assert clean is False
+    assert detail == "portal token leaked"

@@ -129,8 +129,19 @@ def _is_localhost(url: str) -> bool:
     return host in {"localhost", "127.0.0.1", "::1"}
 
 
+def _scan_payload(payload: Any) -> Any:
+    if payload is None:
+        return None
+    if isinstance(payload, httpx.Response):
+        parsed = _json(payload)
+        if parsed:
+            return parsed
+        return {"status_code": payload.status_code, "text": payload.text[:500]}
+    return payload
+
+
 def _no_forbidden_blob(token: str, *payloads: Any) -> tuple[bool, str]:
-    blob = json.dumps(payloads, ensure_ascii=False).lower()
+    blob = json.dumps([_scan_payload(payload) for payload in payloads], ensure_ascii=False).lower()
     for marker in FORBIDDEN:
         if marker in blob:
             return False, marker
