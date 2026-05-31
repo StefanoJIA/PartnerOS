@@ -127,6 +127,9 @@ python scripts/dev_guide_check.py
 python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
 python scripts/project_execution_status.py
+python scripts/d8_staging_execution_pack_check.py
+python scripts/d9_operating_execution_pack_check.py
+python scripts/project_execution_acceptance_audit_check.py
 python -m pytest -q
 ```
 
@@ -180,6 +183,8 @@ python scripts/d8_staging_access_request_check.py
 python scripts/project_execution_chain_gate_check.py
 python scripts/project_execution_chain_check.py
 python scripts/project_execution_status.py
+python scripts/d8_staging_execution_pack_check.py
+python scripts/project_execution_acceptance_audit_check.py
 ```
 
 The correct next action at `READY_FOR_STAGING_HANDOFF` is to use the D8 handoff bundle and operator runbook, obtain private staging values through `d8_staging_access_request.md`, and then run strict staging evidence.

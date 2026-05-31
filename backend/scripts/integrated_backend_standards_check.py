@@ -38,6 +38,8 @@ REQUIRED_MARKERS = (
     "integrated_backend_standards_check.py",
     "project_execution_chain_gate_check.py",
     "d8_staging_execution_pack_check.py",
+    "d9_operating_execution_pack_check.py",
+    "project_execution_acceptance_audit_check.py",
 )
 FORBIDDEN_MARKERS = (
     "D0-D5.2",
