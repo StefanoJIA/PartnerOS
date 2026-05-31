@@ -15,12 +15,14 @@ def _load_module():
     return module
 
 
-def test_project_execution_records_check_passes_without_reports(tmp_path, monkeypatch, capsys):
+def test_project_execution_records_check_rejects_missing_reports(tmp_path, monkeypatch, capsys):
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
 
-    assert module.main() == 0
-    assert "Result: PASS" in capsys.readouterr().out
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "project execution report exists" in output
+    assert "no project execution reports" in output
 
 
 def test_project_execution_records_check_rejects_noncanonical_name(tmp_path, monkeypatch, capsys):

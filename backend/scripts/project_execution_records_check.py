@@ -86,6 +86,7 @@ def _redaction_issues(reports: list[Path]) -> list[str]:
 def main() -> int:
     checks = [
         Check("docs/records exists"),
+        Check("project execution report exists"),
         Check("project execution report names are canonical"),
         Check("project execution reports contain required markers"),
         Check("project execution reports are redacted"),
@@ -97,14 +98,16 @@ def main() -> int:
         checks[0].fail("missing docs/records")
 
     reports = _reports()
+    checks[1].pass_(f"{len(reports)} report(s)") if reports else checks[1].fail("no project execution reports")
+
     naming = _naming_issues(reports)
-    checks[1].pass_(f"{len(reports)} report(s)") if not naming else checks[1].fail(", ".join(naming))
+    checks[2].pass_(f"{len(reports)} report(s)") if not naming else checks[2].fail(", ".join(naming))
 
     markers = _marker_issues(reports)
-    checks[2].pass_("all reports") if not markers else checks[2].fail(", ".join(markers[:8]))
+    checks[3].pass_("all reports") if not markers else checks[3].fail(", ".join(markers[:8]))
 
     redaction = _redaction_issues(reports)
-    checks[3].pass_("no token assignments or forbidden markers") if not redaction else checks[3].fail(
+    checks[4].pass_("no token assignments or forbidden markers") if not redaction else checks[4].fail(
         ", ".join(redaction[:8])
     )
 
