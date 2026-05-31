@@ -17,6 +17,7 @@ python scripts/readme_check.py
 python scripts/deployment_readiness_checklist_check.py
 python scripts/testing_guide_check.py
 python scripts/operator_guide_check.py
+python scripts/codex_skill_pack_check.py
 python scripts/project_execution_chain_check.py
 python scripts/project_execution_status.py
 python -m pytest -q

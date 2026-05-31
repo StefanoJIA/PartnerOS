@@ -31,6 +31,8 @@ REQUIRED_MARKERS = (
     "dev_guide_check.py",
     "Integrated Backend Standards",
     "integrated_backend_standards_check.py",
+    "Codex Skill Pack",
+    "codex_skill_pack_check.py",
     "Deployment Readiness Checklist",
     "deployment_readiness_checklist_check.py",
     "Testing Guide",

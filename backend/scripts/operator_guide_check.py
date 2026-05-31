@@ -39,6 +39,7 @@ REQUIRED_MARKERS = (
     "project_reorientation_summary_check.py",
     "dev_guide_check.py",
     "integrated_backend_standards_check.py",
+    "codex_skill_pack_check.py",
     "deployment_readiness_checklist_check.py",
     "testing_guide_check.py",
     "operator_guide_check.py",
