@@ -241,6 +241,42 @@ def _build_feedback_operations(ticket_rows: list[FeedbackTicket]) -> dict[str, A
     open_rows = [row for row in ticket_rows if row.status in OPEN_FEEDBACK_STATUSES]
     high_priority_rows = [row for row in ticket_rows if row.priority in {"high", "urgent"}]
     flags = [feedback_operation_flags(row) for row in ticket_rows]
+    action_items = []
+    for row, flag in zip(ticket_rows, flags, strict=False):
+        action = None
+        if row.status == "resolved":
+            action = "close_resolved_ticket"
+        elif flag["response_summary_missing"]:
+            action = "add_internal_response_summary"
+        elif row.status == "new" and not row.internal_owner:
+            action = "assign_internal_owner"
+        elif row.priority in {"high", "urgent"} and row.status in OPEN_FEEDBACK_STATUSES:
+            action = "prioritize_internal_review"
+        elif row.status == "in_review":
+            action = "continue_internal_review"
+        if not action:
+            continue
+        action_items.append(
+            {
+                "id": str(row.id),
+                "ticket_number": row.ticket_number,
+                "order_id": str(row.order_id) if row.order_id else None,
+                "feedback_type": row.feedback_type,
+                "subject": row.subject,
+                "status": row.status,
+                "priority": row.priority,
+                "internal_owner": row.internal_owner,
+                "age_days": flag["age_days"],
+                "action": action,
+                "safety": {
+                    "internal_queue_only": True,
+                    "customer_notified": False,
+                    "automatic_reply_sent": False,
+                    "email_sent": False,
+                    "sla_promised": False,
+                },
+            }
+        )
     return {
         "total_count": len(ticket_rows),
         "open_count": len(open_rows),
@@ -248,6 +284,7 @@ def _build_feedback_operations(ticket_rows: list[FeedbackTicket]) -> dict[str, A
         "needs_internal_review_count": sum(1 for item in flags if item["needs_internal_review"]),
         "response_summary_missing_count": sum(1 for item in flags if item["response_summary_missing"]),
         "ready_to_close_count": sum(1 for row in ticket_rows if row.status == "resolved"),
+        "action_items": action_items[:8],
         "oldest_open_age_days": max(
             (
                 int(item["age_days"])

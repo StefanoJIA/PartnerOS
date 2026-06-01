@@ -349,7 +349,7 @@ The internal `recent_customer_visible_orders.items[]` rows include a `portal_tra
 
 The response also includes `runtime_health`, a read-only summary of database status, Alembic current/head revisions, migration pending state, Portal API config readiness, and sanitized warnings. It does not expose database URLs, storage paths, secrets, or token values.
 
-The `feedback_operations` block summarizes internal feedback triage for Portal launch readiness: open tickets, high-priority tickets, tickets needing internal review, missing response summaries, resolved tickets ready to close, and oldest open age. It is an internal queue summary only and does not create replies, notify customers, or promise an SLA.
+The `feedback_operations` block summarizes internal feedback triage for Portal launch readiness: open tickets, high-priority tickets, tickets needing internal review, missing response summaries, resolved tickets ready to close, oldest open age, and metadata-only `action_items`. Action items identify tickets that need internal assignment, prioritized review, response summaries, or closure. They are internal queue guidance only and do not create replies, notify customers, send email/webhooks, or promise an SLA.
 
 Internal operators can use `POST /api/v1/feedback-tickets/{id}/resolve` and `POST /api/v1/feedback-tickets/{id}/close` for explicit workflow actions. Both actions update PartnerOS internal status and response summary only; they do not send customer replies, email, webhooks, or SLA promises.
 

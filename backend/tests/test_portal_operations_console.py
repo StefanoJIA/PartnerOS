@@ -259,14 +259,26 @@ def test_feedback_operations_summary_is_internal_only():
     from app.services.portal.operations_console import _build_feedback_operations
 
     new_ticket = MagicMock()
+    new_ticket.id = uuid4()
+    new_ticket.ticket_number = "FB-2026-0001"
+    new_ticket.order_id = uuid4()
+    new_ticket.feedback_type = "tracking"
+    new_ticket.subject = "Shipment ETA"
     new_ticket.status = "new"
     new_ticket.priority = "urgent"
+    new_ticket.internal_owner = None
     new_ticket.response_summary = None
     new_ticket.created_at = datetime(2026, 5, 29, tzinfo=timezone.utc)
 
     resolved_ticket = MagicMock()
+    resolved_ticket.id = uuid4()
+    resolved_ticket.ticket_number = "FB-2026-0002"
+    resolved_ticket.order_id = None
+    resolved_ticket.feedback_type = "quality"
+    resolved_ticket.subject = "Resolved quality note"
     resolved_ticket.status = "resolved"
     resolved_ticket.priority = "normal"
+    resolved_ticket.internal_owner = "Ops"
     resolved_ticket.response_summary = None
     resolved_ticket.created_at = datetime(2026, 5, 30, tzinfo=timezone.utc)
 
@@ -278,6 +290,16 @@ def test_feedback_operations_summary_is_internal_only():
     assert data["needs_internal_review_count"] == 2
     assert data["response_summary_missing_count"] == 1
     assert data["ready_to_close_count"] == 1
+    assert [item["action"] for item in data["action_items"]] == [
+        "assign_internal_owner",
+        "close_resolved_ticket",
+    ]
+    assert data["action_items"][0]["ticket_number"] == "FB-2026-0001"
+    assert data["action_items"][0]["subject"] == "Shipment ETA"
+    assert data["action_items"][0]["safety"]["internal_queue_only"] is True
+    assert data["action_items"][0]["safety"]["customer_notified"] is False
+    assert data["action_items"][0]["safety"]["automatic_reply_sent"] is False
+    assert data["action_items"][0]["safety"]["sla_promised"] is False
     assert data["safety"]["internal_queue_only"] is True
     assert data["safety"]["customer_notified"] is False
     assert data["safety"]["automatic_reply_sent"] is False

@@ -253,6 +253,25 @@ export interface PortalOperationsConsole {
     needs_internal_review_count: number
     response_summary_missing_count: number
     ready_to_close_count: number
+    action_items: Array<{
+      id: string
+      ticket_number: string
+      order_id: string | null
+      feedback_type: string
+      subject: string
+      status: string
+      priority: string
+      internal_owner: string | null
+      age_days: number | null
+      action: string
+      safety: {
+        internal_queue_only: boolean
+        customer_notified: boolean
+        automatic_reply_sent: boolean
+        email_sent: boolean
+        sla_promised: boolean
+      }
+    }>
     oldest_open_age_days: number | null
     safety: {
       internal_queue_only: boolean
