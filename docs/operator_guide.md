@@ -270,7 +270,7 @@ Feedback status flow is `new -> in_review -> responded -> resolved -> closed`. T
 
 Portal Operations includes a staging connection and Portal contract summary with public base URL, allowed origins, auth header name, endpoint paths, and endpoint readiness. It displays token-required/configured booleans only; it must never display the token value.
 
-The token-gated customer manifest includes the same endpoint map plus a machine-readable customer field contract for products, orders, snapshots, production, shipment, resources, and feedback. `service.intelli-opus.com` should use this contract to render only customer-visible fields and treat planned dates as planned, not guaranteed.
+The token-gated customer manifest includes the same endpoint map plus a machine-readable customer field contract for products, orders, snapshots, production, shipment, resources, and feedback. Portal Operations displays the same field contract summary so operators and `service.intelli-opus.com` use one contract. The customer Portal should render only customer-visible fields and treat planned dates as planned, not guaranteed.
 
 Portal Operations also includes read-only runtime health for database status, Alembic current/head revisions, migration pending state, and Portal API config readiness. It must not display database URLs, storage paths, secrets, or token values.
 

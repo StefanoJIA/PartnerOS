@@ -159,6 +159,40 @@
       </div>
     </section>
 
+    <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="font-semibold text-slate-800">Customer field contract</h3>
+        <el-tag :type="data?.portal_contract.field_contract.date_policy.planned_dates_are_guarantees ? 'danger' : 'success'" effect="plain">
+          {{ data?.portal_contract.field_contract.date_policy.planned_dates_are_guarantees ? 'date guarantee risk' : 'planned dates only' }}
+        </el-tag>
+      </div>
+      <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Product fields</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.portal_contract.field_contract.products.length ?? 0 }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Order fields</p>
+          <p class="mt-1 font-medium text-slate-800">
+            {{ (data?.portal_contract.field_contract.order_summary.length ?? 0) + (data?.portal_contract.field_contract.order_detail.length ?? 0) }}
+          </p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Snapshot stages</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.portal_contract.field_contract.customer_status_stages.length ?? 0 }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Feedback request fields</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.portal_contract.field_contract.feedback_create.length ?? 0 }}</p>
+        </div>
+      </div>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <el-tag v-for="stage in data?.portal_contract.field_contract.customer_status_stages || []" :key="stage" effect="plain">
+          {{ stage }}
+        </el-tag>
+      </div>
+    </section>
+
     <section class="grid gap-4 xl:grid-cols-[1.3fr_1fr]">
       <div class="rounded border border-slate-200 bg-white p-4">
         <h3 class="mb-3 font-semibold text-slate-800">Recent customer-visible orders</h3>

@@ -25,6 +25,7 @@ from app.services.portal.customer_portal_bridge import (
     build_customer_shipment_view,
     create_feedback_ticket,
 )
+from app.services.portal.customer_contract import portal_customer_endpoints, portal_customer_field_contract
 from app.services.portal.customer_order_snapshot import build_customer_order_snapshot
 from app.services.portal.order_resource_service import download_customer_resource, list_customer_order_resources
 
@@ -40,144 +41,6 @@ class PortalFeedbackIn(BaseModel):
     priority: str = "normal"
     customer_name: str | None = None
     customer_email: str | None = None
-
-
-def _portal_customer_endpoints() -> dict[str, str]:
-    return {
-        "manifest": "/api/v1/portal/customer/manifest",
-        "products": "/api/v1/portal/customer/products",
-        "orders": "/api/v1/portal/customer/orders",
-        "order_detail": "/api/v1/portal/customer/orders/{order_id}",
-        "order_snapshot": "/api/v1/portal/customer/orders/{order_id}/snapshot",
-        "production": "/api/v1/portal/customer/orders/{order_id}/production",
-        "shipment": "/api/v1/portal/customer/orders/{order_id}/shipment",
-        "resources": "/api/v1/portal/customer/orders/{order_id}/resources",
-        "feedback": "/api/v1/portal/customer/feedback",
-    }
-
-
-def _portal_customer_field_contract() -> dict[str, object]:
-    return {
-        "envelope": ["ok", "data", "error", "request_id"],
-        "pagination": ["items", "total", "page", "limit"],
-        "products": [
-            "id",
-            "internal_sku",
-            "product_name",
-            "product_category",
-            "product_family",
-            "description",
-            "status",
-            "uom",
-            "currency",
-            "default_incoterm",
-            "image_url",
-            "attributes",
-        ],
-        "order_summary": [
-            "id",
-            "order_number",
-            "status",
-            "order_date",
-            "company_id",
-            "company_name",
-            "currency",
-            "grand_total",
-            "customer_confirmed_at",
-            "ship_to_company",
-            "ship_to_address",
-        ],
-        "order_detail": [
-            "bill_to_company",
-            "ship_to_name",
-            "payment_terms",
-            "shipping_terms",
-            "customer_notes",
-            "line_items",
-        ],
-        "line_item": [
-            "id",
-            "product_name",
-            "product_category",
-            "description",
-            "quantity",
-            "uom",
-            "unit_price",
-            "total_price",
-            "currency",
-            "incoterm",
-            "status",
-        ],
-        "snapshot": [
-            "order",
-            "customer_status",
-            "production",
-            "shipment",
-            "resources",
-            "feedback",
-            "safety",
-        ],
-        "customer_status": [
-            "stage",
-            "label",
-            "order_confirmed",
-            "production_started",
-            "production_completed",
-            "ready_to_ship",
-            "shipped",
-            "delivered",
-            "current_step_index",
-            "progress_steps",
-            "planned_dates_are_guarantees",
-        ],
-        "customer_status_stages": [
-            "pending_confirmation",
-            "confirmed",
-            "in_production",
-            "ready_to_ship",
-            "shipped",
-            "delivered",
-            "cancelled",
-        ],
-        "progress_step_states": ["complete", "current", "pending"],
-        "production_item": ["milestone_type", "milestone_label", "sequence", "status", "planned_date", "actual_date"],
-        "shipment_item": [
-            "id",
-            "status",
-            "shipment_method",
-            "carrier_name",
-            "tracking_number",
-            "tracking_url",
-            "estimated_ship_date",
-            "actual_ship_date",
-            "estimated_arrival_date",
-            "actual_arrival_date",
-        ],
-        "resource_item": ["id", "title", "category", "status", "filename", "mime", "size", "download_url", "created_at"],
-        "feedback_create": [
-            "order_id",
-            "company_id",
-            "feedback_type",
-            "subject",
-            "message",
-            "priority",
-            "customer_name",
-            "customer_email",
-        ],
-        "feedback_create_response": [
-            "ticket_number",
-            "status",
-            "feedback_received",
-            "customer_notified",
-            "automatic_reply_sent",
-            "resolution_time_promised",
-        ],
-        "date_policy": {
-            "planned_dates_are_guarantees": False,
-            "planned_dates_label": "planned",
-            "actual_dates_label": "actual",
-        },
-    }
 
 
 def require_portal_customer_access(
@@ -223,8 +86,8 @@ def portal_customer_manifest(request: Request, settings: Settings = Depends(get_
             "token_configured": bool(settings.PORTAL_CUSTOMER_API_TOKEN.strip()),
             "token_value_exposed": False,
         },
-        "endpoints": _portal_customer_endpoints(),
-        "field_contract": _portal_customer_field_contract(),
+        "endpoints": portal_customer_endpoints(),
+        "field_contract": portal_customer_field_contract(),
         "customer_visible_surfaces": ["products", "orders", "order_snapshot", "production", "shipment", "resources", "feedback"],
         "field_policy": {
             "allow_customer_visible_fields_only": True,
@@ -275,7 +138,7 @@ def portal_customer_readiness(
         "public_base_url_configured": bool(settings.PUBLIC_BASE_URL.strip()),
         "public_base_url": settings.PUBLIC_BASE_URL.strip() or None,
         "cors_origins": settings.cors_origins_list,
-        "endpoints": _portal_customer_endpoints(),
+        "endpoints": portal_customer_endpoints(),
         "safety": {
             "token_exposed": False,
             "automatic_customer_notification": False,

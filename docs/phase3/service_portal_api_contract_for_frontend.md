@@ -301,7 +301,7 @@ GET /api/v1/portal/operations/console
 
 This is an internal authenticated endpoint, not a customer Portal API. It shows Portal API config, endpoint readiness, recent customer-visible orders, customer snapshots, shipment status counts, feedback ticket counts, and forbidden-field audit status. It is read-only and does not notify customers or suppliers, call carrier APIs, or mutate order/shipment state.
 
-The response includes `portal_contract` for staging handoff: public base URL, allowed origins, server-to-server auth header name, token required/configured booleans, customer Portal endpoint paths, and endpoint readiness. It never includes the token value.
+The response includes `portal_contract` for staging handoff: public base URL, allowed origins, server-to-server auth header name, token required/configured booleans, customer Portal endpoint paths, endpoint readiness, and the same customer-visible `field_contract` exposed by `GET /api/v1/portal/customer/manifest`. It never includes the token value.
 
 The response includes `portal_launch_readiness`, a read-only rollup for staging connection preparation. It aggregates config, runtime, endpoint readiness, forbidden-field audit, customer snapshots, resources, and feedback queue checks into blockers and warnings. It never marks staging validated, deploys, notifies anyone, calls carriers, or exposes token values.
 

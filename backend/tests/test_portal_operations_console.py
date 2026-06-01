@@ -162,6 +162,8 @@ def test_operations_console_preserves_safe_token_metadata_without_values():
     assert data["safety"]["token_value_exposed"] is False
     assert data["portal_contract"]["server_to_server_auth"]["header_name"] == "X-Portal-Customer-Token"
     assert data["portal_contract"]["server_to_server_auth"]["token_configured"] is True
+    assert "customer_status_stages" in data["portal_contract"]["field_contract"]
+    assert data["portal_contract"]["field_contract"]["date_policy"]["planned_dates_are_guarantees"] is False
     assert "super-secret-value" not in str(data)
     assert "token" not in data
     assert "storage_key" not in data["nested"]

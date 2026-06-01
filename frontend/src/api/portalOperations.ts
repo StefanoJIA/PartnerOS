@@ -1,4 +1,5 @@
 import { http } from '@/api/http'
+import type { PortalFieldContract } from '@/api/portalCustomer'
 import type { V1Envelope } from '@/api/quotes'
 
 export interface PortalOperationsConsole {
@@ -23,6 +24,7 @@ export interface PortalOperationsConsole {
     }
     allowed_origins: string[]
     missing_config: string[]
+    field_contract: PortalFieldContract
     endpoints: Array<{
       name: string
       method: string

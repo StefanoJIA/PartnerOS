@@ -14,6 +14,7 @@ from app.services.portal.customer_field_filter import (
     FORBIDDEN_FIELD_NAMES,
     FORBIDDEN_TEXT_MARKERS,
 )
+from app.services.portal.customer_contract import portal_customer_field_contract
 from app.services.portal.customer_order_snapshot import build_customer_order_snapshot
 from app.services.portal.customer_portal_bridge import build_customer_order_list
 from app.services.portal.feedback_ticket_service import OPEN_FEEDBACK_STATUSES, feedback_operation_flags
@@ -417,6 +418,7 @@ def _build_portal_contract(settings: Settings, endpoints: dict[str, bool], missi
         },
         "allowed_origins": settings.cors_origins_list,
         "missing_config": missing_config,
+        "field_contract": portal_customer_field_contract(),
         "endpoints": [
             {"name": "manifest", "method": "GET", "path": "/api/v1/portal/customer/manifest", "ready": True},
             {"name": "products", "method": "GET", "path": "/api/v1/portal/customer/products", "ready": endpoints["products"]},
