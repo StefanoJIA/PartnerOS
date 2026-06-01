@@ -6,6 +6,7 @@ from collections import Counter, defaultdict
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
@@ -14,6 +15,13 @@ from app.models.customer_orders import CustomerOrder, OrderLineItem
 from app.models.customer_quotes import Quote, QuoteLineItem
 
 ADJUSTABLE_FRAME_TERMS = ("adjustable", "frame", "desk", "height", "sit stand", "standing")
+FOCUS_CATEGORY_TERMS = {
+    "adjustable_desk_frames": ("adjustable frame", "height adjustable", "sit stand", "standing desk", "desk frame"),
+    "desk_legs": ("desk leg", "table leg", "legs", "leg set"),
+    "lifting_columns": ("lifting column", "telescopic column", "column lift", "linear column"),
+    "education_furniture": ("education", "school", "classroom", "student", "training table"),
+    "project_furniture": ("project furniture", "project-based", "project based", "custom furniture", "contract furniture"),
+}
 NEGATIVE_TERMS = ("delay", "delayed", "late", "issue", "problem", "missing", "broken", "wrong", "noise", "unstable")
 POSITIVE_TERMS = ("good", "accepted", "works", "solid", "fit", "stable", "approved", "satisfied")
 GAP_FIELDS = (
@@ -97,6 +105,14 @@ def _summary(value: str | None, limit: int = 180) -> str:
 def _is_adjustable_frame_signal(*parts: Any) -> bool:
     blob = _text(*parts).lower()
     return any(term in blob for term in ADJUSTABLE_FRAME_TERMS)
+
+
+def _focus_category(*parts: Any) -> str | None:
+    blob = _text(*parts).lower()
+    for category, terms in FOCUS_CATEGORY_TERMS.items():
+        if any(term in blob for term in terms):
+            return category
+    return None
 
 
 def _date_key(value: Any) -> str | None:
@@ -235,6 +251,7 @@ def _build_demand_section(
     quote_lines: list[QuoteLineItem],
     order_lines: list[OrderLineItem],
 ) -> dict[str, Any]:
+    focus_counts: Counter[str] = Counter()
     demand: dict[str, dict[str, Any]] = defaultdict(
         lambda: {
             "category": "",
@@ -247,6 +264,7 @@ def _build_demand_section(
             "importance_counts": {},
             "segments": {},
             "adjustable_frame_focus": False,
+            "focus_category": None,
         }
     )
 
@@ -258,6 +276,10 @@ def _build_demand_section(
         bucket["adjustable_frame_focus"] = bucket["adjustable_frame_focus"] or _is_adjustable_frame_signal(
             category, getattr(item, "title", None), getattr(item, "content", None), getattr(item, "tags", None)
         )
+        focus = _focus_category(category, getattr(item, "title", None), getattr(item, "content", None), getattr(item, "tags", None))
+        if focus:
+            bucket["focus_category"] = bucket["focus_category"] or focus
+            focus_counts[focus] += 1
         _inc(bucket["importance_counts"], _norm(getattr(item, "importance", None), "normal"))
         segment = _norm(getattr(item, "market_segment", None), "Unsegmented")
         _inc(bucket["segments"], segment)
@@ -270,6 +292,10 @@ def _build_demand_section(
         bucket["category"] = category
         bucket["feedback_signal_count"] += 1
         bucket["adjustable_frame_focus"] = bucket["adjustable_frame_focus"] or _is_adjustable_frame_signal(ticket.subject, ticket.message)
+        focus = _focus_category(ticket.feedback_type, ticket.subject, ticket.message, ticket.response_summary)
+        if focus:
+            bucket["focus_category"] = bucket["focus_category"] or focus
+            focus_counts[focus] += 1
 
     for line in quote_lines:
         category = _norm(getattr(line, "product_category", None))
@@ -280,6 +306,10 @@ def _build_demand_section(
         bucket["adjustable_frame_focus"] = bucket["adjustable_frame_focus"] or _is_adjustable_frame_signal(
             category, getattr(line, "product_name", None), getattr(line, "description_customer", None)
         )
+        focus = _focus_category(category, getattr(line, "product_name", None), getattr(line, "description_customer", None))
+        if focus:
+            bucket["focus_category"] = bucket["focus_category"] or focus
+            focus_counts[focus] += 1
 
     for line in order_lines:
         category = _norm(getattr(line, "product_category", None))
@@ -290,17 +320,22 @@ def _build_demand_section(
         bucket["adjustable_frame_focus"] = bucket["adjustable_frame_focus"] or _is_adjustable_frame_signal(
             category, getattr(line, "product_name", None), getattr(line, "description_customer", None)
         )
+        focus = _focus_category(category, getattr(line, "product_name", None), getattr(line, "description_customer", None))
+        if focus:
+            bucket["focus_category"] = bucket["focus_category"] or focus
+            focus_counts[focus] += 1
 
     rows = sorted(
         demand.values(),
         key=lambda r: (
+            bool(r["focus_category"]),
             bool(r["adjustable_frame_focus"]),
             r["order_line_count"] + r["quote_line_count"],
             r["market_signal_count"] + r["feedback_signal_count"],
         ),
         reverse=True,
     )
-    return {"items": rows, "total": len(rows)}
+    return {"items": rows, "total": len(rows), "focus_category_counts": dict(focus_counts)}
 
 
 def _build_gap_section(products: list[Product], demand_rows: list[dict[str, Any]]) -> dict[str, Any]:
@@ -383,13 +418,20 @@ def _build_recommendations(feedback: dict[str, Any], win_loss: dict[str, Any], g
     return recommendations
 
 
-def build_market_response_intelligence(db: Session) -> dict[str, Any]:
+def build_market_response_intelligence(db: Session, *, related_company_id: UUID | None = None) -> dict[str, Any]:
     feedback_rows = _safe_rows(db, FeedbackTicket)
     quotes = _safe_rows(db, Quote)
-    quote_lines = _safe_rows(db, QuoteLineItem)
     orders = _safe_rows(db, CustomerOrder)
-    order_lines = _safe_rows(db, OrderLineItem)
     market_items = _safe_rows(db, MarketIntelligenceItem)
+    if related_company_id:
+        feedback_rows = [row for row in feedback_rows if getattr(row, "company_id", None) == related_company_id]
+        quotes = [row for row in quotes if getattr(row, "company_id", None) == related_company_id]
+        orders = [row for row in orders if getattr(row, "company_id", None) == related_company_id]
+        market_items = [row for row in market_items if getattr(row, "related_company_id", None) == related_company_id]
+    quote_ids = {row.id for row in quotes}
+    order_ids = {row.id for row in orders}
+    quote_lines = [row for row in _safe_rows(db, QuoteLineItem) if not related_company_id or getattr(row, "quote_id", None) in quote_ids]
+    order_lines = [row for row in _safe_rows(db, OrderLineItem) if not related_company_id or getattr(row, "order_id", None) in order_ids]
     products = _safe_rows(db, Product)
 
     feedback = _build_feedback_section(feedback_rows)
@@ -406,6 +448,8 @@ def build_market_response_intelligence(db: Session) -> dict[str, Any]:
             "order_count": len(orders),
             "product_gap_count": gaps["total"],
             "recommendation_count": len(recommendations),
+            "filtered_by_company": bool(related_company_id),
+            "focus_category_counts": demand["focus_category_counts"],
         },
         "feedback": feedback,
         "win_loss": win_loss,

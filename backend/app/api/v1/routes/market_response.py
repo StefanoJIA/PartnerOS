@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
@@ -18,8 +20,9 @@ router = APIRouter(prefix="/market", tags=["v1-market-response"])
 @router.get("/response-intelligence")
 def get_market_response_intelligence(
     request: Request,
+    related_company_id: UUID | None = None,
     db: Session = Depends(get_db),
     _: User = Depends(require_permission(PERM_MARKET_READ)),
 ):
-    data = build_market_response_intelligence(db)
+    data = build_market_response_intelligence(db, related_company_id=related_company_id)
     return success_envelope(data, request_id=get_request_id(request))

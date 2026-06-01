@@ -12,7 +12,7 @@ D8.5 closes the loop from portal feedback, quote outcomes, order conversion, pro
 |---|---|
 | `GET /api/v1/market/response-intelligence` | Read-only market response board with feedback tags, win-loss signals, demand rows, product gaps, and advisory recommendations |
 
-The route requires `market:read`.
+The route requires `market:read`. It accepts optional `related_company_id=<uuid>` so operators can review the same feedback, quote, order, and market-note signals for one customer account without mixing in other brands.
 
 The service aggregates existing records only:
 
@@ -25,6 +25,14 @@ The service aggregates existing records only:
 - `products`
 
 No migration is required for the D8.5 foundation because the first version derives intelligence from existing source-of-truth tables.
+
+The demand board labels priority focus categories for the intelliOffice market loop:
+
+- adjustable desk frames
+- desk legs
+- lifting columns
+- education furniture
+- project furniture
 
 ## Frontend
 
@@ -39,6 +47,7 @@ The page now shows:
 - feedback tag extraction and summaries
 - quote / order win-loss by category
 - demand signal board with adjustable-frame focus detection
+- focus category counts and company-filter status
 - product parameter gaps
 - AI-assisted recommendations that remain advisory
 - the existing market intelligence item list

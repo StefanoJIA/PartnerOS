@@ -35,8 +35,12 @@ class _Db:
 
 
 def _fixture_db():
+    company_id = uuid4()
+    other_company_id = uuid4()
     quote_id = uuid4()
+    other_quote_id = uuid4()
     order_id = uuid4()
+    other_order_id = uuid4()
     product_id = uuid4()
     return _Db(
         {
@@ -51,12 +55,26 @@ def _fixture_db():
                     status="new",
                     priority="high",
                     order_id=order_id,
+                    company_id=company_id,
                     created_at=datetime(2026, 5, 29, tzinfo=timezone.utc),
+                ),
+                SimpleNamespace(
+                    id=uuid4(),
+                    ticket_number="FB-2026-0002",
+                    feedback_type="general",
+                    subject="Education furniture question",
+                    message="Customer asks about classroom project furniture.",
+                    response_summary=None,
+                    status="new",
+                    priority="normal",
+                    order_id=other_order_id,
+                    company_id=other_company_id,
+                    created_at=datetime(2026, 5, 28, tzinfo=timezone.utc),
                 )
             ],
             Quote: [
-                SimpleNamespace(id=quote_id, status="converted_to_order"),
-                SimpleNamespace(id=uuid4(), status="expired"),
+                SimpleNamespace(id=quote_id, company_id=company_id, status="converted_to_order"),
+                SimpleNamespace(id=other_quote_id, company_id=other_company_id, status="expired"),
             ],
             QuoteLineItem: [
                 SimpleNamespace(
@@ -66,10 +84,19 @@ def _fixture_db():
                     description_customer="Height adjustable frame",
                     quantity=12,
                     total_price=Decimal("2400.00"),
+                ),
+                SimpleNamespace(
+                    quote_id=other_quote_id,
+                    product_category="Education Furniture",
+                    product_name="Classroom project table",
+                    description_customer="Education project furniture",
+                    quantity=20,
+                    total_price=Decimal("3000.00"),
                 )
             ],
             CustomerOrder: [
-                SimpleNamespace(id=order_id, source_quote_id=quote_id, status="confirmed"),
+                SimpleNamespace(id=order_id, source_quote_id=quote_id, company_id=company_id, status="confirmed"),
+                SimpleNamespace(id=other_order_id, source_quote_id=other_quote_id, company_id=other_company_id, status="confirmed"),
             ],
             OrderLineItem: [
                 SimpleNamespace(
@@ -79,6 +106,14 @@ def _fixture_db():
                     description_customer="Height adjustable frame",
                     quantity=12,
                     total_price=Decimal("2400.00"),
+                ),
+                SimpleNamespace(
+                    order_id=other_order_id,
+                    product_category="Education Furniture",
+                    product_name="Classroom project table",
+                    description_customer="Education project furniture",
+                    quantity=20,
+                    total_price=Decimal("3000.00"),
                 )
             ],
             MarketIntelligenceItem: [
@@ -90,6 +125,17 @@ def _fixture_db():
                     content="Buyers ask for lower noise and BIFMA support.",
                     tags="adjustable,quiet",
                     importance="high",
+                    related_company_id=company_id,
+                ),
+                SimpleNamespace(
+                    id=uuid4(),
+                    title="Education furniture project demand",
+                    related_product_category="Education Furniture",
+                    market_segment="US education",
+                    content="Schools ask for project furniture packages.",
+                    tags="education,project",
+                    importance="normal",
+                    related_company_id=other_company_id,
                 )
             ],
             Product: [
@@ -108,22 +154,39 @@ def _fixture_db():
                 )
             ],
         }
-    )
+    ), company_id
 
 
 def test_market_response_intelligence_aggregates_feedback_demand_and_gaps():
-    data = build_market_response_intelligence(_fixture_db())
+    db, _ = _fixture_db()
+    data = build_market_response_intelligence(db)
 
-    assert data["summary"]["feedback_ticket_count"] == 1
+    assert data["summary"]["feedback_ticket_count"] == 2
     assert data["feedback"]["tag_counts"]["risk_or_issue"] == 1
     assert data["feedback"]["tag_counts"]["logistics"] == 1
     assert data["win_loss"]["lost_quote_count"] == 1
     assert data["demand"]["items"][0]["category"] == "Adjustable Frames"
     assert data["demand"]["items"][0]["adjustable_frame_focus"] is True
+    assert data["demand"]["items"][0]["focus_category"] == "adjustable_desk_frames"
+    assert data["summary"]["focus_category_counts"]["adjustable_desk_frames"] >= 1
+    assert data["summary"]["focus_category_counts"]["education_furniture"] >= 1
     assert data["product_gaps"]["total"] == 1
     assert data["recommendations"][0]["human_review_required"] is True
     assert data["safety"]["read_only"] is True
     assert data["safety"]["ai_executed"] is False
+
+
+def test_market_response_intelligence_filters_by_related_company():
+    db, company_id = _fixture_db()
+    data = build_market_response_intelligence(db, related_company_id=company_id)
+
+    assert data["summary"]["filtered_by_company"] is True
+    assert data["summary"]["feedback_ticket_count"] == 1
+    assert data["summary"]["market_signal_count"] == 1
+    assert data["summary"]["quote_count"] == 1
+    assert data["summary"]["order_count"] == 1
+    assert data["demand"]["items"][0]["category"] == "Adjustable Frames"
+    assert "Education Furniture" not in {row["category"] for row in data["demand"]["items"]}
 
 
 def test_market_response_intelligence_route(monkeypatch):
@@ -133,12 +196,14 @@ def test_market_response_intelligence_route(monkeypatch):
         email="d8_5_market@test.example",
         is_active=True,
     )
-    app.dependency_overrides[get_db] = lambda: (yield _fixture_db())
+    db, company_id = _fixture_db()
+    app.dependency_overrides[get_db] = lambda: (yield db)
 
     with TestClient(app) as client:
-        response = client.get("/api/v1/market/response-intelligence")
+        response = client.get(f"/api/v1/market/response-intelligence?related_company_id={company_id}")
 
     assert response.status_code == 200
     payload = response.json()["data"]
     assert payload["summary"]["market_signal_count"] == 1
+    assert payload["summary"]["filtered_by_company"] is True
     assert payload["safety"]["customer_notified"] is False

@@ -81,8 +81,12 @@ class _Query:
 
 class _Db:
     def __init__(self) -> None:
+        self.company_id = uuid4()
+        other_company_id = uuid4()
         quote_id = uuid4()
+        other_quote_id = uuid4()
         order_id = uuid4()
+        other_order_id = uuid4()
         self.mapping = {
             FeedbackTicket: [
                 SimpleNamespace(
@@ -95,12 +99,26 @@ class _Db:
                     status="new",
                     priority="high",
                     order_id=order_id,
+                    company_id=self.company_id,
                     created_at=datetime(2026, 5, 29, tzinfo=timezone.utc),
+                ),
+                SimpleNamespace(
+                    id=uuid4(),
+                    ticket_number="FB-2026-0002",
+                    feedback_type="general",
+                    subject="Education furniture project request",
+                    message="Customer asks about classroom project furniture.",
+                    response_summary=None,
+                    status="new",
+                    priority="normal",
+                    order_id=other_order_id,
+                    company_id=other_company_id,
+                    created_at=datetime(2026, 5, 28, tzinfo=timezone.utc),
                 )
             ],
             Quote: [
-                SimpleNamespace(id=quote_id, status="converted_to_order"),
-                SimpleNamespace(id=uuid4(), status="expired"),
+                SimpleNamespace(id=quote_id, company_id=self.company_id, status="converted_to_order"),
+                SimpleNamespace(id=other_quote_id, company_id=other_company_id, status="expired"),
             ],
             QuoteLineItem: [
                 SimpleNamespace(
@@ -110,9 +128,20 @@ class _Db:
                     description_customer="Height adjustable frame",
                     quantity=12,
                     total_price=Decimal("2400.00"),
+                ),
+                SimpleNamespace(
+                    quote_id=other_quote_id,
+                    product_category="Education Furniture",
+                    product_name="Classroom project table",
+                    description_customer="Education project furniture",
+                    quantity=20,
+                    total_price=Decimal("3000.00"),
                 )
             ],
-            CustomerOrder: [SimpleNamespace(id=order_id, source_quote_id=quote_id, status="confirmed")],
+            CustomerOrder: [
+                SimpleNamespace(id=order_id, source_quote_id=quote_id, company_id=self.company_id, status="confirmed"),
+                SimpleNamespace(id=other_order_id, source_quote_id=other_quote_id, company_id=other_company_id, status="confirmed"),
+            ],
             OrderLineItem: [
                 SimpleNamespace(
                     order_id=order_id,
@@ -121,6 +150,14 @@ class _Db:
                     description_customer="Height adjustable frame",
                     quantity=12,
                     total_price=Decimal("2400.00"),
+                ),
+                SimpleNamespace(
+                    order_id=other_order_id,
+                    product_category="Education Furniture",
+                    product_name="Classroom project table",
+                    description_customer="Education project furniture",
+                    quantity=20,
+                    total_price=Decimal("3000.00"),
                 )
             ],
             MarketIntelligenceItem: [
@@ -132,6 +169,17 @@ class _Db:
                     content="Buyers ask for lower noise and BIFMA support.",
                     tags="adjustable,quiet",
                     importance="high",
+                    related_company_id=self.company_id,
+                ),
+                SimpleNamespace(
+                    id=uuid4(),
+                    title="Education furniture project demand",
+                    related_product_category="Education Furniture",
+                    market_segment="US education",
+                    content="Schools ask for project furniture packages.",
+                    tags="education,project",
+                    importance="normal",
+                    related_company_id=other_company_id,
                 )
             ],
             Product: [
@@ -165,6 +213,8 @@ def main() -> int:
         Check("summary present"),
         Check("feedback tags extracted"),
         Check("demand board includes adjustable frames"),
+        Check("company filter narrows signals"),
+        Check("focus categories extracted"),
         Check("product gaps present"),
         Check("recommendations advisory"),
         Check("safety no automation"),
@@ -181,6 +231,9 @@ def main() -> int:
 
     with TestClient(app, raise_server_exceptions=False) as client:
         response = client.get("/api/v1/market/response-intelligence")
+        filtered_db = _Db()
+        app.dependency_overrides[get_db] = lambda: (yield filtered_db)
+        filtered_response = client.get(f"/api/v1/market/response-intelligence?related_company_id={filtered_db.company_id}")
 
     if response.status_code == 200:
         checks[0].pass_("HTTP 200")
@@ -202,14 +255,34 @@ def main() -> int:
     frame_row = next((row for row in demand_items if row.get("category") == "Adjustable Frames"), None)
     checks[3].pass_("Adjustable Frames") if frame_row and frame_row.get("adjustable_frame_focus") else checks[3].fail("missing")
 
+    filtered_data = _json(filtered_response).get("data", {}) if filtered_response.status_code == 200 else {}
+    filtered_summary = filtered_data.get("summary") or {}
+    if (
+        filtered_response.status_code == 200
+        and filtered_summary.get("filtered_by_company") is True
+        and filtered_summary.get("feedback_ticket_count") == 1
+        and filtered_summary.get("market_signal_count") == 1
+        and filtered_summary.get("quote_count") == 1
+        and filtered_summary.get("order_count") == 1
+    ):
+        checks[4].pass_("one company")
+    else:
+        checks[4].fail(str(filtered_summary))
+
+    focus_counts = summary.get("focus_category_counts") or {}
+    if focus_counts.get("adjustable_desk_frames") and focus_counts.get("education_furniture"):
+        checks[5].pass_("adjustable + education")
+    else:
+        checks[5].fail(str(focus_counts))
+
     gap_items = ((data.get("product_gaps") or {}).get("items") or [])
-    checks[4].pass_(f"{len(gap_items)} gap row(s)") if gap_items else checks[4].fail("empty")
+    checks[6].pass_(f"{len(gap_items)} gap row(s)") if gap_items else checks[6].fail("empty")
 
     recs = data.get("recommendations") or []
     if recs and all(rec.get("human_review_required") is True and rec.get("auto_execute") is False for rec in recs):
-        checks[5].pass_(f"{len(recs)} recommendation(s)")
+        checks[7].pass_(f"{len(recs)} recommendation(s)")
     else:
-        checks[5].fail(str(recs[:1]))
+        checks[7].fail(str(recs[:1]))
 
     safety = data.get("safety") or {}
     if (
@@ -221,13 +294,13 @@ def main() -> int:
         and safety.get("quote_status_changed") is False
         and safety.get("order_status_changed") is False
     ):
-        checks[6].pass_("advisory only")
+        checks[8].pass_("advisory only")
     else:
-        checks[6].fail(str(safety))
+        checks[8].fail(str(safety))
 
     blob = json.dumps(data, ensure_ascii=False).lower()
     leaked = next((marker for marker in FORBIDDEN if marker in blob), None)
-    checks[7].pass_("clean") if leaked is None else checks[7].fail(leaked)
+    checks[9].pass_("clean") if leaked is None else checks[9].fail(leaked)
 
     return _finish(checks)
 

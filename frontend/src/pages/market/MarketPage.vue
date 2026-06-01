@@ -27,6 +27,21 @@
     </div>
 
     <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <h3 class="font-semibold text-slate-800">Focus categories</h3>
+        <el-tag :type="data?.summary.filtered_by_company ? 'success' : 'info'" effect="plain">
+          {{ data?.summary.filtered_by_company ? 'company filtered' : 'all companies' }}
+        </el-tag>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <el-tag v-for="item in focusCategoryItems" :key="item.key" effect="plain">
+          {{ focusLabel(item.key) }} {{ item.count }}
+        </el-tag>
+        <span v-if="!focusCategoryItems.length" class="text-sm text-slate-500">No focus-category signal yet</span>
+      </div>
+    </section>
+
+    <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex items-center justify-between gap-3">
         <h3 class="font-semibold text-slate-800">AI-assisted recommendations</h3>
         <el-tag type="warning" effect="plain">Human review required</el-tag>
@@ -60,9 +75,10 @@
         <el-table-column prop="order_line_count" label="Orders" width="90" />
         <el-table-column prop="quoted_quantity" label="Quoted qty" width="110" />
         <el-table-column prop="ordered_quantity" label="Ordered qty" width="115" />
-        <el-table-column label="Focus" width="160">
+        <el-table-column label="Focus" width="185">
           <template #default="{ row }">
-            <el-tag v-if="row.adjustable_frame_focus" type="success" effect="plain">Adjustable frame</el-tag>
+            <el-tag v-if="row.focus_category" type="success" effect="plain">{{ focusLabel(row.focus_category) }}</el-tag>
+            <el-tag v-else-if="row.adjustable_frame_focus" type="success" effect="plain">Adjustable frame</el-tag>
             <span v-else class="text-slate-400">General</span>
           </template>
         </el-table-column>
@@ -174,7 +190,7 @@ async function load() {
     filterCompanyId.value = companyId
     const params = companyId ? { related_company_id: companyId } : {}
     const [intelligence, marketItems] = await Promise.all([
-      fetchMarketResponseIntelligence(),
+      fetchMarketResponseIntelligence(params),
       http.get('/market-intelligence', { params }),
     ])
     data.value = intelligence
@@ -188,4 +204,19 @@ async function load() {
 
 onMounted(load)
 watch(() => route.query.companyId, load)
+
+const focusCategoryItems = computed(() =>
+  Object.entries(data.value?.summary.focus_category_counts || {}).map(([key, count]) => ({ key, count })),
+)
+
+function focusLabel(key: string) {
+  const labels: Record<string, string> = {
+    adjustable_desk_frames: 'Adjustable frames',
+    desk_legs: 'Desk legs',
+    lifting_columns: 'Lifting columns',
+    education_furniture: 'Education furniture',
+    project_furniture: 'Project furniture',
+  }
+  return labels[key] || key
+}
 </script>

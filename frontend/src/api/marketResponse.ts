@@ -8,6 +8,8 @@ export interface MarketResponseSummary {
   order_count: number
   product_gap_count: number
   recommendation_count: number
+  filtered_by_company: boolean
+  focus_category_counts: Record<string, number>
 }
 
 export interface FeedbackSignal {
@@ -35,6 +37,7 @@ export interface DemandSignalRow {
   importance_counts: Record<string, number>
   segments: Record<string, number>
   adjustable_frame_focus: boolean
+  focus_category: string | null
 }
 
 export interface ProductGapRow {
@@ -91,6 +94,7 @@ export interface MarketResponseIntelligence {
   demand: {
     items: DemandSignalRow[]
     total: number
+    focus_category_counts: Record<string, number>
   }
   product_gaps: {
     items: ProductGapRow[]
@@ -113,7 +117,7 @@ export interface MarketResponseIntelligence {
   }
 }
 
-export async function fetchMarketResponseIntelligence() {
-  const { data } = await http.get<V1Envelope<MarketResponseIntelligence>>('/v1/market/response-intelligence')
+export async function fetchMarketResponseIntelligence(params?: { related_company_id?: string }) {
+  const { data } = await http.get<V1Envelope<MarketResponseIntelligence>>('/v1/market/response-intelligence', { params })
   return data.data
 }
