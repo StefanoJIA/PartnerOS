@@ -116,6 +116,16 @@ def test_customer_snapshot_stage_and_safety(monkeypatch):
     data = build_customer_order_snapshot(db, order_id)
 
     assert data["customer_status"]["stage"] == "ready_to_ship"
+    assert data["customer_status"]["current_step_index"] == 2
+    assert [step["key"] for step in data["customer_status"]["progress_steps"]] == [
+        "confirmed",
+        "in_production",
+        "ready_to_ship",
+        "shipped",
+        "delivered",
+    ]
+    assert data["customer_status"]["progress_steps"][2]["state"] == "current"
+    assert data["customer_status"]["progress_steps"][2]["planned_dates_are_guarantees"] is False
     assert data["customer_status"]["planned_dates_are_guarantees"] is False
     assert data["safety"]["forbidden_field_filter_enabled"] is True
     assert data["feedback"]["customer_notified"] is False

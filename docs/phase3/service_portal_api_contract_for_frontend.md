@@ -106,6 +106,44 @@ Returns a customer-visible rollup for the Portal order tracking page. This combi
     "ready_to_ship": true,
     "shipped": false,
     "delivered": false,
+    "current_step_index": 2,
+    "progress_steps": [
+      {
+        "key": "confirmed",
+        "label": "Order confirmed",
+        "state": "complete",
+        "date": "2026-05-29T12:00:00+00:00",
+        "planned_dates_are_guarantees": false
+      },
+      {
+        "key": "in_production",
+        "label": "Production in progress",
+        "state": "complete",
+        "date": null,
+        "planned_dates_are_guarantees": false
+      },
+      {
+        "key": "ready_to_ship",
+        "label": "Ready to ship",
+        "state": "current",
+        "date": null,
+        "planned_dates_are_guarantees": false
+      },
+      {
+        "key": "shipped",
+        "label": "Shipment in transit",
+        "state": "pending",
+        "date": null,
+        "planned_dates_are_guarantees": false
+      },
+      {
+        "key": "delivered",
+        "label": "Delivered",
+        "state": "pending",
+        "date": null,
+        "planned_dates_are_guarantees": false
+      }
+    ],
     "planned_dates_are_guarantees": false
   },
   "production": {
@@ -145,7 +183,7 @@ Returns a customer-visible rollup for the Portal order tracking page. This combi
 }
 ```
 
-`stage` is display guidance for the Portal. Planned dates are planning data only and are not guaranteed lead time.
+`stage`, `current_step_index`, and `progress_steps` are display guidance for the Portal. Planned dates are planning data only and are not guaranteed lead time.
 
 ## GET /orders/{id}/production
 

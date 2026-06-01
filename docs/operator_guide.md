@@ -269,6 +269,8 @@ Feedback status flow is `new -> in_review -> responded -> resolved -> closed`. T
 
 Portal Operations includes a staging connection and Portal contract summary with public base URL, allowed origins, auth header name, endpoint paths, and endpoint readiness. It displays token-required/configured booleans only; it must never display the token value.
 
+Customer snapshots include `progress_steps` for Portal order tracking: confirmed, in production, ready to ship, shipped, and delivered. These steps are display guidance only; planned dates remain non-guaranteed planning data.
+
 Portal Operations also shows an advisory Market Response preview for adjustable desk frames, desk legs, lifting columns, education furniture, project furniture, and other products. It aggregates customer-visible order lines, feedback, production risk, and shipment risk for human review only; it does not create tickets, notify anyone, mutate order/shipment status, or rank partners.
 
 ## D7.9 Resource Center / Document Center

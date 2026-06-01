@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date, datetime
 from typing import Any
 from uuid import UUID
 
@@ -65,6 +66,101 @@ def _customer_status_label(stage: str) -> str:
     return labels.get(stage, "Order in review")
 
 
+PROGRESS_STEPS = (
+    ("confirmed", "Order confirmed"),
+    ("in_production", "Production in progress"),
+    ("ready_to_ship", "Ready to ship"),
+    ("shipped", "Shipment in transit"),
+    ("delivered", "Delivered"),
+)
+
+
+def _date_value(value: Any) -> str | None:
+    if isinstance(value, datetime | date):
+        return value.isoformat()
+    if isinstance(value, str):
+        return value
+    return None
+
+
+def _milestone_date(
+    production_rows: list[OrderProductionMilestone],
+    *,
+    milestone_type: str | None = None,
+    status: str | None = None,
+    field: str = "actual_date",
+) -> str | None:
+    for row in production_rows:
+        if milestone_type and row.milestone_type != milestone_type:
+            continue
+        if status and row.status != status:
+            continue
+        value = getattr(row, field, None)
+        if value:
+            return _date_value(value)
+    return None
+
+
+def _shipment_date(shipment_rows: list[ShipmentPlan], *, status: str, field: str) -> str | None:
+    for row in shipment_rows:
+        if row.status == status:
+            value = getattr(row, field, None)
+            if value:
+                return _date_value(value)
+    return None
+
+
+def _customer_progress_steps(
+    stage: str,
+    order: CustomerOrder | None,
+    production_rows: list[OrderProductionMilestone],
+    shipment_rows: list[ShipmentPlan],
+) -> list[dict[str, Any]]:
+    if stage == "cancelled":
+        return [
+            {
+                "key": "cancelled",
+                "label": "Order cancelled",
+                "state": "current",
+                "date": None,
+                "planned_dates_are_guarantees": False,
+            }
+        ]
+    stage_order = [item[0] for item in PROGRESS_STEPS]
+    current_index = max(0, stage_order.index(stage) if stage in stage_order else 0)
+    dates = {
+        "confirmed": _date_value(getattr(order, "customer_confirmed_at", None)),
+        "in_production": _milestone_date(production_rows, status="in_progress", field="actual_date")
+        or _milestone_date(production_rows, status="completed", field="actual_date")
+        or _milestone_date(production_rows, field="planned_date"),
+        "ready_to_ship": _milestone_date(production_rows, milestone_type="ready_to_ship", status="completed", field="actual_date")
+        or _milestone_date(production_rows, milestone_type="ready_to_ship", field="planned_date"),
+        "shipped": _shipment_date(shipment_rows, status="shipped", field="actual_ship_date")
+        or _shipment_date(shipment_rows, status="planned", field="estimated_ship_date"),
+        "delivered": _shipment_date(shipment_rows, status="delivered", field="actual_arrival_date")
+        or _shipment_date(shipment_rows, status="shipped", field="estimated_arrival_date")
+        or _shipment_date(shipment_rows, status="planned", field="estimated_arrival_date"),
+    }
+    steps = []
+    for index, (key, label) in enumerate(PROGRESS_STEPS):
+        if index < current_index:
+            state = "complete"
+        elif index == current_index:
+            state = "current"
+        else:
+            state = "pending"
+        steps.append(
+            {
+                "key": key,
+                "label": label,
+                "state": state,
+                "date": dates.get(key),
+                "planned_dates_are_guarantees": False,
+            }
+        )
+    return steps
+
+
 def build_customer_order_snapshot(db: Session, order_id: UUID) -> dict[str, Any]:
     detail = build_customer_order_detail(db, order_id)
     production = build_customer_production_view(db, order_id)
@@ -102,6 +198,7 @@ def build_customer_order_snapshot(db: Session, order_id: UUID) -> dict[str, Any]
 
     order_status = getattr(order, "status", detail.get("status") or "unknown")
     stage = _customer_stage(order_status, production_rows, shipment_rows)
+    progress_steps = _customer_progress_steps(stage, order, production_rows, shipment_rows)
     production_statuses = _status_counts(production_rows)
     shipment_statuses = _status_counts(shipment_rows)
 
@@ -117,6 +214,8 @@ def build_customer_order_snapshot(db: Session, order_id: UUID) -> dict[str, Any]
             "ready_to_ship": stage in {"ready_to_ship", "shipped", "delivered"},
             "shipped": stage in {"shipped", "delivered"},
             "delivered": stage == "delivered",
+            "current_step_index": next((idx for idx, step in enumerate(progress_steps) if step["state"] == "current"), 0),
+            "progress_steps": progress_steps,
             "planned_dates_are_guarantees": False,
         },
         "production": {

@@ -58,6 +58,14 @@ export interface PortalOperationsConsole {
       ready_to_ship: boolean
       shipped: boolean
       delivered: boolean
+      current_step_index: number
+      progress_steps: Array<{
+        key: string
+        label: string
+        state: 'complete' | 'current' | 'pending'
+        date: string | null
+        planned_dates_are_guarantees: boolean
+      }>
       planned_dates_are_guarantees: boolean
     }
     shipment: { status_counts: Record<string, number>; active_count: number }

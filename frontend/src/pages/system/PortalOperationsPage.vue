@@ -150,6 +150,21 @@
             <div class="text-xs text-slate-500">{{ row.customer_status.stage }}</div>
           </template>
         </el-table-column>
+        <el-table-column label="Progress" min-width="260">
+          <template #default="{ row }">
+            <div class="flex flex-wrap gap-1">
+              <el-tag
+                v-for="step in row.customer_status.progress_steps"
+                :key="step.key"
+                size="small"
+                :type="step.state === 'current' ? 'warning' : step.state === 'complete' ? 'success' : 'info'"
+                effect="plain"
+              >
+                {{ step.label }}
+              </el-tag>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column label="Shipment" width="160">
           <template #default="{ row }">active {{ row.shipment.active_count }}</template>
         </el-table-column>
