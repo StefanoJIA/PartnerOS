@@ -165,6 +165,25 @@ export interface PortalOperationsConsole {
     delivered_count: number
     active_shipment_count: number
     open_feedback_count: number
+    action_items: Array<{
+      order_id: string | null
+      order_number: string | null
+      stage: string
+      label: string | null
+      next_action_label: string | null
+      active_shipment_count: number
+      open_feedback_count: number
+      action: string
+      safety: {
+        customer_visible_only: boolean
+        read_only: boolean
+        planned_dates_are_guarantees: boolean
+        customer_notified: boolean
+        supplier_notified: boolean
+        order_status_mutated: boolean
+        shipment_created: boolean
+      }
+    }>
     portal_ready: boolean
     safety: {
       customer_visible_only: boolean

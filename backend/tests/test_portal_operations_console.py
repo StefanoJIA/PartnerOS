@@ -312,8 +312,11 @@ def test_customer_snapshot_readiness_summarizes_portal_tracking_state():
     data = _build_customer_snapshot_readiness(
         [
             {
+                "order": {"id": str(uuid4()), "order_number": "O-1"},
                 "customer_status": {
                     "stage": "ready_to_ship",
+                    "label": "Ready to ship",
+                    "next_action_label": "Shipment planning",
                     "production_started": True,
                     "production_completed": True,
                     "ready_to_ship": True,
@@ -321,18 +324,33 @@ def test_customer_snapshot_readiness_summarizes_portal_tracking_state():
                     "delivered": False,
                     "progress_steps": [{"key": "confirmed"}],
                 },
+                "tracking_summary": {
+                    "has_production_updates": True,
+                    "has_active_shipment": True,
+                    "has_visible_resources": True,
+                    "has_open_feedback": True,
+                },
                 "shipment": {"active_count": 1},
                 "feedback": {"open_count": 2},
             },
             {
+                "order": {"id": str(uuid4()), "order_number": "O-2"},
                 "customer_status": {
                     "stage": "shipped",
+                    "label": "Shipment in transit",
+                    "next_action_label": "Track shipment",
                     "production_started": True,
                     "production_completed": True,
                     "ready_to_ship": True,
                     "shipped": True,
                     "delivered": False,
                     "progress_steps": [{"key": "confirmed"}],
+                },
+                "tracking_summary": {
+                    "has_production_updates": True,
+                    "has_active_shipment": True,
+                    "has_visible_resources": False,
+                    "has_open_feedback": False,
                 },
                 "shipment": {"active_count": 1},
                 "feedback": {"open_count": 0},
@@ -348,6 +366,15 @@ def test_customer_snapshot_readiness_summarizes_portal_tracking_state():
     assert data["shipped_count"] == 1
     assert data["active_shipment_count"] == 2
     assert data["open_feedback_count"] == 2
+    assert [item["action"] for item in data["action_items"]] == [
+        "review_open_feedback_before_customer_update",
+        "publish_customer_visible_resource",
+    ]
+    assert data["action_items"][0]["order_number"] == "O-1"
+    assert data["action_items"][0]["stage"] == "ready_to_ship"
+    assert data["action_items"][0]["safety"]["read_only"] is True
+    assert data["action_items"][0]["safety"]["shipment_created"] is False
+    assert data["action_items"][0]["safety"]["order_status_mutated"] is False
     assert data["safety"]["customer_visible_only"] is True
     assert data["safety"]["planned_dates_are_guarantees"] is False
     assert data["safety"]["customer_notified"] is False

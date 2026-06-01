@@ -411,6 +411,28 @@
           missing progress {{ data.customer_snapshot_readiness.missing_progress_count }}
         </el-tag>
       </div>
+      <el-table v-if="data?.customer_snapshot_readiness.action_items.length" :data="data.customer_snapshot_readiness.action_items" class="mb-4 w-full">
+        <el-table-column prop="order_number" label="Order" width="150" />
+        <el-table-column prop="label" label="Stage" min-width="170" />
+        <el-table-column prop="next_action_label" label="Portal next action" min-width="190" />
+        <el-table-column prop="action" label="Internal action" min-width="250" />
+        <el-table-column label="Signals" width="170">
+          <template #default="{ row }">
+            <div class="flex flex-wrap gap-1">
+              <el-tag v-if="row.active_shipment_count" size="small" effect="plain">shipment {{ row.active_shipment_count }}</el-tag>
+              <el-tag v-if="row.open_feedback_count" size="small" type="warning" effect="plain">feedback {{ row.open_feedback_count }}</el-tag>
+              <span v-if="!row.active_shipment_count && !row.open_feedback_count" class="text-sm text-slate-500">none</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="Safety" width="140">
+          <template #default="{ row }">
+            <el-tag size="small" :type="row.safety.read_only && !row.safety.order_status_mutated ? 'success' : 'danger'" effect="plain">
+              {{ row.safety.read_only && !row.safety.order_status_mutated ? 'read only' : 'check' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
       <el-table :data="data?.customer_snapshots || []" class="w-full">
         <el-table-column label="Order" width="170">
           <template #default="{ row }">{{ row.order.order_number }}</template>

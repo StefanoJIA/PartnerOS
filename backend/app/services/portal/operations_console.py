@@ -311,9 +311,12 @@ def _build_customer_snapshot_readiness(snapshot_items: list[dict[str, Any]]) -> 
     delivered_count = 0
     active_shipment_count = 0
     open_feedback_count = 0
+    action_items = []
 
     for snapshot in snapshot_items:
+        order = snapshot.get("order", {})
         customer_status = snapshot.get("customer_status", {})
+        tracking_summary = snapshot.get("tracking_summary", {})
         stage = str(customer_status.get("stage") or "unknown")
         stage_counts[stage] = stage_counts.get(stage, 0) + 1
         progress_steps = customer_status.get("progress_steps") or []
@@ -327,8 +330,44 @@ def _build_customer_snapshot_readiness(snapshot_items: list[dict[str, Any]]) -> 
             shipped_count += 1
         if customer_status.get("delivered"):
             delivered_count += 1
-        active_shipment_count += int(snapshot.get("shipment", {}).get("active_count") or 0)
-        open_feedback_count += int(snapshot.get("feedback", {}).get("open_count") or 0)
+        snapshot_active_shipment_count = int(snapshot.get("shipment", {}).get("active_count") or 0)
+        snapshot_open_feedback_count = int(snapshot.get("feedback", {}).get("open_count") or 0)
+        active_shipment_count += snapshot_active_shipment_count
+        open_feedback_count += snapshot_open_feedback_count
+
+        action = None
+        if not progress_steps:
+            action = "review_customer_progress_steps"
+        elif stage == "confirmed" and not tracking_summary.get("has_production_updates"):
+            action = "add_customer_visible_production_update"
+        elif stage == "ready_to_ship" and not tracking_summary.get("has_active_shipment"):
+            action = "add_shipment_plan_for_portal_tracking"
+        elif not tracking_summary.get("has_visible_resources"):
+            action = "publish_customer_visible_resource"
+        elif snapshot_open_feedback_count:
+            action = "review_open_feedback_before_customer_update"
+        if action:
+            action_items.append(
+                {
+                    "order_id": str(order.get("id")) if order.get("id") else None,
+                    "order_number": order.get("order_number"),
+                    "stage": stage,
+                    "label": customer_status.get("label"),
+                    "next_action_label": customer_status.get("next_action_label"),
+                    "active_shipment_count": snapshot_active_shipment_count,
+                    "open_feedback_count": snapshot_open_feedback_count,
+                    "action": action,
+                    "safety": {
+                        "customer_visible_only": True,
+                        "read_only": True,
+                        "planned_dates_are_guarantees": False,
+                        "customer_notified": False,
+                        "supplier_notified": False,
+                        "order_status_mutated": False,
+                        "shipment_created": False,
+                    },
+                }
+            )
 
     return {
         "snapshot_count": len(snapshot_items),
@@ -340,6 +379,7 @@ def _build_customer_snapshot_readiness(snapshot_items: list[dict[str, Any]]) -> 
         "delivered_count": delivered_count,
         "active_shipment_count": active_shipment_count,
         "open_feedback_count": open_feedback_count,
+        "action_items": action_items[:8],
         "portal_ready": bool(snapshot_items) and missing_progress_count == 0,
         "safety": {
             "customer_visible_only": True,
