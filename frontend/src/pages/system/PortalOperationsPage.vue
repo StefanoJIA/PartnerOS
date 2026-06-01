@@ -704,6 +704,11 @@
         <el-table-column prop="feedback_count" label="Feedback" width="110" />
         <el-table-column prop="delayed_or_blocked_production_count" label="Production risk" width="150" />
         <el-table-column prop="shipment_issue_count" label="Shipment risk" width="140" />
+        <el-table-column label="Review" width="110">
+          <template #default="{ row }">
+            <el-button size="small" @click="openMarketFocus(row.key)">Open</el-button>
+          </template>
+        </el-table-column>
       </el-table>
     </section>
 
@@ -777,5 +782,9 @@ function openFeedbackTicket(ticketId: string) {
 
 function openOrder(orderId: string) {
   router.push({ name: 'order-detail', params: { orderId } })
+}
+
+function openMarketFocus(focusCategory: string) {
+  router.push({ name: 'market', query: { focus_category: focusCategory } })
 }
 </script>

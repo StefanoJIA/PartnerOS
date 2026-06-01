@@ -6,6 +6,9 @@
         <p v-if="filterCompanyId" class="mt-1 text-sm text-slate-600">
           Company filter: <code class="rounded bg-slate-100 px-1">{{ filterCompanyId }}</code>
         </p>
+        <p v-if="focusCategory" class="mt-1 text-sm text-slate-600">
+          Focus filter: <code class="rounded bg-slate-100 px-1">{{ focusLabel(focusCategory) }}</code>
+        </p>
       </div>
       <el-button :loading="loading" @click="load">Refresh</el-button>
     </div>
@@ -34,7 +37,12 @@
         </el-tag>
       </div>
       <div class="flex flex-wrap gap-2">
-        <el-tag v-for="item in focusCategoryItems" :key="item.key" effect="plain">
+        <el-tag
+          v-for="item in focusCategoryItems"
+          :key="item.key"
+          :type="item.key === focusCategory ? 'success' : 'info'"
+          effect="plain"
+        >
           {{ focusLabel(item.key) }} {{ item.count }}
         </el-tag>
         <span v-if="!focusCategoryItems.length" class="text-sm text-slate-500">No focus-category signal yet</span>
@@ -67,7 +75,7 @@
 
     <section class="rounded border border-slate-200 bg-white p-4">
       <h3 class="mb-3 font-semibold text-slate-800">Demand signal board</h3>
-      <el-table :data="data?.demand.items || []" stripe>
+      <el-table :data="demandRows" stripe>
         <el-table-column prop="category" label="Category" min-width="200" />
         <el-table-column prop="market_signal_count" label="Market" width="90" />
         <el-table-column prop="feedback_signal_count" label="Feedback" width="100" />
@@ -155,6 +163,7 @@ import { formatApiError } from '@/api/errors'
 const route = useRoute()
 const rows = ref<unknown[]>([])
 const filterCompanyId = ref<string | null>(null)
+const focusCategory = ref<string | null>(null)
 const data = ref<MarketResponseIntelligence | null>(null)
 const loading = ref(false)
 const error = ref('')
@@ -187,7 +196,9 @@ async function load() {
   error.value = ''
   try {
     const companyId = typeof route.query.companyId === 'string' ? route.query.companyId : null
+    const focus = typeof route.query.focus_category === 'string' ? route.query.focus_category : null
     filterCompanyId.value = companyId
+    focusCategory.value = focus
     const params = companyId ? { related_company_id: companyId } : {}
     const [intelligence, marketItems] = await Promise.all([
       fetchMarketResponseIntelligence(params),
@@ -203,11 +214,19 @@ async function load() {
 }
 
 onMounted(load)
-watch(() => route.query.companyId, load)
+watch(() => [route.query.companyId, route.query.focus_category], load)
 
 const focusCategoryItems = computed(() =>
   Object.entries(data.value?.summary.focus_category_counts || {}).map(([key, count]) => ({ key, count })),
 )
+
+const demandRows = computed(() => {
+  const items = data.value?.demand.items || []
+  if (!focusCategory.value || focusCategory.value === 'other') {
+    return focusCategory.value === 'other' ? items.filter((item) => !item.focus_category) : items
+  }
+  return items.filter((item) => item.focus_category === focusCategory.value)
+})
 
 function focusLabel(key: string) {
   const labels: Record<string, string> = {
