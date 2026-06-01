@@ -191,6 +191,41 @@
           {{ stage }}
         </el-tag>
       </div>
+      <div class="mt-4 grid gap-3 md:grid-cols-2">
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Feedback types</p>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <el-tag
+              v-for="type in data?.portal_contract.field_contract.feedback_form_contract.allowed_feedback_types || []"
+              :key="type"
+              size="small"
+              effect="plain"
+            >
+              {{ type }}
+            </el-tag>
+          </div>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Feedback priorities</p>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <el-tag
+              v-for="priority in data?.portal_contract.field_contract.feedback_form_contract.allowed_priorities || []"
+              :key="priority"
+              size="small"
+              effect="plain"
+            >
+              {{ priority }}
+            </el-tag>
+            <el-tag
+              size="small"
+              :type="data?.portal_contract.field_contract.feedback_form_contract.resolution_time_promised ? 'danger' : 'success'"
+              effect="plain"
+            >
+              {{ data?.portal_contract.field_contract.feedback_form_contract.resolution_time_promised ? 'SLA promised' : 'no SLA promise' }}
+            </el-tag>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section class="grid gap-4 xl:grid-cols-[1.3fr_1fr]">

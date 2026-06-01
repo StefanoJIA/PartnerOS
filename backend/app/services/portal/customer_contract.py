@@ -8,6 +8,21 @@ CUSTOMER_FEEDBACK_TYPES = ("tracking", "resource", "quality", "general")
 CUSTOMER_FEEDBACK_PRIORITIES = ("normal", "high", "urgent")
 
 
+def portal_customer_feedback_form_contract() -> dict[str, Any]:
+    return {
+        "submit_endpoint": "/api/v1/portal/customer/feedback",
+        "submit_method": "POST",
+        "allowed_feedback_types": list(CUSTOMER_FEEDBACK_TYPES),
+        "allowed_priorities": list(CUSTOMER_FEEDBACK_PRIORITIES),
+        "requires_order_id": False,
+        "customer_name_required": False,
+        "customer_email_required": False,
+        "resolution_time_promised": False,
+        "customer_notified": False,
+        "automatic_reply_sent": False,
+    }
+
+
 def portal_customer_endpoints() -> dict[str, str]:
     return {
         "manifest": "/api/v1/portal/customer/manifest",
@@ -168,6 +183,7 @@ def portal_customer_field_contract() -> dict[str, Any]:
             "automatic_reply_sent",
             "resolution_time_promised",
         ],
+        "feedback_form_contract": portal_customer_feedback_form_contract(),
         "date_policy": {
             "planned_dates_are_guarantees": False,
             "planned_dates_label": "planned",

@@ -179,6 +179,13 @@ def test_operations_console_preserves_safe_token_metadata_without_values():
     assert "tracking_summary" in data["portal_contract"]["field_contract"]
     assert "feedback_snapshot" in data["portal_contract"]["field_contract"]
     assert "allowed_priorities" in data["portal_contract"]["field_contract"]["feedback_snapshot"]
+    assert data["portal_contract"]["field_contract"]["feedback_form_contract"]["allowed_feedback_types"] == [
+        "tracking",
+        "resource",
+        "quality",
+        "general",
+    ]
+    assert data["portal_contract"]["field_contract"]["feedback_form_contract"]["resolution_time_promised"] is False
     assert "next_action_label" in data["portal_contract"]["field_contract"]["customer_status"]
     assert data["portal_contract"]["field_contract"]["date_policy"]["planned_dates_are_guarantees"] is False
     assert "super-secret-value" not in str(data)

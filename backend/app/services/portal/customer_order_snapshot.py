@@ -14,7 +14,7 @@ from app.services.portal.customer_field_filter import (
     assert_no_forbidden_internal_fields,
     strip_forbidden_internal_fields,
 )
-from app.services.portal.customer_contract import CUSTOMER_FEEDBACK_PRIORITIES, CUSTOMER_FEEDBACK_TYPES
+from app.services.portal.customer_contract import portal_customer_feedback_form_contract
 from app.services.portal.customer_portal_bridge import (
     build_customer_order_detail,
     build_customer_production_view,
@@ -114,17 +114,6 @@ PROGRESS_STEPS = (
     ("shipped", "Shipment in transit"),
     ("delivered", "Delivered"),
 )
-
-FEEDBACK_FORM_METADATA = {
-    "submit_method": "POST",
-    "allowed_feedback_types": list(CUSTOMER_FEEDBACK_TYPES),
-    "allowed_priorities": list(CUSTOMER_FEEDBACK_PRIORITIES),
-    "requires_order_id": False,
-    "customer_name_required": False,
-    "customer_email_required": False,
-    "resolution_time_promised": False,
-}
-
 
 def _date_value(value: Any) -> str | None:
     if isinstance(value, datetime | date):
@@ -300,12 +289,9 @@ def build_customer_order_snapshot(db: Session, order_id: UUID) -> dict[str, Any]
             "visible_count": visible_resource_count,
         },
         "feedback": {
-            "submit_endpoint": "/api/v1/portal/customer/feedback",
-            **FEEDBACK_FORM_METADATA,
+            **portal_customer_feedback_form_contract(),
             "total_count": feedback_count,
             "open_count": open_feedback_count,
-            "customer_notified": False,
-            "automatic_reply_sent": False,
         },
         "safety": {
             "customer_visible_only": True,

@@ -36,6 +36,18 @@ export interface PortalFieldContract {
   feedback_create: string[]
   feedback_snapshot: string[]
   feedback_create_response: string[]
+  feedback_form_contract: {
+    submit_endpoint: string
+    submit_method: string
+    allowed_feedback_types: string[]
+    allowed_priorities: string[]
+    requires_order_id: boolean
+    customer_name_required: boolean
+    customer_email_required: boolean
+    resolution_time_promised: boolean
+    customer_notified: boolean
+    automatic_reply_sent: boolean
+  }
   date_policy: {
     planned_dates_are_guarantees: boolean
     planned_dates_label: string

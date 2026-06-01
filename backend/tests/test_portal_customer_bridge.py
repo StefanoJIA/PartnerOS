@@ -87,6 +87,16 @@ def test_portal_customer_manifest_is_token_gated_and_safe():
     assert "feedback_snapshot" in data["field_contract"]
     assert "allowed_feedback_types" in data["field_contract"]["feedback_snapshot"]
     assert "resolution_time_promised" in data["field_contract"]["feedback_snapshot"]
+    assert data["field_contract"]["feedback_form_contract"]["submit_method"] == "POST"
+    assert data["field_contract"]["feedback_form_contract"]["allowed_feedback_types"] == [
+        "tracking",
+        "resource",
+        "quality",
+        "general",
+    ]
+    assert data["field_contract"]["feedback_form_contract"]["allowed_priorities"] == ["normal", "high", "urgent"]
+    assert data["field_contract"]["feedback_form_contract"]["resolution_time_promised"] is False
+    assert data["field_contract"]["feedback_form_contract"]["customer_notified"] is False
     assert "feedback_create_response" in data["field_contract"]
     assert data["field_policy"]["planned_dates_are_guarantees"] is False
     assert data["safety"]["automatic_customer_notification"] is False
