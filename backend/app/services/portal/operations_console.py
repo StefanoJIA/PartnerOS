@@ -391,6 +391,78 @@ def _build_customer_snapshot_readiness(snapshot_items: list[dict[str, Any]]) -> 
     }
 
 
+def _build_shipment_readiness(shipment_rows: list[ShipmentPlan]) -> dict[str, Any]:
+    active_rows = [row for row in shipment_rows if row.status != "cancelled"]
+    status_counts = _count_by_status(shipment_rows)
+    missing_estimated_dates_count = sum(
+        1 for row in active_rows if not row.estimated_ship_date or not row.estimated_arrival_date
+    )
+    shipped_without_tracking_count = sum(
+        1 for row in active_rows if row.status == "shipped" and not row.tracking_number
+    )
+    delivered_count = status_counts.get("delivered", 0)
+    action_items = []
+    for row in active_rows:
+        action = None
+        if not row.estimated_ship_date or not row.estimated_arrival_date:
+            action = "add_estimated_shipment_dates"
+        elif row.status == "planned" and not row.shipment_method:
+            action = "confirm_shipment_method"
+        elif row.status == "shipped" and not row.tracking_number:
+            action = "add_tracking_number_for_portal"
+        elif row.status == "shipped" and row.estimated_arrival_date:
+            action = "monitor_estimated_arrival"
+        if not action:
+            continue
+        action_items.append(
+            {
+                "id": str(row.id),
+                "order_id": str(row.order_id),
+                "partner_split_id": str(row.partner_split_id) if row.partner_split_id else None,
+                "status": row.status,
+                "shipment_method": row.shipment_method,
+                "estimated_ship_date": str(row.estimated_ship_date) if row.estimated_ship_date else None,
+                "estimated_arrival_date": str(row.estimated_arrival_date) if row.estimated_arrival_date else None,
+                "tracking_number_present": bool(row.tracking_number),
+                "action": action,
+                "safety": {
+                    "read_only": True,
+                    "carrier_api_called": False,
+                    "shipment_created": False,
+                    "customer_notified": False,
+                    "supplier_notified": False,
+                    "order_status_mutated": False,
+                    "tracking_number_value_exposed": False,
+                    "planned_dates_are_guarantees": False,
+                },
+            }
+        )
+    return {
+        "total_count": len(shipment_rows),
+        "active_count": len(active_rows),
+        "planned_count": status_counts.get("planned", 0),
+        "shipped_count": status_counts.get("shipped", 0),
+        "delivered_count": delivered_count,
+        "cancelled_count": status_counts.get("cancelled", 0),
+        "missing_estimated_dates_count": missing_estimated_dates_count,
+        "shipped_without_tracking_count": shipped_without_tracking_count,
+        "status_counts": status_counts,
+        "action_items": action_items[:8],
+        "ready": bool(active_rows) and missing_estimated_dates_count == 0 and shipped_without_tracking_count == 0,
+        "safety": {
+            "read_only": True,
+            "customer_visible_metadata_only": True,
+            "carrier_api_called": False,
+            "shipment_created": False,
+            "customer_notified": False,
+            "supplier_notified": False,
+            "order_status_mutated": False,
+            "tracking_number_values_exposed": False,
+            "planned_dates_are_guarantees": False,
+        },
+    }
+
+
 def _attach_portal_tracking_to_recent_orders(recent_orders: dict[str, Any], snapshot_items: list[dict[str, Any]]) -> dict[str, Any]:
     snapshots_by_order_id = {
         str(snapshot.get("order", {}).get("id")): snapshot
@@ -545,6 +617,7 @@ def _build_portal_launch_readiness(
     endpoints: dict[str, bool],
     forbidden_field_audit: dict[str, Any],
     customer_snapshot_readiness: dict[str, Any],
+    shipment_readiness: dict[str, Any],
     resource_readiness: dict[str, Any],
     feedback_operations: dict[str, Any],
 ) -> dict[str, Any]:
@@ -570,6 +643,10 @@ def _build_portal_launch_readiness(
         blockers.append("forbidden customer-visible field audit hit")
     if not customer_snapshot_readiness["portal_ready"]:
         warnings.append("customer order snapshots need representative progress data")
+    if shipment_readiness["missing_estimated_dates_count"]:
+        warnings.append("shipment plans need estimated ship and arrival dates")
+    if shipment_readiness["shipped_without_tracking_count"]:
+        warnings.append("shipped plans need tracking numbers for Portal")
     if resource_readiness["blocked_visibility_count"]:
         warnings.append("customer-visible resources need publishing")
     if not resource_readiness["ready"]:
@@ -589,6 +666,7 @@ def _build_portal_launch_readiness(
             "all_endpoints_ready": all(endpoints.values()),
             "forbidden_field_audit_clear": not forbidden_field_audit["hits"],
             "customer_snapshots_ready": customer_snapshot_readiness["portal_ready"],
+            "shipments_ready": shipment_readiness["ready"],
             "resources_ready": resource_readiness["ready"],
             "feedback_queue_clear": feedback_operations["needs_internal_review_count"] == 0,
         },
@@ -743,6 +821,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
     )
     feedback_operations = _build_feedback_operations(ticket_rows)
     customer_snapshot_readiness = _build_customer_snapshot_readiness(snapshot_items)
+    shipment_readiness = _build_shipment_readiness(shipment_rows)
     resource_readiness = _build_resource_readiness(resource_rows)
     multi_partner_flow_readiness = _build_multi_partner_flow_readiness(partner_dashboard)
     status = {
@@ -761,6 +840,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
         endpoints=endpoints,
         forbidden_field_audit=forbidden_field_audit,
         customer_snapshot_readiness=customer_snapshot_readiness,
+        shipment_readiness=shipment_readiness,
         resource_readiness=resource_readiness,
         feedback_operations=feedback_operations,
     )
@@ -774,6 +854,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
         "recent_customer_visible_orders": recent_orders,
         "customer_snapshots": snapshot_items,
         "customer_snapshot_readiness": customer_snapshot_readiness,
+        "shipment_readiness": shipment_readiness,
         "resource_readiness": resource_readiness,
         "multi_partner_flow_readiness": multi_partner_flow_readiness,
         "shipment_status_counts": _count_by_status(shipment_rows),

@@ -380,6 +380,64 @@ def test_customer_snapshot_readiness_summarizes_portal_tracking_state():
     assert data["safety"]["customer_notified"] is False
 
 
+def test_shipment_readiness_flags_portal_tracking_actions():
+    from datetime import date
+
+    from app.services.portal.operations_console import _build_shipment_readiness
+
+    planned_missing_dates = MagicMock()
+    planned_missing_dates.id = uuid4()
+    planned_missing_dates.order_id = uuid4()
+    planned_missing_dates.partner_split_id = None
+    planned_missing_dates.status = "planned"
+    planned_missing_dates.shipment_method = "sea"
+    planned_missing_dates.estimated_ship_date = None
+    planned_missing_dates.estimated_arrival_date = date(2026, 7, 20)
+    planned_missing_dates.tracking_number = None
+
+    shipped_missing_tracking = MagicMock()
+    shipped_missing_tracking.id = uuid4()
+    shipped_missing_tracking.order_id = uuid4()
+    shipped_missing_tracking.partner_split_id = uuid4()
+    shipped_missing_tracking.status = "shipped"
+    shipped_missing_tracking.shipment_method = "air"
+    shipped_missing_tracking.estimated_ship_date = date(2026, 6, 20)
+    shipped_missing_tracking.estimated_arrival_date = date(2026, 6, 28)
+    shipped_missing_tracking.tracking_number = None
+
+    delivered = MagicMock()
+    delivered.id = uuid4()
+    delivered.order_id = uuid4()
+    delivered.partner_split_id = None
+    delivered.status = "delivered"
+    delivered.shipment_method = "sea"
+    delivered.estimated_ship_date = date(2026, 5, 1)
+    delivered.estimated_arrival_date = date(2026, 6, 1)
+    delivered.tracking_number = "TRACK-SECRET"
+
+    data = _build_shipment_readiness([planned_missing_dates, shipped_missing_tracking, delivered])
+
+    assert data["total_count"] == 3
+    assert data["active_count"] == 3
+    assert data["planned_count"] == 1
+    assert data["shipped_count"] == 1
+    assert data["delivered_count"] == 1
+    assert data["missing_estimated_dates_count"] == 1
+    assert data["shipped_without_tracking_count"] == 1
+    assert data["ready"] is False
+    assert [item["action"] for item in data["action_items"]] == [
+        "add_estimated_shipment_dates",
+        "add_tracking_number_for_portal",
+    ]
+    assert data["action_items"][1]["tracking_number_present"] is False
+    assert data["action_items"][1]["safety"]["carrier_api_called"] is False
+    assert data["action_items"][1]["safety"]["shipment_created"] is False
+    assert data["action_items"][1]["safety"]["tracking_number_value_exposed"] is False
+    assert "TRACK-SECRET" not in str(data)
+    assert data["safety"]["tracking_number_values_exposed"] is False
+    assert data["safety"]["planned_dates_are_guarantees"] is False
+
+
 def test_recent_orders_include_portal_tracking_summary():
     from app.services.portal.operations_console import _attach_portal_tracking_to_recent_orders
 
@@ -545,6 +603,7 @@ def test_portal_launch_readiness_aggregates_blockers_without_validating_staging(
         endpoints={"products": True, "orders": True, "production": True, "shipment": True, "resources": True, "feedback": True},
         forbidden_field_audit={"hits": []},
         customer_snapshot_readiness={"portal_ready": False},
+        shipment_readiness={"ready": False, "missing_estimated_dates_count": 1, "shipped_without_tracking_count": 1},
         resource_readiness={"ready": False, "blocked_visibility_count": 1},
         feedback_operations={"needs_internal_review_count": 2},
     )
@@ -553,8 +612,11 @@ def test_portal_launch_readiness_aggregates_blockers_without_validating_staging(
     assert "portal customer token missing" in data["blockers"]
     assert "missing config: PORTAL_CUSTOMER_API_TOKEN" in data["blockers"]
     assert "customer order snapshots need representative progress data" in data["warnings"]
+    assert "shipment plans need estimated ship and arrival dates" in data["warnings"]
+    assert "shipped plans need tracking numbers for Portal" in data["warnings"]
     assert "customer-visible resources need publishing" in data["warnings"]
     assert data["checks"]["all_endpoints_ready"] is True
+    assert data["checks"]["shipments_ready"] is False
     assert data["checks"]["resources_ready"] is False
     assert data["safety"]["read_only"] is True
     assert data["safety"]["staging_validated"] is False

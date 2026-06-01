@@ -51,6 +51,7 @@ export interface PortalOperationsConsole {
       all_endpoints_ready: boolean
       forbidden_field_audit_clear: boolean
       customer_snapshots_ready: boolean
+      shipments_ready: boolean
       resources_ready: boolean
       feedback_queue_clear: boolean
     }
@@ -228,6 +229,50 @@ export interface PortalOperationsConsole {
       filesystem_path_exposed: boolean
       customer_notified: boolean
       automatic_email_sent: boolean
+    }
+  }
+  shipment_readiness: {
+    total_count: number
+    active_count: number
+    planned_count: number
+    shipped_count: number
+    delivered_count: number
+    cancelled_count: number
+    missing_estimated_dates_count: number
+    shipped_without_tracking_count: number
+    status_counts: Record<string, number>
+    action_items: Array<{
+      id: string
+      order_id: string
+      partner_split_id: string | null
+      status: string
+      shipment_method: string | null
+      estimated_ship_date: string | null
+      estimated_arrival_date: string | null
+      tracking_number_present: boolean
+      action: string
+      safety: {
+        read_only: boolean
+        carrier_api_called: boolean
+        shipment_created: boolean
+        customer_notified: boolean
+        supplier_notified: boolean
+        order_status_mutated: boolean
+        tracking_number_value_exposed: boolean
+        planned_dates_are_guarantees: boolean
+      }
+    }>
+    ready: boolean
+    safety: {
+      read_only: boolean
+      customer_visible_metadata_only: boolean
+      carrier_api_called: boolean
+      shipment_created: boolean
+      customer_notified: boolean
+      supplier_notified: boolean
+      order_status_mutated: boolean
+      tracking_number_values_exposed: boolean
+      planned_dates_are_guarantees: boolean
     }
   }
   multi_partner_flow_readiness: {

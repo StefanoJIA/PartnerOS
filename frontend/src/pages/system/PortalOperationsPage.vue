@@ -276,6 +276,38 @@
           </el-tag>
           <span v-if="!Object.keys(data?.shipment_status_counts || {}).length" class="text-sm text-slate-500">No shipment plans</span>
         </div>
+        <div class="mt-4 grid gap-2 sm:grid-cols-2">
+          <div class="rounded border border-slate-200 p-3">
+            <p class="text-sm text-slate-500">Active plans</p>
+            <p class="mt-1 font-medium text-slate-800">{{ data?.shipment_readiness.active_count ?? 0 }}</p>
+          </div>
+          <div class="rounded border border-slate-200 p-3">
+            <p class="text-sm text-slate-500">Needs dates</p>
+            <p class="mt-1 font-medium text-slate-800">{{ data?.shipment_readiness.missing_estimated_dates_count ?? 0 }}</p>
+          </div>
+          <div class="rounded border border-slate-200 p-3">
+            <p class="text-sm text-slate-500">Shipped without tracking</p>
+            <p class="mt-1 font-medium text-slate-800">{{ data?.shipment_readiness.shipped_without_tracking_count ?? 0 }}</p>
+          </div>
+          <div class="rounded border border-slate-200 p-3">
+            <p class="text-sm text-slate-500">Portal ready</p>
+            <p class="mt-1 font-medium text-slate-800">{{ data?.shipment_readiness.ready ? 'yes' : 'check' }}</p>
+          </div>
+        </div>
+        <el-table v-if="data?.shipment_readiness.action_items.length" :data="data.shipment_readiness.action_items" class="mt-4 w-full">
+          <el-table-column prop="status" label="Status" width="110" />
+          <el-table-column prop="shipment_method" label="Method" width="120" />
+          <el-table-column prop="estimated_ship_date" label="Ship date" width="130" />
+          <el-table-column prop="estimated_arrival_date" label="Arrival" width="130" />
+          <el-table-column prop="action" label="Action" min-width="230" />
+          <el-table-column label="Safety" width="145">
+            <template #default="{ row }">
+              <el-tag size="small" :type="row.safety.carrier_api_called || row.safety.shipment_created ? 'danger' : 'success'" effect="plain">
+                {{ row.safety.carrier_api_called || row.safety.shipment_created ? 'check' : 'read only' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
         <h3 class="mb-3 mt-5 font-semibold text-slate-800">Feedback status</h3>
         <div class="flex flex-wrap gap-2">
           <el-tag v-for="(count, status) in data?.feedback_status_counts || {}" :key="status" effect="plain">
