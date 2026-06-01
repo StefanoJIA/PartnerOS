@@ -34,6 +34,7 @@ export interface PortalFieldContract {
   shipment_item: string[]
   resource_item: string[]
   feedback_create: string[]
+  feedback_snapshot: string[]
   feedback_create_response: string[]
   date_policy: {
     planned_dates_are_guarantees: boolean

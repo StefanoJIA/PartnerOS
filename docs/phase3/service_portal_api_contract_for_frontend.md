@@ -187,6 +187,13 @@ Returns a customer-visible rollup for the Portal order tracking page. This combi
   },
   "feedback": {
     "submit_endpoint": "/api/v1/portal/customer/feedback",
+    "submit_method": "POST",
+    "allowed_feedback_types": ["tracking", "resource", "quality", "general"],
+    "allowed_priorities": ["normal", "high", "urgent"],
+    "requires_order_id": false,
+    "customer_name_required": false,
+    "customer_email_required": false,
+    "resolution_time_promised": false,
     "total_count": 0,
     "open_count": 0,
     "customer_notified": false,
@@ -203,7 +210,7 @@ Returns a customer-visible rollup for the Portal order tracking page. This combi
 }
 ```
 
-`stage`, `current_step_index`, `progress_steps`, `next_action_*`, and `tracking_summary` are display guidance for the Portal. Planned dates are planning data only and are not guaranteed lead time.
+`stage`, `current_step_index`, `progress_steps`, `next_action_*`, and `tracking_summary` are display guidance for the Portal. Planned dates are planning data only and are not guaranteed lead time. The `feedback` block gives the Portal backend enough safe metadata to render the customer feedback form without guessing allowed types or priorities; it still does not promise resolution time or send any notification.
 
 ## GET /orders/{id}/production
 

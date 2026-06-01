@@ -136,6 +136,11 @@ def test_customer_snapshot_stage_and_safety(monkeypatch):
     assert data["customer_status"]["planned_dates_are_guarantees"] is False
     assert data["safety"]["forbidden_field_filter_enabled"] is True
     assert data["feedback"]["customer_notified"] is False
+    assert data["feedback"]["submit_method"] == "POST"
+    assert data["feedback"]["requires_order_id"] is False
+    assert data["feedback"]["allowed_feedback_types"] == ["tracking", "resource", "quality", "general"]
+    assert data["feedback"]["allowed_priorities"] == ["normal", "high", "urgent"]
+    assert data["feedback"]["resolution_time_promised"] is False
 
 
 def test_operations_console_preserves_safe_token_metadata_without_values():
@@ -172,6 +177,8 @@ def test_operations_console_preserves_safe_token_metadata_without_values():
     assert "customer_status_stages" in data["portal_contract"]["field_contract"]
     assert "customer_next_action" in data["portal_contract"]["field_contract"]
     assert "tracking_summary" in data["portal_contract"]["field_contract"]
+    assert "feedback_snapshot" in data["portal_contract"]["field_contract"]
+    assert "allowed_priorities" in data["portal_contract"]["field_contract"]["feedback_snapshot"]
     assert "next_action_label" in data["portal_contract"]["field_contract"]["customer_status"]
     assert data["portal_contract"]["field_contract"]["date_policy"]["planned_dates_are_guarantees"] is False
     assert "super-secret-value" not in str(data)

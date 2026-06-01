@@ -84,6 +84,9 @@ def test_portal_customer_manifest_is_token_gated_and_safe():
     assert "next_action_label" in data["field_contract"]["customer_status"]
     assert "ready_to_ship" in data["field_contract"]["customer_status_stages"]
     assert data["field_contract"]["date_policy"]["planned_dates_are_guarantees"] is False
+    assert "feedback_snapshot" in data["field_contract"]
+    assert "allowed_feedback_types" in data["field_contract"]["feedback_snapshot"]
+    assert "resolution_time_promised" in data["field_contract"]["feedback_snapshot"]
     assert "feedback_create_response" in data["field_contract"]
     assert data["field_policy"]["planned_dates_are_guarantees"] is False
     assert data["safety"]["automatic_customer_notification"] is False
@@ -132,6 +135,16 @@ def test_portal_customer_routes_return_whitelisted_payloads(monkeypatch):
                 "has_active_shipment": True,
                 "planned_dates_are_guarantees": False,
             },
+            "feedback": {
+                "submit_endpoint": "/api/v1/portal/customer/feedback",
+                "submit_method": "POST",
+                "allowed_feedback_types": ["tracking", "resource", "quality", "general"],
+                "allowed_priorities": ["normal", "high", "urgent"],
+                "requires_order_id": False,
+                "resolution_time_promised": False,
+                "customer_notified": False,
+                "automatic_reply_sent": False,
+            },
             "safety": {"forbidden_field_filter_enabled": True, "token_exposed": False},
         },
     )
@@ -152,6 +165,9 @@ def test_portal_customer_routes_return_whitelisted_payloads(monkeypatch):
     assert snapshot.json()["data"]["customer_status"]["planned_dates_are_guarantees"] is False
     assert snapshot.json()["data"]["customer_status"]["next_action_label"] == "Shipment planning"
     assert snapshot.json()["data"]["tracking_summary"]["has_active_shipment"] is True
+    assert snapshot.json()["data"]["feedback"]["submit_method"] == "POST"
+    assert "tracking" in snapshot.json()["data"]["feedback"]["allowed_feedback_types"]
+    assert snapshot.json()["data"]["feedback"]["resolution_time_promised"] is False
 
 
 def test_portal_feedback_creates_ticket_without_auto_reply(monkeypatch):

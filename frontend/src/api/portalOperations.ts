@@ -126,7 +126,20 @@ export interface PortalOperationsConsole {
       planned_dates_are_guarantees: boolean
     }
     shipment: { status_counts: Record<string, number>; active_count: number }
-    feedback: { open_count: number; customer_notified: boolean; automatic_reply_sent: boolean }
+    feedback: {
+      submit_endpoint: string
+      submit_method: string
+      allowed_feedback_types: string[]
+      allowed_priorities: string[]
+      requires_order_id: boolean
+      customer_name_required: boolean
+      customer_email_required: boolean
+      resolution_time_promised: boolean
+      total_count: number
+      open_count: number
+      customer_notified: boolean
+      automatic_reply_sent: boolean
+    }
     safety: { forbidden_field_filter_enabled: boolean; token_exposed: boolean }
   }>
   customer_snapshot_readiness: {

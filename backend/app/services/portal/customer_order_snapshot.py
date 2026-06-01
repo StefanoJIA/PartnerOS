@@ -114,6 +114,16 @@ PROGRESS_STEPS = (
     ("delivered", "Delivered"),
 )
 
+FEEDBACK_FORM_METADATA = {
+    "submit_method": "POST",
+    "allowed_feedback_types": ["tracking", "resource", "quality", "general"],
+    "allowed_priorities": ["normal", "high", "urgent"],
+    "requires_order_id": False,
+    "customer_name_required": False,
+    "customer_email_required": False,
+    "resolution_time_promised": False,
+}
+
 
 def _date_value(value: Any) -> str | None:
     if isinstance(value, datetime | date):
@@ -290,6 +300,7 @@ def build_customer_order_snapshot(db: Session, order_id: UUID) -> dict[str, Any]
         },
         "feedback": {
             "submit_endpoint": "/api/v1/portal/customer/feedback",
+            **FEEDBACK_FORM_METADATA,
             "total_count": feedback_count,
             "open_count": open_feedback_count,
             "customer_notified": False,
