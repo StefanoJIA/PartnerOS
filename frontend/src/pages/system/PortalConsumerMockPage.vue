@@ -82,6 +82,21 @@
       </div>
       <el-input v-model="feedback.subject" class="mt-3" />
       <el-input v-model="feedback.message" class="mt-3" type="textarea" rows="3" />
+      <div v-if="feedbackNextLinks.length" class="mt-4 rounded border border-slate-200 p-3">
+        <p class="text-sm font-medium text-slate-700">Returned next links</p>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <el-button
+            v-for="link in feedbackNextLinks"
+            :key="link.key"
+            size="small"
+            :disabled="!link.path"
+            @click="runFeedbackNextLink(link.key)"
+          >
+            {{ link.label }}
+          </el-button>
+        </div>
+        <p class="mt-2 text-xs text-slate-500">These are customer Portal API paths returned by PartnerOS; no internal ticket ID or token value is exposed.</p>
+      </div>
     </section>
 
     <el-table :data="results" class="w-full">
@@ -141,6 +156,18 @@ const feedback = reactive({
 })
 
 const forbiddenSummary = computed(() => Array.from(new Set(results.value.flatMap((r) => r.forbiddenHits))))
+const feedbackNextLinks = computed(() => {
+  const feedbackResult = results.value.find((r) => r.name === 'feedback')
+  const envelope = feedbackResult?.data as { data?: { next_links?: Record<string, string | null> } } | undefined
+  const links = envelope?.data?.next_links || {}
+  return [
+    { key: 'orders', label: 'Orders', path: links.orders },
+    { key: 'order_snapshot', label: 'Snapshot', path: links.order_snapshot },
+    { key: 'production', label: 'Production', path: links.production },
+    { key: 'shipment', label: 'Shipment', path: links.shipment },
+    { key: 'resources', label: 'Resources', path: links.resources },
+  ].filter((item) => item.path !== undefined)
+})
 
 function pretty(value: unknown) {
   return JSON.stringify(value, null, 2)
@@ -236,6 +263,32 @@ async function submitFeedback() {
     )
   } finally {
     feedbackLoading.value = false
+  }
+}
+
+function orderIdFromPortalPath(path: string | null | undefined) {
+  if (!path) return ''
+  return path.match(/\/orders\/([^/]+)/)?.[1] || ''
+}
+
+async function runFeedbackNextLink(key: string) {
+  const link = feedbackNextLinks.value.find((item) => item.key === key)
+  if (!link?.path) return
+  if (key === 'orders') {
+    await pushResult('orders after feedback', portalCustomerContract.orders(portalToken.value))
+    return
+  }
+  const linkedOrderId = orderIdFromPortalPath(link.path)
+  if (!linkedOrderId) return
+  orderId.value = linkedOrderId
+  if (key === 'order_snapshot') {
+    await pushResult('snapshot after feedback', portalCustomerContract.orderSnapshot(portalToken.value, linkedOrderId))
+  } else if (key === 'production') {
+    await pushResult('production after feedback', portalCustomerContract.production(portalToken.value, linkedOrderId))
+  } else if (key === 'shipment') {
+    await pushResult('shipment after feedback', portalCustomerContract.shipment(portalToken.value, linkedOrderId))
+  } else if (key === 'resources') {
+    await pushResult('resources after feedback', portalCustomerContract.resources(portalToken.value, linkedOrderId))
   }
 }
 
