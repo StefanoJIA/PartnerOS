@@ -97,11 +97,14 @@ def test_feedback_ticket_routes(monkeypatch):
     user = User(id=uuid4(), email="ops@test.example", is_active=True)
     db = MagicMock()
     ticket_id = uuid4()
+    order_id = uuid4()
+    list_kwargs = {}
 
-    monkeypatch.setattr(
-        "app.api.v1.routes.feedback_tickets.list_feedback_tickets",
-        lambda *a, **k: {"items": [ticket_to_dict(_ticket(id=ticket_id))], "total": 1, "page": 1, "limit": 50},
-    )
+    def fake_list_feedback_tickets(*args, **kwargs):
+        list_kwargs.update(kwargs)
+        return {"items": [ticket_to_dict(_ticket(id=ticket_id, order_id=order_id))], "total": 1, "page": 1, "limit": 50}
+
+    monkeypatch.setattr("app.api.v1.routes.feedback_tickets.list_feedback_tickets", fake_list_feedback_tickets)
     monkeypatch.setattr(
         "app.api.v1.routes.feedback_tickets.get_feedback_ticket",
         lambda db_, tid: _ticket(id=tid, status="new"),
@@ -120,7 +123,7 @@ def test_feedback_ticket_routes(monkeypatch):
     app.dependency_overrides[get_db] = lambda: (yield db)
 
     with TestClient(app) as client:
-        listed = client.get("/api/v1/feedback-tickets?status=new&priority=normal")
+        listed = client.get(f"/api/v1/feedback-tickets?status=new&priority=normal&order_id={order_id}")
         detail = client.get(f"/api/v1/feedback-tickets/{ticket_id}")
         patched = client.patch(
             f"/api/v1/feedback-tickets/{ticket_id}",
@@ -142,6 +145,8 @@ def test_feedback_ticket_routes(monkeypatch):
 
     assert listed.status_code == 200
     assert listed.json()["data"]["total"] == 1
+    assert listed.json()["data"]["items"][0]["order_id"] == str(order_id)
+    assert list_kwargs["order_id"] == order_id
     assert detail.status_code == 200
     assert patched.status_code == 200
     assert patched.json()["data"]["status"] == "resolved"

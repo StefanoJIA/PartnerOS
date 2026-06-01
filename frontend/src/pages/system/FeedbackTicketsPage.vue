@@ -11,7 +11,7 @@
     <el-alert type="warning" :closable="false" show-icon :title="FEEDBACK_SAFETY_NOTE" />
     <el-alert v-if="error" type="error" :closable="false" show-icon :title="error" />
 
-    <div class="grid gap-3 md:grid-cols-4">
+    <div class="grid gap-3 md:grid-cols-5">
       <el-select v-model="filters.status" clearable placeholder="Status">
         <el-option v-for="s in statuses" :key="s" :label="s" :value="s" />
       </el-select>
@@ -19,6 +19,7 @@
         <el-option v-for="p in priorities" :key="p" :label="p" :value="p" />
       </el-select>
       <el-input v-model="filters.feedback_type" clearable placeholder="Type" />
+      <el-input v-model="filters.order_id" clearable placeholder="Order ID" @keyup.enter="load" />
       <el-input v-model="filters.search" clearable placeholder="Search" @keyup.enter="load" />
     </div>
 
@@ -177,7 +178,7 @@ const drawerOpen = ref(false)
 const total = ref(0)
 const page = ref(1)
 const limit = ref(50)
-const filters = reactive({ status: '', priority: '', feedback_type: '', search: '' })
+const filters = reactive({ status: '', priority: '', feedback_type: '', order_id: '', search: '' })
 const form = reactive({ status: 'new', priority: 'normal', internal_owner: '', response_summary: '' })
 const route = useRoute()
 const router = useRouter()
@@ -204,6 +205,7 @@ async function load() {
       status: filters.status || undefined,
       priority: filters.priority || undefined,
       feedback_type: filters.feedback_type || undefined,
+      order_id: filters.order_id || undefined,
       search: filters.search || undefined,
       page: page.value,
       limit: limit.value,
@@ -298,6 +300,7 @@ function applyRouteFilters() {
   filters.status = routeText(route.query.status)
   filters.priority = routeText(route.query.priority)
   filters.feedback_type = routeText(route.query.feedback_type)
+  filters.order_id = routeText(route.query.order_id)
   filters.search = routeText(route.query.search)
 }
 

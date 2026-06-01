@@ -86,6 +86,7 @@ def list_feedback_tickets(
     status: str | None = None,
     priority: str | None = None,
     feedback_type: str | None = None,
+    order_id: UUID | None = None,
     search: str | None = None,
     page: int = 1,
     limit: int = 50,
@@ -97,6 +98,8 @@ def list_feedback_tickets(
         q = q.filter(FeedbackTicket.priority == priority)
     if feedback_type:
         q = q.filter(FeedbackTicket.feedback_type == feedback_type)
+    if order_id:
+        q = q.filter(FeedbackTicket.order_id == order_id)
     if search:
         like = f"%{search.strip()}%"
         q = q.filter(
