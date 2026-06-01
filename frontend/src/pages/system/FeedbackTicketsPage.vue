@@ -182,6 +182,7 @@ const filters = reactive({ status: '', priority: '', feedback_type: '', order_id
 const form = reactive({ status: 'new', priority: 'normal', internal_owner: '', response_summary: '' })
 const route = useRoute()
 const router = useRouter()
+let syncingRouteFilters = false
 
 function statusTag(status: string): '' | 'success' | 'warning' | 'info' {
   if (status === 'resolved' || status === 'closed') return 'success'
@@ -304,10 +305,39 @@ function applyRouteFilters() {
   filters.search = routeText(route.query.search)
 }
 
+function routeFilterSnapshot() {
+  return [
+    routeText(route.query.status),
+    routeText(route.query.priority),
+    routeText(route.query.feedback_type),
+    routeText(route.query.order_id),
+    routeText(route.query.search),
+  ].join('\u0000')
+}
+
+async function syncRouteFiltersAndLoad() {
+  syncingRouteFilters = true
+  applyRouteFilters()
+  page.value = 1
+  try {
+    await load()
+  } finally {
+    syncingRouteFilters = false
+  }
+}
+
 watch(filters, () => {
+  if (syncingRouteFilters) return
   page.value = 1
   load()
 })
+
+watch(
+  () => routeFilterSnapshot(),
+  async () => {
+    await syncRouteFiltersAndLoad()
+  },
+)
 
 watch(
   () => route.query.ticket_id,
@@ -320,8 +350,7 @@ watch(
 )
 
 onMounted(async () => {
-  applyRouteFilters()
-  await load()
+  await syncRouteFiltersAndLoad()
   const ticketId = routeText(route.query.ticket_id)
   if (ticketId) {
     await openTicketById(ticketId, false)
