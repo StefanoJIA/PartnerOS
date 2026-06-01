@@ -59,6 +59,54 @@
       </div>
     </section>
 
+    <section class="grid gap-4 xl:grid-cols-[0.9fr_1.4fr]">
+      <div class="rounded border border-slate-200 bg-white p-4">
+        <h3 class="mb-3 font-semibold text-slate-800">Staging connection</h3>
+        <dl class="space-y-3 text-sm">
+          <div>
+            <dt class="text-slate-500">Public base URL</dt>
+            <dd class="break-all font-medium text-slate-800">{{ data?.portal_contract.base_url || '-' }}</dd>
+          </div>
+          <div>
+            <dt class="text-slate-500">Auth header</dt>
+            <dd class="font-medium text-slate-800">{{ data?.portal_contract.server_to_server_auth.header_name || '-' }}</dd>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <el-tag :type="data?.portal_contract.server_to_server_auth.required ? 'success' : 'warning'" effect="plain">
+              {{ data?.portal_contract.server_to_server_auth.required ? 'token required' : 'token optional' }}
+            </el-tag>
+            <el-tag :type="data?.portal_contract.server_to_server_auth.token_configured ? 'success' : 'warning'" effect="plain">
+              {{ data?.portal_contract.server_to_server_auth.token_configured ? 'token configured' : 'token missing' }}
+            </el-tag>
+            <el-tag :type="data?.portal_contract.safety.token_value_exposed ? 'danger' : 'success'" effect="plain">
+              {{ data?.portal_contract.safety.token_value_exposed ? 'token exposed' : 'token hidden' }}
+            </el-tag>
+          </div>
+          <div>
+            <dt class="text-slate-500">Allowed origins</dt>
+            <dd class="mt-1 flex flex-wrap gap-2">
+              <el-tag v-for="origin in data?.portal_contract.allowed_origins || []" :key="origin" effect="plain">{{ origin }}</el-tag>
+              <span v-if="!data?.portal_contract.allowed_origins.length" class="text-slate-500">-</span>
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="rounded border border-slate-200 bg-white p-4">
+        <h3 class="mb-3 font-semibold text-slate-800">Portal contract</h3>
+        <el-table :data="data?.portal_contract.endpoints || []" class="w-full">
+          <el-table-column prop="method" label="Method" width="90" />
+          <el-table-column prop="name" label="Data" width="140" />
+          <el-table-column prop="path" label="Path" min-width="310" />
+          <el-table-column label="Ready" width="100">
+            <template #default="{ row }">
+              <el-tag size="small" :type="row.ready ? 'success' : 'warning'">{{ row.ready ? 'ready' : 'check' }}</el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </section>
+
     <section class="grid gap-4 xl:grid-cols-[1.3fr_1fr]">
       <div class="rounded border border-slate-200 bg-white p-4">
         <h3 class="mb-3 font-semibold text-slate-800">Recent customer-visible orders</h3>

@@ -12,6 +12,31 @@ export interface PortalOperationsConsole {
     allowed_origins: string[]
     missing_config: string[]
   }
+  portal_contract: {
+    base_url: string | null
+    server_to_server_auth: {
+      required: boolean
+      header_name: string
+      bearer_authorization_supported: boolean
+      token_configured: boolean
+      token_value_exposed: boolean
+    }
+    allowed_origins: string[]
+    missing_config: string[]
+    endpoints: Array<{
+      name: string
+      method: string
+      path: string
+      ready: boolean
+    }>
+    safety: {
+      customer_visible_fields_only: boolean
+      forbidden_field_filter_enabled: boolean
+      token_value_exposed: boolean
+      automatic_customer_notification: boolean
+      carrier_api_called: boolean
+    }
+  }
   endpoint_readiness: Record<'products' | 'orders' | 'production' | 'shipment' | 'resources' | 'feedback', boolean>
   recent_customer_visible_orders: {
     items: Array<{

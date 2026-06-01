@@ -257,4 +257,6 @@ GET /api/v1/portal/operations/console
 
 This is an internal authenticated endpoint, not a customer Portal API. It shows Portal API config, endpoint readiness, recent customer-visible orders, customer snapshots, shipment status counts, feedback ticket counts, and forbidden-field audit status. It is read-only and does not notify customers or suppliers, call carrier APIs, or mutate order/shipment state.
 
+The response includes `portal_contract` for staging handoff: public base URL, allowed origins, server-to-server auth header name, token required/configured booleans, customer Portal endpoint paths, and endpoint readiness. It never includes the token value.
+
 The console also includes `market_signal_preview`, a read-only advisory rollup for internal Market Response preparation. It groups order lines, ordered quantity, feedback, production risk, and shipment risk across focus areas: adjustable desk frames, desk legs, lifting columns, education furniture, project furniture, and other products. This preview does not create tickets, change recommendations, notify customers/suppliers, or rank partners.

@@ -10,16 +10,47 @@ from app.core.config import Settings
 from app.models import FeedbackTicket, OrderResource, ProductCatalog
 from app.models.customer_orders import CustomerOrder, OrderLineItem, OrderProductionMilestone, ShipmentPlan
 from app.services.portal.customer_field_filter import (
-    assert_no_forbidden_internal_fields,
-    strip_forbidden_internal_fields,
+    FORBIDDEN_FIELD_NAMES,
+    FORBIDDEN_TEXT_MARKERS,
 )
 from app.services.portal.customer_order_snapshot import build_customer_order_snapshot
 from app.services.portal.customer_portal_bridge import build_customer_order_list
 
 
+SAFE_OPERATION_METADATA_KEYS = {
+    "token_required",
+    "token_configured",
+    "token_value_exposed",
+    "credential_value_exposed",
+}
+
+
+def _strip_operations_payload(value: Any) -> Any:
+    if isinstance(value, dict):
+        cleaned: dict[str, Any] = {}
+        for key, item in value.items():
+            lowered = key.lower()
+            if lowered in FORBIDDEN_FIELD_NAMES and lowered not in SAFE_OPERATION_METADATA_KEYS:
+                continue
+            if any(marker in lowered for marker in ("secret", "password")):
+                continue
+            if lowered in {"token", "api_token", "portal_customer_api_token"}:
+                continue
+            cleaned[key] = _strip_operations_payload(item)
+        return cleaned
+    if isinstance(value, list):
+        return [_strip_operations_payload(item) for item in value]
+    return value
+
+
 def _safe_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    cleaned = strip_forbidden_internal_fields(payload)
-    assert_no_forbidden_internal_fields(cleaned)
+    cleaned = _strip_operations_payload(payload)
+    text = str(cleaned).lower()
+    for marker in FORBIDDEN_TEXT_MARKERS:
+        if marker == "portal_customer_api_token":
+            continue
+        if marker in text:
+            raise ValueError(f"Forbidden portal operations field leaked: {marker}")
     return cleaned
 
 
@@ -159,6 +190,57 @@ def _build_market_signal_preview(
     }
 
 
+def _build_portal_contract(settings: Settings, endpoints: dict[str, bool], missing_config: list[str]) -> dict[str, Any]:
+    return {
+        "base_url": settings.PUBLIC_BASE_URL.strip() or None,
+        "server_to_server_auth": {
+            "required": settings.PORTAL_CUSTOMER_API_REQUIRE_TOKEN,
+            "header_name": "X-Portal-Customer-Token",
+            "bearer_authorization_supported": True,
+            "token_configured": bool(settings.PORTAL_CUSTOMER_API_TOKEN.strip()),
+            "token_value_exposed": False,
+        },
+        "allowed_origins": settings.cors_origins_list,
+        "missing_config": missing_config,
+        "endpoints": [
+            {"name": "products", "method": "GET", "path": "/api/v1/portal/customer/products", "ready": endpoints["products"]},
+            {"name": "orders", "method": "GET", "path": "/api/v1/portal/customer/orders", "ready": endpoints["orders"]},
+            {
+                "name": "order_snapshot",
+                "method": "GET",
+                "path": "/api/v1/portal/customer/orders/{order_id}/snapshot",
+                "ready": endpoints["orders"] and endpoints["production"] and endpoints["shipment"] and endpoints["resources"],
+            },
+            {
+                "name": "production",
+                "method": "GET",
+                "path": "/api/v1/portal/customer/orders/{order_id}/production",
+                "ready": endpoints["production"],
+            },
+            {
+                "name": "shipment",
+                "method": "GET",
+                "path": "/api/v1/portal/customer/orders/{order_id}/shipment",
+                "ready": endpoints["shipment"],
+            },
+            {
+                "name": "resources",
+                "method": "GET",
+                "path": "/api/v1/portal/customer/orders/{order_id}/resources",
+                "ready": endpoints["resources"],
+            },
+            {"name": "feedback", "method": "POST", "path": "/api/v1/portal/customer/feedback", "ready": endpoints["feedback"]},
+        ],
+        "safety": {
+            "customer_visible_fields_only": True,
+            "forbidden_field_filter_enabled": True,
+            "token_value_exposed": False,
+            "automatic_customer_notification": False,
+            "carrier_api_called": False,
+        },
+    }
+
+
 def build_portal_operations_console(db: Session, settings: Settings, *, recent_limit: int = 8) -> dict[str, Any]:
     recent_orders = build_customer_order_list(db, page=1, limit=recent_limit)
     order_rows = (
@@ -206,6 +288,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
             "allowed_origins": settings.cors_origins_list,
             "missing_config": missing_config,
         },
+        "portal_contract": _build_portal_contract(settings, endpoints, missing_config),
         "endpoint_readiness": endpoints,
         "recent_customer_visible_orders": recent_orders,
         "customer_snapshots": snapshot_items,

@@ -121,6 +121,37 @@ def test_customer_snapshot_stage_and_safety(monkeypatch):
     assert data["feedback"]["customer_notified"] is False
 
 
+def test_operations_console_preserves_safe_token_metadata_without_values():
+    from app.services.portal.operations_console import _build_portal_contract, _safe_payload
+
+    settings = Settings(
+        PORTAL_CUSTOMER_API_ENABLED=True,
+        PORTAL_CUSTOMER_API_REQUIRE_TOKEN=True,
+        PORTAL_CUSTOMER_API_TOKEN="super-secret-value",
+        PORTAL_CUSTOMER_ALLOWED_ORIGINS="https://service.intelli-opus.com",
+        PUBLIC_BASE_URL="https://partneros-staging.example.com",
+    )
+    endpoints = {name: True for name in ("products", "orders", "production", "shipment", "resources", "feedback")}
+    data = _safe_payload(
+        {
+            "status": {"token_required": True, "token_configured": True},
+            "portal_contract": _build_portal_contract(settings, endpoints, []),
+            "token": "should-not-leak",
+            "nested": {"storage_key": "backend/storage/private.pdf", "ok": "visible"},
+            "safety": {"token_value_exposed": False},
+        }
+    )
+
+    assert data["status"]["token_required"] is True
+    assert data["status"]["token_configured"] is True
+    assert data["safety"]["token_value_exposed"] is False
+    assert data["portal_contract"]["server_to_server_auth"]["header_name"] == "X-Portal-Customer-Token"
+    assert data["portal_contract"]["server_to_server_auth"]["token_configured"] is True
+    assert "super-secret-value" not in str(data)
+    assert "token" not in data
+    assert "storage_key" not in data["nested"]
+
+
 def test_market_signal_preview_groups_focus_categories():
     from app.services.portal.operations_console import _build_market_signal_preview
 
