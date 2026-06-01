@@ -37,6 +37,144 @@ def portal_customer_endpoints() -> dict[str, str]:
     }
 
 
+def portal_customer_connection_guide(
+    *,
+    public_base_url: str | None,
+    token_required: bool,
+    token_configured: bool,
+    allowed_origins: list[str],
+    include_environment: bool = False,
+) -> dict[str, Any]:
+    endpoints = portal_customer_endpoints()
+    smoke_sequence = [
+        {
+            "key": "manifest",
+            "method": "GET",
+            "path": endpoints["manifest"],
+            "expected_status": 200,
+            "uses_order_id_from": None,
+            "mutates_data": False,
+        },
+        {
+            "key": "products",
+            "method": "GET",
+            "path": endpoints["products"],
+            "expected_status": 200,
+            "uses_order_id_from": None,
+            "mutates_data": False,
+        },
+        {
+            "key": "orders",
+            "method": "GET",
+            "path": endpoints["orders"],
+            "expected_status": 200,
+            "uses_order_id_from": None,
+            "mutates_data": False,
+        },
+        {
+            "key": "order_snapshot",
+            "method": "GET",
+            "path": endpoints["order_snapshot"],
+            "expected_status": 200,
+            "uses_order_id_from": "orders.items[0].id",
+            "mutates_data": False,
+        },
+        {
+            "key": "production",
+            "method": "GET",
+            "path": endpoints["production"],
+            "expected_status": 200,
+            "uses_order_id_from": "orders.items[0].id",
+            "mutates_data": False,
+        },
+        {
+            "key": "shipment",
+            "method": "GET",
+            "path": endpoints["shipment"],
+            "expected_status": 200,
+            "uses_order_id_from": "orders.items[0].id",
+            "mutates_data": False,
+        },
+        {
+            "key": "resources",
+            "method": "GET",
+            "path": endpoints["resources"],
+            "expected_status": 200,
+            "uses_order_id_from": "orders.items[0].id",
+            "mutates_data": False,
+        },
+        {
+            "key": "feedback_test",
+            "method": "POST",
+            "path": endpoints["feedback"],
+            "expected_status": 201,
+            "uses_order_id_from": "orders.items[0].id optional",
+            "mutates_data": True,
+            "test_only": True,
+            "subject_prefix": "TEST",
+        },
+    ]
+    guide: dict[str, Any] = {
+        "consumer": "service.intelli-opus.com",
+        "public_base_url": public_base_url,
+        "auth": {
+            "header_name": "X-Portal-Customer-Token",
+            "authorization_bearer_supported": True,
+            "required": token_required,
+            "configured": token_configured,
+            "value_exposed": False,
+        },
+        "allowed_origins": allowed_origins,
+        "smoke_sequence": smoke_sequence,
+        "safety": {
+            "server_to_server_only": True,
+            "browser_token_storage_allowed": False,
+            "customer_visible_fields_only": True,
+            "planned_dates_are_guarantees": False,
+            "feedback_test_creates_ticket": True,
+            "automatic_reply_sent": False,
+            "customer_notified": False,
+            "supplier_notified": False,
+            "carrier_api_called": False,
+            "deployment_triggered": False,
+            "staging_validated": False,
+            "token_value_exposed": False,
+        },
+    }
+    if include_environment:
+        guide["required_environment"] = [
+            {
+                "name": "PORTAL_CUSTOMER_API_ENABLED",
+                "required_value": "true",
+                "configured": True,
+                "sensitive": False,
+                "value_exposed": True,
+            },
+            {
+                "name": "PORTAL_CUSTOMER_API_TOKEN",
+                "required_value": "secret server-to-server value",
+                "configured": token_configured,
+                "sensitive": True,
+                "value_exposed": False,
+            },
+            {
+                "name": "PORTAL_CUSTOMER_ALLOWED_ORIGINS",
+                "required_value": "https://service.intelli-opus.com",
+                "configured": bool(allowed_origins),
+                "sensitive": False,
+                "value_exposed": True,
+            },
+            {
+                "name": "PUBLIC_BASE_URL",
+                "required_value": "public HTTPS PartnerOS staging origin",
+                "configured": bool(public_base_url),
+                "sensitive": False,
+                "value_exposed": bool(public_base_url),
+            },
+        ]
+    return guide
+
+
 def portal_customer_field_contract() -> dict[str, Any]:
     return {
         "envelope": ["ok", "data", "error", "request_id"],

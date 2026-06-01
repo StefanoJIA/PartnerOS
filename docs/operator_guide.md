@@ -272,7 +272,9 @@ Feedback status flow is `new -> in_review -> responded -> resolved -> closed`. T
 
 The `/portal-customer-bridge` UAT page includes a read-only read path check. It calls manifest, products, orders, then uses the first returned order to check detail, snapshot, production, shipment, and resources without creating feedback or mutating business records.
 
-Portal Operations includes a staging connection and Portal contract summary with public base URL, allowed origins, auth header name, endpoint paths, and endpoint readiness. It displays token-required/configured booleans only; it must never display the token value.
+Portal Operations includes a staging connection and Portal contract summary with public base URL, allowed origins, auth header name, endpoint paths, endpoint readiness, required staging environment readiness, and a service Portal smoke sequence. It displays token-required/configured booleans only; it must never display the token value.
+
+The smoke sequence covers manifest, products, orders, order snapshot, production, shipment, resources, and optional TEST feedback. Read steps are marked read-only; the feedback step is marked TEST ticket because it creates an internal feedback ticket. The sequence does not validate staging, deploy, notify customers or suppliers, call carrier APIs, or mutate order/shipment status.
 
 The token-gated customer manifest includes the same endpoint map plus a machine-readable customer field contract for products, orders, snapshots, production, shipment, resources, and feedback. Portal Operations displays the same field contract summary so operators and `service.intelli-opus.com` use one contract. The customer Portal should render only customer-visible fields and treat planned dates as planned, not guaranteed.
 

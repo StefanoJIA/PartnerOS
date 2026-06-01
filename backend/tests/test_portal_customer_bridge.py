@@ -78,6 +78,15 @@ def test_portal_customer_manifest_is_token_gated_and_safe():
     assert data["auth"]["header_name"] == "X-Portal-Customer-Token"
     assert data["auth"]["token_configured"] is True
     assert data["auth"]["token_value_exposed"] is False
+    assert data["connection_guide"]["consumer"] == "service.intelli-opus.com"
+    assert data["connection_guide"]["auth"]["header_name"] == "X-Portal-Customer-Token"
+    assert data["connection_guide"]["auth"]["value_exposed"] is False
+    assert data["connection_guide"]["smoke_sequence"][0]["key"] == "manifest"
+    assert data["connection_guide"]["smoke_sequence"][-1]["key"] == "feedback_test"
+    assert data["connection_guide"]["smoke_sequence"][-1]["test_only"] is True
+    assert data["connection_guide"]["safety"]["staging_validated"] is False
+    assert data["connection_guide"]["safety"]["deployment_triggered"] is False
+    assert "required_environment" not in data["connection_guide"]
     assert "customer_status_stages" in data["field_contract"]
     assert "customer_next_action" in data["field_contract"]
     assert "tracking_summary" in data["field_contract"]

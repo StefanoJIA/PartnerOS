@@ -25,7 +25,11 @@ from app.services.portal.customer_portal_bridge import (
     build_customer_shipment_view,
     create_feedback_ticket,
 )
-from app.services.portal.customer_contract import portal_customer_endpoints, portal_customer_field_contract
+from app.services.portal.customer_contract import (
+    portal_customer_connection_guide,
+    portal_customer_endpoints,
+    portal_customer_field_contract,
+)
 from app.services.portal.customer_order_snapshot import build_customer_order_snapshot
 from app.services.portal.order_resource_service import download_customer_resource, list_customer_order_resources
 
@@ -87,6 +91,12 @@ def portal_customer_manifest(request: Request, settings: Settings = Depends(get_
             "token_value_exposed": False,
         },
         "endpoints": portal_customer_endpoints(),
+        "connection_guide": portal_customer_connection_guide(
+            public_base_url=settings.PUBLIC_BASE_URL.strip() or None,
+            token_required=settings.PORTAL_CUSTOMER_API_REQUIRE_TOKEN,
+            token_configured=bool(settings.PORTAL_CUSTOMER_API_TOKEN.strip()),
+            allowed_origins=settings.cors_origins_list,
+        ),
         "field_contract": portal_customer_field_contract(),
         "customer_visible_surfaces": ["products", "orders", "order_snapshot", "production", "shipment", "resources", "feedback"],
         "field_policy": {

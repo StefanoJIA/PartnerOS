@@ -24,6 +24,49 @@ export interface PortalOperationsConsole {
     }
     allowed_origins: string[]
     missing_config: string[]
+    connection_guide: {
+      consumer: string
+      public_base_url: string | null
+      auth: {
+        header_name: string
+        authorization_bearer_supported: boolean
+        required: boolean
+        configured: boolean
+        value_exposed: boolean
+      }
+      allowed_origins: string[]
+      required_environment: Array<{
+        name: string
+        required_value: string
+        configured: boolean
+        sensitive: boolean
+        value_exposed: boolean
+      }>
+      smoke_sequence: Array<{
+        key: string
+        method: string
+        path: string
+        expected_status: number
+        uses_order_id_from: string | null
+        mutates_data: boolean
+        test_only?: boolean
+        subject_prefix?: string
+      }>
+      safety: {
+        server_to_server_only: boolean
+        browser_token_storage_allowed: boolean
+        customer_visible_fields_only: boolean
+        planned_dates_are_guarantees: boolean
+        feedback_test_creates_ticket: boolean
+        automatic_reply_sent: boolean
+        customer_notified: boolean
+        supplier_notified: boolean
+        carrier_api_called: boolean
+        deployment_triggered: boolean
+        staging_validated: boolean
+        token_value_exposed: boolean
+      }
+    }
     field_contract: PortalFieldContract
     endpoints: Array<{
       name: string

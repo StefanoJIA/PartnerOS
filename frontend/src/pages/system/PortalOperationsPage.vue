@@ -190,6 +190,21 @@
               <span v-if="!data?.portal_contract.allowed_origins.length" class="text-slate-500">-</span>
             </dd>
           </div>
+          <div>
+            <dt class="text-slate-500">Required env</dt>
+            <dd class="mt-1 grid gap-2">
+              <div
+                v-for="item in data?.portal_contract.connection_guide.required_environment || []"
+                :key="item.name"
+                class="flex items-center justify-between gap-2 rounded border border-slate-200 px-2 py-1"
+              >
+                <span class="font-medium text-slate-700">{{ item.name }}</span>
+                <el-tag size="small" :type="item.configured ? 'success' : 'warning'" effect="plain">
+                  {{ item.configured ? 'configured' : 'missing' }}
+                </el-tag>
+              </div>
+            </dd>
+          </div>
         </dl>
       </div>
 
@@ -206,6 +221,44 @@
           </el-table-column>
         </el-table>
       </div>
+    </section>
+
+    <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 class="font-semibold text-slate-800">Service Portal smoke sequence</h3>
+        <div class="flex flex-wrap gap-2">
+          <el-tag
+            :type="data?.portal_contract.connection_guide.safety.browser_token_storage_allowed ? 'danger' : 'success'"
+            effect="plain"
+          >
+            {{ data?.portal_contract.connection_guide.safety.browser_token_storage_allowed ? 'browser token risk' : 'server side token' }}
+          </el-tag>
+          <el-tag
+            :type="data?.portal_contract.connection_guide.safety.staging_validated ? 'danger' : 'info'"
+            effect="plain"
+          >
+            {{ data?.portal_contract.connection_guide.safety.staging_validated ? 'validated' : 'handoff only' }}
+          </el-tag>
+        </div>
+      </div>
+      <el-table :data="data?.portal_contract.connection_guide.smoke_sequence || []" class="w-full">
+        <el-table-column prop="method" label="Method" width="95" />
+        <el-table-column prop="key" label="Step" width="145" />
+        <el-table-column prop="path" label="Path" min-width="330" />
+        <el-table-column label="Order source" min-width="180">
+          <template #default="{ row }">{{ row.uses_order_id_from || '-' }}</template>
+        </el-table-column>
+        <el-table-column label="Expected" width="105">
+          <template #default="{ row }">HTTP {{ row.expected_status }}</template>
+        </el-table-column>
+        <el-table-column label="Safety" width="150">
+          <template #default="{ row }">
+            <el-tag size="small" :type="row.mutates_data ? 'warning' : 'success'" effect="plain">
+              {{ row.mutates_data ? 'TEST ticket' : 'read only' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
     </section>
 
     <section class="rounded border border-slate-200 bg-white p-4">

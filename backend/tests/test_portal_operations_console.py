@@ -203,6 +203,16 @@ def test_operations_console_preserves_safe_token_metadata_without_values():
     assert data["safety"]["token_value_exposed"] is False
     assert data["portal_contract"]["server_to_server_auth"]["header_name"] == "X-Portal-Customer-Token"
     assert data["portal_contract"]["server_to_server_auth"]["token_configured"] is True
+    assert data["portal_contract"]["connection_guide"]["consumer"] == "service.intelli-opus.com"
+    assert data["portal_contract"]["connection_guide"]["auth"]["configured"] is True
+    assert data["portal_contract"]["connection_guide"]["auth"]["value_exposed"] is False
+    assert data["portal_contract"]["connection_guide"]["smoke_sequence"][0]["key"] == "manifest"
+    assert data["portal_contract"]["connection_guide"]["smoke_sequence"][-1]["key"] == "feedback_test"
+    assert data["portal_contract"]["connection_guide"]["smoke_sequence"][-1]["test_only"] is True
+    assert data["portal_contract"]["connection_guide"]["required_environment"][1]["name"] == "PORTAL_CUSTOMER_API_TOKEN"
+    assert data["portal_contract"]["connection_guide"]["required_environment"][1]["value_exposed"] is False
+    assert data["portal_contract"]["connection_guide"]["safety"]["staging_validated"] is False
+    assert data["portal_contract"]["connection_guide"]["safety"]["deployment_triggered"] is False
     assert "customer_status_stages" in data["portal_contract"]["field_contract"]
     assert "customer_next_action" in data["portal_contract"]["field_contract"]
     assert "tracking_summary" in data["portal_contract"]["field_contract"]
