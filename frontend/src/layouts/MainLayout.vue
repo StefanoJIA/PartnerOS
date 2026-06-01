@@ -11,6 +11,7 @@
       >
         <el-menu-item index="/">Dashboard</el-menu-item>
         <el-menu-item index="/system-health">System health</el-menu-item>
+        <el-menu-item index="/portal-integration">Portal operations</el-menu-item>
         <el-menu-item index="/portal-customer-bridge">Portal bridge UAT</el-menu-item>
         <el-menu-item index="/feedback-tickets">Feedback tickets</el-menu-item>
         <el-menu-item index="/lead-intelligence">A 域 · Lead Intelligence</el-menu-item>

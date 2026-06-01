@@ -81,19 +81,29 @@ def test_portal_customer_routes_return_whitelisted_payloads(monkeypatch):
         "app.api.v1.routes.portal_customer.build_customer_resource_view",
         lambda db, oid: {"order_id": str(oid), "items": [{"filename": "spec.pdf"}]},
     )
+    monkeypatch.setattr(
+        "app.api.v1.routes.portal_customer.build_customer_order_snapshot",
+        lambda db, oid: {
+            "order": {"id": str(oid), "order_number": "O-1"},
+            "customer_status": {"stage": "ready_to_ship", "planned_dates_are_guarantees": False},
+            "safety": {"forbidden_field_filter_enabled": True, "token_exposed": False},
+        },
+    )
     headers = {"X-Portal-Customer-Token": "test-token"}
     with client as c:
         detail = c.get(f"/api/v1/portal/customer/orders/{order_id}", headers=headers)
+        snapshot = c.get(f"/api/v1/portal/customer/orders/{order_id}/snapshot", headers=headers)
         production = c.get(f"/api/v1/portal/customer/orders/{order_id}/production", headers=headers)
         shipment = c.get(f"/api/v1/portal/customer/orders/{order_id}/shipment", headers=headers)
         resources = c.get(f"/api/v1/portal/customer/orders/{order_id}/resources", headers=headers)
-    for response in (detail, production, shipment, resources):
+    for response in (detail, snapshot, production, shipment, resources):
         assert response.status_code == 200
         raw = response.text.lower()
         assert "internal_cost" not in raw
         assert "margin" not in raw
         assert "supplier_reference" not in raw
         assert "storage_key" not in raw
+    assert snapshot.json()["data"]["customer_status"]["planned_dates_are_guarantees"] is False
 
 
 def test_portal_feedback_creates_ticket_without_auto_reply(monkeypatch):

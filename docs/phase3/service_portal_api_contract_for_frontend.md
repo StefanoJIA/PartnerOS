@@ -86,6 +86,67 @@ Returns the order summary plus billing/shipping terms, customer notes, and custo
 }
 ```
 
+## GET /orders/{id}/snapshot
+
+Returns a customer-visible rollup for the Portal order tracking page. This combines the safe order detail, production milestones, shipment plans, customer-visible resources, and feedback link metadata.
+
+```json
+{
+  "order": {
+    "id": "uuid",
+    "order_number": "O-2026-0001",
+    "status": "confirmed"
+  },
+  "customer_status": {
+    "stage": "ready_to_ship",
+    "label": "Ready to ship",
+    "order_confirmed": true,
+    "production_started": true,
+    "production_completed": true,
+    "ready_to_ship": true,
+    "shipped": false,
+    "delivered": false,
+    "planned_dates_are_guarantees": false
+  },
+  "production": {
+    "items": [],
+    "status_counts": {
+      "completed": 3
+    },
+    "blocked_count": 0,
+    "delayed_count": 0
+  },
+  "shipment": {
+    "items": [],
+    "status_counts": {
+      "planned": 1
+    },
+    "active_count": 1
+  },
+  "resources": {
+    "items": [],
+    "visible_count": 0
+  },
+  "feedback": {
+    "submit_endpoint": "/api/v1/portal/customer/feedback",
+    "total_count": 0,
+    "open_count": 0,
+    "customer_notified": false,
+    "automatic_reply_sent": false
+  },
+  "safety": {
+    "customer_visible_only": true,
+    "forbidden_field_filter_enabled": true,
+    "cost_fields_exposed": false,
+    "private_supplier_fields_exposed": false,
+    "server_file_path_exposed": false,
+    "customer_notified": false
+  }
+}
+```
+
+`stage` is display guidance for the Portal. Planned dates are planning data only and are not guaranteed lead time.
+
 ## GET /orders/{id}/production
 
 ```json
@@ -185,3 +246,13 @@ No storage key or backend path is exposed. Download URLs are signed and expire.
 ```
 
 Staging feedback must be clearly marked as `TEST`. PartnerOS does not auto-reply, notify customers, or promise resolution time.
+
+## Internal Operations Console
+
+Internal PartnerOS operators can inspect launch readiness at:
+
+```text
+GET /api/v1/portal/operations/console
+```
+
+This is an internal authenticated endpoint, not a customer Portal API. It shows Portal API config, endpoint readiness, recent customer-visible orders, customer snapshots, shipment status counts, feedback ticket counts, and forbidden-field audit status. It is read-only and does not notify customers or suppliers, call carrier APIs, or mutate order/shipment state.

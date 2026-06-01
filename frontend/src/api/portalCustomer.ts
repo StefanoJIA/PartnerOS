@@ -6,7 +6,10 @@ export interface PortalReadiness {
   require_token: boolean
   token_configured: boolean
   allowed_origins_configured: boolean
+  public_base_url_configured: boolean
+  public_base_url: string | null
   cors_origins: string[]
+  endpoints?: Record<string, string>
   safety: {
     token_exposed: boolean
     automatic_customer_notification: boolean
@@ -74,6 +77,7 @@ export const portalCustomerContract = {
   products: (token: string) => callPortal('/v1/portal/customer/products', token),
   orders: (token: string) => callPortal('/v1/portal/customer/orders', token),
   orderDetail: (token: string, orderId: string) => callPortal(`/v1/portal/customer/orders/${orderId}`, token),
+  orderSnapshot: (token: string, orderId: string) => callPortal(`/v1/portal/customer/orders/${orderId}/snapshot`, token),
   production: (token: string, orderId: string) => callPortal(`/v1/portal/customer/orders/${orderId}/production`, token),
   shipment: (token: string, orderId: string) => callPortal(`/v1/portal/customer/orders/${orderId}/shipment`, token),
   resources: (token: string, orderId: string) => callPortal(`/v1/portal/customer/orders/${orderId}/resources`, token),

@@ -171,6 +171,7 @@ async function runOrderChecks() {
   try {
     await Promise.all([
       pushResult('order detail', portalCustomerContract.orderDetail(portalToken.value, orderId.value)),
+      pushResult('snapshot', portalCustomerContract.orderSnapshot(portalToken.value, orderId.value)),
       pushResult('production', portalCustomerContract.production(portalToken.value, orderId.value)),
       pushResult('shipment', portalCustomerContract.shipment(portalToken.value, orderId.value)),
       pushResult('resources', portalCustomerContract.resources(portalToken.value, orderId.value)),

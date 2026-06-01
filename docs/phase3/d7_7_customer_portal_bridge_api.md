@@ -17,6 +17,7 @@ Prefix: `/api/v1/portal/customer`
 | GET | `/products` | Customer-visible product catalog |
 | GET | `/orders` | Customer-visible order list |
 | GET | `/orders/{order_id}` | Customer-visible order detail |
+| GET | `/orders/{order_id}/snapshot` | Customer-visible order, production, shipment, resources, and feedback rollup |
 | GET | `/orders/{order_id}/production` | Production milestone view |
 | GET | `/orders/{order_id}/shipment` | Shipment plan view |
 | GET | `/orders/{order_id}/resources` | Customer-safe resource metadata |
@@ -58,6 +59,15 @@ Feedback creates a `feedback_tickets` row with `FB-YYYY-0001` numbering. It does
 - notify customers
 - promise resolution time
 - create outbound messages
+
+## D8 Launch-Readiness Additions
+
+D8 adds a customer-visible snapshot endpoint and an internal Portal Operations console:
+
+- `GET /api/v1/portal/customer/orders/{order_id}/snapshot` for the service portal order tracking view.
+- `GET /api/v1/portal/operations/console` for internal operators to inspect enabled/token/public-base/CORS config, endpoint readiness, recent orders, shipment statuses, feedback tickets, and forbidden-field audit status.
+
+The snapshot exposes only whitelisted customer fields. Planned dates are planning data, not guaranteed lead time. The operations console is read-only and does not notify customers/suppliers, call carrier APIs, or mutate order/shipment status.
 
 ## Integration Plan
 

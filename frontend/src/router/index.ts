@@ -20,6 +20,7 @@ const router = createRouter({
         { path: 'system-health', name: 'system-health', component: () => import('@/pages/system/SystemHealthPage.vue') },
         { path: 'portal-consumer-mock', redirect: '/portal-customer-bridge' },
         { path: 'portal-customer-bridge', name: 'portal-customer-bridge', component: () => import('@/pages/system/PortalConsumerMockPage.vue') },
+        { path: 'portal-integration', name: 'portal-integration', component: () => import('@/pages/system/PortalOperationsPage.vue') },
         { path: 'feedback-tickets', name: 'feedback-tickets', component: () => import('@/pages/system/FeedbackTicketsPage.vue') },
         { path: 'lead-intelligence', name: 'lead-intelligence', component: () => import('@/pages/leads/LeadIntelligenceWorkbenchPage.vue') },
         { path: 'lead-intake', name: 'lead-intake', component: () => import('@/pages/leads/LeadIntakePage.vue') },

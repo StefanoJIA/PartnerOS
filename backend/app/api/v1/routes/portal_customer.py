@@ -25,6 +25,7 @@ from app.services.portal.customer_portal_bridge import (
     build_customer_shipment_view,
     create_feedback_ticket,
 )
+from app.services.portal.customer_order_snapshot import build_customer_order_snapshot
 from app.services.portal.order_resource_service import download_customer_resource, list_customer_order_resources
 
 router = APIRouter(prefix="/portal/customer", tags=["v1-portal-customer"])
@@ -94,7 +95,19 @@ def portal_customer_readiness(
         "require_token": settings.PORTAL_CUSTOMER_API_REQUIRE_TOKEN,
         "token_configured": bool(settings.PORTAL_CUSTOMER_API_TOKEN.strip()),
         "allowed_origins_configured": bool(settings.PORTAL_CUSTOMER_ALLOWED_ORIGINS.strip()),
+        "public_base_url_configured": bool(settings.PUBLIC_BASE_URL.strip()),
+        "public_base_url": settings.PUBLIC_BASE_URL.strip() or None,
         "cors_origins": settings.cors_origins_list,
+        "endpoints": {
+            "products": "/api/v1/portal/customer/products",
+            "orders": "/api/v1/portal/customer/orders",
+            "order_detail": "/api/v1/portal/customer/orders/{order_id}",
+            "order_snapshot": "/api/v1/portal/customer/orders/{order_id}/snapshot",
+            "production": "/api/v1/portal/customer/orders/{order_id}/production",
+            "shipment": "/api/v1/portal/customer/orders/{order_id}/shipment",
+            "resources": "/api/v1/portal/customer/orders/{order_id}/resources",
+            "feedback": "/api/v1/portal/customer/feedback",
+        },
         "safety": {
             "token_exposed": False,
             "automatic_customer_notification": False,
@@ -120,6 +133,11 @@ def portal_customer_orders(
 @router.get("/orders/{order_id}", dependencies=[Depends(require_portal_customer_access)])
 def portal_customer_order_detail(order_id: UUID, request: Request, db: Session = Depends(get_db)):
     return success_envelope(build_customer_order_detail(db, order_id), request_id=get_request_id(request))
+
+
+@router.get("/orders/{order_id}/snapshot", dependencies=[Depends(require_portal_customer_access)])
+def portal_customer_order_snapshot(order_id: UUID, request: Request, db: Session = Depends(get_db)):
+    return success_envelope(build_customer_order_snapshot(db, order_id), request_id=get_request_id(request))
 
 
 @router.get("/orders/{order_id}/production", dependencies=[Depends(require_portal_customer_access)])

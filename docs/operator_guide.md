@@ -236,6 +236,7 @@ PartnerOS is the internal source of truth. `service.intelli-opus.com` remains th
 | `GET /api/v1/portal/customer/products` | Customer-visible products |
 | `GET /api/v1/portal/customer/orders` | Customer-visible orders |
 | `GET /api/v1/portal/customer/orders/{id}` | Customer-visible order detail |
+| `GET /api/v1/portal/customer/orders/{id}/snapshot` | Customer-visible order tracking snapshot |
 | `GET /api/v1/portal/customer/orders/{id}/production` | Production milestone view |
 | `GET /api/v1/portal/customer/orders/{id}/shipment` | Shipment plan view |
 | `GET /api/v1/portal/customer/orders/{id}/resources` | Customer-safe resource metadata |
@@ -252,8 +253,10 @@ Default bridge config is disabled and token-required. Real tokens must live in `
 | URL / API | Purpose |
 |-----------|---------|
 | `/portal-customer-bridge` | Internal Portal API UAT page; masked token entry, endpoint checks, TEST feedback |
+| `/portal-integration` | Internal Portal Operations console; config, endpoint readiness, recent orders, shipment, feedback, forbidden-field audit |
 | `/feedback-tickets` | Internal feedback operations console |
 | `GET /api/v1/portal/customer/readiness` | Internal readiness summary; no token value returned |
+| `GET /api/v1/portal/operations/console` | Internal launch-readiness console payload |
 | `GET /api/v1/feedback-tickets` | List feedback tickets |
 | `GET /api/v1/feedback-tickets/{id}` | Feedback ticket detail |
 | `PATCH /api/v1/feedback-tickets/{id}` | Update status, priority, owner, response summary |
