@@ -61,6 +61,50 @@
       </p>
     </section>
 
+    <section v-if="portalDisplayPreview" class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 class="font-semibold text-slate-800">Service Portal preview</h3>
+          <p class="mt-1 text-sm text-slate-500">{{ portalDisplayPreview.headline }}</p>
+        </div>
+        <el-tag :type="portalDisplayPreview.planned_dates_are_guarantees ? 'danger' : 'success'" effect="plain">
+          {{ portalDisplayPreview.planned_dates_are_guarantees ? 'date guarantee risk' : 'planned dates only' }}
+        </el-tag>
+      </div>
+      <div class="grid gap-3 md:grid-cols-[1fr_220px]">
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Current stage</p>
+          <p class="mt-1 font-medium text-slate-800">{{ portalDisplayPreview.current_step_label || portalDisplayPreview.stage_label }}</p>
+          <el-progress class="mt-3" :percentage="portalDisplayPreview.progress_percent" />
+          <p class="mt-3 text-sm font-medium text-slate-700">{{ portalDisplayPreview.next_action_label }}</p>
+          <p class="mt-1 text-sm text-slate-500">{{ portalDisplayPreview.next_action_detail }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Feedback CTA</p>
+          <p class="mt-1 font-medium text-slate-800">{{ portalDisplayPreview.feedback_cta.label }}</p>
+          <p class="mt-1 break-all text-xs text-slate-500">{{ portalDisplayPreview.feedback_cta.path }}</p>
+          <div class="mt-2 flex flex-wrap gap-1">
+            <el-tag size="small" :type="portalDisplayPreview.feedback_cta.automatic_reply_sent ? 'danger' : 'success'" effect="plain">
+              {{ portalDisplayPreview.feedback_cta.automatic_reply_sent ? 'auto reply risk' : 'no auto reply' }}
+            </el-tag>
+            <el-tag size="small" :type="portalDisplayPreview.feedback_cta.customer_notified ? 'danger' : 'success'" effect="plain">
+              {{ portalDisplayPreview.feedback_cta.customer_notified ? 'notified' : 'not notified' }}
+            </el-tag>
+          </div>
+        </div>
+      </div>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <el-tag
+          v-for="card in portalDisplayPreview.signal_cards"
+          :key="card.key"
+          :type="card.active ? (card.key === 'feedback' ? 'warning' : 'success') : 'info'"
+          effect="plain"
+        >
+          {{ card.label }} {{ card.count }}
+        </el-tag>
+      </div>
+    </section>
+
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex items-center justify-between">
         <h3 class="font-semibold text-slate-800">TEST feedback</h3>
@@ -143,6 +187,24 @@ const error = ref('')
 const portalToken = ref('')
 const orderId = ref('')
 type NamedPortalResult = PortalResult & { name: string }
+type PortalDisplayPreview = {
+  headline: string
+  stage: string
+  stage_label: string
+  current_step_label: string | null
+  next_action_label: string
+  next_action_detail: string
+  progress_percent: number
+  signal_cards: Array<{ key: string; label: string; active: boolean; count: number }>
+  feedback_cta: {
+    label: string
+    path: string
+    customer_notified: boolean
+    automatic_reply_sent: boolean
+    resolution_time_promised: boolean
+  }
+  planned_dates_are_guarantees: boolean
+}
 
 const results = ref<NamedPortalResult[]>([])
 const feedback = reactive({
@@ -156,6 +218,11 @@ const feedback = reactive({
 })
 
 const forbiddenSummary = computed(() => Array.from(new Set(results.value.flatMap((r) => r.forbiddenHits))))
+const portalDisplayPreview = computed<PortalDisplayPreview | null>(() => {
+  const snapshotResult = [...results.value].reverse().find((r) => r.name.includes('snapshot'))
+  const envelope = snapshotResult?.data as { data?: { portal_display?: PortalDisplayPreview } } | undefined
+  return envelope?.data?.portal_display || null
+})
 const feedbackNextLinks = computed(() => {
   const feedbackResult = results.value.find((r) => r.name === 'feedback')
   const envelope = feedbackResult?.data as { data?: { next_links?: Record<string, string | null> } } | undefined
