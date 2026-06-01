@@ -37,6 +37,22 @@ export interface PortalOperationsConsole {
       carrier_api_called: boolean
     }
   }
+  runtime_health: {
+    ok: boolean
+    database_status: string
+    database_ready: boolean
+    migration_pending: boolean
+    alembic_current_revision: string | null
+    alembic_head_revision: string | null
+    portal_customer_api_ready: boolean
+    warnings: string[]
+    safety: {
+      read_only: boolean
+      secret_values_exposed: boolean
+      database_url_exposed: boolean
+      storage_path_exposed: boolean
+    }
+  }
   endpoint_readiness: Record<'products' | 'orders' | 'production' | 'shipment' | 'resources' | 'feedback', boolean>
   recent_customer_visible_orders: {
     items: Array<{

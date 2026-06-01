@@ -48,6 +48,34 @@
 
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex items-center justify-between">
+        <h3 class="font-semibold text-slate-800">Runtime health</h3>
+        <el-tag :type="data?.runtime_health.ok ? 'success' : 'warning'">{{ data?.runtime_health.ok ? 'healthy' : 'check' }}</el-tag>
+      </div>
+      <div class="grid gap-2 md:grid-cols-4">
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Database</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.runtime_health.database_status || '-' }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Migration</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.runtime_health.migration_pending ? 'pending' : 'at head' }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Portal API</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.runtime_health.portal_customer_api_ready ? 'ready' : 'needs config' }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Alembic</p>
+          <p class="mt-1 text-xs text-slate-600">{{ data?.runtime_health.alembic_current_revision || '-' }}</p>
+        </div>
+      </div>
+      <div v-if="data?.runtime_health.warnings.length" class="mt-3 flex flex-wrap gap-2">
+        <el-tag v-for="warning in data.runtime_health.warnings" :key="warning" type="warning" effect="plain">{{ warning }}</el-tag>
+      </div>
+    </section>
+
+    <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex items-center justify-between">
         <h3 class="font-semibold text-slate-800">Endpoint readiness</h3>
         <el-tag :type="data?.status.ready ? 'success' : 'warning'">{{ data?.status.ready ? 'ready' : 'needs config' }}</el-tag>
       </div>

@@ -269,6 +269,8 @@ Feedback status flow is `new -> in_review -> responded -> resolved -> closed`. T
 
 Portal Operations includes a staging connection and Portal contract summary with public base URL, allowed origins, auth header name, endpoint paths, and endpoint readiness. It displays token-required/configured booleans only; it must never display the token value.
 
+Portal Operations also includes read-only runtime health for database status, Alembic current/head revisions, migration pending state, and Portal API config readiness. It must not display database URLs, storage paths, secrets, or token values.
+
 Customer snapshots include `progress_steps` for Portal order tracking: confirmed, in production, ready to ship, shipped, and delivered. These steps are display guidance only; planned dates remain non-guaranteed planning data.
 
 The forbidden-field audit scans current customer-visible order list data, customer snapshots, and Portal contract metadata. Audit hits show marker names and payload paths only, not hidden values.

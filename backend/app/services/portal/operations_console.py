@@ -7,6 +7,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
+from app.core.database_lifecycle import check_database, get_migration_revisions
 from app.models import FeedbackTicket, OrderResource, ProductCatalog
 from app.models.customer_orders import CustomerOrder, OrderLineItem, OrderProductionMilestone, ShipmentPlan
 from app.services.portal.customer_field_filter import (
@@ -284,6 +285,43 @@ def _build_portal_contract(settings: Settings, endpoints: dict[str, bool], missi
     }
 
 
+def _build_runtime_health(settings: Settings, missing_config: list[str]) -> dict[str, Any]:
+    db_status, db_errors = check_database(settings)
+    current_rev = None
+    head_rev = None
+    migration_pending = False
+    warnings: list[str] = []
+    if db_status == "ready":
+        try:
+            current_rev, head_rev, _ = get_migration_revisions(settings)
+            migration_pending = current_rev != head_rev
+            if migration_pending:
+                warnings.append("alembic migration pending")
+        except Exception:  # noqa: BLE001
+            migration_pending = True
+            warnings.append("alembic revision inspection failed")
+    else:
+        warnings.extend(db_errors[:3] if db_errors else [f"database_status={db_status}"])
+    if missing_config:
+        warnings.append("portal customer api config incomplete")
+    return {
+        "ok": db_status == "ready" and not migration_pending and not missing_config,
+        "database_status": db_status,
+        "database_ready": db_status == "ready",
+        "migration_pending": migration_pending,
+        "alembic_current_revision": current_rev,
+        "alembic_head_revision": head_rev,
+        "portal_customer_api_ready": not missing_config,
+        "warnings": warnings,
+        "safety": {
+            "read_only": True,
+            "secret_values_exposed": False,
+            "database_url_exposed": False,
+            "storage_path_exposed": False,
+        },
+    }
+
+
 def build_portal_operations_console(db: Session, settings: Settings, *, recent_limit: int = 8) -> dict[str, Any]:
     recent_orders = build_customer_order_list(db, page=1, limit=recent_limit)
     order_rows = (
@@ -320,6 +358,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
     if not settings.PUBLIC_BASE_URL.strip():
         missing_config.append("PUBLIC_BASE_URL")
     portal_contract = _build_portal_contract(settings, endpoints, missing_config)
+    runtime_health = _build_runtime_health(settings, missing_config)
     forbidden_field_audit = _audit_forbidden_fields(
         {
             "recent_customer_visible_orders": recent_orders,
@@ -340,6 +379,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
             "missing_config": missing_config,
         },
         "portal_contract": portal_contract,
+        "runtime_health": runtime_health,
         "endpoint_readiness": endpoints,
         "recent_customer_visible_orders": recent_orders,
         "customer_snapshots": snapshot_items,
