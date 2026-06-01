@@ -13,6 +13,7 @@ from app.core.errors import NOT_FOUND, VALIDATION_ERROR, ApiError
 from app.models import Company, FeedbackTicket, File, FileAttachment, ProductCatalog
 from app.models.customer_orders import CustomerOrder, OrderLineItem, OrderProductionMilestone
 from app.services.orders.shipment_plan_service import list_shipment_plans, shipment_plan_to_dict
+from app.services.portal.customer_contract import CUSTOMER_FEEDBACK_PRIORITIES, CUSTOMER_FEEDBACK_TYPES
 from app.services.portal.customer_field_filter import (
     assert_no_forbidden_internal_fields,
     strip_forbidden_internal_fields,
@@ -247,16 +248,22 @@ def create_feedback_ticket(
             company_id = order.company_id
     if not subject.strip() or not message.strip():
         raise ApiError(VALIDATION_ERROR, "subject and message are required", status_code=400)
+    normalized_feedback_type = (feedback_type or "general").strip().lower()
+    normalized_priority = (priority or "normal").strip().lower()
+    if normalized_feedback_type not in CUSTOMER_FEEDBACK_TYPES:
+        raise ApiError(VALIDATION_ERROR, "Invalid feedback type", status_code=400)
+    if normalized_priority not in CUSTOMER_FEEDBACK_PRIORITIES:
+        raise ApiError(VALIDATION_ERROR, "Invalid feedback priority", status_code=400)
     row = FeedbackTicket(
         ticket_number=_next_ticket_number(db),
         source=source or "customer_portal",
         order_id=order_id,
         company_id=company_id,
-        feedback_type=feedback_type or "general",
+        feedback_type=normalized_feedback_type,
         subject=subject.strip()[:255],
         message=message.strip(),
         status="new",
-        priority=priority or "normal",
+        priority=normalized_priority,
         customer_name=customer_name,
         customer_email=customer_email,
     )

@@ -14,6 +14,7 @@ from app.services.portal.customer_field_filter import (
     assert_no_forbidden_internal_fields,
     strip_forbidden_internal_fields,
 )
+from app.services.portal.customer_contract import CUSTOMER_FEEDBACK_PRIORITIES, CUSTOMER_FEEDBACK_TYPES
 from app.services.portal.customer_portal_bridge import (
     build_customer_order_detail,
     build_customer_production_view,
@@ -116,8 +117,8 @@ PROGRESS_STEPS = (
 
 FEEDBACK_FORM_METADATA = {
     "submit_method": "POST",
-    "allowed_feedback_types": ["tracking", "resource", "quality", "general"],
-    "allowed_priorities": ["normal", "high", "urgent"],
+    "allowed_feedback_types": list(CUSTOMER_FEEDBACK_TYPES),
+    "allowed_priorities": list(CUSTOMER_FEEDBACK_PRIORITIES),
     "requires_order_id": False,
     "customer_name_required": False,
     "customer_email_required": False,

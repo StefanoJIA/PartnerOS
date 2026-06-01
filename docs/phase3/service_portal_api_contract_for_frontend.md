@@ -310,7 +310,7 @@ No storage key or backend path is exposed. Download URLs are signed and expire.
 }
 ```
 
-Staging feedback must be clearly marked as `TEST`. PartnerOS does not auto-reply, notify customers, or promise resolution time.
+Staging feedback must be clearly marked as `TEST`. PartnerOS does not auto-reply, notify customers, or promise resolution time. PartnerOS validates `feedback_type` and `priority` against the values advertised in the snapshot feedback metadata; unknown values return HTTP 400 and do not create a ticket.
 
 ## Internal Operations Console
 

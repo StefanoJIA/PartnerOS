@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+CUSTOMER_FEEDBACK_TYPES = ("tracking", "resource", "quality", "general")
+CUSTOMER_FEEDBACK_PRIORITIES = ("normal", "high", "urgent")
+
 
 def portal_customer_endpoints() -> dict[str, str]:
     return {

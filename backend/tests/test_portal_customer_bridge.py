@@ -201,6 +201,42 @@ def test_portal_feedback_creates_ticket_without_auto_reply(monkeypatch):
     assert data["automatic_reply_sent"] is False
 
 
+def test_portal_feedback_rejects_values_outside_customer_contract():
+    settings = Settings(
+        PORTAL_CUSTOMER_API_ENABLED=True,
+        PORTAL_CUSTOMER_API_REQUIRE_TOKEN=True,
+        PORTAL_CUSTOMER_API_TOKEN="test-token",
+    )
+    client, _ = _client(settings)
+    with client as c:
+        bad_type = c.post(
+            "/api/v1/portal/customer/feedback",
+            headers={"X-Portal-Customer-Token": "test-token"},
+            json={
+                "feedback_type": "internal_margin_question",
+                "subject": "Need update",
+                "message": "Where is my order?",
+                "priority": "normal",
+            },
+        )
+        bad_priority = c.post(
+            "/api/v1/portal/customer/feedback",
+            headers={"X-Portal-Customer-Token": "test-token"},
+            json={
+                "feedback_type": "tracking",
+                "subject": "Need update",
+                "message": "Where is my order?",
+                "priority": "someday",
+            },
+        )
+
+    assert bad_type.status_code == 400
+    assert bad_priority.status_code == 400
+    assert "Invalid feedback type" in bad_type.text
+    assert "Invalid feedback priority" in bad_priority.text
+    assert "internal_margin" not in bad_type.text
+
+
 def test_strip_forbidden_internal_fields_recursive():
     payload = {
         "id": "1",
