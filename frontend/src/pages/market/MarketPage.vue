@@ -35,6 +35,9 @@
         <el-tag :type="data?.summary.filtered_by_company ? 'success' : 'info'" effect="plain">
           {{ data?.summary.filtered_by_company ? 'company filtered' : 'all companies' }}
         </el-tag>
+        <el-tag :type="data?.summary.filtered_by_focus ? 'success' : 'info'" effect="plain">
+          {{ data?.summary.filtered_by_focus ? 'focus filtered' : 'all focus areas' }}
+        </el-tag>
       </div>
       <div class="flex flex-wrap gap-2">
         <el-tag
@@ -199,7 +202,9 @@ async function load() {
     const focus = typeof route.query.focus_category === 'string' ? route.query.focus_category : null
     filterCompanyId.value = companyId
     focusCategory.value = focus
-    const params = companyId ? { related_company_id: companyId } : {}
+    const params: { related_company_id?: string; focus_category?: string } = {}
+    if (companyId) params.related_company_id = companyId
+    if (focus) params.focus_category = focus
     const [intelligence, marketItems] = await Promise.all([
       fetchMarketResponseIntelligence(params),
       http.get('/market-intelligence', { params }),

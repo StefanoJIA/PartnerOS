@@ -22,6 +22,7 @@ FOCUS_CATEGORY_TERMS = {
     "education_furniture": ("education", "school", "classroom", "student", "training table"),
     "project_furniture": ("project furniture", "project-based", "project based", "custom furniture", "contract furniture"),
 }
+FOCUS_CATEGORY_KEYS = tuple(FOCUS_CATEGORY_TERMS.keys()) + ("other",)
 NEGATIVE_TERMS = ("delay", "delayed", "late", "issue", "problem", "missing", "broken", "wrong", "noise", "unstable")
 POSITIVE_TERMS = ("good", "accepted", "works", "solid", "fit", "stable", "approved", "satisfied")
 GAP_FIELDS = (
@@ -113,6 +114,42 @@ def _focus_category(*parts: Any) -> str | None:
         if any(term in blob for term in terms):
             return category
     return None
+
+
+def _focus_matches(selected: str | None, *parts: Any) -> bool:
+    if not selected:
+        return True
+    focus = _focus_category(*parts)
+    if selected == "other":
+        return focus is None
+    return focus == selected
+
+
+def _line_focus_parts(row: Any) -> tuple[Any, ...]:
+    return (
+        getattr(row, "product_category", None),
+        getattr(row, "product_name", None),
+        getattr(row, "description_customer", None),
+    )
+
+
+def _market_item_focus_parts(row: Any) -> tuple[Any, ...]:
+    return (
+        getattr(row, "related_product_category", None),
+        getattr(row, "title", None),
+        getattr(row, "content", None),
+        getattr(row, "tags", None),
+        getattr(row, "market_segment", None),
+    )
+
+
+def _feedback_focus_parts(row: Any) -> tuple[Any, ...]:
+    return (
+        getattr(row, "feedback_type", None),
+        getattr(row, "subject", None),
+        getattr(row, "message", None),
+        getattr(row, "response_summary", None),
+    )
 
 
 def _date_key(value: Any) -> str | None:
@@ -418,7 +455,10 @@ def _build_recommendations(feedback: dict[str, Any], win_loss: dict[str, Any], g
     return recommendations
 
 
-def build_market_response_intelligence(db: Session, *, related_company_id: UUID | None = None) -> dict[str, Any]:
+def build_market_response_intelligence(
+    db: Session, *, related_company_id: UUID | None = None, focus_category: str | None = None
+) -> dict[str, Any]:
+    selected_focus = focus_category if focus_category in FOCUS_CATEGORY_KEYS else None
     feedback_rows = _safe_rows(db, FeedbackTicket)
     quotes = _safe_rows(db, Quote)
     orders = _safe_rows(db, CustomerOrder)
@@ -433,10 +473,44 @@ def build_market_response_intelligence(db: Session, *, related_company_id: UUID 
     quote_lines = [row for row in _safe_rows(db, QuoteLineItem) if not related_company_id or getattr(row, "quote_id", None) in quote_ids]
     order_lines = [row for row in _safe_rows(db, OrderLineItem) if not related_company_id or getattr(row, "order_id", None) in order_ids]
     products = _safe_rows(db, Product)
+    if selected_focus:
+        focus_quote_ids = {getattr(row, "quote_id", None) for row in quote_lines if _focus_matches(selected_focus, *_line_focus_parts(row))}
+        focus_order_ids = {getattr(row, "order_id", None) for row in order_lines if _focus_matches(selected_focus, *_line_focus_parts(row))}
+        quote_lines = [row for row in quote_lines if getattr(row, "quote_id", None) in focus_quote_ids]
+        order_lines = [row for row in order_lines if getattr(row, "order_id", None) in focus_order_ids]
+        quotes = [row for row in quotes if getattr(row, "id", None) in focus_quote_ids]
+        orders = [row for row in orders if getattr(row, "id", None) in focus_order_ids]
+        market_items = [row for row in market_items if _focus_matches(selected_focus, *_market_item_focus_parts(row))]
+        feedback_rows = [
+            row
+            for row in feedback_rows
+            if _focus_matches(selected_focus, *_feedback_focus_parts(row)) or getattr(row, "order_id", None) in focus_order_ids
+        ]
+        products = [
+            row
+            for row in products
+            if _focus_matches(
+                selected_focus,
+                getattr(row, "product_category", None),
+                getattr(row, "product_name", None),
+            )
+        ]
 
     feedback = _build_feedback_section(feedback_rows)
     win_loss = _build_win_loss_section(quotes, quote_lines, orders, order_lines)
     demand = _build_demand_section(market_items, feedback_rows, quote_lines, order_lines)
+    if selected_focus:
+        demand_items = [
+            row
+            for row in demand["items"]
+            if (selected_focus == "other" and not row.get("focus_category")) or row.get("focus_category") == selected_focus
+        ]
+        demand = {
+            **demand,
+            "items": demand_items,
+            "total": len(demand_items),
+            "focus_category_counts": dict(Counter(row["focus_category"] or "other" for row in demand_items)),
+        }
     gaps = _build_gap_section(products, demand["items"])
     recommendations = _build_recommendations(feedback, win_loss, gaps)
 
@@ -449,6 +523,8 @@ def build_market_response_intelligence(db: Session, *, related_company_id: UUID 
             "product_gap_count": gaps["total"],
             "recommendation_count": len(recommendations),
             "filtered_by_company": bool(related_company_id),
+            "filtered_by_focus": bool(selected_focus),
+            "focus_category": selected_focus,
             "focus_category_counts": demand["focus_category_counts"],
         },
         "feedback": feedback,

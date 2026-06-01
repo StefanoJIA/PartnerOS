@@ -9,6 +9,8 @@ export interface MarketResponseSummary {
   product_gap_count: number
   recommendation_count: number
   filtered_by_company: boolean
+  filtered_by_focus: boolean
+  focus_category: string | null
   focus_category_counts: Record<string, number>
 }
 
@@ -117,7 +119,7 @@ export interface MarketResponseIntelligence {
   }
 }
 
-export async function fetchMarketResponseIntelligence(params?: { related_company_id?: string }) {
+export async function fetchMarketResponseIntelligence(params?: { related_company_id?: string; focus_category?: string }) {
   const { data } = await http.get<V1Envelope<MarketResponseIntelligence>>('/v1/market/response-intelligence', { params })
   return data.data
 }

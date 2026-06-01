@@ -189,6 +189,22 @@ def test_market_response_intelligence_filters_by_related_company():
     assert "Education Furniture" not in {row["category"] for row in data["demand"]["items"]}
 
 
+def test_market_response_intelligence_filters_by_focus_category():
+    db, _ = _fixture_db()
+    data = build_market_response_intelligence(db, focus_category="education_furniture")
+
+    assert data["summary"]["filtered_by_focus"] is True
+    assert data["summary"]["focus_category"] == "education_furniture"
+    assert data["summary"]["feedback_ticket_count"] == 1
+    assert data["summary"]["market_signal_count"] == 1
+    assert data["summary"]["quote_count"] == 1
+    assert data["summary"]["order_count"] == 1
+    assert {row["focus_category"] for row in data["demand"]["items"]} == {"education_furniture"}
+    assert "Education Furniture" in {row["category"] for row in data["demand"]["items"]}
+    assert data["feedback"]["items"][0]["subject"] == "Education furniture question"
+    assert data["safety"]["customer_notified"] is False
+
+
 def test_market_response_intelligence_route(monkeypatch):
     app = create_app()
     app.dependency_overrides[get_current_user] = lambda: User(
@@ -200,10 +216,13 @@ def test_market_response_intelligence_route(monkeypatch):
     app.dependency_overrides[get_db] = lambda: (yield db)
 
     with TestClient(app) as client:
-        response = client.get(f"/api/v1/market/response-intelligence?related_company_id={company_id}")
+        response = client.get(
+            f"/api/v1/market/response-intelligence?related_company_id={company_id}&focus_category=adjustable_desk_frames"
+        )
 
     assert response.status_code == 200
     payload = response.json()["data"]
     assert payload["summary"]["market_signal_count"] == 1
     assert payload["summary"]["filtered_by_company"] is True
+    assert payload["summary"]["filtered_by_focus"] is True
     assert payload["safety"]["customer_notified"] is False

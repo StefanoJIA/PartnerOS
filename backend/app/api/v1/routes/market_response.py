@@ -21,8 +21,9 @@ router = APIRouter(prefix="/market", tags=["v1-market-response"])
 def get_market_response_intelligence(
     request: Request,
     related_company_id: UUID | None = None,
+    focus_category: str | None = None,
     db: Session = Depends(get_db),
     _: User = Depends(require_permission(PERM_MARKET_READ)),
 ):
-    data = build_market_response_intelligence(db, related_company_id=related_company_id)
+    data = build_market_response_intelligence(db, related_company_id=related_company_id, focus_category=focus_category)
     return success_envelope(data, request_id=get_request_id(request))
