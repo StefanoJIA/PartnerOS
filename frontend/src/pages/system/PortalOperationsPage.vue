@@ -112,6 +112,21 @@
     </section>
 
     <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="font-semibold text-slate-800">Market response signals</h3>
+        <el-tag type="info" effect="plain">advisory only</el-tag>
+      </div>
+      <el-table :data="data?.market_signal_preview.items || []" class="w-full">
+        <el-table-column prop="label" label="Focus" min-width="190" />
+        <el-table-column prop="order_line_count" label="Order lines" width="120" />
+        <el-table-column prop="ordered_quantity" label="Qty" width="100" />
+        <el-table-column prop="feedback_count" label="Feedback" width="110" />
+        <el-table-column prop="delayed_or_blocked_production_count" label="Production risk" width="150" />
+        <el-table-column prop="shipment_issue_count" label="Shipment risk" width="140" />
+      </el-table>
+    </section>
+
+    <section class="rounded border border-slate-200 bg-white p-4">
       <h3 class="mb-3 font-semibold text-slate-800">Recent feedback tickets</h3>
       <el-table :data="data?.recent_feedback_tickets || []" class="w-full">
         <el-table-column prop="ticket_number" label="Ticket" width="150" />

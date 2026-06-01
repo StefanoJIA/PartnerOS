@@ -119,3 +119,43 @@ def test_customer_snapshot_stage_and_safety(monkeypatch):
     assert data["customer_status"]["planned_dates_are_guarantees"] is False
     assert data["safety"]["forbidden_field_filter_enabled"] is True
     assert data["feedback"]["customer_notified"] is False
+
+
+def test_market_signal_preview_groups_focus_categories():
+    from app.services.portal.operations_console import _build_market_signal_preview
+
+    order_id = uuid4()
+    line = MagicMock()
+    line.order_id = order_id
+    line.product_category = "desk_frame"
+    line.product_name = "Dual motor adjustable desk frame"
+    line.description_customer = "Height adjustable frame"
+    line.quantity = 12
+
+    milestone = MagicMock()
+    milestone.order_id = order_id
+    milestone.status = "delayed"
+
+    shipment = MagicMock()
+    shipment.order_id = order_id
+    shipment.status = "planned"
+    shipment.notes = "Delay at port"
+
+    ticket = MagicMock()
+    ticket.order_id = order_id
+    ticket.feedback_type = "tracking"
+    ticket.subject = "Desk frame shipment update"
+    ticket.message = "Customer asks about the adjustable frame ETA"
+    ticket.response_summary = None
+
+    data = _build_market_signal_preview([line], [milestone], [shipment], [ticket])
+    first = data["items"][0]
+
+    assert first["key"] == "adjustable_desk_frames"
+    assert first["order_line_count"] == 1
+    assert first["ordered_quantity"] == 12
+    assert first["feedback_count"] == 1
+    assert first["delayed_or_blocked_production_count"] == 1
+    assert first["shipment_issue_count"] == 1
+    assert data["safety"]["advisory_only"] is True
+    assert data["safety"]["auto_ticket_created"] is False

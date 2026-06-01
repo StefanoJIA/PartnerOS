@@ -42,6 +42,27 @@ export interface PortalOperationsConsole {
   shipment_status_counts: Record<string, number>
   feedback_status_counts: Record<string, number>
   feedback_priority_counts: Record<string, number>
+  market_signal_preview: {
+    items: Array<{
+      key: string
+      label: string
+      order_line_count: number
+      ordered_quantity: number
+      feedback_count: number
+      delayed_or_blocked_production_count: number
+      shipment_issue_count: number
+      human_review_required: boolean
+    }>
+    total: number
+    safety: {
+      read_only: boolean
+      advisory_only: boolean
+      human_review_required: boolean
+      auto_ticket_created: boolean
+      customer_notified: boolean
+      supplier_notified: boolean
+    }
+  }
   recent_feedback_tickets: Array<{
     id: string
     ticket_number: string

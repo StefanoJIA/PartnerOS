@@ -267,6 +267,8 @@ python scripts/d7_8_portal_live_integration_check.py
 
 Feedback status flow is `new -> in_review -> responded -> resolved -> closed`. The console records internal handling only; it does not send email, notify customers, upload attachments, or promise an SLA. Staging feedback must include `TEST` in the subject or message.
 
+Portal Operations also shows an advisory Market Response preview for adjustable desk frames, desk legs, lifting columns, education furniture, project furniture, and other products. It aggregates customer-visible order lines, feedback, production risk, and shipment risk for human review only; it does not create tickets, notify anyone, mutate order/shipment status, or rank partners.
+
 ## D7.9 Resource Center / Document Center
 
 | URL / API | Purpose |
