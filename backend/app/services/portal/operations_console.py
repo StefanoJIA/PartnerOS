@@ -314,6 +314,50 @@ def _build_customer_snapshot_readiness(snapshot_items: list[dict[str, Any]]) -> 
     }
 
 
+def _attach_portal_tracking_to_recent_orders(recent_orders: dict[str, Any], snapshot_items: list[dict[str, Any]]) -> dict[str, Any]:
+    snapshots_by_order_id = {
+        str(snapshot.get("order", {}).get("id")): snapshot
+        for snapshot in snapshot_items
+        if snapshot.get("order", {}).get("id")
+    }
+    items = []
+    for row in recent_orders.get("items", []):
+        item = dict(row)
+        snapshot = snapshots_by_order_id.get(str(item.get("id")))
+        if snapshot:
+            customer_status = snapshot.get("customer_status", {})
+            tracking_summary = snapshot.get("tracking_summary", {})
+            item["portal_tracking"] = {
+                "snapshot_available": True,
+                "stage": customer_status.get("stage"),
+                "label": customer_status.get("label"),
+                "next_action_label": customer_status.get("next_action_label"),
+                "active_shipment_count": int(snapshot.get("shipment", {}).get("active_count") or 0),
+                "open_feedback_count": int(snapshot.get("feedback", {}).get("open_count") or 0),
+                "has_production_updates": bool(tracking_summary.get("has_production_updates")),
+                "has_active_shipment": bool(tracking_summary.get("has_active_shipment")),
+                "has_visible_resources": bool(tracking_summary.get("has_visible_resources")),
+                "has_open_feedback": bool(tracking_summary.get("has_open_feedback")),
+                "planned_dates_are_guarantees": False,
+            }
+        else:
+            item["portal_tracking"] = {
+                "snapshot_available": False,
+                "stage": None,
+                "label": None,
+                "next_action_label": None,
+                "active_shipment_count": 0,
+                "open_feedback_count": 0,
+                "has_production_updates": False,
+                "has_active_shipment": False,
+                "has_visible_resources": False,
+                "has_open_feedback": False,
+                "planned_dates_are_guarantees": False,
+            }
+        items.append(item)
+    return {**recent_orders, "items": items}
+
+
 def _build_resource_readiness(resource_rows: list[OrderResource]) -> dict[str, Any]:
     status_counts = _count_by_status(resource_rows)
     category_counts = _count_by_status(resource_rows, "category")
@@ -561,6 +605,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
     snapshot_items = []
     for order in order_rows[:3]:
         snapshot_items.append(build_customer_order_snapshot(db, order.id))
+    recent_orders = _attach_portal_tracking_to_recent_orders(recent_orders, snapshot_items)
 
     endpoints = {
         "products": db.query(ProductCatalog).filter(ProductCatalog.status == "active").count() >= 0,

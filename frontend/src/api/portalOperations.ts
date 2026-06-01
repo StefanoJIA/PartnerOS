@@ -89,6 +89,19 @@ export interface PortalOperationsConsole {
       company_name: string | null
       grand_total: string | null
       currency: string
+      portal_tracking: {
+        snapshot_available: boolean
+        stage: string | null
+        label: string | null
+        next_action_label: string | null
+        active_shipment_count: number
+        open_feedback_count: number
+        has_production_updates: boolean
+        has_active_shipment: boolean
+        has_visible_resources: boolean
+        has_open_feedback: boolean
+        planned_dates_are_guarantees: boolean
+      }
     }>
     total: number
   }

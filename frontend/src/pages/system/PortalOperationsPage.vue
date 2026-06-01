@@ -235,6 +235,33 @@
           <el-table-column prop="order_number" label="Order" width="160" />
           <el-table-column prop="company_name" label="Company" min-width="180" />
           <el-table-column prop="status" label="Status" width="170" />
+          <el-table-column label="Portal stage" min-width="170">
+            <template #default="{ row }">
+              <div class="font-medium text-slate-800">{{ row.portal_tracking.label || '-' }}</div>
+              <div class="text-xs text-slate-500">{{ row.portal_tracking.stage || 'snapshot pending' }}</div>
+            </template>
+          </el-table-column>
+          <el-table-column label="Signals" min-width="220">
+            <template #default="{ row }">
+              <div class="flex flex-wrap gap-1">
+                <el-tag v-if="row.portal_tracking.has_production_updates" size="small" effect="plain">production</el-tag>
+                <el-tag v-if="row.portal_tracking.has_active_shipment" size="small" effect="plain">shipment {{ row.portal_tracking.active_shipment_count }}</el-tag>
+                <el-tag v-if="row.portal_tracking.has_visible_resources" size="small" effect="plain">resources</el-tag>
+                <el-tag v-if="row.portal_tracking.has_open_feedback" size="small" type="warning" effect="plain">feedback {{ row.portal_tracking.open_feedback_count }}</el-tag>
+                <span
+                  v-if="
+                    !row.portal_tracking.has_production_updates &&
+                    !row.portal_tracking.has_active_shipment &&
+                    !row.portal_tracking.has_visible_resources &&
+                    !row.portal_tracking.has_open_feedback
+                  "
+                  class="text-sm text-slate-500"
+                >
+                  none
+                </span>
+              </div>
+            </template>
+          </el-table-column>
           <el-table-column label="Total" width="150">
             <template #default="{ row }">{{ row.grand_total || '-' }} {{ row.currency }}</template>
           </el-table-column>

@@ -331,6 +331,52 @@ def test_customer_snapshot_readiness_summarizes_portal_tracking_state():
     assert data["safety"]["customer_notified"] is False
 
 
+def test_recent_orders_include_portal_tracking_summary():
+    from app.services.portal.operations_console import _attach_portal_tracking_to_recent_orders
+
+    order_id = str(uuid4())
+    data = _attach_portal_tracking_to_recent_orders(
+        {
+            "items": [
+                {"id": order_id, "order_number": "O-1", "status": "confirmed"},
+                {"id": str(uuid4()), "order_number": "O-2", "status": "confirmed"},
+            ],
+            "total": 2,
+            "page": 1,
+            "limit": 8,
+        },
+        [
+            {
+                "order": {"id": order_id, "order_number": "O-1"},
+                "customer_status": {
+                    "stage": "ready_to_ship",
+                    "label": "Ready to ship",
+                    "next_action_label": "Shipment planning",
+                },
+                "tracking_summary": {
+                    "has_production_updates": True,
+                    "has_active_shipment": True,
+                    "has_visible_resources": False,
+                    "has_open_feedback": True,
+                },
+                "shipment": {"active_count": 1},
+                "feedback": {"open_count": 2},
+            }
+        ],
+    )
+
+    first = data["items"][0]["portal_tracking"]
+    second = data["items"][1]["portal_tracking"]
+    assert first["snapshot_available"] is True
+    assert first["stage"] == "ready_to_ship"
+    assert first["next_action_label"] == "Shipment planning"
+    assert first["active_shipment_count"] == 1
+    assert first["open_feedback_count"] == 2
+    assert first["planned_dates_are_guarantees"] is False
+    assert second["snapshot_available"] is False
+    assert second["active_shipment_count"] == 0
+
+
 def test_resource_readiness_summarizes_customer_visible_resources_without_paths():
     from app.services.portal.operations_console import _build_resource_readiness
 
