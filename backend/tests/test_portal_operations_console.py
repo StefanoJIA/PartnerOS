@@ -301,6 +301,13 @@ def test_feedback_operations_summary_is_internal_only():
     ]
     assert data["action_items"][0]["ticket_number"] == "FB-2026-0001"
     assert data["action_items"][0]["subject"] == "Shipment ETA"
+    assert data["action_items"][0]["action_label"] == "Assign internal owner"
+    assert data["action_items"][0]["route_query"]["ticket_id"] == str(new_ticket.id)
+    assert data["action_items"][0]["route_query"]["status"] == "new"
+    assert data["action_items"][0]["route_query"]["priority"] == "urgent"
+    assert data["action_items"][0]["route_query"]["feedback_type"] == "tracking"
+    assert data["action_items"][1]["action_label"] == "Close resolved ticket"
+    assert data["action_items"][1]["route_query"]["status"] == "resolved"
     assert data["action_items"][0]["safety"]["internal_queue_only"] is True
     assert data["action_items"][0]["safety"]["customer_notified"] is False
     assert data["action_items"][0]["safety"]["automatic_reply_sent"] is False

@@ -256,6 +256,13 @@ def _build_feedback_operations(ticket_rows: list[FeedbackTicket]) -> dict[str, A
             action = "continue_internal_review"
         if not action:
             continue
+        action_label = {
+            "close_resolved_ticket": "Close resolved ticket",
+            "add_internal_response_summary": "Add internal response summary",
+            "assign_internal_owner": "Assign internal owner",
+            "prioritize_internal_review": "Prioritize internal review",
+            "continue_internal_review": "Continue internal review",
+        }[action]
         action_items.append(
             {
                 "id": str(row.id),
@@ -268,6 +275,13 @@ def _build_feedback_operations(ticket_rows: list[FeedbackTicket]) -> dict[str, A
                 "internal_owner": row.internal_owner,
                 "age_days": flag["age_days"],
                 "action": action,
+                "action_label": action_label,
+                "route_query": {
+                    "ticket_id": str(row.id),
+                    "status": row.status,
+                    "priority": row.priority if row.priority in {"high", "urgent"} else None,
+                    "feedback_type": row.feedback_type,
+                },
                 "safety": {
                     "internal_queue_only": True,
                     "customer_notified": False,

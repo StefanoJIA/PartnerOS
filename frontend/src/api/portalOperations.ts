@@ -401,6 +401,13 @@ export interface PortalOperationsConsole {
       internal_owner: string | null
       age_days: number | null
       action: string
+      action_label: string
+      route_query: {
+        ticket_id: string
+        status: string
+        priority: string | null
+        feedback_type: string
+      }
       safety: {
         internal_queue_only: boolean
         customer_notified: boolean

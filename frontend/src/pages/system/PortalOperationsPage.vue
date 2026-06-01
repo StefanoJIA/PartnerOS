@@ -367,11 +367,22 @@
           </el-table-column>
         </el-table>
         <h3 class="mb-3 mt-5 font-semibold text-slate-800">Feedback status</h3>
-        <div class="flex flex-wrap gap-2">
-          <el-tag v-for="(count, status) in data?.feedback_status_counts || {}" :key="status" effect="plain">
+        <div class="flex flex-wrap items-center gap-2">
+          <el-button
+            v-for="(count, status) in data?.feedback_status_counts || {}"
+            :key="status"
+            size="small"
+            @click="openFeedbackQueue({ status: String(status) })"
+          >
             {{ status }} {{ count }}
-          </el-tag>
+          </el-button>
           <span v-if="!Object.keys(data?.feedback_status_counts || {}).length" class="text-sm text-slate-500">No tickets</span>
+        </div>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <el-button size="small" @click="openFeedbackQueue({ status: 'new' })">Review new</el-button>
+          <el-button size="small" @click="openFeedbackQueue({ priority: 'urgent' })">Urgent</el-button>
+          <el-button size="small" @click="openFeedbackQueue({ priority: 'high' })">High priority</el-button>
+          <el-button size="small" @click="openFeedbackQueue({ status: 'resolved' })">Ready to close</el-button>
         </div>
         <div class="mt-4 grid gap-2 sm:grid-cols-2">
           <div class="rounded border border-slate-200 p-3">
@@ -405,10 +416,12 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="action" label="Action" min-width="210" />
+          <el-table-column label="Action" min-width="210">
+            <template #default="{ row }">{{ row.action_label || row.action }}</template>
+          </el-table-column>
           <el-table-column label="Handle" width="100">
             <template #default="{ row }">
-              <el-button size="small" @click="openFeedbackTicket(row.id)">Open</el-button>
+              <el-button size="small" @click="openFeedbackAction(row)">Open</el-button>
             </template>
           </el-table-column>
           <el-table-column label="Safety" width="150">
@@ -778,6 +791,15 @@ function checklistStatusType(status: string) {
 
 function openFeedbackTicket(ticketId: string) {
   router.push({ name: 'feedback-tickets', query: { ticket_id: ticketId } })
+}
+
+function openFeedbackQueue(query: Record<string, string | null | undefined>) {
+  const cleanQuery = Object.fromEntries(Object.entries(query).filter(([, value]) => value))
+  router.push({ name: 'feedback-tickets', query: cleanQuery })
+}
+
+function openFeedbackAction(row: { id: string; route_query?: Record<string, string | null | undefined> }) {
+  openFeedbackQueue(row.route_query || { ticket_id: row.id })
 }
 
 function openOrder(orderId: string) {
