@@ -318,6 +318,11 @@
           <el-table-column label="Total" width="150">
             <template #default="{ row }">{{ row.grand_total || '-' }} {{ row.currency }}</template>
           </el-table-column>
+          <el-table-column label="UAT" width="105">
+            <template #default="{ row }">
+              <el-button size="small" @click="openPortalBridge(row.id)">Check</el-button>
+            </template>
+          </el-table-column>
         </el-table>
       </div>
 
@@ -650,6 +655,11 @@
         <el-table-column label="Open feedback" width="150">
           <template #default="{ row }">{{ row.feedback.open_count }}</template>
         </el-table-column>
+        <el-table-column label="UAT" width="105">
+          <template #default="{ row }">
+            <el-button size="small" @click="openPortalBridge(row.order.id)">Check</el-button>
+          </template>
+        </el-table-column>
       </el-table>
     </section>
 
@@ -810,6 +820,10 @@ function openFeedbackAction(row: { id: string; route_query?: Record<string, stri
 
 function openOrder(orderId: string) {
   router.push({ name: 'order-detail', params: { orderId } })
+}
+
+function openPortalBridge(orderId: string) {
+  router.push({ name: 'portal-customer-bridge', query: { order_id: orderId } })
 }
 
 function openMarketFocus(focusCategory: string) {

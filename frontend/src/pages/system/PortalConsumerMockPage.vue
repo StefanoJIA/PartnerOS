@@ -171,6 +171,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { formatApiError } from '@/api/errors'
 import {
   fetchPortalCustomerReadiness,
@@ -186,6 +187,7 @@ const feedbackLoading = ref(false)
 const error = ref('')
 const portalToken = ref('')
 const orderId = ref('')
+const route = useRoute()
 type NamedPortalResult = PortalResult & { name: string }
 type PortalDisplayPreview = {
   headline: string
@@ -338,6 +340,18 @@ function orderIdFromPortalPath(path: string | null | undefined) {
   return path.match(/\/orders\/([^/]+)/)?.[1] || ''
 }
 
+function routeText(value: unknown): string {
+  if (Array.isArray(value)) return String(value[0] || '')
+  return typeof value === 'string' ? value : ''
+}
+
+function applyRouteContext() {
+  const routeOrderId = routeText(route.query.order_id)
+  if (!routeOrderId) return
+  orderId.value = routeOrderId
+  feedback.order_id = routeOrderId
+}
+
 async function runFeedbackNextLink(key: string) {
   const link = feedbackNextLinks.value.find((item) => item.key === key)
   if (!link?.path) return
@@ -359,5 +373,8 @@ async function runFeedbackNextLink(key: string) {
   }
 }
 
-onMounted(loadReadiness)
+onMounted(() => {
+  applyRouteContext()
+  loadReadiness()
+})
 </script>
