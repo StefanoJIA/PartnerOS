@@ -507,6 +507,49 @@ def _attach_portal_tracking_to_recent_orders(recent_orders: dict[str, Any], snap
     return {**recent_orders, "items": items}
 
 
+def _build_snapshot_coverage(recent_orders: dict[str, Any], snapshot_items: list[dict[str, Any]]) -> dict[str, Any]:
+    snapshot_order_ids = {
+        str(snapshot.get("order", {}).get("id"))
+        for snapshot in snapshot_items
+        if snapshot.get("order", {}).get("id")
+    }
+    recent_items = recent_orders.get("items", [])
+    missing_items = [
+        {
+            "order_id": str(row.get("id")) if row.get("id") else None,
+            "order_number": row.get("order_number"),
+            "status": row.get("status"),
+            "action": "build_customer_order_snapshot",
+            "safety": {
+                "read_only": True,
+                "customer_visible_only": True,
+                "customer_notified": False,
+                "supplier_notified": False,
+                "order_status_mutated": False,
+                "planned_dates_are_guarantees": False,
+            },
+        }
+        for row in recent_items
+        if row.get("id") and str(row.get("id")) not in snapshot_order_ids
+    ]
+    return {
+        "recent_order_count": len(recent_items),
+        "snapshot_count": len(snapshot_items),
+        "missing_snapshot_count": len(missing_items),
+        "coverage_complete": bool(recent_items) and not missing_items,
+        "action_items": missing_items[:8],
+        "safety": {
+            "read_only": True,
+            "customer_visible_only": True,
+            "forbidden_field_filter_enabled": True,
+            "customer_notified": False,
+            "supplier_notified": False,
+            "order_status_mutated": False,
+            "planned_dates_are_guarantees": False,
+        },
+    }
+
+
 def _build_resource_readiness(resource_rows: list[OrderResource]) -> dict[str, Any]:
     status_counts = _count_by_status(resource_rows)
     category_counts = _count_by_status(resource_rows, "category")
@@ -617,6 +660,7 @@ def _build_portal_launch_readiness(
     endpoints: dict[str, bool],
     forbidden_field_audit: dict[str, Any],
     customer_snapshot_readiness: dict[str, Any],
+    snapshot_coverage: dict[str, Any],
     shipment_readiness: dict[str, Any],
     resource_readiness: dict[str, Any],
     feedback_operations: dict[str, Any],
@@ -643,6 +687,8 @@ def _build_portal_launch_readiness(
         blockers.append("forbidden customer-visible field audit hit")
     if not customer_snapshot_readiness["portal_ready"]:
         warnings.append("customer order snapshots need representative progress data")
+    if snapshot_coverage["missing_snapshot_count"]:
+        warnings.append("recent customer-visible orders need snapshot coverage")
     if shipment_readiness["missing_estimated_dates_count"]:
         warnings.append("shipment plans need estimated ship and arrival dates")
     if shipment_readiness["shipped_without_tracking_count"]:
@@ -666,6 +712,7 @@ def _build_portal_launch_readiness(
             "all_endpoints_ready": all(endpoints.values()),
             "forbidden_field_audit_clear": not forbidden_field_audit["hits"],
             "customer_snapshots_ready": customer_snapshot_readiness["portal_ready"],
+            "recent_order_snapshot_coverage": snapshot_coverage["coverage_complete"],
             "shipments_ready": shipment_readiness["ready"],
             "resources_ready": resource_readiness["ready"],
             "feedback_queue_clear": feedback_operations["needs_internal_review_count"] == 0,
@@ -709,6 +756,7 @@ def _build_staging_integration_checklist(
     endpoints: dict[str, bool],
     forbidden_field_audit: dict[str, Any],
     customer_snapshot_readiness: dict[str, Any],
+    snapshot_coverage: dict[str, Any],
     shipment_readiness: dict[str, Any],
     resource_readiness: dict[str, Any],
     feedback_operations: dict[str, Any],
@@ -745,9 +793,9 @@ def _build_staging_integration_checklist(
         _checklist_item(
             "review_customer_snapshots",
             "Customer order snapshots",
-            "done" if customer_snapshot_readiness["portal_ready"] else "needs_operator_action",
+            "done" if customer_snapshot_readiness["portal_ready"] and snapshot_coverage["coverage_complete"] else "needs_operator_action",
             "Review customer-visible order stages and progress steps for representative recent orders.",
-            f"snapshots={customer_snapshot_readiness['snapshot_count']}; missing_progress={customer_snapshot_readiness['missing_progress_count']}",
+            f"snapshots={customer_snapshot_readiness['snapshot_count']}; missing_progress={customer_snapshot_readiness['missing_progress_count']}; missing_recent_snapshots={snapshot_coverage['missing_snapshot_count']}",
         ),
         _checklist_item(
             "complete_shipment_tracking",
@@ -909,9 +957,10 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
     partner_dashboard = build_partner_operations_dashboard(db)
 
     snapshot_items = []
-    for order in order_rows[:3]:
+    for order in order_rows[:recent_limit]:
         snapshot_items.append(build_customer_order_snapshot(db, order.id))
     recent_orders = _attach_portal_tracking_to_recent_orders(recent_orders, snapshot_items)
+    snapshot_coverage = _build_snapshot_coverage(recent_orders, snapshot_items)
 
     endpoints = {
         "products": db.query(ProductCatalog).filter(ProductCatalog.status == "active").count() >= 0,
@@ -960,6 +1009,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
         endpoints=endpoints,
         forbidden_field_audit=forbidden_field_audit,
         customer_snapshot_readiness=customer_snapshot_readiness,
+        snapshot_coverage=snapshot_coverage,
         shipment_readiness=shipment_readiness,
         resource_readiness=resource_readiness,
         feedback_operations=feedback_operations,
@@ -970,6 +1020,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
         endpoints=endpoints,
         forbidden_field_audit=forbidden_field_audit,
         customer_snapshot_readiness=customer_snapshot_readiness,
+        snapshot_coverage=snapshot_coverage,
         shipment_readiness=shipment_readiness,
         resource_readiness=resource_readiness,
         feedback_operations=feedback_operations,
@@ -984,6 +1035,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
         "endpoint_readiness": endpoints,
         "recent_customer_visible_orders": recent_orders,
         "customer_snapshots": snapshot_items,
+        "snapshot_coverage": snapshot_coverage,
         "customer_snapshot_readiness": customer_snapshot_readiness,
         "shipment_readiness": shipment_readiness,
         "resource_readiness": resource_readiness,

@@ -484,6 +484,32 @@ def test_recent_orders_include_portal_tracking_summary():
     assert second["active_shipment_count"] == 0
 
 
+def test_snapshot_coverage_flags_recent_orders_without_snapshots():
+    from app.services.portal.operations_console import _build_snapshot_coverage
+
+    covered_order_id = str(uuid4())
+    missing_order_id = str(uuid4())
+    data = _build_snapshot_coverage(
+        {
+            "items": [
+                {"id": covered_order_id, "order_number": "O-1", "status": "confirmed"},
+                {"id": missing_order_id, "order_number": "O-2", "status": "ready_to_ship"},
+            ]
+        },
+        [{"order": {"id": covered_order_id, "order_number": "O-1"}}],
+    )
+
+    assert data["recent_order_count"] == 2
+    assert data["snapshot_count"] == 1
+    assert data["missing_snapshot_count"] == 1
+    assert data["coverage_complete"] is False
+    assert data["action_items"][0]["order_id"] == missing_order_id
+    assert data["action_items"][0]["order_number"] == "O-2"
+    assert data["action_items"][0]["action"] == "build_customer_order_snapshot"
+    assert data["action_items"][0]["safety"]["customer_notified"] is False
+    assert data["safety"]["planned_dates_are_guarantees"] is False
+
+
 def test_resource_readiness_summarizes_customer_visible_resources_without_paths():
     from app.services.portal.operations_console import _build_resource_readiness
 
@@ -603,6 +629,7 @@ def test_portal_launch_readiness_aggregates_blockers_without_validating_staging(
         endpoints={"products": True, "orders": True, "production": True, "shipment": True, "resources": True, "feedback": True},
         forbidden_field_audit={"hits": []},
         customer_snapshot_readiness={"portal_ready": False},
+        snapshot_coverage={"coverage_complete": False, "missing_snapshot_count": 1},
         shipment_readiness={"ready": False, "missing_estimated_dates_count": 1, "shipped_without_tracking_count": 1},
         resource_readiness={"ready": False, "blocked_visibility_count": 1},
         feedback_operations={"needs_internal_review_count": 2},
@@ -612,6 +639,7 @@ def test_portal_launch_readiness_aggregates_blockers_without_validating_staging(
     assert "portal customer token missing" in data["blockers"]
     assert "missing config: PORTAL_CUSTOMER_API_TOKEN" in data["blockers"]
     assert "customer order snapshots need representative progress data" in data["warnings"]
+    assert "recent customer-visible orders need snapshot coverage" in data["warnings"]
     assert "shipment plans need estimated ship and arrival dates" in data["warnings"]
     assert "shipped plans need tracking numbers for Portal" in data["warnings"]
     assert "customer-visible resources need publishing" in data["warnings"]
@@ -636,6 +664,7 @@ def test_staging_integration_checklist_is_actionable_without_proof_records():
         endpoints={"products": True, "orders": True, "production": True, "shipment": True, "resources": True, "feedback": True},
         forbidden_field_audit={"hits": []},
         customer_snapshot_readiness={"portal_ready": False, "snapshot_count": 2, "missing_progress_count": 1},
+        snapshot_coverage={"coverage_complete": False, "missing_snapshot_count": 1},
         shipment_readiness={"ready": False, "missing_estimated_dates_count": 1, "shipped_without_tracking_count": 0},
         resource_readiness={"ready": True, "portal_visible_count": 1, "blocked_visibility_count": 1},
         feedback_operations={"needs_internal_review_count": 2, "ready_to_close_count": 1},

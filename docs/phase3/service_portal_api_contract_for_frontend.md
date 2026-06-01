@@ -357,6 +357,8 @@ The `feedback_operations` block summarizes internal feedback triage for Portal l
 
 Internal operators can use `POST /api/v1/feedback-tickets/{id}/resolve` and `POST /api/v1/feedback-tickets/{id}/close` for explicit workflow actions. Both actions update PartnerOS internal status and response summary only; they do not send customer replies, email, webhooks, or SLA promises.
 
+The `snapshot_coverage` block compares recent customer-visible orders with the customer snapshots generated for the console. It reports recent order count, snapshot count, missing snapshot count, coverage completeness, and read-only action items for orders that still need a snapshot. The console generates snapshots up to its recent-order limit so operators can inspect the same order set that the Portal will consume during staging.
+
 The `customer_snapshot_readiness` block summarizes the customer-visible snapshots currently shown in the console: stage counts, production-visible count, active shipment count, open feedback count, missing progress-step count, and read-only `action_items`. Snapshot action items identify orders that need customer-visible production updates, shipment plans, resource publishing, feedback review, or progress-step review before Portal staging integration. They do not notify customers/suppliers, create shipments, mutate order status, or make planned dates guarantees.
 
 The `multi_partner_flow_readiness` block is an internal read-only summary of partner-neutral execution coverage. It shows partner count, order/split count, partners with production/shipment data, partners with risk flags, and per-partner operational counts. It must not rank partners, change partner selection, notify suppliers/customers, create shipments, or mutate order status.

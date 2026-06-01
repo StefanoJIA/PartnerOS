@@ -465,6 +465,9 @@
         <el-tag :type="data?.customer_snapshot_readiness.portal_ready ? 'success' : 'warning'" effect="plain">
           {{ data?.customer_snapshot_readiness.portal_ready ? 'portal ready' : 'needs data' }}
         </el-tag>
+        <el-tag :type="data?.snapshot_coverage.coverage_complete ? 'success' : 'warning'" effect="plain">
+          {{ data?.snapshot_coverage.coverage_complete ? 'recent covered' : 'coverage gap' }}
+        </el-tag>
       </div>
       <div class="mb-4 grid gap-2 md:grid-cols-4">
         <div class="rounded border border-slate-200 p-3">
@@ -482,6 +485,20 @@
         <div class="rounded border border-slate-200 p-3">
           <p class="text-sm text-slate-500">Open feedback</p>
           <p class="mt-1 font-medium text-slate-800">{{ data?.customer_snapshot_readiness.open_feedback_count ?? 0 }}</p>
+        </div>
+      </div>
+      <div class="mb-4 grid gap-2 md:grid-cols-3">
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Recent orders</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.snapshot_coverage.recent_order_count ?? 0 }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Snapshot coverage</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.snapshot_coverage.snapshot_count ?? 0 }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Missing snapshots</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.snapshot_coverage.missing_snapshot_count ?? 0 }}</p>
         </div>
       </div>
       <div class="mb-4 flex flex-wrap gap-2">
@@ -510,6 +527,18 @@
           <template #default="{ row }">
             <el-tag size="small" :type="row.safety.read_only && !row.safety.order_status_mutated ? 'success' : 'danger'" effect="plain">
               {{ row.safety.read_only && !row.safety.order_status_mutated ? 'read only' : 'check' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
+      <el-table v-if="data?.snapshot_coverage.action_items.length" :data="data.snapshot_coverage.action_items" class="mb-4 w-full">
+        <el-table-column prop="order_number" label="Order" width="150" />
+        <el-table-column prop="status" label="Status" width="150" />
+        <el-table-column prop="action" label="Coverage action" min-width="250" />
+        <el-table-column label="Safety" width="150">
+          <template #default="{ row }">
+            <el-tag size="small" :type="row.safety.read_only && !row.safety.customer_notified ? 'success' : 'danger'" effect="plain">
+              {{ row.safety.read_only && !row.safety.customer_notified ? 'read only' : 'check' }}
             </el-tag>
           </template>
         </el-table-column>

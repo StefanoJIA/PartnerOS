@@ -51,6 +51,7 @@ export interface PortalOperationsConsole {
       all_endpoints_ready: boolean
       forbidden_field_audit_clear: boolean
       customer_snapshots_ready: boolean
+      recent_order_snapshot_coverage: boolean
       shipments_ready: boolean
       resources_ready: boolean
       feedback_queue_clear: boolean
@@ -191,6 +192,35 @@ export interface PortalOperationsConsole {
     }
     safety: { forbidden_field_filter_enabled: boolean; token_exposed: boolean }
   }>
+  snapshot_coverage: {
+    recent_order_count: number
+    snapshot_count: number
+    missing_snapshot_count: number
+    coverage_complete: boolean
+    action_items: Array<{
+      order_id: string | null
+      order_number: string | null
+      status: string | null
+      action: string
+      safety: {
+        read_only: boolean
+        customer_visible_only: boolean
+        customer_notified: boolean
+        supplier_notified: boolean
+        order_status_mutated: boolean
+        planned_dates_are_guarantees: boolean
+      }
+    }>
+    safety: {
+      read_only: boolean
+      customer_visible_only: boolean
+      forbidden_field_filter_enabled: boolean
+      customer_notified: boolean
+      supplier_notified: boolean
+      order_status_mutated: boolean
+      planned_dates_are_guarantees: boolean
+    }
+  }
   customer_snapshot_readiness: {
     snapshot_count: number
     stage_counts: Record<string, number>
