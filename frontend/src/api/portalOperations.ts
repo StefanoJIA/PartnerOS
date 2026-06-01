@@ -502,6 +502,7 @@ export interface PortalOperationsConsole {
       action_label: string
       route_query: {
         ticket_id: string
+        operation_filter: string
         status: string
         priority: string | null
         feedback_type: string

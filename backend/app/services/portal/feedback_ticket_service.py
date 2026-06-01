@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import or_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from app.core.errors import NOT_FOUND, VALIDATION_ERROR, ApiError
@@ -87,6 +87,7 @@ def list_feedback_tickets(
     priority: str | None = None,
     feedback_type: str | None = None,
     order_id: UUID | None = None,
+    operation_filter: str | None = None,
     search: str | None = None,
     page: int = 1,
     limit: int = 50,
@@ -100,6 +101,29 @@ def list_feedback_tickets(
         q = q.filter(FeedbackTicket.feedback_type == feedback_type)
     if order_id:
         q = q.filter(FeedbackTicket.order_id == order_id)
+    if operation_filter:
+        if operation_filter == "needs_internal_review":
+            q = q.filter(
+                or_(
+                    FeedbackTicket.status.in_(("new", "in_review")),
+                    FeedbackTicket.priority.in_(("high", "urgent")),
+                    and_(
+                        FeedbackTicket.status.in_(("responded", "resolved", "closed")),
+                        or_(FeedbackTicket.response_summary.is_(None), FeedbackTicket.response_summary == ""),
+                    ),
+                )
+            )
+        elif operation_filter == "response_summary_missing":
+            q = q.filter(
+                FeedbackTicket.status.in_(("responded", "resolved", "closed")),
+                or_(FeedbackTicket.response_summary.is_(None), FeedbackTicket.response_summary == ""),
+            )
+        elif operation_filter == "ready_to_close":
+            q = q.filter(FeedbackTicket.status == "resolved")
+        elif operation_filter == "open":
+            q = q.filter(FeedbackTicket.status.in_(OPEN_FEEDBACK_STATUSES))
+        else:
+            raise ApiError(VALIDATION_ERROR, "Invalid feedback operation filter", status_code=400)
     if search:
         like = f"%{search.strip()}%"
         q = q.filter(

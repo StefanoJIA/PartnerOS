@@ -14,7 +14,7 @@ from app.core.deps import get_current_user
 from app.core.errors import ApiError
 from app.main import create_app
 from app.models import ActivityLog, User
-from app.services.portal.feedback_ticket_service import feedback_safety, ticket_to_dict, update_feedback_ticket
+from app.services.portal.feedback_ticket_service import feedback_safety, list_feedback_tickets, ticket_to_dict, update_feedback_ticket
 
 
 def _ticket(**overrides):
@@ -92,6 +92,13 @@ def test_update_feedback_ticket_validates_status_and_priority():
         update_feedback_ticket(db, row.id, status="emailed_customer")
 
 
+def test_list_feedback_tickets_validates_operation_filter():
+    db = MagicMock()
+
+    with pytest.raises(ApiError):
+        list_feedback_tickets(db, operation_filter="email_customer")
+
+
 def test_feedback_ticket_routes(monkeypatch):
     app = create_app()
     user = User(id=uuid4(), email="ops@test.example", is_active=True)
@@ -123,7 +130,10 @@ def test_feedback_ticket_routes(monkeypatch):
     app.dependency_overrides[get_db] = lambda: (yield db)
 
     with TestClient(app) as client:
-        listed = client.get(f"/api/v1/feedback-tickets?status=new&priority=normal&order_id={order_id}")
+        listed = client.get(
+            f"/api/v1/feedback-tickets?status=new&priority=normal&order_id={order_id}"
+            "&operation_filter=needs_internal_review"
+        )
         detail = client.get(f"/api/v1/feedback-tickets/{ticket_id}")
         patched = client.patch(
             f"/api/v1/feedback-tickets/{ticket_id}",
@@ -147,6 +157,7 @@ def test_feedback_ticket_routes(monkeypatch):
     assert listed.json()["data"]["total"] == 1
     assert listed.json()["data"]["items"][0]["order_id"] == str(order_id)
     assert list_kwargs["order_id"] == order_id
+    assert list_kwargs["operation_filter"] == "needs_internal_review"
     assert detail.status_code == 200
     assert patched.status_code == 200
     assert patched.json()["data"]["status"] == "resolved"

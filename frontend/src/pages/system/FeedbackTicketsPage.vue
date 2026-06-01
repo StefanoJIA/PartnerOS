@@ -11,12 +11,15 @@
     <el-alert type="warning" :closable="false" show-icon :title="FEEDBACK_SAFETY_NOTE" />
     <el-alert v-if="error" type="error" :closable="false" show-icon :title="error" />
 
-    <div class="grid gap-3 md:grid-cols-5">
+    <div class="grid gap-3 md:grid-cols-6">
       <el-select v-model="filters.status" clearable placeholder="Status">
         <el-option v-for="s in statuses" :key="s" :label="s" :value="s" />
       </el-select>
       <el-select v-model="filters.priority" clearable placeholder="Priority">
         <el-option v-for="p in priorities" :key="p" :label="p" :value="p" />
+      </el-select>
+      <el-select v-model="filters.operation_filter" clearable placeholder="Ops queue">
+        <el-option v-for="item in operationFilters" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
       <el-input v-model="filters.feedback_type" clearable placeholder="Type" />
       <el-input v-model="filters.order_id" clearable placeholder="Order ID" @keyup.enter="load" />
@@ -168,6 +171,12 @@ import {
 
 const statuses = ['new', 'in_review', 'responded', 'resolved', 'closed']
 const priorities = ['low', 'normal', 'high', 'urgent']
+const operationFilters = [
+  { value: 'needs_internal_review', label: 'Needs review' },
+  { value: 'response_summary_missing', label: 'Missing summary' },
+  { value: 'ready_to_close', label: 'Ready to close' },
+  { value: 'open', label: 'Open tickets' },
+]
 
 const loading = ref(false)
 const saving = ref(false)
@@ -178,7 +187,7 @@ const drawerOpen = ref(false)
 const total = ref(0)
 const page = ref(1)
 const limit = ref(50)
-const filters = reactive({ status: '', priority: '', feedback_type: '', order_id: '', search: '' })
+const filters = reactive({ status: '', priority: '', operation_filter: '', feedback_type: '', order_id: '', search: '' })
 const form = reactive({ status: 'new', priority: 'normal', internal_owner: '', response_summary: '' })
 const route = useRoute()
 const router = useRouter()
@@ -205,6 +214,7 @@ async function load() {
     const data = await fetchFeedbackTickets({
       status: filters.status || undefined,
       priority: filters.priority || undefined,
+      operation_filter: filters.operation_filter || undefined,
       feedback_type: filters.feedback_type || undefined,
       order_id: filters.order_id || undefined,
       search: filters.search || undefined,
@@ -300,6 +310,7 @@ function routeText(value: unknown): string {
 function applyRouteFilters() {
   filters.status = routeText(route.query.status)
   filters.priority = routeText(route.query.priority)
+  filters.operation_filter = routeText(route.query.operation_filter)
   filters.feedback_type = routeText(route.query.feedback_type)
   filters.order_id = routeText(route.query.order_id)
   filters.search = routeText(route.query.search)
@@ -309,6 +320,7 @@ function routeFilterSnapshot() {
   return [
     routeText(route.query.status),
     routeText(route.query.priority),
+    routeText(route.query.operation_filter),
     routeText(route.query.feedback_type),
     routeText(route.query.order_id),
     routeText(route.query.search),

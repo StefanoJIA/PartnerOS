@@ -278,6 +278,13 @@ def _build_feedback_operations(ticket_rows: list[FeedbackTicket]) -> dict[str, A
                 "action_label": action_label,
                 "route_query": {
                     "ticket_id": str(row.id),
+                    "operation_filter": (
+                        "ready_to_close"
+                        if action == "close_resolved_ticket"
+                        else "response_summary_missing"
+                        if action == "add_internal_response_summary"
+                        else "needs_internal_review"
+                    ),
                     "status": row.status,
                     "priority": row.priority if row.priority in {"high", "urgent"} else None,
                     "feedback_type": row.feedback_type,

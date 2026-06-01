@@ -56,6 +56,7 @@ export async function fetchFeedbackTickets(params?: {
   priority?: string
   feedback_type?: string
   order_id?: string
+  operation_filter?: string
   search?: string
   page?: number
   limit?: number
@@ -65,6 +66,7 @@ export async function fetchFeedbackTickets(params?: {
   if (params?.priority) q.set('priority', params.priority)
   if (params?.feedback_type) q.set('feedback_type', params.feedback_type)
   if (params?.order_id) q.set('order_id', params.order_id)
+  if (params?.operation_filter) q.set('operation_filter', params.operation_filter)
   if (params?.search) q.set('search', params.search)
   if (params?.page) q.set('page', String(params.page))
   if (params?.limit) q.set('limit', String(params.limit))

@@ -445,10 +445,10 @@
           <span v-if="!Object.keys(data?.feedback_status_counts || {}).length" class="text-sm text-slate-500">No tickets</span>
         </div>
         <div class="mt-2 flex flex-wrap gap-2">
-          <el-button size="small" @click="openFeedbackQueue({ status: 'new' })">Review new</el-button>
+          <el-button size="small" @click="openFeedbackQueue({ operation_filter: 'needs_internal_review' })">Needs review</el-button>
           <el-button size="small" @click="openFeedbackQueue({ priority: 'urgent' })">Urgent</el-button>
           <el-button size="small" @click="openFeedbackQueue({ priority: 'high' })">High priority</el-button>
-          <el-button size="small" @click="openFeedbackQueue({ status: 'resolved' })">Ready to close</el-button>
+          <el-button size="small" @click="openFeedbackQueue({ operation_filter: 'ready_to_close' })">Ready to close</el-button>
         </div>
         <div class="mt-4 grid gap-2 sm:grid-cols-2">
           <div class="rounded border border-slate-200 p-3">
