@@ -123,6 +123,23 @@ def test_customer_snapshot_stage_and_safety(monkeypatch):
     assert data["tracking_summary"]["shipment_item_count"] == 1
     assert data["tracking_summary"]["has_active_shipment"] is True
     assert data["tracking_summary"]["planned_dates_are_guarantees"] is False
+    assert data["portal_display"]["headline"] == "O-1: Ready to ship"
+    assert data["portal_display"]["stage"] == "ready_to_ship"
+    assert data["portal_display"]["current_step_label"] == "Ready to ship"
+    assert data["portal_display"]["next_action_label"] == "Shipment planning"
+    assert data["portal_display"]["progress_percent"] == 60
+    assert data["portal_display"]["signal_cards"][0] == {
+        "key": "production",
+        "label": "Production",
+        "active": True,
+        "count": 1,
+    }
+    assert data["portal_display"]["signal_cards"][1]["key"] == "shipment"
+    assert data["portal_display"]["signal_cards"][1]["active"] is True
+    assert data["portal_display"]["feedback_cta"]["path"] == "/api/v1/portal/customer/feedback"
+    assert data["portal_display"]["feedback_cta"]["automatic_reply_sent"] is False
+    assert data["portal_display"]["feedback_cta"]["resolution_time_promised"] is False
+    assert data["portal_display"]["planned_dates_are_guarantees"] is False
     assert data["links"]["order_snapshot"] == f"/api/v1/portal/customer/orders/{order_id}/snapshot"
     assert data["links"]["shipment"] == f"/api/v1/portal/customer/orders/{order_id}/shipment"
     assert data["links"]["feedback_submit"] == "/api/v1/portal/customer/feedback"
@@ -181,6 +198,10 @@ def test_operations_console_preserves_safe_token_metadata_without_values():
     assert "customer_next_action" in data["portal_contract"]["field_contract"]
     assert "tracking_summary" in data["portal_contract"]["field_contract"]
     assert "links" in data["portal_contract"]["field_contract"]["snapshot"]
+    assert "portal_display" in data["portal_contract"]["field_contract"]["snapshot"]
+    assert "portal_display" in data["portal_contract"]["field_contract"]
+    assert "signal_cards" in data["portal_contract"]["field_contract"]["portal_display"]
+    assert "portal_display_feedback_cta" in data["portal_contract"]["field_contract"]
     assert "snapshot_links" in data["portal_contract"]["field_contract"]
     assert "feedback_snapshot" in data["portal_contract"]["field_contract"]
     assert "allowed_priorities" in data["portal_contract"]["field_contract"]["feedback_snapshot"]

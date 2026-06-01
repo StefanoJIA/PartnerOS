@@ -201,6 +201,65 @@ def _customer_progress_steps(
     return steps
 
 
+def _portal_display(
+    *,
+    order_number: str | None,
+    stage: str,
+    status_label: str,
+    next_action: dict[str, str],
+    progress_steps: list[dict[str, Any]],
+    tracking_summary: dict[str, Any],
+    feedback_submit_path: str,
+) -> dict[str, Any]:
+    completed_steps = sum(1 for step in progress_steps if step.get("state") == "complete")
+    current_step = next((step for step in progress_steps if step.get("state") == "current"), None)
+    total_steps = len(progress_steps)
+    progress_percent = int(((completed_steps + (1 if current_step else 0)) / total_steps) * 100) if total_steps else 0
+    return {
+        "headline": f"{order_number or 'Order'}: {status_label}",
+        "stage": stage,
+        "stage_label": status_label,
+        "current_step_label": current_step.get("label") if current_step else status_label,
+        "next_action_label": next_action["label"],
+        "next_action_detail": next_action["detail"],
+        "progress_percent": progress_percent,
+        "signal_cards": [
+            {
+                "key": "production",
+                "label": "Production",
+                "active": bool(tracking_summary["has_production_updates"]),
+                "count": int(tracking_summary["production_item_count"]),
+            },
+            {
+                "key": "shipment",
+                "label": "Shipment",
+                "active": bool(tracking_summary["has_active_shipment"]),
+                "count": int(tracking_summary["shipment_item_count"]),
+            },
+            {
+                "key": "resources",
+                "label": "Resources",
+                "active": bool(tracking_summary["has_visible_resources"]),
+                "count": int(tracking_summary["resource_visible_count"]),
+            },
+            {
+                "key": "feedback",
+                "label": "Feedback",
+                "active": bool(tracking_summary["has_open_feedback"]),
+                "count": int(tracking_summary["feedback_open_count"]),
+            },
+        ],
+        "feedback_cta": {
+            "label": "Send feedback",
+            "path": feedback_submit_path,
+            "customer_notified": False,
+            "automatic_reply_sent": False,
+            "resolution_time_promised": False,
+        },
+        "planned_dates_are_guarantees": False,
+    }
+
+
 def build_customer_order_snapshot(db: Session, order_id: UUID) -> dict[str, Any]:
     detail = build_customer_order_detail(db, order_id)
     production = build_customer_production_view(db, order_id)
@@ -240,15 +299,36 @@ def build_customer_order_snapshot(db: Session, order_id: UUID) -> dict[str, Any]
     stage = _customer_stage(order_status, production_rows, shipment_rows)
     progress_steps = _customer_progress_steps(stage, order, production_rows, shipment_rows)
     next_action = _customer_next_action(stage)
+    status_label = _customer_status_label(stage)
     production_statuses = _status_counts(production_rows)
     shipment_statuses = _status_counts(shipment_rows)
     order_id_text = str(order_id)
+    links = {
+        "order_detail": f"/api/v1/portal/customer/orders/{order_id_text}",
+        "order_snapshot": f"/api/v1/portal/customer/orders/{order_id_text}/snapshot",
+        "production": f"/api/v1/portal/customer/orders/{order_id_text}/production",
+        "shipment": f"/api/v1/portal/customer/orders/{order_id_text}/shipment",
+        "resources": f"/api/v1/portal/customer/orders/{order_id_text}/resources",
+        "feedback_submit": "/api/v1/portal/customer/feedback",
+    }
+    tracking_summary = {
+        "stage": stage,
+        "production_item_count": len(production_rows),
+        "shipment_item_count": sum(1 for row in shipment_rows if row.status != "cancelled"),
+        "resource_visible_count": visible_resource_count,
+        "feedback_open_count": open_feedback_count,
+        "has_production_updates": bool(production_rows),
+        "has_active_shipment": any(row.status != "cancelled" for row in shipment_rows),
+        "has_visible_resources": visible_resource_count > 0,
+        "has_open_feedback": open_feedback_count > 0,
+        "planned_dates_are_guarantees": False,
+    }
 
     payload = {
         "order": detail,
         "customer_status": {
             "stage": stage,
-            "label": _customer_status_label(stage),
+            "label": status_label,
             "next_action_label": next_action["label"],
             "next_action_detail": next_action["detail"],
             "order_confirmed": order_status
@@ -262,26 +342,17 @@ def build_customer_order_snapshot(db: Session, order_id: UUID) -> dict[str, Any]
             "progress_steps": progress_steps,
             "planned_dates_are_guarantees": False,
         },
-        "tracking_summary": {
-            "stage": stage,
-            "production_item_count": len(production_rows),
-            "shipment_item_count": sum(1 for row in shipment_rows if row.status != "cancelled"),
-            "resource_visible_count": visible_resource_count,
-            "feedback_open_count": open_feedback_count,
-            "has_production_updates": bool(production_rows),
-            "has_active_shipment": any(row.status != "cancelled" for row in shipment_rows),
-            "has_visible_resources": visible_resource_count > 0,
-            "has_open_feedback": open_feedback_count > 0,
-            "planned_dates_are_guarantees": False,
-        },
-        "links": {
-            "order_detail": f"/api/v1/portal/customer/orders/{order_id_text}",
-            "order_snapshot": f"/api/v1/portal/customer/orders/{order_id_text}/snapshot",
-            "production": f"/api/v1/portal/customer/orders/{order_id_text}/production",
-            "shipment": f"/api/v1/portal/customer/orders/{order_id_text}/shipment",
-            "resources": f"/api/v1/portal/customer/orders/{order_id_text}/resources",
-            "feedback_submit": "/api/v1/portal/customer/feedback",
-        },
+        "tracking_summary": tracking_summary,
+        "portal_display": _portal_display(
+            order_number=detail.get("order_number"),
+            stage=stage,
+            status_label=status_label,
+            next_action=next_action,
+            progress_steps=progress_steps,
+            tracking_summary=tracking_summary,
+            feedback_submit_path=links["feedback_submit"],
+        ),
+        "links": links,
         "production": {
             **production,
             "status_counts": production_statuses,

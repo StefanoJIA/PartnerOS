@@ -175,6 +175,24 @@ export interface PortalOperationsConsole {
       has_open_feedback: boolean
       planned_dates_are_guarantees: boolean
     }
+    portal_display: {
+      headline: string
+      stage: string
+      stage_label: string
+      current_step_label: string | null
+      next_action_label: string
+      next_action_detail: string
+      progress_percent: number
+      signal_cards: Array<{ key: string; label: string; active: boolean; count: number }>
+      feedback_cta: {
+        label: string
+        path: string
+        customer_notified: boolean
+        automatic_reply_sent: boolean
+        resolution_time_promised: boolean
+      }
+      planned_dates_are_guarantees: boolean
+    }
     links: {
       order_detail: string
       order_snapshot: string

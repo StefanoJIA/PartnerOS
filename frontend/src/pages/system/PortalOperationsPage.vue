@@ -592,8 +592,8 @@
         </el-table-column>
         <el-table-column label="Customer stage" min-width="220">
           <template #default="{ row }">
-            <div class="font-medium text-slate-800">{{ row.customer_status.label }}</div>
-            <div class="text-xs text-slate-500">{{ row.customer_status.stage }}</div>
+            <div class="font-medium text-slate-800">{{ row.portal_display?.headline || row.customer_status.label }}</div>
+            <div class="text-xs text-slate-500">{{ row.portal_display?.current_step_label || row.customer_status.stage }}</div>
           </template>
         </el-table-column>
         <el-table-column label="Next action" min-width="240">
@@ -623,10 +623,16 @@
         <el-table-column label="Signals" min-width="210">
           <template #default="{ row }">
             <div class="flex flex-wrap gap-1">
-              <el-tag v-if="row.tracking_summary.has_production_updates" size="small" effect="plain">production</el-tag>
-              <el-tag v-if="row.tracking_summary.has_active_shipment" size="small" effect="plain">shipment</el-tag>
-              <el-tag v-if="row.tracking_summary.has_visible_resources" size="small" effect="plain">resources</el-tag>
-              <el-tag v-if="row.tracking_summary.has_open_feedback" size="small" type="warning" effect="plain">feedback</el-tag>
+              <el-tag
+                v-for="card in row.portal_display?.signal_cards || []"
+                v-show="card.active"
+                :key="card.key"
+                size="small"
+                :type="card.key === 'feedback' ? 'warning' : 'info'"
+                effect="plain"
+              >
+                {{ card.label }} {{ card.count }}
+              </el-tag>
               <span
                 v-if="
                   !row.tracking_summary.has_production_updates &&
