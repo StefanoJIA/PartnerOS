@@ -131,6 +131,14 @@ def test_feedback_ticket_routes(monkeypatch):
                 "response_summary": "TEST resolution summary. No customer notification sent.",
             },
         )
+        resolved = client.post(
+            f"/api/v1/feedback-tickets/{ticket_id}/resolve",
+            json={"priority": "high", "internal_owner": "Ops", "response_summary": "Resolved internally."},
+        )
+        closed = client.post(
+            f"/api/v1/feedback-tickets/{ticket_id}/close",
+            json={"internal_owner": "Ops", "response_summary": "Closed internally."},
+        )
 
     assert listed.status_code == 200
     assert listed.json()["data"]["total"] == 1
@@ -138,3 +146,9 @@ def test_feedback_ticket_routes(monkeypatch):
     assert patched.status_code == 200
     assert patched.json()["data"]["status"] == "resolved"
     assert patched.json()["data"]["safety"]["email_sent"] is False
+    assert resolved.status_code == 200
+    assert resolved.json()["data"]["status"] == "resolved"
+    assert resolved.json()["data"]["safety"]["customer_notified"] is False
+    assert closed.status_code == 200
+    assert closed.json()["data"]["status"] == "closed"
+    assert closed.json()["data"]["safety"]["automatic_reply_sent"] is False

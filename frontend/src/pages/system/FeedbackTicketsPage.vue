@@ -149,10 +149,13 @@ import { onMounted, reactive, ref, watch } from 'vue'
 import { formatApiError } from '@/api/errors'
 import {
   FEEDBACK_SAFETY_NOTE,
+  closeFeedbackTicket,
   fetchFeedbackTicket,
   fetchFeedbackTickets,
+  resolveFeedbackTicket,
   updateFeedbackTicket,
   type FeedbackTicket,
+  type FeedbackTicketUpdatePayload,
 } from '@/api/feedbackTickets'
 
 const statuses = ['new', 'in_review', 'responded', 'resolved', 'closed']
@@ -237,9 +240,32 @@ async function save() {
   }
 }
 
-async function quickStatus(status: string) {
-  form.status = status
-  await save()
+function formPayload(): FeedbackTicketUpdatePayload {
+  return {
+    status: form.status,
+    priority: form.priority,
+    internal_owner: form.internal_owner || null,
+    response_summary: form.response_summary || null,
+  }
+}
+
+async function quickStatus(status: 'resolved' | 'closed') {
+  if (!selected.value) return
+  saving.value = true
+  error.value = ''
+  try {
+    form.status = status
+    selected.value =
+      status === 'resolved'
+        ? await resolveFeedbackTicket(selected.value.id, formPayload())
+        : await closeFeedbackTicket(selected.value.id, formPayload())
+    syncForm()
+    await load()
+  } catch (e) {
+    error.value = formatApiError(e, `Failed to mark feedback ticket ${status}.`)
+  } finally {
+    saving.value = false
+  }
 }
 
 watch(filters, () => {

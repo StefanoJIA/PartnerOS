@@ -261,6 +261,8 @@ Default bridge config is disabled and token-required. Real tokens must live in `
 | `GET /api/v1/feedback-tickets` | List feedback tickets |
 | `GET /api/v1/feedback-tickets/{id}` | Feedback ticket detail |
 | `PATCH /api/v1/feedback-tickets/{id}` | Update status, priority, owner, response summary |
+| `POST /api/v1/feedback-tickets/{id}/resolve` | Mark resolved with internal response summary |
+| `POST /api/v1/feedback-tickets/{id}/close` | Close after internal review |
 
 ```powershell
 python scripts/d7_8_portal_live_integration_check.py

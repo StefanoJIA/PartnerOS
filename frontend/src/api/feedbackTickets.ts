@@ -84,5 +84,21 @@ export async function updateFeedbackTicket(
   return data.data
 }
 
+export async function resolveFeedbackTicket(
+  id: string,
+  payload: FeedbackTicketUpdatePayload,
+): Promise<FeedbackTicket> {
+  const { data } = await http.post<V1Envelope<FeedbackTicket>>(`/v1/feedback-tickets/${id}/resolve`, payload)
+  return data.data
+}
+
+export async function closeFeedbackTicket(
+  id: string,
+  payload: FeedbackTicketUpdatePayload,
+): Promise<FeedbackTicket> {
+  const { data } = await http.post<V1Envelope<FeedbackTicket>>(`/v1/feedback-tickets/${id}/close`, payload)
+  return data.data
+}
+
 export const FEEDBACK_SAFETY_NOTE =
   'Feedback operations are internal notes only. PartnerOS does not send email, notify customers, or promise an SLA from this console.'

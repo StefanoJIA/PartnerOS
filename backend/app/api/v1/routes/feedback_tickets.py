@@ -75,3 +75,43 @@ def patch_feedback_ticket_route(
         actor_id=user.id,
     )
     return success_envelope(ticket_to_dict(row), request_id=get_request_id(request))
+
+
+@router.post("/{ticket_id}/resolve")
+def resolve_feedback_ticket_route(
+    ticket_id: UUID,
+    body: FeedbackTicketUpdateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission(PERM_FEEDBACK_WRITE)),
+):
+    row = update_feedback_ticket(
+        db,
+        ticket_id,
+        status="resolved",
+        priority=body.priority,
+        internal_owner=body.internal_owner,
+        response_summary=body.response_summary,
+        actor_id=user.id,
+    )
+    return success_envelope(ticket_to_dict(row), request_id=get_request_id(request))
+
+
+@router.post("/{ticket_id}/close")
+def close_feedback_ticket_route(
+    ticket_id: UUID,
+    body: FeedbackTicketUpdateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission(PERM_FEEDBACK_WRITE)),
+):
+    row = update_feedback_ticket(
+        db,
+        ticket_id,
+        status="closed",
+        priority=body.priority,
+        internal_owner=body.internal_owner,
+        response_summary=body.response_summary,
+        actor_id=user.id,
+    )
+    return success_envelope(ticket_to_dict(row), request_id=get_request_id(request))
