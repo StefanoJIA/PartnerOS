@@ -37,6 +37,55 @@
       </div>
     </section>
 
+    <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <h3 class="font-semibold text-slate-800">Staging integration checklist</h3>
+        <div class="flex flex-wrap gap-2">
+          <el-tag :type="data?.staging_integration_checklist.ready_for_staging_operator ? 'success' : 'warning'" effect="plain">
+            {{ data?.staging_integration_checklist.ready_for_staging_operator ? 'operator ready' : 'blocked' }}
+          </el-tag>
+          <el-tag :type="data?.staging_integration_checklist.safety.staging_validated ? 'danger' : 'info'" effect="plain">
+            {{ data?.staging_integration_checklist.safety.staging_validated ? 'validated' : 'handoff only' }}
+          </el-tag>
+        </div>
+      </div>
+      <div class="mb-3 grid gap-2 md:grid-cols-4">
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Done</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.staging_integration_checklist.done_count ?? 0 }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Operator actions</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.staging_integration_checklist.operator_action_count ?? 0 }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Blocked</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.staging_integration_checklist.blocked_count ?? 0 }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Proof records</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.staging_integration_checklist.safety.proof_record_created ? 'created' : 'none' }}</p>
+        </div>
+      </div>
+      <el-table :data="data?.staging_integration_checklist.items || []" class="w-full">
+        <el-table-column prop="label" label="Item" min-width="190" />
+        <el-table-column label="Status" width="160">
+          <template #default="{ row }">
+            <el-tag size="small" :type="checklistStatusType(row.status)" effect="plain">{{ row.status }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="action" label="Action" min-width="360" />
+        <el-table-column prop="detail" label="Detail" min-width="230" />
+        <el-table-column label="Safety" width="155">
+          <template #default="{ row }">
+            <el-tag size="small" :type="row.safety.proof_record_created || row.safety.token_value_exposed ? 'danger' : 'success'" effect="plain">
+              {{ row.safety.proof_record_created || row.safety.token_value_exposed ? 'check' : 'safe' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
+    </section>
+
     <section class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
       <div class="rounded border border-slate-200 bg-white p-4">
         <p class="text-sm text-slate-500">Portal API</p>
@@ -645,4 +694,10 @@ async function load() {
 }
 
 onMounted(load)
+
+function checklistStatusType(status: string) {
+  if (status === 'done' || status === 'ready_for_operator') return 'success'
+  if (status === 'needs_operator_action') return 'warning'
+  return 'danger'
+}
 </script>

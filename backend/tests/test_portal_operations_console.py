@@ -621,3 +621,39 @@ def test_portal_launch_readiness_aggregates_blockers_without_validating_staging(
     assert data["safety"]["read_only"] is True
     assert data["safety"]["staging_validated"] is False
     assert data["safety"]["token_value_exposed"] is False
+
+
+def test_staging_integration_checklist_is_actionable_without_proof_records():
+    from app.services.portal.operations_console import _build_staging_integration_checklist
+
+    data = _build_staging_integration_checklist(
+        status={
+            "enabled": True,
+            "token_configured": True,
+            "missing_config": [],
+        },
+        runtime_health={"database_ready": True, "database_status": "ready", "migration_pending": False},
+        endpoints={"products": True, "orders": True, "production": True, "shipment": True, "resources": True, "feedback": True},
+        forbidden_field_audit={"hits": []},
+        customer_snapshot_readiness={"portal_ready": False, "snapshot_count": 2, "missing_progress_count": 1},
+        shipment_readiness={"ready": False, "missing_estimated_dates_count": 1, "shipped_without_tracking_count": 0},
+        resource_readiness={"ready": True, "portal_visible_count": 1, "blocked_visibility_count": 1},
+        feedback_operations={"needs_internal_review_count": 2, "ready_to_close_count": 1},
+    )
+
+    statuses = {item["key"]: item["status"] for item in data["items"]}
+    assert statuses["configure_portal_api"] == "done"
+    assert statuses["verify_clean_runtime"] == "done"
+    assert statuses["review_customer_snapshots"] == "needs_operator_action"
+    assert statuses["complete_shipment_tracking"] == "needs_operator_action"
+    assert statuses["publish_customer_resources"] == "needs_operator_action"
+    assert statuses["triage_feedback_queue"] == "needs_operator_action"
+    assert statuses["run_service_portal_smoke"] == "ready_for_operator"
+    assert data["blocked_count"] == 0
+    assert data["operator_action_count"] == 4
+    assert data["ready_for_staging_operator"] is True
+    assert data["safety"]["read_only"] is True
+    assert data["safety"]["staging_validated"] is False
+    assert data["safety"]["proof_record_created"] is False
+    assert data["safety"]["deployment_triggered"] is False
+    assert "secret" not in str(data).lower()

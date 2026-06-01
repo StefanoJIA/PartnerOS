@@ -682,6 +682,126 @@ def _build_portal_launch_readiness(
     }
 
 
+def _checklist_item(key: str, label: str, status: str, action: str, detail: str) -> dict[str, Any]:
+    return {
+        "key": key,
+        "label": label,
+        "status": status,
+        "action": action,
+        "detail": detail,
+        "safety": {
+            "read_only": True,
+            "staging_validated": False,
+            "proof_record_created": False,
+            "customer_notified": False,
+            "supplier_notified": False,
+            "automatic_reply_sent": False,
+            "carrier_api_called": False,
+            "token_value_exposed": False,
+        },
+    }
+
+
+def _build_staging_integration_checklist(
+    *,
+    status: dict[str, Any],
+    runtime_health: dict[str, Any],
+    endpoints: dict[str, bool],
+    forbidden_field_audit: dict[str, Any],
+    customer_snapshot_readiness: dict[str, Any],
+    shipment_readiness: dict[str, Any],
+    resource_readiness: dict[str, Any],
+    feedback_operations: dict[str, Any],
+) -> dict[str, Any]:
+    items = [
+        _checklist_item(
+            "configure_portal_api",
+            "Portal API config",
+            "done" if status["enabled"] and not status["missing_config"] else "blocked",
+            "Set PORTAL_CUSTOMER_API_ENABLED, PORTAL_CUSTOMER_API_TOKEN, PORTAL_CUSTOMER_ALLOWED_ORIGINS, and PUBLIC_BASE_URL for staging.",
+            "Token presence and origin configuration are reported as booleans only.",
+        ),
+        _checklist_item(
+            "verify_clean_runtime",
+            "Backend runtime and migrations",
+            "done" if runtime_health["database_ready"] and not runtime_health["migration_pending"] else "blocked",
+            "Start the backend against staging Postgres and run migrations to Alembic head.",
+            f"database={runtime_health['database_status']}; migration_pending={runtime_health['migration_pending']}",
+        ),
+        _checklist_item(
+            "confirm_endpoint_contract",
+            "Portal endpoint contract",
+            "done" if all(endpoints.values()) else "blocked",
+            "Confirm products, orders, production, shipment, resources, and feedback endpoints are reachable.",
+            "Endpoint readiness is computed from PartnerOS source-of-truth tables and route availability.",
+        ),
+        _checklist_item(
+            "clear_forbidden_field_audit",
+            "Customer field safety",
+            "done" if not forbidden_field_audit["hits"] else "blocked",
+            "Resolve any forbidden customer-visible field leak before connecting service.intelli-opus.com.",
+            f"hits={len(forbidden_field_audit['hits'])}",
+        ),
+        _checklist_item(
+            "review_customer_snapshots",
+            "Customer order snapshots",
+            "done" if customer_snapshot_readiness["portal_ready"] else "needs_operator_action",
+            "Review customer-visible order stages and progress steps for representative recent orders.",
+            f"snapshots={customer_snapshot_readiness['snapshot_count']}; missing_progress={customer_snapshot_readiness['missing_progress_count']}",
+        ),
+        _checklist_item(
+            "complete_shipment_tracking",
+            "Shipment tracking readiness",
+            "done" if shipment_readiness["ready"] else "needs_operator_action",
+            "Add estimated dates and tracking metadata needed for Portal logistics display.",
+            f"missing_dates={shipment_readiness['missing_estimated_dates_count']}; shipped_without_tracking={shipment_readiness['shipped_without_tracking_count']}",
+        ),
+        _checklist_item(
+            "publish_customer_resources",
+            "Customer resources",
+            "done" if resource_readiness["ready"] and resource_readiness["blocked_visibility_count"] == 0 else "needs_operator_action",
+            "Publish customer-visible resources needed by the Portal resource download surface.",
+            f"portal_visible={resource_readiness['portal_visible_count']}; blocked={resource_readiness['blocked_visibility_count']}",
+        ),
+        _checklist_item(
+            "triage_feedback_queue",
+            "Feedback operations queue",
+            "done" if feedback_operations["needs_internal_review_count"] == 0 else "needs_operator_action",
+            "Assign, summarize, resolve, or close Portal feedback tickets before staging handoff review.",
+            f"needs_review={feedback_operations['needs_internal_review_count']}; ready_to_close={feedback_operations['ready_to_close_count']}",
+        ),
+        _checklist_item(
+            "run_service_portal_smoke",
+            "Service Portal smoke",
+            "ready_for_operator" if status["enabled"] and status["token_configured"] else "blocked",
+            "Run the service.intelli-opus.com staging smoke with the real token and origin outside this repository.",
+            "This checklist does not deploy, write proof records, or mark staging validated.",
+        ),
+    ]
+    blocked_count = sum(1 for item in items if item["status"] == "blocked")
+    operator_action_count = sum(1 for item in items if item["status"] == "needs_operator_action")
+    done_count = sum(1 for item in items if item["status"] == "done")
+    return {
+        "items": items,
+        "total": len(items),
+        "done_count": done_count,
+        "blocked_count": blocked_count,
+        "operator_action_count": operator_action_count,
+        "ready_for_staging_operator": blocked_count == 0,
+        "safety": {
+            "read_only": True,
+            "staging_validated": False,
+            "proof_record_created": False,
+            "deployment_triggered": False,
+            "customer_notified": False,
+            "supplier_notified": False,
+            "automatic_reply_sent": False,
+            "carrier_api_called": False,
+            "token_value_exposed": False,
+        },
+    }
+
+
 def _build_portal_contract(settings: Settings, endpoints: dict[str, bool], missing_config: list[str]) -> dict[str, Any]:
     return {
         "base_url": settings.PUBLIC_BASE_URL.strip() or None,
@@ -844,10 +964,21 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
         resource_readiness=resource_readiness,
         feedback_operations=feedback_operations,
     )
+    staging_integration_checklist = _build_staging_integration_checklist(
+        status=status,
+        runtime_health=runtime_health,
+        endpoints=endpoints,
+        forbidden_field_audit=forbidden_field_audit,
+        customer_snapshot_readiness=customer_snapshot_readiness,
+        shipment_readiness=shipment_readiness,
+        resource_readiness=resource_readiness,
+        feedback_operations=feedback_operations,
+    )
 
     payload = {
         "status": status,
         "portal_launch_readiness": portal_launch_readiness,
+        "staging_integration_checklist": staging_integration_checklist,
         "portal_contract": portal_contract,
         "runtime_health": runtime_health,
         "endpoint_readiness": endpoints,

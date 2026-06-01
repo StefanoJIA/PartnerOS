@@ -65,6 +65,41 @@ export interface PortalOperationsConsole {
       token_value_exposed: boolean
     }
   }
+  staging_integration_checklist: {
+    items: Array<{
+      key: string
+      label: string
+      status: 'done' | 'blocked' | 'needs_operator_action' | 'ready_for_operator'
+      action: string
+      detail: string
+      safety: {
+        read_only: boolean
+        staging_validated: boolean
+        proof_record_created: boolean
+        customer_notified: boolean
+        supplier_notified: boolean
+        automatic_reply_sent: boolean
+        carrier_api_called: boolean
+        token_value_exposed: boolean
+      }
+    }>
+    total: number
+    done_count: number
+    blocked_count: number
+    operator_action_count: number
+    ready_for_staging_operator: boolean
+    safety: {
+      read_only: boolean
+      staging_validated: boolean
+      proof_record_created: boolean
+      deployment_triggered: boolean
+      customer_notified: boolean
+      supplier_notified: boolean
+      automatic_reply_sent: boolean
+      carrier_api_called: boolean
+      token_value_exposed: boolean
+    }
+  }
   runtime_health: {
     ok: boolean
     database_status: string
