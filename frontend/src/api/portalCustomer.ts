@@ -17,6 +17,35 @@ export interface PortalReadiness {
   }
 }
 
+export interface PortalManifest {
+  contract_version: string
+  source_of_truth: string
+  consumer: string
+  public_base_url: string | null
+  auth: {
+    required: boolean
+    header_name: string
+    bearer_authorization_supported: boolean
+    token_configured: boolean
+    token_value_exposed: boolean
+  }
+  endpoints: Record<string, string>
+  customer_visible_surfaces: string[]
+  field_policy: {
+    allow_customer_visible_fields_only: boolean
+    planned_dates_are_guarantees: boolean
+    hidden_field_categories: string[]
+  }
+  safety: {
+    token_exposed: boolean
+    automatic_customer_notification: boolean
+    supplier_notified: boolean
+    carrier_api_called: boolean
+    order_status_mutated: boolean
+    feedback_auto_reply_sent: boolean
+  }
+}
+
 export interface PortalResult {
   ok: boolean
   status: number
@@ -74,6 +103,7 @@ export async function fetchPortalCustomerReadiness(): Promise<PortalReadiness> {
 }
 
 export const portalCustomerContract = {
+  manifest: (token: string) => callPortal('/v1/portal/customer/manifest', token),
   products: (token: string) => callPortal('/v1/portal/customer/products', token),
   orders: (token: string) => callPortal('/v1/portal/customer/orders', token),
   orderDetail: (token: string, orderId: string) => callPortal(`/v1/portal/customer/orders/${orderId}`, token),

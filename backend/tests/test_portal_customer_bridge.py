@@ -57,6 +57,35 @@ def test_portal_customer_token_required_and_valid(monkeypatch):
     assert ok.json()["data"]["total"] == 0
 
 
+def test_portal_customer_manifest_is_token_gated_and_safe():
+    settings = Settings(
+        PORTAL_CUSTOMER_API_ENABLED=True,
+        PORTAL_CUSTOMER_API_REQUIRE_TOKEN=True,
+        PORTAL_CUSTOMER_API_TOKEN="test-token",
+        PUBLIC_BASE_URL="https://partneros-staging.example.com",
+    )
+    client, _ = _client(settings)
+    with client as c:
+        missing = c.get("/api/v1/portal/customer/manifest")
+        ok = c.get("/api/v1/portal/customer/manifest", headers={"X-Portal-Customer-Token": "test-token"})
+
+    assert missing.status_code == 401
+    assert ok.status_code == 200
+    data = ok.json()["data"]
+    raw = ok.text.lower()
+    assert data["source_of_truth"] == "PartnerOS"
+    assert data["consumer"] == "service.intelli-opus.com"
+    assert data["auth"]["header_name"] == "X-Portal-Customer-Token"
+    assert data["auth"]["token_configured"] is True
+    assert data["auth"]["token_value_exposed"] is False
+    assert data["field_policy"]["planned_dates_are_guarantees"] is False
+    assert data["safety"]["automatic_customer_notification"] is False
+    assert data["safety"]["order_status_mutated"] is False
+    assert "test-token" not in raw
+    assert "internal_cost" not in raw
+    assert "storage_key" not in raw
+
+
 def test_portal_customer_routes_return_whitelisted_payloads(monkeypatch):
     settings = Settings(
         PORTAL_CUSTOMER_API_ENABLED=True,

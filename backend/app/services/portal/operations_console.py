@@ -418,6 +418,7 @@ def _build_portal_contract(settings: Settings, endpoints: dict[str, bool], missi
         "allowed_origins": settings.cors_origins_list,
         "missing_config": missing_config,
         "endpoints": [
+            {"name": "manifest", "method": "GET", "path": "/api/v1/portal/customer/manifest", "ready": True},
             {"name": "products", "method": "GET", "path": "/api/v1/portal/customer/products", "ready": endpoints["products"]},
             {"name": "orders", "method": "GET", "path": "/api/v1/portal/customer/orders", "ready": endpoints["orders"]},
             {

@@ -42,6 +42,20 @@ class PortalFeedbackIn(BaseModel):
     customer_email: str | None = None
 
 
+def _portal_customer_endpoints() -> dict[str, str]:
+    return {
+        "manifest": "/api/v1/portal/customer/manifest",
+        "products": "/api/v1/portal/customer/products",
+        "orders": "/api/v1/portal/customer/orders",
+        "order_detail": "/api/v1/portal/customer/orders/{order_id}",
+        "order_snapshot": "/api/v1/portal/customer/orders/{order_id}/snapshot",
+        "production": "/api/v1/portal/customer/orders/{order_id}/production",
+        "shipment": "/api/v1/portal/customer/orders/{order_id}/shipment",
+        "resources": "/api/v1/portal/customer/orders/{order_id}/resources",
+        "feedback": "/api/v1/portal/customer/feedback",
+    }
+
+
 def require_portal_customer_access(
     authorization: str | None = Header(default=None),
     x_portal_customer_token: str | None = Header(default=None),
@@ -71,6 +85,44 @@ def require_portal_customer_access(
         raise ApiError(VALIDATION_ERROR, "Invalid customer portal token", status_code=403)
 
 
+@router.get("/manifest", dependencies=[Depends(require_portal_customer_access)])
+def portal_customer_manifest(request: Request, settings: Settings = Depends(get_settings)):
+    data = {
+        "contract_version": "D8.1",
+        "source_of_truth": "PartnerOS",
+        "consumer": "service.intelli-opus.com",
+        "public_base_url": settings.PUBLIC_BASE_URL.strip() or None,
+        "auth": {
+            "required": settings.PORTAL_CUSTOMER_API_REQUIRE_TOKEN,
+            "header_name": "X-Portal-Customer-Token",
+            "bearer_authorization_supported": True,
+            "token_configured": bool(settings.PORTAL_CUSTOMER_API_TOKEN.strip()),
+            "token_value_exposed": False,
+        },
+        "endpoints": _portal_customer_endpoints(),
+        "customer_visible_surfaces": ["products", "orders", "order_snapshot", "production", "shipment", "resources", "feedback"],
+        "field_policy": {
+            "allow_customer_visible_fields_only": True,
+            "planned_dates_are_guarantees": False,
+            "hidden_field_categories": [
+                "internal pricing details",
+                "supplier-private notes",
+                "backend file locations",
+                "credential values",
+            ],
+        },
+        "safety": {
+            "token_exposed": False,
+            "automatic_customer_notification": False,
+            "supplier_notified": False,
+            "carrier_api_called": False,
+            "order_status_mutated": False,
+            "feedback_auto_reply_sent": False,
+        },
+    }
+    return success_envelope(data, request_id=get_request_id(request))
+
+
 @router.get("/products", dependencies=[Depends(require_portal_customer_access)])
 def portal_customer_products(
     request: Request,
@@ -98,16 +150,7 @@ def portal_customer_readiness(
         "public_base_url_configured": bool(settings.PUBLIC_BASE_URL.strip()),
         "public_base_url": settings.PUBLIC_BASE_URL.strip() or None,
         "cors_origins": settings.cors_origins_list,
-        "endpoints": {
-            "products": "/api/v1/portal/customer/products",
-            "orders": "/api/v1/portal/customer/orders",
-            "order_detail": "/api/v1/portal/customer/orders/{order_id}",
-            "order_snapshot": "/api/v1/portal/customer/orders/{order_id}/snapshot",
-            "production": "/api/v1/portal/customer/orders/{order_id}/production",
-            "shipment": "/api/v1/portal/customer/orders/{order_id}/shipment",
-            "resources": "/api/v1/portal/customer/orders/{order_id}/resources",
-            "feedback": "/api/v1/portal/customer/feedback",
-        },
+        "endpoints": _portal_customer_endpoints(),
         "safety": {
             "token_exposed": False,
             "automatic_customer_notification": False,

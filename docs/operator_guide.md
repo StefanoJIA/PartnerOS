@@ -233,6 +233,7 @@ PartnerOS is the internal source of truth. `service.intelli-opus.com` remains th
 
 | URL / API | Purpose |
 |-----------|---------|
+| `GET /api/v1/portal/customer/manifest` | Token-gated customer bridge contract manifest |
 | `GET /api/v1/portal/customer/products` | Customer-visible products |
 | `GET /api/v1/portal/customer/orders` | Customer-visible orders |
 | `GET /api/v1/portal/customer/orders/{id}` | Customer-visible order detail |

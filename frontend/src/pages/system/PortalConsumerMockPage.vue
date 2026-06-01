@@ -50,6 +50,7 @@
         <el-button :loading="running" type="primary" @click="runCoreChecks">Run checks</el-button>
       </div>
       <div class="mt-3 flex flex-wrap gap-2">
+        <el-button size="small" @click="runCheck('manifest')">Manifest</el-button>
         <el-button size="small" @click="runCheck('products')">Products</el-button>
         <el-button size="small" @click="runCheck('orders')">Orders</el-button>
         <el-button size="small" :disabled="!orderId" @click="runOrderChecks">Order views</el-button>
@@ -156,7 +157,7 @@ async function pushResult(name: string, promise: Promise<PortalResult>) {
   results.value = [...results.value.filter((r) => r.name !== name), { name, ...result }]
 }
 
-async function runCheck(name: 'products' | 'orders') {
+async function runCheck(name: 'manifest' | 'products' | 'orders') {
   running.value = true
   try {
     await pushResult(name, portalCustomerContract[name](portalToken.value))
@@ -183,7 +184,7 @@ async function runOrderChecks() {
 
 async function runCoreChecks() {
   results.value = []
-  await Promise.all([runCheck('products'), runCheck('orders')])
+  await Promise.all([runCheck('manifest'), runCheck('products'), runCheck('orders')])
   if (orderId.value) await runOrderChecks()
 }
 
