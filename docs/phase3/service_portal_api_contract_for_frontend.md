@@ -299,6 +299,8 @@ The response includes `portal_contract` for staging handoff: public base URL, al
 
 The response also includes `runtime_health`, a read-only summary of database status, Alembic current/head revisions, migration pending state, Portal API config readiness, and sanitized warnings. It does not expose database URLs, storage paths, secrets, or token values.
 
+The `feedback_operations` block summarizes internal feedback triage for Portal launch readiness: open tickets, high-priority tickets, tickets needing internal review, missing response summaries, resolved tickets ready to close, and oldest open age. It is an internal queue summary only and does not create replies, notify customers, or promise an SLA.
+
 `forbidden_field_audit` scans the current customer-visible order list, customer snapshots, and portal contract metadata. It reports marker names and payload paths only, never raw token values or hidden field values.
 
 The console also includes `market_signal_preview`, a read-only advisory rollup for internal Market Response preparation. It groups order lines, ordered quantity, feedback, production risk, and shipment risk across focus areas: adjustable desk frames, desk legs, lifting columns, education furniture, project furniture, and other products. This preview does not create tickets, change recommendations, notify customers/suppliers, or rank partners.

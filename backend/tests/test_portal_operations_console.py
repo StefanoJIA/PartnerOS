@@ -225,3 +225,34 @@ def test_market_signal_preview_groups_focus_categories():
     assert first["shipment_issue_count"] == 1
     assert data["safety"]["advisory_only"] is True
     assert data["safety"]["auto_ticket_created"] is False
+
+
+def test_feedback_operations_summary_is_internal_only():
+    from datetime import datetime, timezone
+
+    from app.services.portal.operations_console import _build_feedback_operations
+
+    new_ticket = MagicMock()
+    new_ticket.status = "new"
+    new_ticket.priority = "urgent"
+    new_ticket.response_summary = None
+    new_ticket.created_at = datetime(2026, 5, 29, tzinfo=timezone.utc)
+
+    resolved_ticket = MagicMock()
+    resolved_ticket.status = "resolved"
+    resolved_ticket.priority = "normal"
+    resolved_ticket.response_summary = None
+    resolved_ticket.created_at = datetime(2026, 5, 30, tzinfo=timezone.utc)
+
+    data = _build_feedback_operations([new_ticket, resolved_ticket])
+
+    assert data["total_count"] == 2
+    assert data["open_count"] == 1
+    assert data["high_priority_count"] == 1
+    assert data["needs_internal_review_count"] == 2
+    assert data["response_summary_missing_count"] == 1
+    assert data["ready_to_close_count"] == 1
+    assert data["safety"]["internal_queue_only"] is True
+    assert data["safety"]["customer_notified"] is False
+    assert data["safety"]["automatic_reply_sent"] is False
+    assert data["safety"]["sla_promised"] is False

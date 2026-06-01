@@ -16,6 +16,7 @@ from app.services.portal.customer_field_filter import (
 )
 from app.services.portal.customer_order_snapshot import build_customer_order_snapshot
 from app.services.portal.customer_portal_bridge import build_customer_order_list
+from app.services.portal.feedback_ticket_service import OPEN_FEEDBACK_STATUSES, feedback_operation_flags
 
 
 SAFE_OPERATION_METADATA_KEYS = {
@@ -234,6 +235,34 @@ def _build_market_signal_preview(
     }
 
 
+def _build_feedback_operations(ticket_rows: list[FeedbackTicket]) -> dict[str, Any]:
+    open_rows = [row for row in ticket_rows if row.status in OPEN_FEEDBACK_STATUSES]
+    high_priority_rows = [row for row in ticket_rows if row.priority in {"high", "urgent"}]
+    flags = [feedback_operation_flags(row) for row in ticket_rows]
+    return {
+        "total_count": len(ticket_rows),
+        "open_count": len(open_rows),
+        "high_priority_count": len(high_priority_rows),
+        "needs_internal_review_count": sum(1 for item in flags if item["needs_internal_review"]),
+        "response_summary_missing_count": sum(1 for item in flags if item["response_summary_missing"]),
+        "ready_to_close_count": sum(1 for row in ticket_rows if row.status == "resolved"),
+        "oldest_open_age_days": max(
+            (
+                int(item["age_days"])
+                for row, item in zip(ticket_rows, flags, strict=False)
+                if row.status in OPEN_FEEDBACK_STATUSES and item["age_days"] is not None
+            ),
+            default=None,
+        ),
+        "safety": {
+            "internal_queue_only": True,
+            "customer_notified": False,
+            "automatic_reply_sent": False,
+            "sla_promised": False,
+        },
+    }
+
+
 def _build_portal_contract(settings: Settings, endpoints: dict[str, bool], missing_config: list[str]) -> dict[str, Any]:
     return {
         "base_url": settings.PUBLIC_BASE_URL.strip() or None,
@@ -366,6 +395,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
             "portal_contract": portal_contract,
         }
     )
+    feedback_operations = _build_feedback_operations(ticket_rows)
 
     payload = {
         "status": {
@@ -386,6 +416,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
         "shipment_status_counts": _count_by_status(shipment_rows),
         "feedback_status_counts": _count_by_status(ticket_rows),
         "feedback_priority_counts": _count_by_status(ticket_rows, "priority"),
+        "feedback_operations": feedback_operations,
         "market_signal_preview": _build_market_signal_preview(order_lines, production_rows, shipment_rows, ticket_rows),
         "recent_feedback_tickets": [
             {
@@ -396,6 +427,8 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
                 "subject": row.subject,
                 "status": row.status,
                 "priority": row.priority,
+                "internal_owner": row.internal_owner,
+                "operation": feedback_operation_flags(row),
                 "created_at": row.created_at.isoformat() if row.created_at else None,
             }
             for row in ticket_rows[:recent_limit]

@@ -91,6 +91,21 @@ export interface PortalOperationsConsole {
   shipment_status_counts: Record<string, number>
   feedback_status_counts: Record<string, number>
   feedback_priority_counts: Record<string, number>
+  feedback_operations: {
+    total_count: number
+    open_count: number
+    high_priority_count: number
+    needs_internal_review_count: number
+    response_summary_missing_count: number
+    ready_to_close_count: number
+    oldest_open_age_days: number | null
+    safety: {
+      internal_queue_only: boolean
+      customer_notified: boolean
+      automatic_reply_sent: boolean
+      sla_promised: boolean
+    }
+  }
   market_signal_preview: {
     items: Array<{
       key: string
@@ -120,6 +135,15 @@ export interface PortalOperationsConsole {
     subject: string
     status: string
     priority: string
+    internal_owner: string | null
+    operation: {
+      age_days: number | null
+      open: boolean
+      needs_internal_review: boolean
+      response_summary_missing: boolean
+      customer_visible_response: boolean
+      internal_handling_only: boolean
+    }
     created_at: string | null
   }>
   forbidden_field_audit: {

@@ -29,6 +29,10 @@ export interface FeedbackTicket {
     internal_handling_only: boolean
     activity_logging_enabled: boolean
     customer_visible_response: boolean
+    age_days: number | null
+    open: boolean
+    needs_internal_review: boolean
+    response_summary_missing: boolean
   }
   safety: FeedbackTicketSafety
 }

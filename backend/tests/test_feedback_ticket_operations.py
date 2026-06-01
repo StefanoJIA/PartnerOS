@@ -43,10 +43,22 @@ def test_ticket_to_dict_has_operations_safety_flags():
     assert data["internal_owner"] == "Operator"
     assert data["operation"]["internal_handling_only"] is True
     assert data["operation"]["activity_logging_enabled"] is True
+    assert data["operation"]["age_days"] is not None
+    assert data["operation"]["open"] is True
+    assert data["operation"]["needs_internal_review"] is True
+    assert data["operation"]["response_summary_missing"] is False
     assert data["safety"] == feedback_safety()
     assert data["safety"]["customer_notified"] is False
     assert data["safety"]["automatic_reply_sent"] is False
     assert data["safety"]["sla_promised"] is False
+
+
+def test_ticket_to_dict_marks_missing_internal_resolution_summary():
+    data = ticket_to_dict(_ticket(status="resolved", response_summary=None))
+    assert data["operation"]["open"] is False
+    assert data["operation"]["needs_internal_review"] is True
+    assert data["operation"]["response_summary_missing"] is True
+    assert data["operation"]["customer_visible_response"] is False
 
 
 def test_update_feedback_ticket_validates_status_and_priority():

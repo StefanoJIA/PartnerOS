@@ -271,6 +271,8 @@ Portal Operations includes a staging connection and Portal contract summary with
 
 Portal Operations also includes read-only runtime health for database status, Alembic current/head revisions, migration pending state, and Portal API config readiness. It must not display database URLs, storage paths, secrets, or token values.
 
+Portal Operations and Feedback Tickets now show internal feedback queue signals: open count, high-priority count, needs-internal-review count, missing response summaries, ready-to-close count, and oldest open age. These signals are for operator triage only; they do not send replies, notify customers, or promise an SLA.
+
 Customer snapshots include `progress_steps` for Portal order tracking: confirmed, in production, ready to ship, shipped, and delivered. These steps are display guidance only; planned dates remain non-guaranteed planning data.
 
 The forbidden-field audit scans current customer-visible order list data, customer snapshots, and Portal contract metadata. Audit hits show marker names and payload paths only, not hidden values.

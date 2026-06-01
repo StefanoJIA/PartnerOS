@@ -166,6 +166,24 @@
           </el-tag>
           <span v-if="!Object.keys(data?.feedback_status_counts || {}).length" class="text-sm text-slate-500">No tickets</span>
         </div>
+        <div class="mt-4 grid gap-2 sm:grid-cols-2">
+          <div class="rounded border border-slate-200 p-3">
+            <p class="text-sm text-slate-500">Needs review</p>
+            <p class="mt-1 font-medium text-slate-800">{{ data?.feedback_operations.needs_internal_review_count ?? 0 }}</p>
+          </div>
+          <div class="rounded border border-slate-200 p-3">
+            <p class="text-sm text-slate-500">High priority</p>
+            <p class="mt-1 font-medium text-slate-800">{{ data?.feedback_operations.high_priority_count ?? 0 }}</p>
+          </div>
+          <div class="rounded border border-slate-200 p-3">
+            <p class="text-sm text-slate-500">Ready to close</p>
+            <p class="mt-1 font-medium text-slate-800">{{ data?.feedback_operations.ready_to_close_count ?? 0 }}</p>
+          </div>
+          <div class="rounded border border-slate-200 p-3">
+            <p class="text-sm text-slate-500">Oldest open</p>
+            <p class="mt-1 font-medium text-slate-800">{{ data?.feedback_operations.oldest_open_age_days ?? '-' }}</p>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -228,6 +246,17 @@
         <el-table-column prop="feedback_type" label="Type" width="130" />
         <el-table-column prop="status" label="Status" width="130" />
         <el-table-column prop="priority" label="Priority" width="120" />
+        <el-table-column prop="internal_owner" label="Owner" width="150" />
+        <el-table-column label="Review" width="130">
+          <template #default="{ row }">
+            <el-tag size="small" :type="row.operation.needs_internal_review ? 'warning' : 'success'" effect="plain">
+              {{ row.operation.needs_internal_review ? 'review' : 'clear' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="Age" width="90">
+          <template #default="{ row }">{{ row.operation.age_days ?? '-' }}</template>
+        </el-table-column>
       </el-table>
     </section>
   </div>

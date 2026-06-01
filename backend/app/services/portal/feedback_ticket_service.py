@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import or_
@@ -13,6 +14,29 @@ from app.services.activity import log_activity
 
 FEEDBACK_STATUSES = ("new", "in_review", "responded", "resolved", "closed")
 FEEDBACK_PRIORITIES = ("low", "normal", "high", "urgent")
+OPEN_FEEDBACK_STATUSES = ("new", "in_review", "responded")
+
+
+def _age_days(created_at: datetime | None) -> int | None:
+    if not created_at:
+        return None
+    value = created_at
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return max(0, (datetime.now(timezone.utc) - value.astimezone(timezone.utc)).days)
+
+
+def feedback_operation_flags(row: FeedbackTicket) -> dict[str, bool | int | None]:
+    response_summary_missing = row.status in {"responded", "resolved", "closed"} and not bool(row.response_summary)
+    needs_internal_review = row.status in {"new", "in_review"} or row.priority in {"high", "urgent"} or response_summary_missing
+    return {
+        "age_days": _age_days(row.created_at),
+        "open": row.status in OPEN_FEEDBACK_STATUSES,
+        "needs_internal_review": needs_internal_review,
+        "response_summary_missing": response_summary_missing,
+        "customer_visible_response": False,
+        "internal_handling_only": True,
+    }
 
 
 def feedback_safety() -> dict[str, bool]:
@@ -25,6 +49,7 @@ def feedback_safety() -> dict[str, bool]:
 
 
 def ticket_to_dict(row: FeedbackTicket) -> dict:
+    operation_flags = feedback_operation_flags(row)
     return {
         "id": str(row.id),
         "ticket_number": row.ticket_number,
@@ -46,6 +71,10 @@ def ticket_to_dict(row: FeedbackTicket) -> dict:
             "internal_handling_only": True,
             "activity_logging_enabled": True,
             "customer_visible_response": False,
+            "age_days": operation_flags["age_days"],
+            "open": operation_flags["open"],
+            "needs_internal_review": operation_flags["needs_internal_review"],
+            "response_summary_missing": operation_flags["response_summary_missing"],
         },
         "safety": feedback_safety(),
     }

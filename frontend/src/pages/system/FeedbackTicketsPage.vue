@@ -36,6 +36,16 @@
           <el-tag size="small" :type="priorityTag(row.priority)" effect="plain">{{ row.priority }}</el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="Review" width="120">
+        <template #default="{ row }">
+          <el-tag size="small" :type="row.operation.needs_internal_review ? 'warning' : 'success'" effect="plain">
+            {{ row.operation.needs_internal_review ? 'review' : 'clear' }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="Age" width="90">
+        <template #default="{ row }">{{ row.operation.age_days ?? '-' }}</template>
+      </el-table-column>
       <el-table-column prop="internal_owner" label="Owner" width="160" />
       <el-table-column prop="created_at" label="Created" width="190" />
     </el-table>
@@ -76,6 +86,20 @@
             <el-tag :type="selected.safety.customer_notified ? 'danger' : 'success'" effect="plain">
               {{ selected.safety.customer_notified ? 'customer notified' : 'no notification' }}
             </el-tag>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div class="rounded border border-slate-200 p-3">
+              <dt class="text-slate-500">Age</dt>
+              <dd class="font-medium">{{ selected.operation.age_days ?? '-' }}</dd>
+            </div>
+            <div class="rounded border border-slate-200 p-3">
+              <dt class="text-slate-500">Review</dt>
+              <dd class="font-medium">{{ selected.operation.needs_internal_review ? 'needed' : 'clear' }}</dd>
+            </div>
+            <div class="rounded border border-slate-200 p-3">
+              <dt class="text-slate-500">Summary</dt>
+              <dd class="font-medium">{{ selected.operation.response_summary_missing ? 'missing' : 'ok' }}</dd>
+            </div>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
