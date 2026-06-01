@@ -81,6 +81,8 @@ def test_portal_customer_manifest_is_token_gated_and_safe():
     assert "customer_status_stages" in data["field_contract"]
     assert "customer_next_action" in data["field_contract"]
     assert "tracking_summary" in data["field_contract"]
+    assert "links" in data["field_contract"]["snapshot"]
+    assert "snapshot_links" in data["field_contract"]
     assert "next_action_label" in data["field_contract"]["customer_status"]
     assert "ready_to_ship" in data["field_contract"]["customer_status_stages"]
     assert data["field_contract"]["date_policy"]["planned_dates_are_guarantees"] is False
@@ -145,6 +147,14 @@ def test_portal_customer_routes_return_whitelisted_payloads(monkeypatch):
                 "has_active_shipment": True,
                 "planned_dates_are_guarantees": False,
             },
+            "links": {
+                "order_detail": f"/api/v1/portal/customer/orders/{oid}",
+                "order_snapshot": f"/api/v1/portal/customer/orders/{oid}/snapshot",
+                "production": f"/api/v1/portal/customer/orders/{oid}/production",
+                "shipment": f"/api/v1/portal/customer/orders/{oid}/shipment",
+                "resources": f"/api/v1/portal/customer/orders/{oid}/resources",
+                "feedback_submit": "/api/v1/portal/customer/feedback",
+            },
             "feedback": {
                 "submit_endpoint": "/api/v1/portal/customer/feedback",
                 "submit_method": "POST",
@@ -175,6 +185,8 @@ def test_portal_customer_routes_return_whitelisted_payloads(monkeypatch):
     assert snapshot.json()["data"]["customer_status"]["planned_dates_are_guarantees"] is False
     assert snapshot.json()["data"]["customer_status"]["next_action_label"] == "Shipment planning"
     assert snapshot.json()["data"]["tracking_summary"]["has_active_shipment"] is True
+    assert snapshot.json()["data"]["links"]["shipment"] == f"/api/v1/portal/customer/orders/{order_id}/shipment"
+    assert snapshot.json()["data"]["links"]["feedback_submit"] == "/api/v1/portal/customer/feedback"
     assert snapshot.json()["data"]["feedback"]["submit_method"] == "POST"
     assert "tracking" in snapshot.json()["data"]["feedback"]["allowed_feedback_types"]
     assert snapshot.json()["data"]["feedback"]["resolution_time_promised"] is False

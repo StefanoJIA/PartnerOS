@@ -281,7 +281,11 @@
       <div class="rounded border border-slate-200 bg-white p-4">
         <h3 class="mb-3 font-semibold text-slate-800">Recent customer-visible orders</h3>
         <el-table :data="data?.recent_customer_visible_orders.items || []" v-loading="loading" class="w-full">
-          <el-table-column prop="order_number" label="Order" width="160" />
+          <el-table-column label="Order" width="165">
+            <template #default="{ row }">
+              <el-button link type="primary" @click="openOrder(row.id)">{{ row.order_number }}</el-button>
+            </template>
+          </el-table-column>
           <el-table-column prop="company_name" label="Company" min-width="180" />
           <el-table-column prop="status" label="Status" width="170" />
           <el-table-column label="Portal stage" min-width="170">
@@ -349,6 +353,11 @@
           <el-table-column prop="estimated_ship_date" label="Ship date" width="130" />
           <el-table-column prop="estimated_arrival_date" label="Arrival" width="130" />
           <el-table-column prop="action" label="Action" min-width="230" />
+          <el-table-column label="Order" width="100">
+            <template #default="{ row }">
+              <el-button size="small" @click="openOrder(row.order_id)">Open</el-button>
+            </template>
+          </el-table-column>
           <el-table-column label="Safety" width="145">
             <template #default="{ row }">
               <el-tag size="small" :type="row.safety.carrier_api_called || row.safety.shipment_created ? 'danger' : 'success'" effect="plain">
@@ -519,7 +528,12 @@
         </el-tag>
       </div>
       <el-table v-if="data?.customer_snapshot_readiness.action_items.length" :data="data.customer_snapshot_readiness.action_items" class="mb-4 w-full">
-        <el-table-column prop="order_number" label="Order" width="150" />
+        <el-table-column label="Order" width="150">
+          <template #default="{ row }">
+            <el-button v-if="row.order_id" link type="primary" @click="openOrder(row.order_id)">{{ row.order_number }}</el-button>
+            <span v-else>{{ row.order_number || '-' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="label" label="Stage" min-width="170" />
         <el-table-column prop="next_action_label" label="Portal next action" min-width="190" />
         <el-table-column prop="action" label="Internal action" min-width="250" />
@@ -541,7 +555,12 @@
         </el-table-column>
       </el-table>
       <el-table v-if="data?.snapshot_coverage.action_items.length" :data="data.snapshot_coverage.action_items" class="mb-4 w-full">
-        <el-table-column prop="order_number" label="Order" width="150" />
+        <el-table-column label="Order" width="150">
+          <template #default="{ row }">
+            <el-button v-if="row.order_id" link type="primary" @click="openOrder(row.order_id)">{{ row.order_number }}</el-button>
+            <span v-else>{{ row.order_number || '-' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="Status" width="150" />
         <el-table-column prop="action" label="Coverage action" min-width="250" />
         <el-table-column label="Safety" width="150">
@@ -554,7 +573,9 @@
       </el-table>
       <el-table :data="data?.customer_snapshots || []" class="w-full">
         <el-table-column label="Order" width="170">
-          <template #default="{ row }">{{ row.order.order_number }}</template>
+          <template #default="{ row }">
+            <el-button link type="primary" @click="openOrder(row.order.id)">{{ row.order.order_number }}</el-button>
+          </template>
         </el-table-column>
         <el-table-column label="Customer stage" min-width="220">
           <template #default="{ row }">
@@ -752,5 +773,9 @@ function checklistStatusType(status: string) {
 
 function openFeedbackTicket(ticketId: string) {
   router.push({ name: 'feedback-tickets', query: { ticket_id: ticketId } })
+}
+
+function openOrder(orderId: string) {
+  router.push({ name: 'order-detail', params: { orderId } })
 }
 </script>

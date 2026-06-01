@@ -175,6 +175,14 @@ export interface PortalOperationsConsole {
       has_open_feedback: boolean
       planned_dates_are_guarantees: boolean
     }
+    links: {
+      order_detail: string
+      order_snapshot: string
+      production: string
+      shipment: string
+      resources: string
+      feedback_submit: string
+    }
     shipment: { status_counts: Record<string, number>; active_count: number }
     feedback: {
       submit_endpoint: string

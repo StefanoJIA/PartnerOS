@@ -242,6 +242,7 @@ def build_customer_order_snapshot(db: Session, order_id: UUID) -> dict[str, Any]
     next_action = _customer_next_action(stage)
     production_statuses = _status_counts(production_rows)
     shipment_statuses = _status_counts(shipment_rows)
+    order_id_text = str(order_id)
 
     payload = {
         "order": detail,
@@ -272,6 +273,14 @@ def build_customer_order_snapshot(db: Session, order_id: UUID) -> dict[str, Any]
             "has_visible_resources": visible_resource_count > 0,
             "has_open_feedback": open_feedback_count > 0,
             "planned_dates_are_guarantees": False,
+        },
+        "links": {
+            "order_detail": f"/api/v1/portal/customer/orders/{order_id_text}",
+            "order_snapshot": f"/api/v1/portal/customer/orders/{order_id_text}/snapshot",
+            "production": f"/api/v1/portal/customer/orders/{order_id_text}/production",
+            "shipment": f"/api/v1/portal/customer/orders/{order_id_text}/shipment",
+            "resources": f"/api/v1/portal/customer/orders/{order_id_text}/resources",
+            "feedback_submit": "/api/v1/portal/customer/feedback",
         },
         "production": {
             **production,

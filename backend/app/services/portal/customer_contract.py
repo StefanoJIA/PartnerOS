@@ -93,6 +93,7 @@ def portal_customer_field_contract() -> dict[str, Any]:
             "order",
             "customer_status",
             "tracking_summary",
+            "links",
             "production",
             "shipment",
             "resources",
@@ -110,6 +111,14 @@ def portal_customer_field_contract() -> dict[str, Any]:
             "has_visible_resources",
             "has_open_feedback",
             "planned_dates_are_guarantees",
+        ],
+        "snapshot_links": [
+            "order_detail",
+            "order_snapshot",
+            "production",
+            "shipment",
+            "resources",
+            "feedback_submit",
         ],
         "customer_status": [
             "stage",

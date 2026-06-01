@@ -111,6 +111,12 @@
               <dd>{{ selected.customer_email || '-' }}</dd>
             </div>
           </div>
+          <div v-if="selected.order_id">
+            <dt class="text-slate-500">Related order</dt>
+            <dd class="mt-1">
+              <el-button size="small" @click="openRelatedOrder(selected.order_id)">Open order</el-button>
+            </dd>
+          </div>
         </dl>
 
         <el-divider />
@@ -277,6 +283,10 @@ async function quickStatus(status: 'resolved' | 'closed') {
   } finally {
     saving.value = false
   }
+}
+
+function openRelatedOrder(orderId: string) {
+  router.push({ name: 'order-detail', params: { orderId } })
 }
 
 function routeText(value: unknown): string {
