@@ -40,6 +40,9 @@
         <el-tag class="mt-2" :type="data?.forbidden_field_audit.hits.length ? 'danger' : 'success'">
           {{ data?.forbidden_field_audit.hits.length ? `${data.forbidden_field_audit.hits.length} hit(s)` : 'clear' }}
         </el-tag>
+        <p class="mt-2 text-xs text-slate-500">
+          {{ data?.forbidden_field_audit.checked_payloads?.join(', ') || 'not checked' }}
+        </p>
       </div>
     </section>
 

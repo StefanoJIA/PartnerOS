@@ -54,6 +54,49 @@ def _safe_payload(payload: dict[str, Any]) -> dict[str, Any]:
     return cleaned
 
 
+def _audit_forbidden_fields(value: Any) -> dict[str, Any]:
+    hits: set[str] = set()
+
+    def walk(item: Any, path: str = "$") -> None:
+        if isinstance(item, dict):
+            for key, child in item.items():
+                lowered = key.lower()
+                child_path = f"{path}.{key}"
+                if lowered in FORBIDDEN_FIELD_NAMES and lowered not in SAFE_OPERATION_METADATA_KEYS:
+                    hits.add(f"{child_path}:forbidden_key")
+                if any(marker in lowered for marker in ("secret", "password")):
+                    hits.add(f"{child_path}:forbidden_key")
+                if lowered in {"token", "api_token", "portal_customer_api_token"}:
+                    hits.add(f"{child_path}:forbidden_key")
+                walk(child, child_path)
+            return
+        if isinstance(item, list):
+            for index, child in enumerate(item):
+                walk(child, f"{path}[{index}]")
+            return
+        if isinstance(item, str):
+            lowered = item.lower()
+            for marker in FORBIDDEN_TEXT_MARKERS:
+                if marker == "portal_customer_api_token":
+                    continue
+                if marker in lowered:
+                    hits.add(f"{path}:{marker}")
+
+    walk(value)
+    return {
+        "checked": True,
+        "checked_payloads": [
+            "recent_customer_visible_orders",
+            "customer_snapshots",
+            "portal_contract",
+        ],
+        "hits": sorted(hits),
+        "credential_value_exposed": any("token" in hit or "secret" in hit or "password" in hit for hit in hits),
+        "server_file_path_exposed": any("backend/storage" in hit or "local_data" in hit or "storage_key" in hit for hit in hits),
+        "cost_fields_exposed": any("cost" in hit or "margin" in hit or "pricing_breakdown" in hit for hit in hits),
+    }
+
+
 def _count_by_status(rows: list[Any], attr: str = "status") -> dict[str, int]:
     counts: dict[str, int] = {}
     for row in rows:
@@ -276,6 +319,14 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
         missing_config.append("PORTAL_CUSTOMER_ALLOWED_ORIGINS")
     if not settings.PUBLIC_BASE_URL.strip():
         missing_config.append("PUBLIC_BASE_URL")
+    portal_contract = _build_portal_contract(settings, endpoints, missing_config)
+    forbidden_field_audit = _audit_forbidden_fields(
+        {
+            "recent_customer_visible_orders": recent_orders,
+            "customer_snapshots": snapshot_items,
+            "portal_contract": portal_contract,
+        }
+    )
 
     payload = {
         "status": {
@@ -288,7 +339,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
             "allowed_origins": settings.cors_origins_list,
             "missing_config": missing_config,
         },
-        "portal_contract": _build_portal_contract(settings, endpoints, missing_config),
+        "portal_contract": portal_contract,
         "endpoint_readiness": endpoints,
         "recent_customer_visible_orders": recent_orders,
         "customer_snapshots": snapshot_items,
@@ -309,13 +360,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
             }
             for row in ticket_rows[:recent_limit]
         ],
-        "forbidden_field_audit": {
-            "checked": True,
-            "hits": [],
-            "credential_value_exposed": False,
-            "server_file_path_exposed": False,
-            "cost_fields_exposed": False,
-        },
+        "forbidden_field_audit": forbidden_field_audit,
         "safety": {
             "read_only": True,
             "customer_notified": False,

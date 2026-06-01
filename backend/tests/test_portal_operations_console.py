@@ -132,7 +132,7 @@ def test_customer_snapshot_stage_and_safety(monkeypatch):
 
 
 def test_operations_console_preserves_safe_token_metadata_without_values():
-    from app.services.portal.operations_console import _build_portal_contract, _safe_payload
+    from app.services.portal.operations_console import _audit_forbidden_fields, _build_portal_contract, _safe_payload
 
     settings = Settings(
         PORTAL_CUSTOMER_API_ENABLED=True,
@@ -160,6 +160,20 @@ def test_operations_console_preserves_safe_token_metadata_without_values():
     assert "super-secret-value" not in str(data)
     assert "token" not in data
     assert "storage_key" not in data["nested"]
+
+    audit = _audit_forbidden_fields(
+        {
+            "portal_contract": data["portal_contract"],
+            "customer_snapshot": {"order": {"order_number": "O-1"}, "safety": {"token_value_exposed": False}},
+            "bad": {"storage_key": "backend/storage/private.pdf", "margin": "hidden"},
+        }
+    )
+    assert audit["checked"] is True
+    assert audit["credential_value_exposed"] is False
+    assert audit["server_file_path_exposed"] is True
+    assert audit["cost_fields_exposed"] is True
+    assert any("storage_key" in hit for hit in audit["hits"])
+    assert any("margin" in hit for hit in audit["hits"])
 
 
 def test_market_signal_preview_groups_focus_categories():

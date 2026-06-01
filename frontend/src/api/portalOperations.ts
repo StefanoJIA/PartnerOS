@@ -108,6 +108,7 @@ export interface PortalOperationsConsole {
   }>
   forbidden_field_audit: {
     checked: boolean
+    checked_payloads: string[]
     hits: string[]
     credential_value_exposed: boolean
     server_file_path_exposed: boolean
