@@ -50,11 +50,15 @@
         <el-button :loading="running" type="primary" @click="runCoreChecks">Run checks</el-button>
       </div>
       <div class="mt-3 flex flex-wrap gap-2">
+        <el-button size="small" type="primary" plain @click="runReadPathChecks">Read path</el-button>
         <el-button size="small" @click="runCheck('manifest')">Manifest</el-button>
         <el-button size="small" @click="runCheck('products')">Products</el-button>
         <el-button size="small" @click="runCheck('orders')">Orders</el-button>
         <el-button size="small" :disabled="!orderId" @click="runOrderChecks">Order views</el-button>
       </div>
+      <p class="mt-2 text-xs text-slate-500">
+        Read path is read-only: it checks manifest, products, orders, then uses the first returned order for detail, snapshot, production, shipment, and resources.
+      </p>
     </section>
 
     <section class="rounded border border-slate-200 bg-white p-4">
@@ -123,7 +127,9 @@ const feedbackLoading = ref(false)
 const error = ref('')
 const portalToken = ref('')
 const orderId = ref('')
-const results = ref<(PortalResult & { name: string })[]>([])
+type NamedPortalResult = PortalResult & { name: string }
+
+const results = ref<NamedPortalResult[]>([])
 const feedback = reactive({
   order_id: '',
   feedback_type: 'tracking',
@@ -155,6 +161,7 @@ async function loadReadiness() {
 async function pushResult(name: string, promise: Promise<PortalResult>) {
   const result = await promise
   results.value = [...results.value.filter((r) => r.name !== name), { name, ...result }]
+  return result
 }
 
 async function runCheck(name: 'manifest' | 'products' | 'orders') {
@@ -177,6 +184,30 @@ async function runOrderChecks() {
       pushResult('shipment', portalCustomerContract.shipment(portalToken.value, orderId.value)),
       pushResult('resources', portalCustomerContract.resources(portalToken.value, orderId.value)),
     ])
+  } finally {
+    running.value = false
+  }
+}
+
+function firstOrderIdFrom(result: PortalResult) {
+  if (!result.ok || !result.data || typeof result.data !== 'object') return ''
+  const envelope = result.data as { data?: { items?: Array<{ id?: string }> } }
+  return envelope.data?.items?.find((item) => typeof item.id === 'string')?.id || ''
+}
+
+async function runReadPathChecks() {
+  results.value = []
+  running.value = true
+  try {
+    await pushResult('manifest', portalCustomerContract.manifest(portalToken.value))
+    await pushResult('products', portalCustomerContract.products(portalToken.value))
+    const orders = await pushResult('orders', portalCustomerContract.orders(portalToken.value))
+    const firstOrderId = firstOrderIdFrom(orders)
+    if (firstOrderId) {
+      orderId.value = firstOrderId
+      if (!feedback.order_id) feedback.order_id = firstOrderId
+      await runOrderChecks()
+    }
   } finally {
     running.value = false
   }

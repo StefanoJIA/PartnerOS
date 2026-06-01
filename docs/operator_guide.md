@@ -268,6 +268,8 @@ python scripts/d7_8_portal_live_integration_check.py
 
 Feedback status flow is `new -> in_review -> responded -> resolved -> closed`. The console records internal handling only; it does not send email, notify customers, upload attachments, or promise an SLA. Staging feedback must include `TEST` in the subject or message.
 
+The `/portal-customer-bridge` UAT page includes a read-only read path check. It calls manifest, products, orders, then uses the first returned order to check detail, snapshot, production, shipment, and resources without creating feedback or mutating business records.
+
 Portal Operations includes a staging connection and Portal contract summary with public base URL, allowed origins, auth header name, endpoint paths, and endpoint readiness. It displays token-required/configured booleans only; it must never display the token value.
 
 The token-gated customer manifest includes the same endpoint map plus a machine-readable customer field contract for products, orders, snapshots, production, shipment, resources, and feedback. Portal Operations displays the same field contract summary so operators and `service.intelli-opus.com` use one contract. The customer Portal should render only customer-visible fields and treat planned dates as planned, not guaranteed.
