@@ -118,6 +118,11 @@ def test_customer_snapshot_stage_and_safety(monkeypatch):
     assert data["customer_status"]["stage"] == "ready_to_ship"
     assert data["customer_status"]["next_action_label"] == "Shipment planning"
     assert "guaranteed" not in data["customer_status"]["next_action_detail"].lower()
+    assert data["tracking_summary"]["stage"] == "ready_to_ship"
+    assert data["tracking_summary"]["production_item_count"] == 1
+    assert data["tracking_summary"]["shipment_item_count"] == 1
+    assert data["tracking_summary"]["has_active_shipment"] is True
+    assert data["tracking_summary"]["planned_dates_are_guarantees"] is False
     assert data["customer_status"]["current_step_index"] == 2
     assert [step["key"] for step in data["customer_status"]["progress_steps"]] == [
         "confirmed",
@@ -166,6 +171,7 @@ def test_operations_console_preserves_safe_token_metadata_without_values():
     assert data["portal_contract"]["server_to_server_auth"]["token_configured"] is True
     assert "customer_status_stages" in data["portal_contract"]["field_contract"]
     assert "customer_next_action" in data["portal_contract"]["field_contract"]
+    assert "tracking_summary" in data["portal_contract"]["field_contract"]
     assert "next_action_label" in data["portal_contract"]["field_contract"]["customer_status"]
     assert data["portal_contract"]["field_contract"]["date_policy"]["planned_dates_are_guarantees"] is False
     assert "super-secret-value" not in str(data)

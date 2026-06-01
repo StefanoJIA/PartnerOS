@@ -261,6 +261,18 @@ def build_customer_order_snapshot(db: Session, order_id: UUID) -> dict[str, Any]
             "progress_steps": progress_steps,
             "planned_dates_are_guarantees": False,
         },
+        "tracking_summary": {
+            "stage": stage,
+            "production_item_count": len(production_rows),
+            "shipment_item_count": sum(1 for row in shipment_rows if row.status != "cancelled"),
+            "resource_visible_count": visible_resource_count,
+            "feedback_open_count": open_feedback_count,
+            "has_production_updates": bool(production_rows),
+            "has_active_shipment": any(row.status != "cancelled" for row in shipment_rows),
+            "has_visible_resources": visible_resource_count > 0,
+            "has_open_feedback": open_feedback_count > 0,
+            "planned_dates_are_guarantees": False,
+        },
         "production": {
             **production,
             "status_counts": production_statuses,

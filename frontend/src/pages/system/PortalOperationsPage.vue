@@ -364,6 +364,27 @@
         <el-table-column label="Shipment" width="160">
           <template #default="{ row }">active {{ row.shipment.active_count }}</template>
         </el-table-column>
+        <el-table-column label="Signals" min-width="210">
+          <template #default="{ row }">
+            <div class="flex flex-wrap gap-1">
+              <el-tag v-if="row.tracking_summary.has_production_updates" size="small" effect="plain">production</el-tag>
+              <el-tag v-if="row.tracking_summary.has_active_shipment" size="small" effect="plain">shipment</el-tag>
+              <el-tag v-if="row.tracking_summary.has_visible_resources" size="small" effect="plain">resources</el-tag>
+              <el-tag v-if="row.tracking_summary.has_open_feedback" size="small" type="warning" effect="plain">feedback</el-tag>
+              <span
+                v-if="
+                  !row.tracking_summary.has_production_updates &&
+                  !row.tracking_summary.has_active_shipment &&
+                  !row.tracking_summary.has_visible_resources &&
+                  !row.tracking_summary.has_open_feedback
+                "
+                class="text-sm text-slate-500"
+              >
+                none
+              </span>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column label="Open feedback" width="150">
           <template #default="{ row }">{{ row.feedback.open_count }}</template>
         </el-table-column>

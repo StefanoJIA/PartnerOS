@@ -113,6 +113,18 @@ export interface PortalOperationsConsole {
       }>
       planned_dates_are_guarantees: boolean
     }
+    tracking_summary: {
+      stage: string
+      production_item_count: number
+      shipment_item_count: number
+      resource_visible_count: number
+      feedback_open_count: number
+      has_production_updates: boolean
+      has_active_shipment: boolean
+      has_visible_resources: boolean
+      has_open_feedback: boolean
+      planned_dates_are_guarantees: boolean
+    }
     shipment: { status_counts: Record<string, number>; active_count: number }
     feedback: { open_count: number; customer_notified: boolean; automatic_reply_sent: boolean }
     safety: { forbidden_field_filter_enabled: boolean; token_exposed: boolean }

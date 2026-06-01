@@ -273,7 +273,9 @@ def main() -> int:
                 and "customer_status" in snapshot_data
                 and "progress_steps" in snapshot_data.get("customer_status", {})
                 and bool(snapshot_data.get("customer_status", {}).get("next_action_label"))
+                and "tracking_summary" in snapshot_data
                 and snapshot_data.get("customer_status", {}).get("planned_dates_are_guarantees") is False
+                and snapshot_data.get("tracking_summary", {}).get("planned_dates_are_guarantees") is False
             ):
                 checks[8].pass_(f"HTTP {snapshot.status_code}")
             else:

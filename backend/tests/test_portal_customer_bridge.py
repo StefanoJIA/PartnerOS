@@ -80,6 +80,7 @@ def test_portal_customer_manifest_is_token_gated_and_safe():
     assert data["auth"]["token_value_exposed"] is False
     assert "customer_status_stages" in data["field_contract"]
     assert "customer_next_action" in data["field_contract"]
+    assert "tracking_summary" in data["field_contract"]
     assert "next_action_label" in data["field_contract"]["customer_status"]
     assert "ready_to_ship" in data["field_contract"]["customer_status_stages"]
     assert data["field_contract"]["date_policy"]["planned_dates_are_guarantees"] is False
@@ -126,6 +127,11 @@ def test_portal_customer_routes_return_whitelisted_payloads(monkeypatch):
                 "next_action_detail": "Operator will add shipment details when available.",
                 "planned_dates_are_guarantees": False,
             },
+            "tracking_summary": {
+                "stage": "ready_to_ship",
+                "has_active_shipment": True,
+                "planned_dates_are_guarantees": False,
+            },
             "safety": {"forbidden_field_filter_enabled": True, "token_exposed": False},
         },
     )
@@ -145,6 +151,7 @@ def test_portal_customer_routes_return_whitelisted_payloads(monkeypatch):
         assert "storage_key" not in raw
     assert snapshot.json()["data"]["customer_status"]["planned_dates_are_guarantees"] is False
     assert snapshot.json()["data"]["customer_status"]["next_action_label"] == "Shipment planning"
+    assert snapshot.json()["data"]["tracking_summary"]["has_active_shipment"] is True
 
 
 def test_portal_feedback_creates_ticket_without_auto_reply(monkeypatch):

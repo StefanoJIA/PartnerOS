@@ -282,7 +282,7 @@ Portal Operations includes a read-only launch readiness rollup. It aggregates co
 
 Portal Operations and Feedback Tickets now show internal feedback queue signals: open count, high-priority count, needs-internal-review count, missing response summaries, ready-to-close count, and oldest open age. These signals are for operator triage only; they do not send replies, notify customers, or promise an SLA.
 
-Customer snapshots include `progress_steps` for Portal order tracking: confirmed, in production, ready to ship, shipped, and delivered. They also include `next_action_label` and `next_action_detail` so the service Portal can show the next customer-visible step without inventing copy. These fields are display guidance only; planned dates remain non-guaranteed planning data.
+Customer snapshots include `progress_steps` for Portal order tracking: confirmed, in production, ready to ship, shipped, and delivered. They also include `next_action_label`, `next_action_detail`, and `tracking_summary` so the service Portal can show the next customer-visible step and data availability signals without inventing copy. These fields are display guidance only; planned dates remain non-guaranteed planning data.
 
 Portal Operations summarizes customer snapshot readiness with stage counts, production-visible count, active shipments, open feedback, and missing progress steps so operators can see whether the Portal tracking page has enough customer-safe data for staging integration.
 

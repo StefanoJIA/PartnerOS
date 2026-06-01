@@ -154,6 +154,18 @@ Returns a customer-visible rollup for the Portal order tracking page. This combi
     ],
     "planned_dates_are_guarantees": false
   },
+  "tracking_summary": {
+    "stage": "ready_to_ship",
+    "production_item_count": 3,
+    "shipment_item_count": 1,
+    "resource_visible_count": 0,
+    "feedback_open_count": 0,
+    "has_production_updates": true,
+    "has_active_shipment": true,
+    "has_visible_resources": false,
+    "has_open_feedback": false,
+    "planned_dates_are_guarantees": false
+  },
   "production": {
     "items": [],
     "status_counts": {
@@ -191,7 +203,7 @@ Returns a customer-visible rollup for the Portal order tracking page. This combi
 }
 ```
 
-`stage`, `current_step_index`, `progress_steps`, and `next_action_*` are display guidance for the Portal. Planned dates are planning data only and are not guaranteed lead time.
+`stage`, `current_step_index`, `progress_steps`, `next_action_*`, and `tracking_summary` are display guidance for the Portal. Planned dates are planning data only and are not guaranteed lead time.
 
 ## GET /orders/{id}/production
 

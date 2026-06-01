@@ -25,6 +25,7 @@ export interface PortalFieldContract {
   order_detail: string[]
   line_item: string[]
   snapshot: string[]
+  tracking_summary: string[]
   customer_status: string[]
   customer_next_action: string[]
   customer_status_stages: string[]
