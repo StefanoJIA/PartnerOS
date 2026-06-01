@@ -13,7 +13,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.errors import ApiError
 from app.main import create_app
-from app.models import User
+from app.models import ActivityLog, User
 from app.services.portal.feedback_ticket_service import feedback_safety, ticket_to_dict, update_feedback_ticket
 
 
@@ -41,6 +41,8 @@ def _ticket(**overrides):
 def test_ticket_to_dict_has_operations_safety_flags():
     data = ticket_to_dict(_ticket(internal_owner="Operator"))
     assert data["internal_owner"] == "Operator"
+    assert data["operation"]["internal_handling_only"] is True
+    assert data["operation"]["activity_logging_enabled"] is True
     assert data["safety"] == feedback_safety()
     assert data["safety"]["customer_notified"] is False
     assert data["safety"]["automatic_reply_sent"] is False
@@ -59,12 +61,19 @@ def test_update_feedback_ticket_validates_status_and_priority():
         priority="high",
         internal_owner="Ops",
         response_summary="Reviewed internally. No customer reply sent.",
+        actor_id=uuid4(),
     )
 
     assert updated.status == "in_review"
     assert updated.priority == "high"
     assert updated.internal_owner == "Ops"
     assert updated.response_summary.startswith("Reviewed")
+    activity = next(call.args[0] for call in db.add.call_args_list if isinstance(call.args[0], ActivityLog))
+    assert activity.object_type == "feedback_ticket"
+    assert activity.object_id == row.id
+    assert activity.action == "feedback_status_changed"
+    assert activity.diff["current"]["customer_notified"] is False
+    assert activity.diff["current"]["automatic_reply_sent"] is False
     db.commit.assert_called_once()
 
     with pytest.raises(ApiError):

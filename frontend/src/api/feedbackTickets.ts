@@ -25,6 +25,11 @@ export interface FeedbackTicket {
   response_summary: string | null
   created_at: string
   updated_at: string
+  operation: {
+    internal_handling_only: boolean
+    activity_logging_enabled: boolean
+    customer_visible_response: boolean
+  }
   safety: FeedbackTicketSafety
 }
 

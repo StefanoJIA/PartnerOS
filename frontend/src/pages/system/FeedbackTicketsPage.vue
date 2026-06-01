@@ -66,6 +66,17 @@
             <dt class="text-slate-500">Message</dt>
             <dd class="whitespace-pre-wrap rounded border border-slate-200 bg-slate-50 p-3">{{ selected.message }}</dd>
           </div>
+          <div class="grid grid-cols-3 gap-2">
+            <el-tag :type="selected.operation.activity_logging_enabled ? 'success' : 'warning'" effect="plain">
+              {{ selected.operation.activity_logging_enabled ? 'activity logging' : 'not logged' }}
+            </el-tag>
+            <el-tag :type="selected.operation.internal_handling_only ? 'info' : 'danger'" effect="plain">
+              internal handling
+            </el-tag>
+            <el-tag :type="selected.safety.customer_notified ? 'danger' : 'success'" effect="plain">
+              {{ selected.safety.customer_notified ? 'customer notified' : 'no notification' }}
+            </el-tag>
+          </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
               <dt class="text-slate-500">Customer</dt>

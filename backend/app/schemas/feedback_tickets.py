@@ -27,6 +27,7 @@ class FeedbackTicketOut(BaseModel):
     response_summary: str | None = None
     created_at: datetime
     updated_at: datetime
+    operation: dict[str, bool]
     safety: dict[str, bool]
 
 

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import NOT_FOUND, VALIDATION_ERROR, ApiError
 from app.models import FeedbackTicket
+from app.services.activity import log_activity
 
 FEEDBACK_STATUSES = ("new", "in_review", "responded", "resolved", "closed")
 FEEDBACK_PRIORITIES = ("low", "normal", "high", "urgent")
@@ -41,6 +42,11 @@ def ticket_to_dict(row: FeedbackTicket) -> dict:
         "response_summary": row.response_summary,
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+        "operation": {
+            "internal_handling_only": True,
+            "activity_logging_enabled": True,
+            "customer_visible_response": False,
+        },
         "safety": feedback_safety(),
     }
 
@@ -92,8 +98,15 @@ def update_feedback_ticket(
     priority: str | None = None,
     internal_owner: str | None = None,
     response_summary: str | None = None,
+    actor_id: UUID | None = None,
 ) -> FeedbackTicket:
     row = get_feedback_ticket(db, ticket_id)
+    previous = {
+        "status": row.status,
+        "priority": row.priority,
+        "internal_owner": row.internal_owner,
+        "has_response_summary": bool(row.response_summary),
+    }
     if status is not None:
         if status not in FEEDBACK_STATUSES:
             raise ApiError(VALIDATION_ERROR, "Invalid feedback status", status_code=400)
@@ -106,6 +119,30 @@ def update_feedback_ticket(
         row.internal_owner = internal_owner.strip() or None
     if response_summary is not None:
         row.response_summary = response_summary.strip() or None
+    changes = {
+        "status": row.status,
+        "priority": row.priority,
+        "internal_owner": row.internal_owner,
+        "has_response_summary": bool(row.response_summary),
+        "customer_notified": False,
+        "automatic_reply_sent": False,
+        "sla_promised": False,
+    }
+    action = "feedback_ticket_updated"
+    if previous["status"] != row.status:
+        action = "feedback_status_changed"
+    if row.status == "resolved":
+        action = "feedback_ticket_resolved"
+    if row.status == "closed":
+        action = "feedback_ticket_closed"
+    log_activity(
+        db,
+        object_type="feedback_ticket",
+        object_id=row.id,
+        action=action,
+        actor_id=actor_id,
+        diff={"previous": previous, "current": changes},
+    )
     db.commit()
     db.refresh(row)
     return row
