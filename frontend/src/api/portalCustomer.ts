@@ -95,9 +95,13 @@ const FORBIDDEN_MARKERS = [
   'cost_snapshot',
   'supplier_private',
   'supplier_reference',
+  'backend_path',
   'storage_key',
   'backend/storage',
+  'local_data',
   'portal_customer_api_token',
+  'secret_key',
+  'password_hash',
 ]
 
 function portalHeaders(token: string) {

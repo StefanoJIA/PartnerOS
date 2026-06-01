@@ -18,10 +18,15 @@ FORBIDDEN = (
     "margin",
     "pricing_breakdown_json",
     "cost_snapshot_json",
+    "supplier_private",
     "supplier_reference",
+    "backend_path",
     "storage_key",
     "backend/storage",
+    "local_data",
     "portal_customer_api_token",
+    "secret_key",
+    "password_hash",
     "test-portal-token",
 )
 

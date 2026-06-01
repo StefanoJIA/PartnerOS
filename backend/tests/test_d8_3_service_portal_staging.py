@@ -45,10 +45,19 @@ def test_no_forbidden_blob_accepts_customer_safe_payload():
 
 def test_no_forbidden_blob_rejects_internal_fields_and_token():
     internal, marker = script.no_forbidden_blob({"storage_key": "secret/path"})
+    backend_path, backend_marker = script.no_forbidden_blob({"backend_path": "hidden"})
+    local_path, local_marker = script.no_forbidden_blob({"download": "local_data/private.pdf"})
+    password, password_marker = script.no_forbidden_blob({"auth": "password_hash"})
     token, token_marker = script.no_forbidden_blob({"message": "abc portal-secret xyz"}, token="portal-secret")
 
     assert internal is False
     assert marker == "storage_key"
+    assert backend_path is False
+    assert backend_marker == "backend_path"
+    assert local_path is False
+    assert local_marker == "local_data"
+    assert password is False
+    assert password_marker == "password_hash"
     assert token is False
     assert token_marker == "portal token leaked"
 

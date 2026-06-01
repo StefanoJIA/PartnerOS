@@ -36,6 +36,24 @@ def test_portal_live_forbidden_scan_tolerates_non_json_response():
     assert module._no_forbidden_blob(response) == (True, "clean")
 
 
+def test_portal_live_forbidden_scan_rejects_extended_markers():
+    module = _load_module()
+
+    response = SimpleNamespace(
+        json=lambda: {
+            "data": {
+                "backend_path": "hidden",
+                "download": "backend/storage/private.pdf",
+                "auth": "password_hash",
+            }
+        }
+    )
+
+    clean, marker = module._no_forbidden_blob(response)
+    assert clean is False
+    assert marker in {"backend_path", "backend/storage", "password_hash"}
+
+
 def test_portal_live_json_helper_tolerates_non_json_response():
     module = _load_module()
 
