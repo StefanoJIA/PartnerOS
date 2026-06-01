@@ -110,9 +110,11 @@ def main() -> int:
         Check("missing token rejected"),
         Check("wrong token rejected"),
         Check("correct token accepted"),
+        Check("manifest exposes service portal contract"),
         Check("products whitelist payload"),
         Check("orders whitelist payload"),
         Check("order detail whitelist payload"),
+        Check("order snapshot whitelist payload"),
         Check("production whitelist payload"),
         Check("shipment whitelist payload"),
         Check("resources whitelist payload"),
@@ -133,6 +135,7 @@ def main() -> int:
         missing = c.get("/api/v1/portal/customer/products")
         wrong = c.get("/api/v1/portal/customer/products", headers={"X-Portal-Customer-Token": "wrong"})
         headers = {"X-Portal-Customer-Token": "test-portal-token"}
+        manifest = c.get("/api/v1/portal/customer/manifest", headers=headers)
         products = c.get("/api/v1/portal/customer/products?limit=5", headers=headers)
         orders = c.get("/api/v1/portal/customer/orders?limit=5", headers=headers)
         readiness = c.get("/api/v1/portal/customer/readiness")
@@ -146,38 +149,60 @@ def main() -> int:
         checks[3].pass_(f"HTTP {products.status_code}") if products.status_code == 200 else checks[3].fail(
             products.text[:160]
         )
-        checks[4].pass_(f"HTTP {products.status_code}") if products.status_code == 200 else checks[4].fail(
+        mdata = _json(manifest).get("data", {}) if manifest.status_code == 200 else {}
+        if (
+            manifest.status_code == 200
+            and mdata.get("source_of_truth") == "PartnerOS"
+            and "order_snapshot" in mdata.get("endpoints", {})
+            and mdata.get("field_policy", {}).get("planned_dates_are_guarantees") is False
+        ):
+            checks[4].pass_("D8.1 contract")
+        else:
+            checks[4].fail(manifest.text[:160])
+        checks[5].pass_(f"HTTP {products.status_code}") if products.status_code == 200 else checks[5].fail(
             products.text[:160]
         )
-        checks[5].pass_(f"HTTP {orders.status_code}") if orders.status_code == 200 else checks[5].fail(
+        checks[6].pass_(f"HTTP {orders.status_code}") if orders.status_code == 200 else checks[6].fail(
             orders.text[:160]
         )
 
         order_items = _json(orders).get("data", {}).get("items", []) if orders.status_code == 200 else []
-        detail = production = shipment = resources = None
+        detail = snapshot = production = shipment = resources = None
         if order_items:
             order_id = order_items[0]["id"]
             detail = c.get(f"/api/v1/portal/customer/orders/{order_id}", headers=headers)
+            snapshot = c.get(f"/api/v1/portal/customer/orders/{order_id}/snapshot", headers=headers)
             production = c.get(f"/api/v1/portal/customer/orders/{order_id}/production", headers=headers)
             shipment = c.get(f"/api/v1/portal/customer/orders/{order_id}/shipment", headers=headers)
             resources = c.get(f"/api/v1/portal/customer/orders/{order_id}/resources", headers=headers)
-            checks[6].pass_(f"HTTP {detail.status_code}") if detail.status_code == 200 else checks[6].fail(
+            checks[7].pass_(f"HTTP {detail.status_code}") if detail.status_code == 200 else checks[7].fail(
                 detail.text[:160]
             )
-            checks[7].pass_(f"HTTP {production.status_code}") if production.status_code == 200 else checks[7].fail(
+            sdata = _json(snapshot).get("data", {}) if snapshot.status_code == 200 else {}
+            if (
+                snapshot.status_code == 200
+                and "customer_status" in sdata
+                and "progress_steps" in sdata.get("customer_status", {})
+                and sdata.get("customer_status", {}).get("planned_dates_are_guarantees") is False
+            ):
+                checks[8].pass_(f"HTTP {snapshot.status_code}")
+            else:
+                checks[8].fail(snapshot.text[:160])
+            checks[9].pass_(f"HTTP {production.status_code}") if production.status_code == 200 else checks[9].fail(
                 production.text[:160]
             )
-            checks[8].pass_(f"HTTP {shipment.status_code}") if shipment.status_code == 200 else checks[8].fail(
+            checks[10].pass_(f"HTTP {shipment.status_code}") if shipment.status_code == 200 else checks[10].fail(
                 shipment.text[:160]
             )
-            checks[9].pass_(f"HTTP {resources.status_code}") if resources.status_code == 200 else checks[9].fail(
+            checks[11].pass_(f"HTTP {resources.status_code}") if resources.status_code == 200 else checks[11].fail(
                 resources.text[:160]
             )
         else:
-            checks[6].pass_("no order rows")
             checks[7].pass_("no order rows")
             checks[8].pass_("no order rows")
             checks[9].pass_("no order rows")
+            checks[10].pass_("no order rows")
+            checks[11].pass_("no order rows")
 
         feedback = c.post(
             "/api/v1/portal/customer/feedback",
@@ -199,26 +224,26 @@ def main() -> int:
             and fdata.get("customer_notified") is False
             and fdata.get("automatic_reply_sent") is False
         ):
-            checks[10].pass_(fdata.get("ticket_number", "created"))
+            checks[12].pass_(fdata.get("ticket_number", "created"))
         else:
-            checks[10].fail(feedback.text[:160])
+            checks[12].fail(feedback.text[:160])
 
-        responses = [products, orders, feedback, readiness]
-        responses.extend(r for r in (detail, production, shipment, resources) if r is not None)
+        responses = [manifest, products, orders, feedback, readiness]
+        responses.extend(r for r in (detail, snapshot, production, shipment, resources) if r is not None)
         clean, detail_text = _no_forbidden_blob(*responses)
-        checks[11].pass_(detail_text) if clean else checks[11].fail(detail_text)
+        checks[13].pass_(detail_text) if clean else checks[13].fail(detail_text)
 
         rdata = _json(readiness).get("data", {}) if readiness.status_code == 200 else {}
         if rdata.get("allowed_origins_configured") is True and "https://service.intelli-opus.com" in rdata.get(
             "cors_origins", []
         ):
-            checks[12].pass_("service portal origin configured")
+            checks[14].pass_("service portal origin configured")
         else:
-            checks[12].fail(readiness.text[:160])
+            checks[14].fail(readiness.text[:160])
         if readiness.status_code == 200 and rdata.get("safety", {}).get("token_exposed") is False:
-            checks[13].pass_("token not exposed")
+            checks[15].pass_("token not exposed")
         else:
-            checks[13].fail(readiness.text[:160])
+            checks[15].fail(readiness.text[:160])
 
     for check in checks:
         print(check.line())

@@ -165,9 +165,11 @@ def main() -> int:
         Check("missing token rejected"),
         Check("wrong token rejected"),
         Check("CORS preflight allows service portal origin"),
+        Check("manifest endpoint"),
         Check("products endpoint"),
         Check("orders endpoint"),
         Check("order detail endpoint"),
+        Check("order snapshot endpoint"),
         Check("production endpoint"),
         Check("shipment endpoint"),
         Check("resources endpoint"),
@@ -226,13 +228,25 @@ def main() -> int:
                 checks[3].fail(f"HTTP {preflight.status_code} allow-origin={allowed_origin or 'missing'}")
         responses.append(preflight)
 
+        manifest = _get(client, "/manifest", headers=headers)
         products = _get(client, "/products?limit=5", headers=headers)
         orders = _get(client, "/orders?limit=5", headers=headers)
-        responses.extend([products, orders])
-        checks[4].pass_(f"HTTP {products.status_code}") if products and products.status_code == 200 else checks[
-            4
+        responses.extend([manifest, products, orders])
+        manifest_data = (_json(manifest).get("data") or {}) if manifest and manifest.status_code == 200 else {}
+        if (
+            manifest
+            and manifest.status_code == 200
+            and manifest_data.get("source_of_truth") == "PartnerOS"
+            and "order_snapshot" in manifest_data.get("endpoints", {})
+            and manifest_data.get("field_policy", {}).get("planned_dates_are_guarantees") is False
+        ):
+            checks[4].pass_("D8.1 contract")
+        else:
+            checks[4].fail(f"HTTP {manifest.status_code if manifest else 'unreachable'}")
+        checks[5].pass_(f"HTTP {products.status_code}") if products and products.status_code == 200 else checks[
+            5
         ].fail(f"HTTP {products.status_code if products else 'unreachable'}")
-        checks[5].pass_(f"HTTP {orders.status_code}") if orders and orders.status_code == 200 else checks[5].fail(
+        checks[6].pass_(f"HTTP {orders.status_code}") if orders and orders.status_code == 200 else checks[6].fail(
             f"HTTP {orders.status_code if orders else 'unreachable'}"
         )
 
@@ -241,17 +255,33 @@ def main() -> int:
         if order_items:
             order_id = order_items[0]["id"]
             detail = _get(client, f"/orders/{order_id}", headers=headers)
+            snapshot = _get(client, f"/orders/{order_id}/snapshot", headers=headers)
             production = _get(client, f"/orders/{order_id}/production", headers=headers)
             shipment = _get(client, f"/orders/{order_id}/shipment", headers=headers)
             resources = _get(client, f"/orders/{order_id}/resources", headers=headers)
-            responses.extend([detail, production, shipment, resources])
-            for idx, response in ((6, detail), (7, production), (8, shipment), (9, resources)):
+            responses.extend([detail, snapshot, production, shipment, resources])
+            if detail and detail.status_code == 200:
+                checks[7].pass_(f"HTTP {detail.status_code}")
+            else:
+                checks[7].fail(f"HTTP {detail.status_code if detail else 'unreachable'}")
+            snapshot_data = (_json(snapshot).get("data") or {}) if snapshot and snapshot.status_code == 200 else {}
+            if (
+                snapshot
+                and snapshot.status_code == 200
+                and "customer_status" in snapshot_data
+                and "progress_steps" in snapshot_data.get("customer_status", {})
+                and snapshot_data.get("customer_status", {}).get("planned_dates_are_guarantees") is False
+            ):
+                checks[8].pass_(f"HTTP {snapshot.status_code}")
+            else:
+                checks[8].fail(f"HTTP {snapshot.status_code if snapshot else 'unreachable'}")
+            for idx, response in ((9, production), (10, shipment), (11, resources)):
                 if response and response.status_code == 200:
                     checks[idx].pass_(f"HTTP {response.status_code}")
                 else:
                     checks[idx].fail(f"HTTP {response.status_code if response else 'unreachable'}")
         else:
-            for idx in (6, 7, 8, 9):
+            for idx in (7, 8, 9, 10, 11):
                 checks[idx].pass_("no order rows")
 
         if create_feedback:
@@ -275,14 +305,14 @@ def main() -> int:
                 and data.get("feedback_received") is True
                 and data.get("customer_notified") is False
             ):
-                checks[10].pass_(data.get("ticket_number", "created"))
+                checks[12].pass_(data.get("ticket_number", "created"))
             else:
-                checks[10].fail(f"HTTP {feedback.status_code}")
+                checks[12].fail(f"HTTP {feedback.status_code}")
         else:
-            checks[10].pass_("skipped; set D8_3_CREATE_TEST_FEEDBACK=true")
+            checks[12].pass_("skipped; set D8_3_CREATE_TEST_FEEDBACK=true")
 
     clean, detail = no_forbidden_blob(*responses, token=token)
-    checks[11].pass_(detail) if clean else checks[11].fail(detail)
+    checks[13].pass_(detail) if clean else checks[13].fail(detail)
 
     return _finish(checks=checks, base=base, origin=origin, create_feedback=create_feedback)
 

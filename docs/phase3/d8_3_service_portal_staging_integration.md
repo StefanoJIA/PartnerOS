@@ -39,8 +39,9 @@ python scripts/d8_3_service_portal_staging_check.py
 | `/health` | Confirms PartnerOS backend is reachable |
 | missing/wrong token | Confirms 401/403 token boundary |
 | CORS preflight | Confirms `SERVICE_PORTAL_ORIGIN` is allowed |
+| manifest | Confirms the token-gated service Portal contract exposes source-of-truth, endpoints, and planned-date policy |
 | products/orders | Confirms customer bridge reads work |
-| order detail/production/shipment/resources | Confirms the customer order lifecycle reads consistently |
+| order detail/snapshot/production/shipment/resources | Confirms the customer order lifecycle and customer-visible tracking summary read consistently |
 | optional TEST feedback | Confirms portal feedback creation without customer notification |
 | forbidden field scan | Blocks internal cost, margin, storage keys, backend paths, secrets, token leakage |
 
