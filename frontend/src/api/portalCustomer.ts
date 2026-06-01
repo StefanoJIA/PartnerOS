@@ -37,6 +37,7 @@ export interface PortalFieldContract {
   feedback_create: string[]
   feedback_snapshot: string[]
   feedback_create_response: string[]
+  feedback_next_links: string[]
   feedback_form_contract: {
     submit_endpoint: string
     submit_method: string

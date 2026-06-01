@@ -270,11 +270,30 @@ def create_feedback_ticket(
     db.add(row)
     db.commit()
     db.refresh(row)
+    next_links: dict[str, str | None] = {
+        "orders": "/api/v1/portal/customer/orders",
+        "order_snapshot": None,
+        "production": None,
+        "shipment": None,
+        "resources": None,
+        "feedback_submit": "/api/v1/portal/customer/feedback",
+    }
+    if order_id:
+        order_id_text = str(order_id)
+        next_links.update(
+            {
+                "order_snapshot": f"/api/v1/portal/customer/orders/{order_id_text}/snapshot",
+                "production": f"/api/v1/portal/customer/orders/{order_id_text}/production",
+                "shipment": f"/api/v1/portal/customer/orders/{order_id_text}/shipment",
+                "resources": f"/api/v1/portal/customer/orders/{order_id_text}/resources",
+            }
+        )
     return _safe_payload(
         {
             "ticket_number": row.ticket_number,
             "status": row.status,
             "feedback_received": True,
+            "next_links": next_links,
             "customer_notified": False,
             "automatic_reply_sent": False,
             "resolution_time_promised": False,

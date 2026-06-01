@@ -188,9 +188,18 @@ def portal_customer_field_contract() -> dict[str, Any]:
             "ticket_number",
             "status",
             "feedback_received",
+            "next_links",
             "customer_notified",
             "automatic_reply_sent",
             "resolution_time_promised",
+        ],
+        "feedback_next_links": [
+            "orders",
+            "order_snapshot",
+            "production",
+            "shipment",
+            "resources",
+            "feedback_submit",
         ],
         "feedback_form_contract": portal_customer_feedback_form_contract(),
         "date_policy": {

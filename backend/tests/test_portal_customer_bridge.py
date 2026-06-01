@@ -100,6 +100,8 @@ def test_portal_customer_manifest_is_token_gated_and_safe():
     assert data["field_contract"]["feedback_form_contract"]["resolution_time_promised"] is False
     assert data["field_contract"]["feedback_form_contract"]["customer_notified"] is False
     assert "feedback_create_response" in data["field_contract"]
+    assert "next_links" in data["field_contract"]["feedback_create_response"]
+    assert "feedback_next_links" in data["field_contract"]
     assert data["field_policy"]["planned_dates_are_guarantees"] is False
     assert data["safety"]["automatic_customer_notification"] is False
     assert data["safety"]["order_status_mutated"] is False
@@ -205,6 +207,14 @@ def test_portal_feedback_creates_ticket_without_auto_reply(monkeypatch):
             "ticket_number": "FB-2026-0001",
             "status": "new",
             "feedback_received": True,
+            "next_links": {
+                "orders": "/api/v1/portal/customer/orders",
+                "order_snapshot": None,
+                "production": None,
+                "shipment": None,
+                "resources": None,
+                "feedback_submit": "/api/v1/portal/customer/feedback",
+            },
             "customer_notified": False,
             "automatic_reply_sent": False,
             "resolution_time_promised": False,
@@ -219,6 +229,43 @@ def test_portal_feedback_creates_ticket_without_auto_reply(monkeypatch):
     assert r.status_code == 201
     data = r.json()["data"]
     assert data["ticket_number"] == "FB-2026-0001"
+    assert data["next_links"]["orders"] == "/api/v1/portal/customer/orders"
+    assert data["next_links"]["feedback_submit"] == "/api/v1/portal/customer/feedback"
+    assert data["customer_notified"] is False
+    assert data["automatic_reply_sent"] is False
+
+
+def test_portal_feedback_response_includes_order_refresh_links(monkeypatch):
+    from app.services.portal.customer_portal_bridge import create_feedback_ticket
+
+    order_id = uuid4()
+    company_id = uuid4()
+    db = MagicMock()
+    order = MagicMock()
+    order.company_id = company_id
+
+    db.query.return_value.filter.return_value.first.return_value = order
+    monkeypatch.setattr("app.services.portal.customer_portal_bridge._next_ticket_number", lambda db: "FB-2026-0002")
+
+    def add(row):
+        row.ticket_number = "FB-2026-0002"
+        row.status = "new"
+
+    db.add.side_effect = add
+
+    data = create_feedback_ticket(
+        db,
+        order_id=order_id,
+        feedback_type="tracking",
+        subject="Need shipment update",
+        message="Can you refresh the shipment status?",
+    )
+
+    assert data["ticket_number"] == "FB-2026-0002"
+    assert data["next_links"]["order_snapshot"] == f"/api/v1/portal/customer/orders/{order_id}/snapshot"
+    assert data["next_links"]["shipment"] == f"/api/v1/portal/customer/orders/{order_id}/shipment"
+    assert data["next_links"]["resources"] == f"/api/v1/portal/customer/orders/{order_id}/resources"
+    assert data["next_links"]["feedback_submit"] == "/api/v1/portal/customer/feedback"
     assert data["customer_notified"] is False
     assert data["automatic_reply_sent"] is False
 
