@@ -37,6 +37,31 @@ export interface PortalOperationsConsole {
       carrier_api_called: boolean
     }
   }
+  portal_launch_readiness: {
+    ready_for_real_staging: boolean
+    blockers: string[]
+    warnings: string[]
+    checks: {
+      portal_api_enabled: boolean
+      token_configured: boolean
+      public_base_url_configured: boolean
+      runtime_ok: boolean
+      all_endpoints_ready: boolean
+      forbidden_field_audit_clear: boolean
+      customer_snapshots_ready: boolean
+      resources_ready: boolean
+      feedback_queue_clear: boolean
+    }
+    safety: {
+      read_only: boolean
+      staging_validated: boolean
+      customer_notified: boolean
+      supplier_notified: boolean
+      automatic_reply_sent: boolean
+      carrier_api_called: boolean
+      token_value_exposed: boolean
+    }
+  }
   runtime_health: {
     ok: boolean
     database_status: string

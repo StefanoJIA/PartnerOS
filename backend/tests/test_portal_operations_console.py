@@ -337,3 +337,35 @@ def test_resource_readiness_summarizes_customer_visible_resources_without_paths(
     assert data["safety"]["download_links_signed"] is True
     assert data["safety"]["file_location_exposed"] is False
     assert data["safety"]["filesystem_path_exposed"] is False
+
+
+def test_portal_launch_readiness_aggregates_blockers_without_validating_staging():
+    from app.services.portal.operations_console import _build_portal_launch_readiness
+
+    status = {
+        "enabled": True,
+        "token_required": True,
+        "token_configured": False,
+        "public_base_url_configured": True,
+        "missing_config": ["PORTAL_CUSTOMER_API_TOKEN"],
+    }
+    data = _build_portal_launch_readiness(
+        status=status,
+        runtime_health={"ok": True, "database_ready": True, "migration_pending": False},
+        endpoints={"products": True, "orders": True, "production": True, "shipment": True, "resources": True, "feedback": True},
+        forbidden_field_audit={"hits": []},
+        customer_snapshot_readiness={"portal_ready": False},
+        resource_readiness={"ready": False, "blocked_visibility_count": 1},
+        feedback_operations={"needs_internal_review_count": 2},
+    )
+
+    assert data["ready_for_real_staging"] is False
+    assert "portal customer token missing" in data["blockers"]
+    assert "missing config: PORTAL_CUSTOMER_API_TOKEN" in data["blockers"]
+    assert "customer order snapshots need representative progress data" in data["warnings"]
+    assert "customer-visible resources need publishing" in data["warnings"]
+    assert data["checks"]["all_endpoints_ready"] is True
+    assert data["checks"]["resources_ready"] is False
+    assert data["safety"]["read_only"] is True
+    assert data["safety"]["staging_validated"] is False
+    assert data["safety"]["token_value_exposed"] is False

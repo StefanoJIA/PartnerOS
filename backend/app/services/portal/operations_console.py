@@ -339,6 +339,72 @@ def _build_resource_readiness(resource_rows: list[OrderResource]) -> dict[str, A
     }
 
 
+def _build_portal_launch_readiness(
+    *,
+    status: dict[str, Any],
+    runtime_health: dict[str, Any],
+    endpoints: dict[str, bool],
+    forbidden_field_audit: dict[str, Any],
+    customer_snapshot_readiness: dict[str, Any],
+    resource_readiness: dict[str, Any],
+    feedback_operations: dict[str, Any],
+) -> dict[str, Any]:
+    blockers: list[str] = []
+    warnings: list[str] = []
+
+    if not status["enabled"]:
+        blockers.append("portal api disabled")
+    if status["token_required"] and not status["token_configured"]:
+        blockers.append("portal customer token missing")
+    if not status["public_base_url_configured"]:
+        blockers.append("public base url missing")
+    if status["missing_config"]:
+        blockers.extend(f"missing config: {item}" for item in status["missing_config"])
+    if not runtime_health["database_ready"]:
+        blockers.append("database not ready")
+    if runtime_health["migration_pending"]:
+        blockers.append("alembic migration pending")
+    for name, ready in endpoints.items():
+        if not ready:
+            blockers.append(f"endpoint not ready: {name}")
+    if forbidden_field_audit["hits"]:
+        blockers.append("forbidden customer-visible field audit hit")
+    if not customer_snapshot_readiness["portal_ready"]:
+        warnings.append("customer order snapshots need representative progress data")
+    if resource_readiness["blocked_visibility_count"]:
+        warnings.append("customer-visible resources need publishing")
+    if not resource_readiness["ready"]:
+        warnings.append("no portal-visible resources available")
+    if feedback_operations["needs_internal_review_count"]:
+        warnings.append("feedback tickets need internal review")
+
+    return {
+        "ready_for_real_staging": not blockers,
+        "blockers": blockers,
+        "warnings": warnings,
+        "checks": {
+            "portal_api_enabled": status["enabled"],
+            "token_configured": status["token_configured"],
+            "public_base_url_configured": status["public_base_url_configured"],
+            "runtime_ok": runtime_health["ok"],
+            "all_endpoints_ready": all(endpoints.values()),
+            "forbidden_field_audit_clear": not forbidden_field_audit["hits"],
+            "customer_snapshots_ready": customer_snapshot_readiness["portal_ready"],
+            "resources_ready": resource_readiness["ready"],
+            "feedback_queue_clear": feedback_operations["needs_internal_review_count"] == 0,
+        },
+        "safety": {
+            "read_only": True,
+            "staging_validated": False,
+            "customer_notified": False,
+            "supplier_notified": False,
+            "automatic_reply_sent": False,
+            "carrier_api_called": False,
+            "token_value_exposed": False,
+        },
+    }
+
+
 def _build_portal_contract(settings: Settings, endpoints: dict[str, bool], missing_config: list[str]) -> dict[str, Any]:
     return {
         "base_url": settings.PUBLIC_BASE_URL.strip() or None,
@@ -475,18 +541,29 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
     feedback_operations = _build_feedback_operations(ticket_rows)
     customer_snapshot_readiness = _build_customer_snapshot_readiness(snapshot_items)
     resource_readiness = _build_resource_readiness(resource_rows)
+    status = {
+        "ready": settings.PORTAL_CUSTOMER_API_ENABLED and not missing_config,
+        "enabled": settings.PORTAL_CUSTOMER_API_ENABLED,
+        "token_required": settings.PORTAL_CUSTOMER_API_REQUIRE_TOKEN,
+        "token_configured": bool(settings.PORTAL_CUSTOMER_API_TOKEN.strip()),
+        "public_base_url_configured": bool(settings.PUBLIC_BASE_URL.strip()),
+        "public_base_url": settings.PUBLIC_BASE_URL.strip() or None,
+        "allowed_origins": settings.cors_origins_list,
+        "missing_config": missing_config,
+    }
+    portal_launch_readiness = _build_portal_launch_readiness(
+        status=status,
+        runtime_health=runtime_health,
+        endpoints=endpoints,
+        forbidden_field_audit=forbidden_field_audit,
+        customer_snapshot_readiness=customer_snapshot_readiness,
+        resource_readiness=resource_readiness,
+        feedback_operations=feedback_operations,
+    )
 
     payload = {
-        "status": {
-            "ready": settings.PORTAL_CUSTOMER_API_ENABLED and not missing_config,
-            "enabled": settings.PORTAL_CUSTOMER_API_ENABLED,
-            "token_required": settings.PORTAL_CUSTOMER_API_REQUIRE_TOKEN,
-            "token_configured": bool(settings.PORTAL_CUSTOMER_API_TOKEN.strip()),
-            "public_base_url_configured": bool(settings.PUBLIC_BASE_URL.strip()),
-            "public_base_url": settings.PUBLIC_BASE_URL.strip() or None,
-            "allowed_origins": settings.cors_origins_list,
-            "missing_config": missing_config,
-        },
+        "status": status,
+        "portal_launch_readiness": portal_launch_readiness,
         "portal_contract": portal_contract,
         "runtime_health": runtime_health,
         "endpoint_readiness": endpoints,

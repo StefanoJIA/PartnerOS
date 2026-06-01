@@ -16,6 +16,27 @@
     />
     <el-alert v-if="error" type="error" :closable="false" show-icon :title="error" />
 
+    <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="font-semibold text-slate-800">Launch readiness</h3>
+        <el-tag :type="data?.portal_launch_readiness.ready_for_real_staging ? 'success' : 'warning'">
+          {{ data?.portal_launch_readiness.ready_for_real_staging ? 'ready to connect' : 'needs attention' }}
+        </el-tag>
+      </div>
+      <div class="grid gap-2 md:grid-cols-3 xl:grid-cols-6">
+        <div v-for="(ready, check) in data?.portal_launch_readiness.checks || {}" :key="check" class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">{{ check }}</p>
+          <el-tag class="mt-2" size="small" :type="ready ? 'success' : 'warning'" effect="plain">{{ ready ? 'ok' : 'check' }}</el-tag>
+        </div>
+      </div>
+      <div v-if="data?.portal_launch_readiness.blockers.length" class="mt-3 flex flex-wrap gap-2">
+        <el-tag v-for="blocker in data.portal_launch_readiness.blockers" :key="blocker" type="danger" effect="plain">{{ blocker }}</el-tag>
+      </div>
+      <div v-if="data?.portal_launch_readiness.warnings.length" class="mt-2 flex flex-wrap gap-2">
+        <el-tag v-for="warning in data.portal_launch_readiness.warnings" :key="warning" type="warning" effect="plain">{{ warning }}</el-tag>
+      </div>
+    </section>
+
     <section class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
       <div class="rounded border border-slate-200 bg-white p-4">
         <p class="text-sm text-slate-500">Portal API</p>

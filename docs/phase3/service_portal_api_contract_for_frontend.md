@@ -297,6 +297,8 @@ This is an internal authenticated endpoint, not a customer Portal API. It shows 
 
 The response includes `portal_contract` for staging handoff: public base URL, allowed origins, server-to-server auth header name, token required/configured booleans, customer Portal endpoint paths, and endpoint readiness. It never includes the token value.
 
+The response includes `portal_launch_readiness`, a read-only rollup for staging connection preparation. It aggregates config, runtime, endpoint readiness, forbidden-field audit, customer snapshots, resources, and feedback queue checks into blockers and warnings. It never marks staging validated, deploys, notifies anyone, calls carriers, or exposes token values.
+
 The response also includes `runtime_health`, a read-only summary of database status, Alembic current/head revisions, migration pending state, Portal API config readiness, and sanitized warnings. It does not expose database URLs, storage paths, secrets, or token values.
 
 The `feedback_operations` block summarizes internal feedback triage for Portal launch readiness: open tickets, high-priority tickets, tickets needing internal review, missing response summaries, resolved tickets ready to close, and oldest open age. It is an internal queue summary only and does not create replies, notify customers, or promise an SLA.
