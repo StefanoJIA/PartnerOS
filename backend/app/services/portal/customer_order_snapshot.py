@@ -276,6 +276,147 @@ def _portal_display(
     }
 
 
+def _timeline_state(status: str) -> str:
+    if status in {"completed", "delivered"}:
+        return "complete"
+    if status in {"in_progress", "shipped", "responded"}:
+        return "current"
+    if status in {"delayed", "blocked", "urgent"}:
+        return "attention"
+    if status in {"cancelled", "closed"}:
+        return "closed"
+    return "planned"
+
+
+def _customer_timeline(
+    *,
+    order: CustomerOrder | None,
+    order_status: str,
+    production_rows: list[OrderProductionMilestone],
+    shipment_rows: list[ShipmentPlan],
+    resources: dict[str, Any],
+    feedback_count: int,
+    open_feedback_count: int,
+) -> dict[str, Any]:
+    items: list[dict[str, Any]] = []
+
+    confirmed_at = _date_value(getattr(order, "customer_confirmed_at", None))
+    if order_status in {
+        "confirmed",
+        "supplier_confirmation_pending",
+        "supplier_confirmed",
+        "production_pending",
+        "in_production",
+        "ready_to_ship",
+        "shipped",
+        "delivered",
+    }:
+        items.append(
+            {
+                "key": "order_confirmed",
+                "source": "order",
+                "label": "Order confirmed",
+                "status": "confirmed",
+                "state": "complete",
+                "occurred_at": confirmed_at,
+                "planned_at": None,
+                "sort_date": confirmed_at,
+                "planned_dates_are_guarantees": False,
+            }
+        )
+
+    for row in production_rows:
+        actual = _date_value(row.actual_date)
+        planned = _date_value(row.planned_date)
+        items.append(
+            {
+                "key": f"production:{row.milestone_type}",
+                "source": "production",
+                "label": row.milestone_label,
+                "status": row.status,
+                "state": _timeline_state(row.status),
+                "occurred_at": actual,
+                "planned_at": planned,
+                "sort_date": actual or planned,
+                "planned_dates_are_guarantees": False,
+            }
+        )
+
+    for row in shipment_rows:
+        if row.status == "cancelled":
+            continue
+        planned = _date_value(row.estimated_arrival_date or row.estimated_ship_date)
+        items.append(
+            {
+                "key": f"shipment:{row.id}",
+                "source": "shipment",
+                "label": "Shipment tracking",
+                "status": row.status,
+                "state": _timeline_state(row.status),
+                "occurred_at": None,
+                "planned_at": planned,
+                "sort_date": planned or _date_value(row.created_at),
+                "shipment_method": row.shipment_method,
+                "tracking_number_present": bool(row.tracking_number),
+                "planned_dates_are_guarantees": False,
+            }
+        )
+
+    for resource in resources.get("items", []):
+        published_at = resource.get("published_at") or resource.get("created_at")
+        items.append(
+            {
+                "key": f"resource:{resource.get('id')}",
+                "source": "resources",
+                "label": resource.get("title") or "Customer resource",
+                "status": resource.get("status") or "published",
+                "state": "complete",
+                "occurred_at": published_at,
+                "planned_at": None,
+                "sort_date": published_at,
+                "category": resource.get("category"),
+                "planned_dates_are_guarantees": False,
+            }
+        )
+
+    if feedback_count:
+        items.append(
+            {
+                "key": "feedback",
+                "source": "feedback",
+                "label": "Feedback received",
+                "status": "open" if open_feedback_count else "closed",
+                "state": "attention" if open_feedback_count else "complete",
+                "occurred_at": None,
+                "planned_at": None,
+                "sort_date": None,
+                "open_count": open_feedback_count,
+                "total_count": feedback_count,
+                "planned_dates_are_guarantees": False,
+            }
+        )
+
+    items.sort(key=lambda item: (item["sort_date"] is None, item["sort_date"] or "", item["source"], item["key"]))
+    for item in items:
+        item.pop("sort_date", None)
+
+    return {
+        "items": items,
+        "total": len(items),
+        "has_attention": any(item["state"] == "attention" for item in items),
+        "planned_dates_are_guarantees": False,
+        "safety": {
+            "customer_visible_only": True,
+            "forbidden_field_filter_enabled": True,
+            "planned_dates_are_guarantees": False,
+            "customer_notified": False,
+            "supplier_notified": False,
+            "carrier_api_called": False,
+            "order_status_mutated": False,
+        },
+    }
+
+
 def build_customer_order_snapshot(db: Session, order_id: UUID) -> dict[str, Any]:
     detail = build_customer_order_detail(db, order_id)
     production = build_customer_production_view(db, order_id)
@@ -367,6 +508,15 @@ def build_customer_order_snapshot(db: Session, order_id: UUID) -> dict[str, Any]
             progress_steps=progress_steps,
             tracking_summary=tracking_summary,
             feedback_submit_path=links["feedback_submit"],
+        ),
+        "customer_timeline": _customer_timeline(
+            order=order,
+            order_status=order_status,
+            production_rows=production_rows,
+            shipment_rows=shipment_rows,
+            resources=resources,
+            feedback_count=feedback_count,
+            open_feedback_count=open_feedback_count,
         ),
         "links": links,
         "production": {

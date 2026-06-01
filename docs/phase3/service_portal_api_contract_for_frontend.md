@@ -111,7 +111,7 @@ Returns the order summary plus billing/shipping terms, customer notes, and custo
 
 ## GET /orders/{id}/snapshot
 
-Returns a customer-visible rollup for the Portal order tracking page. This combines the safe order detail, production milestones, shipment plans, customer-visible resources, and feedback link metadata.
+Returns a customer-visible rollup for the Portal order tracking page. This combines the safe order detail, production milestones, shipment plans, customer-visible resources, feedback link metadata, and a render-ready `customer_timeline`.
 
 ```json
 {
@@ -183,6 +183,33 @@ Returns a customer-visible rollup for the Portal order tracking page. This combi
     "has_open_feedback": false,
     "planned_dates_are_guarantees": false
   },
+  "customer_timeline": {
+    "items": [
+      {
+        "key": "order_confirmed",
+        "source": "order",
+        "label": "Order confirmed",
+        "status": "confirmed",
+        "state": "complete",
+        "occurred_at": "2026-05-29T12:00:00+00:00",
+        "planned_at": null,
+        "planned_dates_are_guarantees": false
+      },
+      {
+        "key": "production:ready_to_ship",
+        "source": "production",
+        "label": "Ready to ship",
+        "status": "completed",
+        "state": "complete",
+        "occurred_at": null,
+        "planned_at": null,
+        "planned_dates_are_guarantees": false
+      }
+    ],
+    "total": 2,
+    "has_attention": false,
+    "planned_dates_are_guarantees": false
+  },
   "production": {
     "items": [],
     "status_counts": {
@@ -227,7 +254,7 @@ Returns a customer-visible rollup for the Portal order tracking page. This combi
 }
 ```
 
-`stage`, `current_step_index`, `progress_steps`, `portal_display.status_badges`, `next_action_*`, and `tracking_summary` are display guidance for the Portal. `status_badges` is a render-ready version of the same confirmed → production → ready to ship → shipped → delivered sequence, with `state`, `active`, optional `date`, and `planned_dates_are_guarantees=false` on each badge so `service.intelli-opus.com` does not need to infer milestone semantics. Planned dates are planning data only and are not guaranteed lead time. The `feedback` block gives the Portal backend enough safe metadata to render the customer feedback form without guessing allowed types or priorities; it still does not promise resolution time or send any notification.
+`stage`, `current_step_index`, `progress_steps`, `portal_display.status_badges`, `next_action_*`, `tracking_summary`, and `customer_timeline` are display guidance for the Portal. `status_badges` is a render-ready version of the same confirmed → production → ready to ship → shipped → delivered sequence, with `state`, `active`, optional `date`, and `planned_dates_are_guarantees=false` on each badge so `service.intelli-opus.com` does not need to infer milestone semantics. `customer_timeline.items[]` safely combines order, production, shipment, resources, and feedback signals without internal notes, supplier-private fields, backend paths, or token values. Planned dates are planning data only and are not guaranteed lead time. The `feedback` block gives the Portal backend enough safe metadata to render the customer feedback form without guessing allowed types or priorities; it still does not promise resolution time or send any notification.
 
 ## GET /orders/{id}/production
 

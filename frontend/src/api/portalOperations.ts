@@ -244,6 +244,35 @@ export interface PortalOperationsConsole {
       }
       planned_dates_are_guarantees: boolean
     }
+    customer_timeline?: {
+      items: Array<{
+        key: string
+        source: string
+        label: string
+        status: string
+        state: string
+        occurred_at: string | null
+        planned_at: string | null
+        shipment_method?: string | null
+        tracking_number_present?: boolean
+        category?: string | null
+        open_count?: number
+        total_count?: number
+        planned_dates_are_guarantees: boolean
+      }>
+      total: number
+      has_attention: boolean
+      planned_dates_are_guarantees: boolean
+      safety: {
+        customer_visible_only: boolean
+        forbidden_field_filter_enabled: boolean
+        planned_dates_are_guarantees: boolean
+        customer_notified: boolean
+        supplier_notified: boolean
+        carrier_api_called: boolean
+        order_status_mutated: boolean
+      }
+    }
     links: {
       order_detail: string
       order_snapshot: string

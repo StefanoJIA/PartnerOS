@@ -694,6 +694,13 @@
         <el-table-column label="Shipment" width="160">
           <template #default="{ row }">active {{ row.shipment.active_count }}</template>
         </el-table-column>
+        <el-table-column label="Timeline" width="150">
+          <template #default="{ row }">
+            <el-tag size="small" :type="row.customer_timeline?.has_attention ? 'warning' : 'success'" effect="plain">
+              {{ row.customer_timeline?.total ?? 0 }} events
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="Signals" min-width="210">
           <template #default="{ row }">
             <div class="flex flex-wrap gap-1">

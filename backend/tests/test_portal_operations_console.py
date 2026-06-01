@@ -79,8 +79,17 @@ def test_customer_snapshot_stage_and_safety(monkeypatch):
     milestone = MagicMock()
     milestone.status = "completed"
     milestone.milestone_type = "ready_to_ship"
+    milestone.milestone_label = "Ready to ship"
+    milestone.planned_date = None
+    milestone.actual_date = None
     shipment = MagicMock()
+    shipment.id = uuid4()
     shipment.status = "planned"
+    shipment.shipment_method = "ocean"
+    shipment.estimated_ship_date = None
+    shipment.estimated_arrival_date = None
+    shipment.tracking_number = None
+    shipment.created_at = None
 
     def query(model):
         q = MagicMock()
@@ -149,6 +158,13 @@ def test_customer_snapshot_stage_and_safety(monkeypatch):
     assert data["portal_display"]["feedback_cta"]["automatic_reply_sent"] is False
     assert data["portal_display"]["feedback_cta"]["resolution_time_promised"] is False
     assert data["portal_display"]["planned_dates_are_guarantees"] is False
+    assert data["customer_timeline"]["total"] == 3
+    assert [item["source"] for item in data["customer_timeline"]["items"]] == ["order", "production", "shipment"]
+    assert data["customer_timeline"]["items"][1]["label"] == "Ready to ship"
+    assert data["customer_timeline"]["items"][2]["tracking_number_present"] is False
+    assert data["customer_timeline"]["planned_dates_are_guarantees"] is False
+    assert data["customer_timeline"]["safety"]["customer_notified"] is False
+    assert data["customer_timeline"]["safety"]["carrier_api_called"] is False
     assert data["links"]["order_snapshot"] == f"/api/v1/portal/customer/orders/{order_id}/snapshot"
     assert data["links"]["shipment"] == f"/api/v1/portal/customer/orders/{order_id}/shipment"
     assert data["links"]["feedback_submit"] == "/api/v1/portal/customer/feedback"

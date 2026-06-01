@@ -30,6 +30,8 @@ export interface PortalFieldContract {
   portal_display_status_badge?: string[]
   portal_display_signal_card?: string[]
   portal_display_feedback_cta?: string[]
+  customer_timeline?: string[]
+  customer_timeline_item?: string[]
   snapshot_links: string[]
   customer_status: string[]
   customer_next_action: string[]
