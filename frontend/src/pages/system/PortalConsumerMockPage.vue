@@ -103,6 +103,43 @@
           {{ card.label }} {{ card.count }}
         </el-tag>
       </div>
+      <div v-if="customerTimelinePreview" class="mt-4 rounded border border-slate-200 p-3">
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p class="text-sm font-medium text-slate-700">Customer timeline</p>
+            <p class="mt-1 text-xs text-slate-500">
+              {{ customerTimelinePreview.total }} customer-visible event(s) from order, production, shipment, resources, and feedback.
+            </p>
+          </div>
+          <el-tag :type="customerTimelinePreview.has_attention ? 'warning' : 'success'" effect="plain">
+            {{ customerTimelinePreview.has_attention ? 'needs attention' : 'clear' }}
+          </el-tag>
+        </div>
+        <el-table :data="customerTimelinePreview.items" size="small" class="w-full">
+          <el-table-column prop="label" label="Event" min-width="190">
+            <template #default="{ row }">
+              <div class="font-medium text-slate-800">{{ row.label }}</div>
+              <div class="text-xs text-slate-500">{{ row.description || row.source }}</div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="source" label="Source" width="110" />
+          <el-table-column label="Status" width="140">
+            <template #default="{ row }">
+              <el-tag size="small" :type="timelineStateType(row.state)" effect="plain">
+                {{ row.status || row.state }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="Date" width="150">
+            <template #default="{ row }">
+              {{ row.occurred_at || row.planned_at || '-' }}
+            </template>
+          </el-table-column>
+        </el-table>
+        <p class="mt-2 text-xs text-slate-500">
+          Planned dates are displayed as planning data only; this preview must not expose internal notes, supplier-private fields, backend paths, or token values.
+        </p>
+      </div>
     </section>
 
     <section class="rounded border border-slate-200 bg-white p-4">
@@ -207,6 +244,20 @@ type PortalDisplayPreview = {
   }
   planned_dates_are_guarantees: boolean
 }
+type CustomerTimelineItem = {
+  source: string
+  label: string
+  description?: string | null
+  status?: string | null
+  state: 'done' | 'current' | 'pending' | 'attention' | string
+  occurred_at?: string | null
+  planned_at?: string | null
+}
+type CustomerTimelinePreview = {
+  items: CustomerTimelineItem[]
+  total: number
+  has_attention: boolean
+}
 
 const results = ref<NamedPortalResult[]>([])
 const feedback = reactive({
@@ -225,6 +276,11 @@ const portalDisplayPreview = computed<PortalDisplayPreview | null>(() => {
   const envelope = snapshotResult?.data as { data?: { portal_display?: PortalDisplayPreview } } | undefined
   return envelope?.data?.portal_display || null
 })
+const customerTimelinePreview = computed<CustomerTimelinePreview | null>(() => {
+  const snapshotResult = [...results.value].reverse().find((r) => r.name.includes('snapshot'))
+  const envelope = snapshotResult?.data as { data?: { customer_timeline?: CustomerTimelinePreview } } | undefined
+  return envelope?.data?.customer_timeline || null
+})
 const feedbackNextLinks = computed(() => {
   const feedbackResult = results.value.find((r) => r.name === 'feedback')
   const envelope = feedbackResult?.data as { data?: { next_links?: Record<string, string | null> } } | undefined
@@ -240,6 +296,12 @@ const feedbackNextLinks = computed(() => {
 
 function pretty(value: unknown) {
   return JSON.stringify(value, null, 2)
+}
+
+function timelineStateType(state: string) {
+  if (state === 'attention') return 'warning'
+  if (state === 'done' || state === 'current') return 'success'
+  return 'info'
 }
 
 async function loadReadiness() {
