@@ -97,6 +97,8 @@ export interface PortalOperationsConsole {
     customer_status: {
       stage: string
       label: string
+      next_action_label: string
+      next_action_detail: string
       production_completed: boolean
       ready_to_ship: boolean
       shipped: boolean

@@ -83,6 +83,8 @@ def portal_customer_field_contract() -> dict[str, Any]:
         "customer_status": [
             "stage",
             "label",
+            "next_action_label",
+            "next_action_detail",
             "order_confirmed",
             "production_started",
             "production_completed",
@@ -93,6 +95,7 @@ def portal_customer_field_contract() -> dict[str, Any]:
             "progress_steps",
             "planned_dates_are_guarantees",
         ],
+        "customer_next_action": ["next_action_label", "next_action_detail"],
         "customer_status_stages": [
             "pending_confirmation",
             "confirmed",

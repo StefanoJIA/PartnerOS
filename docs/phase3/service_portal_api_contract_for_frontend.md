@@ -106,6 +106,8 @@ Returns a customer-visible rollup for the Portal order tracking page. This combi
   "customer_status": {
     "stage": "ready_to_ship",
     "label": "Ready to ship",
+    "next_action_label": "Shipment planning",
+    "next_action_detail": "The order is ready to ship and logistics details will appear when an operator adds a shipment plan.",
     "order_confirmed": true,
     "production_started": true,
     "production_completed": true,
@@ -189,7 +191,7 @@ Returns a customer-visible rollup for the Portal order tracking page. This combi
 }
 ```
 
-`stage`, `current_step_index`, and `progress_steps` are display guidance for the Portal. Planned dates are planning data only and are not guaranteed lead time.
+`stage`, `current_step_index`, `progress_steps`, and `next_action_*` are display guidance for the Portal. Planned dates are planning data only and are not guaranteed lead time.
 
 ## GET /orders/{id}/production
 

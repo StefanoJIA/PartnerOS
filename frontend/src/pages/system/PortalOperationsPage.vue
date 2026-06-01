@@ -340,6 +340,12 @@
             <div class="text-xs text-slate-500">{{ row.customer_status.stage }}</div>
           </template>
         </el-table-column>
+        <el-table-column label="Next action" min-width="240">
+          <template #default="{ row }">
+            <div class="font-medium text-slate-800">{{ row.customer_status.next_action_label }}</div>
+            <div class="text-xs text-slate-500">{{ row.customer_status.next_action_detail }}</div>
+          </template>
+        </el-table-column>
         <el-table-column label="Progress" min-width="260">
           <template #default="{ row }">
             <div class="flex flex-wrap gap-1">

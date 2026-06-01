@@ -66,6 +66,46 @@ def _customer_status_label(stage: str) -> str:
     return labels.get(stage, "Order in review")
 
 
+def _customer_next_action(stage: str) -> dict[str, str]:
+    actions = {
+        "pending_confirmation": {
+            "label": "Waiting for confirmation",
+            "detail": "PartnerOS is waiting for the order confirmation before production tracking starts.",
+        },
+        "confirmed": {
+            "label": "Preparing production",
+            "detail": "The order is confirmed and the team is preparing supplier and production updates.",
+        },
+        "in_production": {
+            "label": "Production update pending",
+            "detail": "Production is in progress. Planned dates are progress guidance, not a guaranteed lead time.",
+        },
+        "ready_to_ship": {
+            "label": "Shipment planning",
+            "detail": "The order is ready to ship and logistics details will appear when an operator adds a shipment plan.",
+        },
+        "shipped": {
+            "label": "Track shipment",
+            "detail": "Shipment information is available from PartnerOS tracking records.",
+        },
+        "delivered": {
+            "label": "Order delivered",
+            "detail": "The order is marked delivered in PartnerOS tracking records.",
+        },
+        "cancelled": {
+            "label": "Order cancelled",
+            "detail": "The order is cancelled and no further customer tracking steps are planned.",
+        },
+    }
+    return actions.get(
+        stage,
+        {
+            "label": "Review order",
+            "detail": "PartnerOS is reviewing the order status before the next customer-visible update.",
+        },
+    )
+
+
 PROGRESS_STEPS = (
     ("confirmed", "Order confirmed"),
     ("in_production", "Production in progress"),
@@ -199,6 +239,7 @@ def build_customer_order_snapshot(db: Session, order_id: UUID) -> dict[str, Any]
     order_status = getattr(order, "status", detail.get("status") or "unknown")
     stage = _customer_stage(order_status, production_rows, shipment_rows)
     progress_steps = _customer_progress_steps(stage, order, production_rows, shipment_rows)
+    next_action = _customer_next_action(stage)
     production_statuses = _status_counts(production_rows)
     shipment_statuses = _status_counts(shipment_rows)
 
@@ -207,6 +248,8 @@ def build_customer_order_snapshot(db: Session, order_id: UUID) -> dict[str, Any]
         "customer_status": {
             "stage": stage,
             "label": _customer_status_label(stage),
+            "next_action_label": next_action["label"],
+            "next_action_detail": next_action["detail"],
             "order_confirmed": order_status
             in {"confirmed", "supplier_confirmation_pending", "supplier_confirmed", "production_pending", "in_production", "ready_to_ship", "shipped", "delivered"},
             "production_started": bool(production_rows),
