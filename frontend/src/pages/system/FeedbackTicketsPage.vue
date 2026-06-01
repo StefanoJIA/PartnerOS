@@ -146,6 +146,7 @@
 
 <script setup lang="ts">
 import { onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { formatApiError } from '@/api/errors'
 import {
   FEEDBACK_SAFETY_NOTE,
@@ -172,6 +173,8 @@ const page = ref(1)
 const limit = ref(50)
 const filters = reactive({ status: '', priority: '', feedback_type: '', search: '' })
 const form = reactive({ status: 'new', priority: 'normal', internal_owner: '', response_summary: '' })
+const route = useRoute()
+const router = useRouter()
 
 function statusTag(status: string): '' | 'success' | 'warning' | 'info' {
   if (status === 'resolved' || status === 'closed') return 'success'
@@ -209,9 +212,17 @@ async function load() {
 }
 
 async function openTicket(row: FeedbackTicket) {
-  selected.value = await fetchFeedbackTicket(row.id)
+  await openTicketById(row.id, true)
+}
+
+async function openTicketById(ticketId: string, syncRoute: boolean) {
+  error.value = ''
+  selected.value = await fetchFeedbackTicket(ticketId)
   syncForm()
   drawerOpen.value = true
+  if (syncRoute) {
+    await router.replace({ name: 'feedback-tickets', query: { ...route.query, ticket_id: ticketId } })
+  }
 }
 
 function syncForm() {
@@ -268,10 +279,39 @@ async function quickStatus(status: 'resolved' | 'closed') {
   }
 }
 
+function routeText(value: unknown): string {
+  if (Array.isArray(value)) return String(value[0] || '')
+  return typeof value === 'string' ? value : ''
+}
+
+function applyRouteFilters() {
+  filters.status = routeText(route.query.status)
+  filters.priority = routeText(route.query.priority)
+  filters.feedback_type = routeText(route.query.feedback_type)
+  filters.search = routeText(route.query.search)
+}
+
 watch(filters, () => {
   page.value = 1
   load()
 })
 
-onMounted(load)
+watch(
+  () => route.query.ticket_id,
+  async (ticketId) => {
+    const id = routeText(ticketId)
+    if (id && id !== selected.value?.id) {
+      await openTicketById(id, false)
+    }
+  },
+)
+
+onMounted(async () => {
+  applyRouteFilters()
+  await load()
+  const ticketId = routeText(route.query.ticket_id)
+  if (ticketId) {
+    await openTicketById(ticketId, false)
+  }
+})
 </script>

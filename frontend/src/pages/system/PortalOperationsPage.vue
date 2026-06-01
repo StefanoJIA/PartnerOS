@@ -383,7 +383,11 @@
           </div>
         </div>
         <el-table v-if="data?.feedback_operations.action_items.length" :data="data.feedback_operations.action_items" class="mt-4 w-full">
-          <el-table-column prop="ticket_number" label="Ticket" width="135" />
+          <el-table-column label="Ticket" width="145">
+            <template #default="{ row }">
+              <el-button link type="primary" @click="openFeedbackTicket(row.id)">{{ row.ticket_number }}</el-button>
+            </template>
+          </el-table-column>
           <el-table-column prop="subject" label="Subject" min-width="190" />
           <el-table-column prop="priority" label="Priority" width="110">
             <template #default="{ row }">
@@ -393,6 +397,11 @@
             </template>
           </el-table-column>
           <el-table-column prop="action" label="Action" min-width="210" />
+          <el-table-column label="Handle" width="100">
+            <template #default="{ row }">
+              <el-button size="small" @click="openFeedbackTicket(row.id)">Open</el-button>
+            </template>
+          </el-table-column>
           <el-table-column label="Safety" width="150">
             <template #default="{ row }">
               <el-tag size="small" :type="row.safety.customer_notified || row.safety.automatic_reply_sent ? 'danger' : 'success'" effect="plain">
@@ -680,7 +689,11 @@
     <section class="rounded border border-slate-200 bg-white p-4">
       <h3 class="mb-3 font-semibold text-slate-800">Recent feedback tickets</h3>
       <el-table :data="data?.recent_feedback_tickets || []" class="w-full">
-        <el-table-column prop="ticket_number" label="Ticket" width="150" />
+        <el-table-column label="Ticket" width="150">
+          <template #default="{ row }">
+            <el-button link type="primary" @click="openFeedbackTicket(row.id)">{{ row.ticket_number }}</el-button>
+          </template>
+        </el-table-column>
         <el-table-column prop="subject" label="Subject" min-width="220" />
         <el-table-column prop="feedback_type" label="Type" width="130" />
         <el-table-column prop="status" label="Status" width="130" />
@@ -696,6 +709,11 @@
         <el-table-column label="Age" width="90">
           <template #default="{ row }">{{ row.operation.age_days ?? '-' }}</template>
         </el-table-column>
+        <el-table-column label="Handle" width="100">
+          <template #default="{ row }">
+            <el-button size="small" @click="openFeedbackTicket(row.id)">Open</el-button>
+          </template>
+        </el-table-column>
       </el-table>
     </section>
   </div>
@@ -703,12 +721,14 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { formatApiError } from '@/api/errors'
 import { fetchPortalOperationsConsole, type PortalOperationsConsole } from '@/api/portalOperations'
 
 const data = ref<PortalOperationsConsole | null>(null)
 const loading = ref(false)
 const error = ref('')
+const router = useRouter()
 
 async function load() {
   loading.value = true
@@ -728,5 +748,9 @@ function checklistStatusType(status: string) {
   if (status === 'done' || status === 'ready_for_operator') return 'success'
   if (status === 'needs_operator_action') return 'warning'
   return 'danger'
+}
+
+function openFeedbackTicket(ticketId: string) {
+  router.push({ name: 'feedback-tickets', query: { ticket_id: ticketId } })
 }
 </script>
