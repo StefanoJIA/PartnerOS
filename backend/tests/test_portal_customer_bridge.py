@@ -78,6 +78,10 @@ def test_portal_customer_manifest_is_token_gated_and_safe():
     assert data["auth"]["header_name"] == "X-Portal-Customer-Token"
     assert data["auth"]["token_configured"] is True
     assert data["auth"]["token_value_exposed"] is False
+    assert "customer_status_stages" in data["field_contract"]
+    assert "ready_to_ship" in data["field_contract"]["customer_status_stages"]
+    assert data["field_contract"]["date_policy"]["planned_dates_are_guarantees"] is False
+    assert "feedback_create_response" in data["field_contract"]
     assert data["field_policy"]["planned_dates_are_guarantees"] is False
     assert data["safety"]["automatic_customer_notification"] is False
     assert data["safety"]["order_status_mutated"] is False

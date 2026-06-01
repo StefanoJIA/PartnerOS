@@ -10,7 +10,7 @@ The preferred production shape is a service portal backend proxy. Browser code s
 
 Returns the token-gated customer Portal contract manifest for `service.intelli-opus.com`. It includes contract version, source of truth, public base URL, auth header metadata, endpoint paths, customer-visible surfaces, hidden-field categories, and safety flags. It never includes the token value.
 
-Use this before data reads to confirm the bridge contract without relying on internal operator-only readiness endpoints.
+Use this before data reads to confirm the bridge contract without relying on internal operator-only readiness endpoints. The manifest also includes a `field_contract` object with customer-visible field names for products, orders, snapshots, production, shipment, resources, feedback creation, customer status stages, progress step states, and the non-guaranteed planned-date policy.
 
 ## GET /products
 

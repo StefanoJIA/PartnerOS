@@ -30,6 +30,28 @@ export interface PortalManifest {
     token_value_exposed: boolean
   }
   endpoints: Record<string, string>
+  field_contract: {
+    envelope: string[]
+    pagination: string[]
+    products: string[]
+    order_summary: string[]
+    order_detail: string[]
+    line_item: string[]
+    snapshot: string[]
+    customer_status: string[]
+    customer_status_stages: string[]
+    progress_step_states: string[]
+    production_item: string[]
+    shipment_item: string[]
+    resource_item: string[]
+    feedback_create: string[]
+    feedback_create_response: string[]
+    date_policy: {
+      planned_dates_are_guarantees: boolean
+      planned_dates_label: string
+      actual_dates_label: string
+    }
+  }
   customer_visible_surfaces: string[]
   field_policy: {
     allow_customer_visible_fields_only: boolean
