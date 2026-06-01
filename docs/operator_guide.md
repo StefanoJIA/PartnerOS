@@ -288,6 +288,8 @@ The forbidden-field audit scans current customer-visible order list data, custom
 
 Portal Operations also shows an advisory Market Response preview for adjustable desk frames, desk legs, lifting columns, education furniture, project furniture, and other products. It aggregates customer-visible order lines, feedback, production risk, and shipment risk for human review only; it does not create tickets, notify anyone, mutate order/shipment status, or rank partners.
 
+Portal Operations includes multi-partner flow readiness for partner-neutral execution coverage. It shows per-partner order, split, production, shipment, and risk counts across HOSUN, JOOBOO, Chongqing Huiju, and future brands without ranking partners, changing partner selection, notifying anyone, creating shipments, or mutating order status.
+
 ## D7.9 Resource Center / Document Center
 
 | URL / API | Purpose |

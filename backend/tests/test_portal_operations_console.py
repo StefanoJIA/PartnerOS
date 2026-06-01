@@ -341,6 +341,55 @@ def test_resource_readiness_summarizes_customer_visible_resources_without_paths(
     assert data["safety"]["filesystem_path_exposed"] is False
 
 
+def test_multi_partner_flow_readiness_is_neutral_and_read_only():
+    from app.services.portal.operations_console import _build_multi_partner_flow_readiness
+
+    data = _build_multi_partner_flow_readiness(
+        {
+            "summary": {"partner_count": 2, "order_count": 3, "split_count": 4},
+            "items": [
+                {
+                    "partner_id": "p1",
+                    "partner_name": "HOSUN",
+                    "partner_type": "Brand",
+                    "order_count": 2,
+                    "split_count": 2,
+                    "line_item_count": 5,
+                    "supplier_confirmation_status_counts": {"confirmed": 2},
+                    "milestone_status_counts": {"completed": 3},
+                    "shipment_status_counts": {"planned": 1},
+                    "active_shipment_count": 1,
+                    "risk_flags": [],
+                },
+                {
+                    "partner_id": "p2",
+                    "partner_name": "JOOBOO",
+                    "partner_type": "Factory",
+                    "order_count": 1,
+                    "split_count": 2,
+                    "line_item_count": 3,
+                    "supplier_confirmation_status_counts": {"pending": 1},
+                    "milestone_status_counts": {},
+                    "shipment_status_counts": {},
+                    "active_shipment_count": 0,
+                    "risk_flags": ["supplier_confirmation_open"],
+                },
+            ],
+        }
+    )
+
+    assert data["partner_count"] == 2
+    assert data["partners_with_orders"] == 2
+    assert data["partners_with_production"] == 1
+    assert data["partners_with_shipments"] == 1
+    assert data["partners_with_risk"] == 1
+    assert [row["partner_name"] for row in data["items"]] == ["HOSUN", "JOOBOO"]
+    assert data["safety"]["partner_neutral"] is True
+    assert data["safety"]["partner_ranked"] is False
+    assert data["safety"]["partner_selection_changed"] is False
+    assert data["safety"]["customer_notified"] is False
+
+
 def test_portal_launch_readiness_aggregates_blockers_without_validating_staging():
     from app.services.portal.operations_console import _build_portal_launch_readiness
 

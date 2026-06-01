@@ -10,6 +10,7 @@ from app.core.config import Settings
 from app.core.database_lifecycle import check_database, get_migration_revisions
 from app.models import FeedbackTicket, OrderResource, ProductCatalog
 from app.models.customer_orders import CustomerOrder, OrderLineItem, OrderProductionMilestone, ShipmentPlan
+from app.services.orders.partner_operations_dashboard import build_partner_operations_dashboard
 from app.services.portal.customer_field_filter import (
     FORBIDDEN_FIELD_NAMES,
     FORBIDDEN_TEXT_MARKERS,
@@ -340,6 +341,51 @@ def _build_resource_readiness(resource_rows: list[OrderResource]) -> dict[str, A
     }
 
 
+def _build_multi_partner_flow_readiness(partner_dashboard: dict[str, Any]) -> dict[str, Any]:
+    summary = partner_dashboard.get("summary", {})
+    items = partner_dashboard.get("items", [])
+    partner_rows = [
+        {
+            "partner_id": row.get("partner_id"),
+            "partner_name": row.get("partner_name"),
+            "partner_type": row.get("partner_type"),
+            "order_count": row.get("order_count", 0),
+            "split_count": row.get("split_count", 0),
+            "line_item_count": row.get("line_item_count", 0),
+            "supplier_confirmation_status_counts": row.get("supplier_confirmation_status_counts", {}),
+            "milestone_status_counts": row.get("milestone_status_counts", {}),
+            "shipment_status_counts": row.get("shipment_status_counts", {}),
+            "active_shipment_count": row.get("active_shipment_count", 0),
+            "risk_flags": row.get("risk_flags", []),
+        }
+        for row in items
+    ]
+    partners_with_orders = sum(1 for row in partner_rows if int(row["order_count"] or 0) > 0)
+    partners_with_production = sum(1 for row in partner_rows if row["milestone_status_counts"])
+    partners_with_shipments = sum(1 for row in partner_rows if row["shipment_status_counts"])
+    partners_with_risk = sum(1 for row in partner_rows if row["risk_flags"])
+    return {
+        "partner_count": summary.get("partner_count", len(partner_rows)),
+        "order_count": summary.get("order_count", 0),
+        "split_count": summary.get("split_count", 0),
+        "partners_with_orders": partners_with_orders,
+        "partners_with_production": partners_with_production,
+        "partners_with_shipments": partners_with_shipments,
+        "partners_with_risk": partners_with_risk,
+        "items": partner_rows,
+        "safety": {
+            "read_only": True,
+            "partner_neutral": True,
+            "partner_ranked": False,
+            "partner_selection_changed": False,
+            "supplier_notified": False,
+            "customer_notified": False,
+            "order_status_mutated": False,
+            "shipment_created": False,
+        },
+    }
+
+
 def _build_portal_launch_readiness(
     *,
     status: dict[str, Any],
@@ -510,6 +556,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
     resource_rows = db.query(OrderResource).order_by(OrderResource.created_at.desc()).limit(500).all()
     order_lines = db.query(OrderLineItem).limit(500).all()
     production_rows = db.query(OrderProductionMilestone).limit(500).all()
+    partner_dashboard = build_partner_operations_dashboard(db)
 
     snapshot_items = []
     for order in order_rows[:3]:
@@ -544,6 +591,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
     feedback_operations = _build_feedback_operations(ticket_rows)
     customer_snapshot_readiness = _build_customer_snapshot_readiness(snapshot_items)
     resource_readiness = _build_resource_readiness(resource_rows)
+    multi_partner_flow_readiness = _build_multi_partner_flow_readiness(partner_dashboard)
     status = {
         "ready": settings.PORTAL_CUSTOMER_API_ENABLED and not missing_config,
         "enabled": settings.PORTAL_CUSTOMER_API_ENABLED,
@@ -574,6 +622,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
         "customer_snapshots": snapshot_items,
         "customer_snapshot_readiness": customer_snapshot_readiness,
         "resource_readiness": resource_readiness,
+        "multi_partner_flow_readiness": multi_partner_flow_readiness,
         "shipment_status_counts": _count_by_status(shipment_rows),
         "feedback_status_counts": _count_by_status(ticket_rows),
         "feedback_priority_counts": _count_by_status(ticket_rows, "priority"),

@@ -311,6 +311,8 @@ The `feedback_operations` block summarizes internal feedback triage for Portal l
 
 The `customer_snapshot_readiness` block summarizes the customer-visible snapshots currently shown in the console: stage counts, production-visible count, active shipment count, open feedback count, and missing progress-step count. It helps the Portal team confirm whether order tracking has enough safe data to render before real staging integration.
 
+The `multi_partner_flow_readiness` block is an internal read-only summary of partner-neutral execution coverage. It shows partner count, order/split count, partners with production/shipment data, partners with risk flags, and per-partner operational counts. It must not rank partners, change partner selection, notify suppliers/customers, create shipments, or mutate order status.
+
 The `resource_readiness` block summarizes customer resource availability for Portal launch: portal-visible resources, customer-visible resources that still need publishing, hidden published resources, status/category counts, and signed-download safety flags. It is metadata-only and must not expose storage keys, filesystem paths, or raw token values.
 
 `forbidden_field_audit` scans the current customer-visible order list, customer snapshots, and portal contract metadata. It reports marker names and payload paths only, never raw token values or hidden field values.

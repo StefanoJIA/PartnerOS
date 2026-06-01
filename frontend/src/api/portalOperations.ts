@@ -152,6 +152,38 @@ export interface PortalOperationsConsole {
       automatic_email_sent: boolean
     }
   }
+  multi_partner_flow_readiness: {
+    partner_count: number
+    order_count: number
+    split_count: number
+    partners_with_orders: number
+    partners_with_production: number
+    partners_with_shipments: number
+    partners_with_risk: number
+    items: Array<{
+      partner_id: string
+      partner_name: string
+      partner_type: string | null
+      order_count: number
+      split_count: number
+      line_item_count: number
+      supplier_confirmation_status_counts: Record<string, number>
+      milestone_status_counts: Record<string, number>
+      shipment_status_counts: Record<string, number>
+      active_shipment_count: number
+      risk_flags: string[]
+    }>
+    safety: {
+      read_only: boolean
+      partner_neutral: boolean
+      partner_ranked: boolean
+      partner_selection_changed: boolean
+      supplier_notified: boolean
+      customer_notified: boolean
+      order_status_mutated: boolean
+      shipment_created: boolean
+    }
+  }
   shipment_status_counts: Record<string, number>
   feedback_status_counts: Record<string, number>
   feedback_priority_counts: Record<string, number>

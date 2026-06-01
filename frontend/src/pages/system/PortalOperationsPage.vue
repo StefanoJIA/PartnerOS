@@ -244,6 +244,61 @@
 
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex items-center justify-between">
+        <h3 class="font-semibold text-slate-800">Multi-partner flow readiness</h3>
+        <el-tag :type="data?.multi_partner_flow_readiness.safety.partner_neutral ? 'success' : 'danger'" effect="plain">
+          {{ data?.multi_partner_flow_readiness.safety.partner_neutral ? 'partner neutral' : 'check partner policy' }}
+        </el-tag>
+      </div>
+      <div class="mb-4 grid gap-2 md:grid-cols-4 xl:grid-cols-7">
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Partners</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.multi_partner_flow_readiness.partner_count ?? 0 }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Orders</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.multi_partner_flow_readiness.order_count ?? 0 }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Splits</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.multi_partner_flow_readiness.split_count ?? 0 }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">With production</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.multi_partner_flow_readiness.partners_with_production ?? 0 }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">With shipments</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.multi_partner_flow_readiness.partners_with_shipments ?? 0 }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">With risk</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.multi_partner_flow_readiness.partners_with_risk ?? 0 }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Ranked</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.multi_partner_flow_readiness.safety.partner_ranked ? 'yes' : 'no' }}</p>
+        </div>
+      </div>
+      <el-table :data="data?.multi_partner_flow_readiness.items || []" class="w-full">
+        <el-table-column prop="partner_name" label="Partner" min-width="180" />
+        <el-table-column prop="partner_type" label="Type" width="140" />
+        <el-table-column prop="order_count" label="Orders" width="100" />
+        <el-table-column prop="split_count" label="Splits" width="100" />
+        <el-table-column prop="line_item_count" label="Lines" width="100" />
+        <el-table-column prop="active_shipment_count" label="Shipments" width="120" />
+        <el-table-column label="Risk" min-width="220">
+          <template #default="{ row }">
+            <div class="flex flex-wrap gap-1">
+              <el-tag v-for="flag in row.risk_flags" :key="flag" size="small" type="warning" effect="plain">{{ flag }}</el-tag>
+              <span v-if="!row.risk_flags.length" class="text-sm text-slate-500">clear</span>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+    </section>
+
+    <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex items-center justify-between">
         <h3 class="font-semibold text-slate-800">Customer snapshots</h3>
         <el-tag :type="data?.customer_snapshot_readiness.portal_ready ? 'success' : 'warning'" effect="plain">
           {{ data?.customer_snapshot_readiness.portal_ready ? 'portal ready' : 'needs data' }}
