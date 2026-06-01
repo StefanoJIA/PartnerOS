@@ -128,6 +128,15 @@ def test_customer_snapshot_stage_and_safety(monkeypatch):
     assert data["portal_display"]["current_step_label"] == "Ready to ship"
     assert data["portal_display"]["next_action_label"] == "Shipment planning"
     assert data["portal_display"]["progress_percent"] == 60
+    assert data["portal_display"]["status_badges"][2] == {
+        "key": "ready_to_ship",
+        "label": "Ready to ship",
+        "state": "current",
+        "active": True,
+        "date": None,
+        "planned_dates_are_guarantees": False,
+    }
+    assert data["portal_display"]["status_badges"][3]["active"] is False
     assert data["portal_display"]["signal_cards"][0] == {
         "key": "production",
         "label": "Production",
@@ -200,6 +209,8 @@ def test_operations_console_preserves_safe_token_metadata_without_values():
     assert "links" in data["portal_contract"]["field_contract"]["snapshot"]
     assert "portal_display" in data["portal_contract"]["field_contract"]["snapshot"]
     assert "portal_display" in data["portal_contract"]["field_contract"]
+    assert "status_badges" in data["portal_contract"]["field_contract"]["portal_display"]
+    assert "portal_display_status_badge" in data["portal_contract"]["field_contract"]
     assert "signal_cards" in data["portal_contract"]["field_contract"]["portal_display"]
     assert "portal_display_feedback_cta" in data["portal_contract"]["field_contract"]
     assert "snapshot_links" in data["portal_contract"]["field_contract"]

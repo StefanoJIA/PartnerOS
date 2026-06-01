@@ -27,6 +27,7 @@ export interface PortalFieldContract {
   snapshot: string[]
   tracking_summary: string[]
   portal_display?: string[]
+  portal_display_status_badge?: string[]
   portal_display_signal_card?: string[]
   portal_display_feedback_cta?: string[]
   snapshot_links: string[]

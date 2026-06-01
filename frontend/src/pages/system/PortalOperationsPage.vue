@@ -627,13 +627,13 @@
           <template #default="{ row }">
             <div class="flex flex-wrap gap-1">
               <el-tag
-                v-for="step in row.customer_status.progress_steps"
-                :key="step.key"
+                v-for="badge in row.portal_display?.status_badges || row.customer_status.progress_steps"
+                :key="badge.key"
                 size="small"
-                :type="step.state === 'current' ? 'warning' : step.state === 'complete' ? 'success' : 'info'"
+                :type="badge.state === 'current' ? 'warning' : badge.state === 'complete' ? 'success' : 'info'"
                 effect="plain"
               >
-                {{ step.label }}
+                {{ badge.label }}
               </el-tag>
             </div>
           </template>

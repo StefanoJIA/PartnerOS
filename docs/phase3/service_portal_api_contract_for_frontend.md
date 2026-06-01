@@ -227,7 +227,7 @@ Returns a customer-visible rollup for the Portal order tracking page. This combi
 }
 ```
 
-`stage`, `current_step_index`, `progress_steps`, `next_action_*`, and `tracking_summary` are display guidance for the Portal. Planned dates are planning data only and are not guaranteed lead time. The `feedback` block gives the Portal backend enough safe metadata to render the customer feedback form without guessing allowed types or priorities; it still does not promise resolution time or send any notification.
+`stage`, `current_step_index`, `progress_steps`, `portal_display.status_badges`, `next_action_*`, and `tracking_summary` are display guidance for the Portal. `status_badges` is a render-ready version of the same confirmed → production → ready to ship → shipped → delivered sequence, with `state`, `active`, optional `date`, and `planned_dates_are_guarantees=false` on each badge so `service.intelli-opus.com` does not need to infer milestone semantics. Planned dates are planning data only and are not guaranteed lead time. The `feedback` block gives the Portal backend enough safe metadata to render the customer feedback form without guessing allowed types or priorities; it still does not promise resolution time or send any notification.
 
 ## GET /orders/{id}/production
 

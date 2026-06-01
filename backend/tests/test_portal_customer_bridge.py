@@ -84,6 +84,8 @@ def test_portal_customer_manifest_is_token_gated_and_safe():
     assert "links" in data["field_contract"]["snapshot"]
     assert "portal_display" in data["field_contract"]["snapshot"]
     assert "portal_display" in data["field_contract"]
+    assert "status_badges" in data["field_contract"]["portal_display"]
+    assert "portal_display_status_badge" in data["field_contract"]
     assert "portal_display_signal_card" in data["field_contract"]
     assert "portal_display_feedback_cta" in data["field_contract"]
     assert "snapshot_links" in data["field_contract"]

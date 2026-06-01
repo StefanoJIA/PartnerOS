@@ -215,6 +215,21 @@ def _portal_display(
     current_step = next((step for step in progress_steps if step.get("state") == "current"), None)
     total_steps = len(progress_steps)
     progress_percent = int(((completed_steps + (1 if current_step else 0)) / total_steps) * 100) if total_steps else 0
+    progress_by_key = {str(step.get("key")): step for step in progress_steps}
+    status_badges = []
+    for key, label in PROGRESS_STEPS:
+        step = progress_by_key.get(key, {})
+        state = str(step.get("state") or "pending")
+        status_badges.append(
+            {
+                "key": key,
+                "label": label,
+                "state": state,
+                "active": state in {"complete", "current"},
+                "date": step.get("date"),
+                "planned_dates_are_guarantees": False,
+            }
+        )
     return {
         "headline": f"{order_number or 'Order'}: {status_label}",
         "stage": stage,
@@ -223,6 +238,7 @@ def _portal_display(
         "next_action_label": next_action["label"],
         "next_action_detail": next_action["detail"],
         "progress_percent": progress_percent,
+        "status_badges": status_badges,
         "signal_cards": [
             {
                 "key": "production",

@@ -183,6 +183,14 @@ export interface PortalOperationsConsole {
       next_action_label: string
       next_action_detail: string
       progress_percent: number
+      status_badges: Array<{
+        key: string
+        label: string
+        state: 'complete' | 'current' | 'pending'
+        active: boolean
+        date: string | null
+        planned_dates_are_guarantees: boolean
+      }>
       signal_cards: Array<{ key: string; label: string; active: boolean; count: number }>
       feedback_cta: {
         label: string

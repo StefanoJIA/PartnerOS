@@ -121,10 +121,12 @@ def portal_customer_field_contract() -> dict[str, Any]:
             "next_action_label",
             "next_action_detail",
             "progress_percent",
+            "status_badges",
             "signal_cards",
             "feedback_cta",
             "planned_dates_are_guarantees",
         ],
+        "portal_display_status_badge": ["key", "label", "state", "active", "date", "planned_dates_are_guarantees"],
         "portal_display_signal_card": ["key", "label", "active", "count"],
         "portal_display_feedback_cta": [
             "label",
