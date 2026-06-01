@@ -532,6 +532,12 @@ export interface PortalOperationsConsole {
       feedback_count: number
       delayed_or_blocked_production_count: number
       shipment_issue_count: number
+      signal_score: number
+      primary_signal: string
+      review_label: string
+      route_query: {
+        focus_category: string
+      }
       human_review_required: boolean
     }>
     total: number

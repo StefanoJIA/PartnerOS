@@ -177,6 +177,24 @@ def _market_signal_seed() -> dict[str, dict[str, Any]]:
     return rows
 
 
+def _market_review_signal(row: dict[str, Any]) -> tuple[int, str, str]:
+    production_risk = int(row["delayed_or_blocked_production_count"])
+    shipment_risk = int(row["shipment_issue_count"])
+    feedback_count = int(row["feedback_count"])
+    order_lines = int(row["order_line_count"])
+    quantity = int(row["ordered_quantity"])
+    score = feedback_count * 3 + production_risk * 2 + shipment_risk * 2 + order_lines + min(quantity, 100) // 10
+    if production_risk:
+        return score, "production_risk", "Review delayed or blocked production signals"
+    if shipment_risk:
+        return score, "shipment_risk", "Review shipment delay or tracking signals"
+    if feedback_count:
+        return score, "feedback_signal", "Review customer feedback themes"
+    if order_lines:
+        return score, "order_demand", "Review customer order demand"
+    return score, "watchlist", "Watch for new customer and operations signals"
+
+
 def _build_market_signal_preview(
     order_lines: list[OrderLineItem],
     production_rows: list[OrderProductionMilestone],
@@ -223,6 +241,12 @@ def _build_market_signal_preview(
         ),
         reverse=True,
     )
+    for item in items:
+        signal_score, primary_signal, review_label = _market_review_signal(item)
+        item["signal_score"] = signal_score
+        item["primary_signal"] = primary_signal
+        item["review_label"] = review_label
+        item["route_query"] = {"focus_category": item["key"]}
     return {
         "items": items,
         "total": len(items),

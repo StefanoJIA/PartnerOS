@@ -312,6 +312,10 @@ def test_market_signal_preview_groups_focus_categories():
     assert first["feedback_count"] == 1
     assert first["delayed_or_blocked_production_count"] == 1
     assert first["shipment_issue_count"] == 1
+    assert first["signal_score"] > 0
+    assert first["primary_signal"] == "production_risk"
+    assert first["review_label"] == "Review delayed or blocked production signals"
+    assert first["route_query"] == {"focus_category": "adjustable_desk_frames"}
     assert data["safety"]["advisory_only"] is True
     assert data["safety"]["auto_ticket_created"] is False
 

@@ -808,6 +808,13 @@
       </div>
       <el-table :data="data?.market_signal_preview.items || []" class="w-full">
         <el-table-column prop="label" label="Focus" min-width="190" />
+        <el-table-column prop="signal_score" label="Score" width="90" />
+        <el-table-column label="Primary signal" min-width="220">
+          <template #default="{ row }">
+            <div class="font-medium text-slate-800">{{ row.review_label }}</div>
+            <div class="text-xs text-slate-500">{{ row.primary_signal }}</div>
+          </template>
+        </el-table-column>
         <el-table-column prop="order_line_count" label="Order lines" width="120" />
         <el-table-column prop="ordered_quantity" label="Qty" width="100" />
         <el-table-column prop="feedback_count" label="Feedback" width="110" />
@@ -815,7 +822,7 @@
         <el-table-column prop="shipment_issue_count" label="Shipment risk" width="140" />
         <el-table-column label="Review" width="110">
           <template #default="{ row }">
-            <el-button size="small" @click="openMarketFocus(row.key)">Open</el-button>
+            <el-button size="small" @click="openMarketSignal(row)">Open</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -913,5 +920,10 @@ function openPortalBridge(orderId: string) {
 
 function openMarketFocus(focusCategory: string) {
   router.push({ name: 'market', query: { focus_category: focusCategory } })
+}
+
+function openMarketSignal(row: { key: string; route_query?: Record<string, string | null | undefined> }) {
+  const focusCategory = row.route_query?.focus_category || row.key
+  openMarketFocus(focusCategory)
 }
 </script>
