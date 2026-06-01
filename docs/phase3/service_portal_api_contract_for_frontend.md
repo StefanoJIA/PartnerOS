@@ -303,6 +303,8 @@ The `feedback_operations` block summarizes internal feedback triage for Portal l
 
 The `customer_snapshot_readiness` block summarizes the customer-visible snapshots currently shown in the console: stage counts, production-visible count, active shipment count, open feedback count, and missing progress-step count. It helps the Portal team confirm whether order tracking has enough safe data to render before real staging integration.
 
+The `resource_readiness` block summarizes customer resource availability for Portal launch: portal-visible resources, customer-visible resources that still need publishing, hidden published resources, status/category counts, and signed-download safety flags. It is metadata-only and must not expose storage keys, filesystem paths, or raw token values.
+
 `forbidden_field_audit` scans the current customer-visible order list, customer snapshots, and portal contract metadata. It reports marker names and payload paths only, never raw token values or hidden field values.
 
 The console also includes `market_signal_preview`, a read-only advisory rollup for internal Market Response preparation. It groups order lines, ordered quantity, feedback, production risk, and shipment risk across focus areas: adjustable desk frames, desk legs, lifting columns, education furniture, project furniture, and other products. This preview does not create tickets, change recommendations, notify customers/suppliers, or rank partners.

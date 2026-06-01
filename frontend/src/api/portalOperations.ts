@@ -107,6 +107,24 @@ export interface PortalOperationsConsole {
       order_status_mutated: boolean
     }
   }
+  resource_readiness: {
+    total_count: number
+    portal_visible_count: number
+    customer_visible_count: number
+    blocked_visibility_count: number
+    hidden_published_count: number
+    status_counts: Record<string, number>
+    category_counts: Record<string, number>
+    ready: boolean
+    safety: {
+      metadata_only: boolean
+      download_links_signed: boolean
+      file_location_exposed: boolean
+      filesystem_path_exposed: boolean
+      customer_notified: boolean
+      automatic_email_sent: boolean
+    }
+  }
   shipment_status_counts: Record<string, number>
   feedback_status_counts: Record<string, number>
   feedback_priority_counts: Record<string, number>

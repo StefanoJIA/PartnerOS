@@ -256,6 +256,44 @@
 
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex items-center justify-between">
+        <h3 class="font-semibold text-slate-800">Resource readiness</h3>
+        <el-tag :type="data?.resource_readiness.ready ? 'success' : 'warning'" effect="plain">
+          {{ data?.resource_readiness.ready ? 'visible resources' : 'no visible resources' }}
+        </el-tag>
+      </div>
+      <div class="grid gap-2 md:grid-cols-4">
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Portal visible</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.resource_readiness.portal_visible_count ?? 0 }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Customer visible</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.resource_readiness.customer_visible_count ?? 0 }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Needs publish</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.resource_readiness.blocked_visibility_count ?? 0 }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Hidden published</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.resource_readiness.hidden_published_count ?? 0 }}</p>
+        </div>
+      </div>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <el-tag v-for="(count, status) in data?.resource_readiness.status_counts || {}" :key="status" effect="plain">
+          {{ status }} {{ count }}
+        </el-tag>
+        <el-tag :type="data?.resource_readiness.safety.download_links_signed ? 'success' : 'danger'" effect="plain">
+          {{ data?.resource_readiness.safety.download_links_signed ? 'signed downloads' : 'unsigned downloads' }}
+        </el-tag>
+        <el-tag :type="data?.resource_readiness.safety.file_location_exposed ? 'danger' : 'success'" effect="plain">
+          {{ data?.resource_readiness.safety.file_location_exposed ? 'file path exposed' : 'paths hidden' }}
+        </el-tag>
+      </div>
+    </section>
+
+    <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex items-center justify-between">
         <h3 class="font-semibold text-slate-800">Market response signals</h3>
         <el-tag type="info" effect="plain">advisory only</el-tag>
       </div>

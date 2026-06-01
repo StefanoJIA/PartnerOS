@@ -312,6 +312,33 @@ def _build_customer_snapshot_readiness(snapshot_items: list[dict[str, Any]]) -> 
     }
 
 
+def _build_resource_readiness(resource_rows: list[OrderResource]) -> dict[str, Any]:
+    status_counts = _count_by_status(resource_rows)
+    category_counts = _count_by_status(resource_rows, "category")
+    customer_visible_count = sum(1 for row in resource_rows if row.customer_visible)
+    portal_visible_count = sum(1 for row in resource_rows if row.status == "published" and row.customer_visible)
+    blocked_visibility_count = sum(1 for row in resource_rows if row.customer_visible and row.status != "published")
+    hidden_published_count = sum(1 for row in resource_rows if row.status == "published" and not row.customer_visible)
+    return {
+        "total_count": len(resource_rows),
+        "portal_visible_count": portal_visible_count,
+        "customer_visible_count": customer_visible_count,
+        "blocked_visibility_count": blocked_visibility_count,
+        "hidden_published_count": hidden_published_count,
+        "status_counts": status_counts,
+        "category_counts": category_counts,
+        "ready": portal_visible_count > 0,
+        "safety": {
+            "metadata_only": True,
+            "download_links_signed": True,
+            "file_location_exposed": False,
+            "filesystem_path_exposed": False,
+            "customer_notified": False,
+            "automatic_email_sent": False,
+        },
+    }
+
+
 def _build_portal_contract(settings: Settings, endpoints: dict[str, bool], missing_config: list[str]) -> dict[str, Any]:
     return {
         "base_url": settings.PUBLIC_BASE_URL.strip() or None,
@@ -411,6 +438,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
     )
     shipment_rows = db.query(ShipmentPlan).order_by(ShipmentPlan.created_at.desc()).limit(200).all()
     ticket_rows = db.query(FeedbackTicket).order_by(FeedbackTicket.created_at.desc()).limit(200).all()
+    resource_rows = db.query(OrderResource).order_by(OrderResource.created_at.desc()).limit(500).all()
     order_lines = db.query(OrderLineItem).limit(500).all()
     production_rows = db.query(OrderProductionMilestone).limit(500).all()
 
@@ -446,6 +474,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
     )
     feedback_operations = _build_feedback_operations(ticket_rows)
     customer_snapshot_readiness = _build_customer_snapshot_readiness(snapshot_items)
+    resource_readiness = _build_resource_readiness(resource_rows)
 
     payload = {
         "status": {
@@ -464,6 +493,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
         "recent_customer_visible_orders": recent_orders,
         "customer_snapshots": snapshot_items,
         "customer_snapshot_readiness": customer_snapshot_readiness,
+        "resource_readiness": resource_readiness,
         "shipment_status_counts": _count_by_status(shipment_rows),
         "feedback_status_counts": _count_by_status(ticket_rows),
         "feedback_priority_counts": _count_by_status(ticket_rows, "priority"),

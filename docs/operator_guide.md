@@ -277,6 +277,8 @@ Customer snapshots include `progress_steps` for Portal order tracking: confirmed
 
 Portal Operations summarizes customer snapshot readiness with stage counts, production-visible count, active shipments, open feedback, and missing progress steps so operators can see whether the Portal tracking page has enough customer-safe data for staging integration.
 
+Portal Operations also summarizes resource readiness with portal-visible count, customer-visible-but-unpublished count, hidden published count, status/category counts, and signed-download safety flags. It shows metadata only and must not expose storage keys, backend paths, or raw download tokens.
+
 The forbidden-field audit scans current customer-visible order list data, customer snapshots, and Portal contract metadata. Audit hits show marker names and payload paths only, not hidden values.
 
 Portal Operations also shows an advisory Market Response preview for adjustable desk frames, desk legs, lifting columns, education furniture, project furniture, and other products. It aggregates customer-visible order lines, feedback, production risk, and shipment risk for human review only; it does not create tickets, notify anyone, mutate order/shipment status, or rank partners.

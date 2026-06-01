@@ -303,3 +303,37 @@ def test_customer_snapshot_readiness_summarizes_portal_tracking_state():
     assert data["safety"]["customer_visible_only"] is True
     assert data["safety"]["planned_dates_are_guarantees"] is False
     assert data["safety"]["customer_notified"] is False
+
+
+def test_resource_readiness_summarizes_customer_visible_resources_without_paths():
+    from app.services.portal.operations_console import _build_resource_readiness
+
+    published_visible = MagicMock()
+    published_visible.status = "published"
+    published_visible.category = "packing_list"
+    published_visible.customer_visible = True
+
+    draft_visible = MagicMock()
+    draft_visible.status = "draft"
+    draft_visible.category = "spec_sheet"
+    draft_visible.customer_visible = True
+
+    hidden_published = MagicMock()
+    hidden_published.status = "published"
+    hidden_published.category = "certificate"
+    hidden_published.customer_visible = False
+
+    data = _build_resource_readiness([published_visible, draft_visible, hidden_published])
+
+    assert data["total_count"] == 3
+    assert data["portal_visible_count"] == 1
+    assert data["customer_visible_count"] == 2
+    assert data["blocked_visibility_count"] == 1
+    assert data["hidden_published_count"] == 1
+    assert data["status_counts"] == {"published": 2, "draft": 1}
+    assert data["category_counts"] == {"packing_list": 1, "spec_sheet": 1, "certificate": 1}
+    assert data["ready"] is True
+    assert data["safety"]["metadata_only"] is True
+    assert data["safety"]["download_links_signed"] is True
+    assert data["safety"]["file_location_exposed"] is False
+    assert data["safety"]["filesystem_path_exposed"] is False
