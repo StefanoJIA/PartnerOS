@@ -61,8 +61,8 @@ Use a scratch database only. Do not point this check at staging or production da
 
 ```powershell
 cd backend
-docker compose exec -T db psql -U partneros -d postgres -c "DROP DATABASE IF EXISTS partneros_migration_check;"
-docker compose exec -T db psql -U partneros -d postgres -c "CREATE DATABASE partneros_migration_check OWNER partneros;"
+docker exec projectconnecting-db-1 psql -U partneros -d postgres -c "DROP DATABASE IF EXISTS partneros_migration_check WITH (FORCE);"
+docker exec projectconnecting-db-1 psql -U partneros -d postgres -c "CREATE DATABASE partneros_migration_check OWNER partneros;"
 $env:DATABASE_URL="<scratch-db-url>"
 alembic upgrade head
 ```
@@ -70,8 +70,10 @@ alembic upgrade head
 After a successful check, remove the scratch database:
 
 ```powershell
-docker compose exec -T db psql -U partneros -d postgres -c "DROP DATABASE IF EXISTS partneros_migration_check;"
+docker exec projectconnecting-db-1 psql -U partneros -d postgres -c "DROP DATABASE IF EXISTS partneros_migration_check WITH (FORCE);"
 ```
+
+Use `docker exec` for this scratch check so the migration validation does not require a repository-root `.env` file. Do not create a root `.env` only to run this check.
 
 ## Portal Customer API Staging Environment
 

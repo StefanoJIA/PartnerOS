@@ -235,10 +235,16 @@ Clean Docker/Postgres and empty-DB migration must also be verified before real s
 
 ```powershell
 docker compose up -d db
+docker compose ps db
 cd backend
+docker exec projectconnecting-db-1 psql -U partneros -d postgres -c "DROP DATABASE IF EXISTS partneros_migration_check WITH (FORCE);"
+docker exec projectconnecting-db-1 psql -U partneros -d postgres -c "CREATE DATABASE partneros_migration_check OWNER partneros;"
 $env:DATABASE_URL="<scratch-db-url>"
 alembic upgrade head
+docker exec projectconnecting-db-1 psql -U partneros -d postgres -c "DROP DATABASE IF EXISTS partneros_migration_check WITH (FORCE);"
 ```
+
+The scratch migration commands use `docker exec` so D8.0 validation does not require creating a repository-root `.env` file.
 
 ### Port 8000 (legacy)
 

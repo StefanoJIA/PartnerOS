@@ -339,11 +339,14 @@ docker compose up -d db
 docker compose ps db
 
 cd backend
-docker compose exec -T db psql -U partneros -d postgres -c "DROP DATABASE IF EXISTS partneros_migration_check;"
-docker compose exec -T db psql -U partneros -d postgres -c "CREATE DATABASE partneros_migration_check OWNER partneros;"
+docker exec projectconnecting-db-1 psql -U partneros -d postgres -c "DROP DATABASE IF EXISTS partneros_migration_check WITH (FORCE);"
+docker exec projectconnecting-db-1 psql -U partneros -d postgres -c "CREATE DATABASE partneros_migration_check OWNER partneros;"
 $env:DATABASE_URL="<scratch-db-url>"
 alembic upgrade head
+docker exec projectconnecting-db-1 psql -U partneros -d postgres -c "DROP DATABASE IF EXISTS partneros_migration_check WITH (FORCE);"
 ```
+
+Use `docker exec` for the scratch database commands so this check does not require a repository-root `.env` file. Never create or commit `.env` just to run D8.0 validation.
 
 Configure these PartnerOS staging backend variables for `service.intelli-opus.com` integration. Store token values only in the runtime secret manager or shell session.
 
