@@ -188,7 +188,38 @@
     </section>
 
     <section class="rounded border border-slate-200 bg-white p-4">
-      <h3 class="mb-3 font-semibold text-slate-800">Customer snapshots</h3>
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="font-semibold text-slate-800">Customer snapshots</h3>
+        <el-tag :type="data?.customer_snapshot_readiness.portal_ready ? 'success' : 'warning'" effect="plain">
+          {{ data?.customer_snapshot_readiness.portal_ready ? 'portal ready' : 'needs data' }}
+        </el-tag>
+      </div>
+      <div class="mb-4 grid gap-2 md:grid-cols-4">
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Snapshots</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.customer_snapshot_readiness.snapshot_count ?? 0 }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Production visible</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.customer_snapshot_readiness.production_visible_count ?? 0 }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Active shipments</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.customer_snapshot_readiness.active_shipment_count ?? 0 }}</p>
+        </div>
+        <div class="rounded border border-slate-200 p-3">
+          <p class="text-sm text-slate-500">Open feedback</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.customer_snapshot_readiness.open_feedback_count ?? 0 }}</p>
+        </div>
+      </div>
+      <div class="mb-4 flex flex-wrap gap-2">
+        <el-tag v-for="(count, stage) in data?.customer_snapshot_readiness.stage_counts || {}" :key="stage" effect="plain">
+          {{ stage }} {{ count }}
+        </el-tag>
+        <el-tag v-if="data?.customer_snapshot_readiness.missing_progress_count" type="warning" effect="plain">
+          missing progress {{ data.customer_snapshot_readiness.missing_progress_count }}
+        </el-tag>
+      </div>
       <el-table :data="data?.customer_snapshots || []" class="w-full">
         <el-table-column label="Order" width="170">
           <template #default="{ row }">{{ row.order.order_number }}</template>

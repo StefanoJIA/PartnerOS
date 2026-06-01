@@ -88,6 +88,25 @@ export interface PortalOperationsConsole {
     feedback: { open_count: number; customer_notified: boolean; automatic_reply_sent: boolean }
     safety: { forbidden_field_filter_enabled: boolean; token_exposed: boolean }
   }>
+  customer_snapshot_readiness: {
+    snapshot_count: number
+    stage_counts: Record<string, number>
+    missing_progress_count: number
+    production_visible_count: number
+    ready_to_ship_count: number
+    shipped_count: number
+    delivered_count: number
+    active_shipment_count: number
+    open_feedback_count: number
+    portal_ready: boolean
+    safety: {
+      customer_visible_only: boolean
+      forbidden_field_filter_enabled: boolean
+      planned_dates_are_guarantees: boolean
+      customer_notified: boolean
+      order_status_mutated: boolean
+    }
+  }
   shipment_status_counts: Record<string, number>
   feedback_status_counts: Record<string, number>
   feedback_priority_counts: Record<string, number>

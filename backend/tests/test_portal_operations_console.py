@@ -256,3 +256,50 @@ def test_feedback_operations_summary_is_internal_only():
     assert data["safety"]["customer_notified"] is False
     assert data["safety"]["automatic_reply_sent"] is False
     assert data["safety"]["sla_promised"] is False
+
+
+def test_customer_snapshot_readiness_summarizes_portal_tracking_state():
+    from app.services.portal.operations_console import _build_customer_snapshot_readiness
+
+    data = _build_customer_snapshot_readiness(
+        [
+            {
+                "customer_status": {
+                    "stage": "ready_to_ship",
+                    "production_started": True,
+                    "production_completed": True,
+                    "ready_to_ship": True,
+                    "shipped": False,
+                    "delivered": False,
+                    "progress_steps": [{"key": "confirmed"}],
+                },
+                "shipment": {"active_count": 1},
+                "feedback": {"open_count": 2},
+            },
+            {
+                "customer_status": {
+                    "stage": "shipped",
+                    "production_started": True,
+                    "production_completed": True,
+                    "ready_to_ship": True,
+                    "shipped": True,
+                    "delivered": False,
+                    "progress_steps": [{"key": "confirmed"}],
+                },
+                "shipment": {"active_count": 1},
+                "feedback": {"open_count": 0},
+            },
+        ]
+    )
+
+    assert data["snapshot_count"] == 2
+    assert data["stage_counts"] == {"ready_to_ship": 1, "shipped": 1}
+    assert data["portal_ready"] is True
+    assert data["production_visible_count"] == 2
+    assert data["ready_to_ship_count"] == 2
+    assert data["shipped_count"] == 1
+    assert data["active_shipment_count"] == 2
+    assert data["open_feedback_count"] == 2
+    assert data["safety"]["customer_visible_only"] is True
+    assert data["safety"]["planned_dates_are_guarantees"] is False
+    assert data["safety"]["customer_notified"] is False

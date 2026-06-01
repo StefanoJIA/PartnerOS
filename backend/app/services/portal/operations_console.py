@@ -263,6 +263,55 @@ def _build_feedback_operations(ticket_rows: list[FeedbackTicket]) -> dict[str, A
     }
 
 
+def _build_customer_snapshot_readiness(snapshot_items: list[dict[str, Any]]) -> dict[str, Any]:
+    stage_counts: dict[str, int] = {}
+    missing_progress_count = 0
+    production_visible_count = 0
+    ready_to_ship_count = 0
+    shipped_count = 0
+    delivered_count = 0
+    active_shipment_count = 0
+    open_feedback_count = 0
+
+    for snapshot in snapshot_items:
+        customer_status = snapshot.get("customer_status", {})
+        stage = str(customer_status.get("stage") or "unknown")
+        stage_counts[stage] = stage_counts.get(stage, 0) + 1
+        progress_steps = customer_status.get("progress_steps") or []
+        if not progress_steps:
+            missing_progress_count += 1
+        if customer_status.get("production_started") or customer_status.get("production_completed"):
+            production_visible_count += 1
+        if customer_status.get("ready_to_ship"):
+            ready_to_ship_count += 1
+        if customer_status.get("shipped"):
+            shipped_count += 1
+        if customer_status.get("delivered"):
+            delivered_count += 1
+        active_shipment_count += int(snapshot.get("shipment", {}).get("active_count") or 0)
+        open_feedback_count += int(snapshot.get("feedback", {}).get("open_count") or 0)
+
+    return {
+        "snapshot_count": len(snapshot_items),
+        "stage_counts": stage_counts,
+        "missing_progress_count": missing_progress_count,
+        "production_visible_count": production_visible_count,
+        "ready_to_ship_count": ready_to_ship_count,
+        "shipped_count": shipped_count,
+        "delivered_count": delivered_count,
+        "active_shipment_count": active_shipment_count,
+        "open_feedback_count": open_feedback_count,
+        "portal_ready": bool(snapshot_items) and missing_progress_count == 0,
+        "safety": {
+            "customer_visible_only": True,
+            "forbidden_field_filter_enabled": True,
+            "planned_dates_are_guarantees": False,
+            "customer_notified": False,
+            "order_status_mutated": False,
+        },
+    }
+
+
 def _build_portal_contract(settings: Settings, endpoints: dict[str, bool], missing_config: list[str]) -> dict[str, Any]:
     return {
         "base_url": settings.PUBLIC_BASE_URL.strip() or None,
@@ -396,6 +445,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
         }
     )
     feedback_operations = _build_feedback_operations(ticket_rows)
+    customer_snapshot_readiness = _build_customer_snapshot_readiness(snapshot_items)
 
     payload = {
         "status": {
@@ -413,6 +463,7 @@ def build_portal_operations_console(db: Session, settings: Settings, *, recent_l
         "endpoint_readiness": endpoints,
         "recent_customer_visible_orders": recent_orders,
         "customer_snapshots": snapshot_items,
+        "customer_snapshot_readiness": customer_snapshot_readiness,
         "shipment_status_counts": _count_by_status(shipment_rows),
         "feedback_status_counts": _count_by_status(ticket_rows),
         "feedback_priority_counts": _count_by_status(ticket_rows, "priority"),
