@@ -365,6 +365,36 @@ def _build_resource_readiness(resource_rows: list[OrderResource]) -> dict[str, A
     portal_visible_count = sum(1 for row in resource_rows if row.status == "published" and row.customer_visible)
     blocked_visibility_count = sum(1 for row in resource_rows if row.customer_visible and row.status != "published")
     hidden_published_count = sum(1 for row in resource_rows if row.status == "published" and not row.customer_visible)
+    action_items = []
+    for row in resource_rows:
+        action = None
+        if row.customer_visible and row.status != "published":
+            action = "publish_customer_visible_resource"
+        elif row.status == "published" and not row.customer_visible:
+            action = "review_hidden_published_resource"
+        if not action:
+            continue
+        action_items.append(
+            {
+                "id": str(row.id),
+                "order_id": str(row.order_id),
+                "title": row.title,
+                "category": row.category,
+                "status": row.status,
+                "customer_visible": bool(row.customer_visible),
+                "portal_visible": row.status == "published" and bool(row.customer_visible),
+                "action": action,
+                "safety": {
+                    "metadata_only": True,
+                    "download_url_exposed": False,
+                    "file_location_exposed": False,
+                    "filesystem_path_exposed": False,
+                    "token_value_exposed": False,
+                    "customer_notified": False,
+                    "automatic_email_sent": False,
+                },
+            }
+        )
     return {
         "total_count": len(resource_rows),
         "portal_visible_count": portal_visible_count,
@@ -373,6 +403,7 @@ def _build_resource_readiness(resource_rows: list[OrderResource]) -> dict[str, A
         "hidden_published_count": hidden_published_count,
         "status_counts": status_counts,
         "category_counts": category_counts,
+        "action_items": action_items[:8],
         "ready": portal_visible_count > 0,
         "safety": {
             "metadata_only": True,

@@ -381,16 +381,25 @@ def test_resource_readiness_summarizes_customer_visible_resources_without_paths(
     from app.services.portal.operations_console import _build_resource_readiness
 
     published_visible = MagicMock()
+    published_visible.id = uuid4()
+    published_visible.order_id = uuid4()
+    published_visible.title = "Packing list"
     published_visible.status = "published"
     published_visible.category = "packing_list"
     published_visible.customer_visible = True
 
     draft_visible = MagicMock()
+    draft_visible.id = uuid4()
+    draft_visible.order_id = uuid4()
+    draft_visible.title = "Spec sheet"
     draft_visible.status = "draft"
     draft_visible.category = "spec_sheet"
     draft_visible.customer_visible = True
 
     hidden_published = MagicMock()
+    hidden_published.id = uuid4()
+    hidden_published.order_id = uuid4()
+    hidden_published.title = "Certificate"
     hidden_published.status = "published"
     hidden_published.category = "certificate"
     hidden_published.customer_visible = False
@@ -404,6 +413,17 @@ def test_resource_readiness_summarizes_customer_visible_resources_without_paths(
     assert data["hidden_published_count"] == 1
     assert data["status_counts"] == {"published": 2, "draft": 1}
     assert data["category_counts"] == {"packing_list": 1, "spec_sheet": 1, "certificate": 1}
+    assert [item["action"] for item in data["action_items"]] == [
+        "publish_customer_visible_resource",
+        "review_hidden_published_resource",
+    ]
+    assert data["action_items"][0]["title"] == "Spec sheet"
+    assert data["action_items"][0]["portal_visible"] is False
+    assert data["action_items"][0]["safety"]["metadata_only"] is True
+    assert data["action_items"][0]["safety"]["download_url_exposed"] is False
+    assert data["action_items"][0]["safety"]["filesystem_path_exposed"] is False
+    assert "storage" not in str(data["action_items"]).lower()
+    assert "token" not in str(data["action_items"]).lower().replace("token_value_exposed", "")
     assert data["ready"] is True
     assert data["safety"]["metadata_only"] is True
     assert data["safety"]["download_links_signed"] is True

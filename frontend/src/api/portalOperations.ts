@@ -182,6 +182,25 @@ export interface PortalOperationsConsole {
     hidden_published_count: number
     status_counts: Record<string, number>
     category_counts: Record<string, number>
+    action_items: Array<{
+      id: string
+      order_id: string
+      title: string
+      category: string
+      status: string
+      customer_visible: boolean
+      portal_visible: boolean
+      action: string
+      safety: {
+        metadata_only: boolean
+        download_url_exposed: boolean
+        file_location_exposed: boolean
+        filesystem_path_exposed: boolean
+        token_value_exposed: boolean
+        customer_notified: boolean
+        automatic_email_sent: boolean
+      }
+    }>
     ready: boolean
     safety: {
       metadata_only: boolean

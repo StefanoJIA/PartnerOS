@@ -489,6 +489,26 @@
           {{ data?.resource_readiness.safety.file_location_exposed ? 'file path exposed' : 'paths hidden' }}
         </el-tag>
       </div>
+      <el-table v-if="data?.resource_readiness.action_items.length" :data="data.resource_readiness.action_items" class="mt-4 w-full">
+        <el-table-column prop="title" label="Resource" min-width="190" />
+        <el-table-column prop="category" label="Category" width="150" />
+        <el-table-column prop="status" label="Status" width="120" />
+        <el-table-column label="Visibility" width="150">
+          <template #default="{ row }">
+            <el-tag size="small" :type="row.portal_visible ? 'success' : 'warning'" effect="plain">
+              {{ row.portal_visible ? 'portal visible' : 'not visible' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="action" label="Action" min-width="220" />
+        <el-table-column label="Safety" width="150">
+          <template #default="{ row }">
+            <el-tag size="small" :type="row.safety.metadata_only && !row.safety.file_location_exposed ? 'success' : 'danger'" effect="plain">
+              {{ row.safety.metadata_only && !row.safety.file_location_exposed ? 'metadata only' : 'check' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
     </section>
 
     <section class="rounded border border-slate-200 bg-white p-4">
