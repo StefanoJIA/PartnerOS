@@ -41,6 +41,8 @@ from app.services.quotes.quote_totals import apply_totals_to_quote
 
 router = APIRouter(prefix="/quotes", tags=["v1-quotes"])
 
+ARCHIVABLE_QUOTE_STATUSES = ("internal_review", "ready_to_send", "revised", "expired")
+
 
 @router.get("")
 def list_quotes(
@@ -155,8 +157,12 @@ def archive_quote(
     user: User = Depends(get_current_user),
 ):
     quote = get_quote(db, quote_id)
-    if quote.status not in ("internal_review", "expired"):
-        raise ApiError(VALIDATION_ERROR, "only internal_review or expired quotes can be archived", status_code=400)
+    if quote.status not in ARCHIVABLE_QUOTE_STATUSES:
+        raise ApiError(
+            VALIDATION_ERROR,
+            "only unsent, revised, or expired quotes can be archived",
+            status_code=400,
+        )
     quote.is_archived = True
     quote.updated_by_id = user.id
     db.commit()

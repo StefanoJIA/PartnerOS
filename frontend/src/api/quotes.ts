@@ -190,6 +190,11 @@ export async function fetchQuote(id: string): Promise<QuoteDetail> {
   return data.data
 }
 
+export async function deleteQuote(id: string): Promise<{ archived: boolean; id: string }> {
+  const { data } = await http.delete<V1Envelope<{ archived: boolean; id: string }>>(`/v1/quotes/${id}`)
+  return data.data
+}
+
 export async function markQuoteReady(id: string): Promise<QuoteDetail> {
   const { data } = await http.post<V1Envelope<QuoteDetail>>(`/v1/quotes/${id}/mark-ready`)
   return data.data

@@ -140,3 +140,34 @@ def test_quote_safety_no_forbidden_words(quote_client):
     text = r.text.lower()
     for phrase in ("guaranteed price", "in stock", "delivery guaranteed", "lead time confirmed"):
         assert phrase not in text
+
+
+def test_archive_ready_to_send_quote(quote_client):
+    client, quote_id, _, _ = quote_client
+    r = client.delete(f"/api/v1/quotes/{quote_id}")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["ok"] is True
+    assert body["data"] == {"archived": True, "id": str(quote_id)}
+
+
+def test_sent_quote_cannot_be_archived(quote_client, monkeypatch):
+    client, quote_id, _, _ = quote_client
+    quote = Quote(
+        id=quote_id,
+        quote_number="Q-2026-0001",
+        quote_date=date.today(),
+        valid_until=date.today() + timedelta(days=21),
+        status="sent",
+        currency="USD",
+        subtotal=Decimal("1000.00"),
+        adjustment_total=Decimal("0"),
+        tax_total=Decimal("0"),
+        grand_total=Decimal("1000.00"),
+    )
+    monkeypatch.setattr("app.api.v1.routes.quotes.get_quote", lambda db, qid: quote)
+
+    r = client.delete(f"/api/v1/quotes/{quote_id}")
+
+    assert r.status_code == 400
+    assert "only unsent, revised, or expired quotes can be archived" in r.text
