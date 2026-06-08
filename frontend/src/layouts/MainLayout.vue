@@ -10,6 +10,7 @@
         router
       >
         <el-menu-item index="/">Dashboard</el-menu-item>
+        <el-menu-item index="/demo-walkthrough">Demo walkthrough</el-menu-item>
         <el-menu-item index="/system-health">System health</el-menu-item>
         <el-menu-item index="/portal-integration">Portal operations</el-menu-item>
         <el-menu-item index="/portal-customer-bridge">Portal bridge UAT</el-menu-item>

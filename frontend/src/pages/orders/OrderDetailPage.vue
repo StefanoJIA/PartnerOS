@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { UploadRequestOptions } from 'element-plus'
 import { uploadFile } from '@/api/objects'
+import { fetchFeedbackTickets, type FeedbackTicket } from '@/api/feedbackTickets'
 import {
   addSupplierConfirmation,
   cancelOrder,
@@ -54,6 +55,7 @@ const showSupplierFormFor = ref<string | null>(null)
 const milestonesBySplit = ref<Record<string, ProductionMilestone[]>>({})
 const shipmentPlans = ref<ShipmentPlan[]>([])
 const orderResources = ref<OrderResource[]>([])
+const feedbackTickets = ref<FeedbackTicket[]>([])
 const resourceUploading = ref(false)
 const editingMilestoneId = ref<string | null>(null)
 const milestoneForm = reactive({
@@ -136,6 +138,20 @@ const canManageShipments = computed(() => {
 const canCancel = computed(() => order.value && ['pending_customer_confirmation', 'confirmed'].includes(order.value.status))
 const typeWarning = computed(() => confirmationTypeWarning(confirmForm.confirmation_type))
 const orderWarnings = computed(() => order.value?.warnings || order.value?.confirmation_summary?.warnings || [])
+const openFeedbackTickets = computed(() => feedbackTickets.value.filter((ticket) => ticket.operation?.open))
+const visibleResourceCount = computed(() => orderResources.value.filter((resource) => resource.customer_visible && resource.status === 'published').length)
+const customerVisibleSummary = computed(() => {
+  const production = order.value?.production_summary
+  const shipment = order.value?.shipment_summary
+  const totalMilestones = production?.total_milestones ?? 0
+  const completedMilestones = production?.completed_milestones ?? 0
+  return {
+    production: totalMilestones ? `${completedMilestones}/${totalMilestones} milestones complete` : 'No milestones yet',
+    shipment: shipment?.total_plans ? `${shipment.active_plans} active / ${shipment.total_plans} total plans` : 'No shipment plan yet',
+    resources: `${visibleResourceCount.value} customer-visible resources`,
+    feedback: `${openFeedbackTickets.value.length} open feedback tickets`,
+  }
+})
 
 async function loadPartnerSplits() {
   if (!order.value) return
@@ -155,6 +171,12 @@ async function loadOrderResources() {
   orderResources.value = resources.items
 }
 
+async function loadFeedbackTickets() {
+  if (!order.value) return
+  const tickets = await fetchFeedbackTickets({ order_id: order.value.id, limit: 20 })
+  feedbackTickets.value = tickets.items
+}
+
 async function load() {
   loading.value = true
   error.value = ''
@@ -166,6 +188,7 @@ async function load() {
     await loadPartnerSplits()
     await loadShipmentPlans()
     await loadOrderResources()
+    await loadFeedbackTickets()
     const tl = await fetchOrderTimeline(id)
     timelineItems.value = tl.items
   } catch (e: unknown) {
@@ -496,6 +519,44 @@ onMounted(load)
           <span v-else>—</span>
         </el-descriptions-item>
       </el-descriptions>
+
+      <section class="section mb">
+        <div class="section-head">
+          <h3>Customer-visible operating summary</h3>
+          <div class="flex gap-2">
+            <el-button size="small" @click="router.push({ name: 'portal-customer-bridge', query: { order_id: order.id } })">
+              Portal preview
+            </el-button>
+            <el-button size="small" @click="router.push({ name: 'feedback-tickets', query: { order_id: order.id } })">
+              Feedback queue
+            </el-button>
+          </div>
+        </div>
+        <el-alert
+          type="info"
+          :closable="false"
+          class="mb"
+          title="Customer-visible summaries use whitelisted production, shipment, resource, and feedback metadata only."
+        />
+        <div class="summary-grid">
+          <div class="summary-tile">
+            <div class="summary-label">Production</div>
+            <div class="summary-value">{{ customerVisibleSummary.production }}</div>
+          </div>
+          <div class="summary-tile">
+            <div class="summary-label">Shipment</div>
+            <div class="summary-value">{{ customerVisibleSummary.shipment }}</div>
+          </div>
+          <div class="summary-tile">
+            <div class="summary-label">Resources</div>
+            <div class="summary-value">{{ customerVisibleSummary.resources }}</div>
+          </div>
+          <div class="summary-tile">
+            <div class="summary-label">Feedback</div>
+            <div class="summary-value">{{ customerVisibleSummary.feedback }}</div>
+          </div>
+        </div>
+      </section>
 
       <section class="section mb">
         <h3>Line Items</h3>
@@ -942,4 +1003,14 @@ onMounted(load)
 .link { color: var(--el-color-primary); }
 .split-detail { padding: 12px; border: 1px solid var(--el-border-color); border-radius: 4px; }
 .mt { margin-top: 12px; }
+.summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.summary-tile { border: 1px solid var(--el-border-color); border-radius: 4px; padding: 12px; background: #f8fafc; }
+.summary-label { font-size: 12px; color: #64748b; text-transform: uppercase; }
+.summary-value { margin-top: 6px; font-weight: 600; color: #0f172a; }
+@media (max-width: 900px) {
+  .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .summary-grid { grid-template-columns: 1fr; }
+}
 </style>

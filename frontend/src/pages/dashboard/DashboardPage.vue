@@ -2,7 +2,10 @@
   <div class="space-y-6" v-loading="loading">
     <div class="flex items-center justify-between">
       <h2 class="text-xl font-semibold text-slate-800">行动看板</h2>
-      <el-button size="small" @click="load">刷新</el-button>
+      <div class="flex gap-2">
+        <el-button size="small" type="primary" plain @click="router.push({ name: 'demo-walkthrough' })">Demo walkthrough</el-button>
+        <el-button size="small" @click="load">刷新</el-button>
+      </div>
     </div>
     <p class="text-sm text-slate-600">
       今日应联系谁、处理哪些 RFQ、跟进哪些样品与订单——集中在一页。规则生成的建议可点击跳转。

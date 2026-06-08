@@ -17,6 +17,7 @@ const router = createRouter({
       meta: { requiresAuth: true },
       children: [
         { path: '', name: 'dashboard', component: () => import('@/pages/dashboard/DashboardPage.vue') },
+        { path: 'demo-walkthrough', name: 'demo-walkthrough', component: () => import('@/pages/demo/DemoWalkthroughPage.vue') },
         { path: 'system-health', name: 'system-health', component: () => import('@/pages/system/SystemHealthPage.vue') },
         { path: 'portal-consumer-mock', redirect: '/portal-customer-bridge' },
         { path: 'portal-operations', redirect: '/portal-integration' },
