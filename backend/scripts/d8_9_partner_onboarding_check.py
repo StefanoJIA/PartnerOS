@@ -142,11 +142,11 @@ def main() -> int:
     router = _read("frontend/src/router/index.ts")
     layout = _read("frontend/src/layouts/MainLayout.vue")
     page = _read("frontend/src/pages/partners/PartnerOnboardingPage.vue")
-    ok, missing = _contains_all(
-        router + layout + page,
-        ("/partner-onboarding", "Partner onboarding", "HOSUN", "JOOBOO", "future brands", "peer partners"),
-    )
-    checks[5].pass_("route/menu/page present") if ok else checks[5].fail(missing)
+    frontend_text = router + layout + page
+    ok, missing = _contains_all(frontend_text, ("/partner-onboarding", "HOSUN", "JOOBOO"))
+    chinese_ready = all(marker in frontend_text for marker in ("Partner 接入", "未来品牌", "平级"))
+    english_ready = all(marker in frontend_text for marker in ("Partner onboarding", "future brands", "peer partners"))
+    checks[5].pass_("route/menu/page present") if ok and (chinese_ready or english_ready) else checks[5].fail(missing or "localized onboarding anchors")
 
     docs = _read("docs/phase3/d8_9_multi_brand_partner_onboarding.md") + "\n" + _read("docs/demo/partner_onboarding_playbook.md")
     ok, missing = _contains_all(
@@ -190,4 +190,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

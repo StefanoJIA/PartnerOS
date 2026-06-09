@@ -85,9 +85,9 @@ const resourceForm = reactive({
 })
 
 const SAFETY =
-  'Recording customer confirmation does not notify suppliers, start production, create shipments, confirm inventory, confirm certifications, or confirm lead time.'
+  '记录客户确认不会通知供应商、启动生产、创建物流、确认库存、确认认证或确认交期。'
 const RESOURCE_SAFETY_NOTE =
-  'Order resources are manually published customer documents. Publishing creates a signed download URL only; it does not email customers, expose storage paths, or notify the portal automatically.'
+  '订单资料是人工发布给客户的文件。发布只创建签名下载链接，不发送邮件、不暴露存储路径，也不会自动通知 Portal。'
 
 const supplierForm = reactive({
   confirmation_status: 'confirmed',
@@ -146,26 +146,26 @@ const customerVisibleSummary = computed(() => {
   const totalMilestones = production?.total_milestones ?? 0
   const completedMilestones = production?.completed_milestones ?? 0
   const stage =
-    shipment?.delivered_plans ? 'Delivered'
-    : shipment?.shipped_plans ? 'In transit'
-    : production?.ready_to_ship_completed ? 'Ready to ship'
-    : production?.in_progress_milestones ? 'In production'
-    : order.value?.status === 'confirmed' ? 'Order confirmed'
-    : 'Order intake'
+    shipment?.delivered_plans ? '已交付'
+    : shipment?.shipped_plans ? '运输中'
+    : production?.ready_to_ship_completed ? '待发运'
+    : production?.in_progress_milestones ? '生产中'
+    : order.value?.status === 'confirmed' ? '订单已确认'
+    : '订单录入'
   const nextAction =
-    shipment?.delivered_plans ? 'Collect feedback and close the operating loop.'
-    : shipment?.shipped_plans ? 'Monitor tracking and customer delivery feedback.'
-    : production?.ready_to_ship_completed ? 'Confirm logistics plan and customer-visible shipment details.'
-    : production?.in_progress_milestones ? 'Review production milestones and expected ready date.'
-    : order.value?.status === 'confirmed' ? 'Confirm partner split, supplier readiness, and production plan.'
-    : 'Record customer confirmation before production or shipment planning.'
+    shipment?.delivered_plans ? '收集反馈并关闭运营闭环。'
+    : shipment?.shipped_plans ? '跟踪物流和客户收货反馈。'
+    : production?.ready_to_ship_completed ? '确认物流计划和客户可见物流信息。'
+    : production?.in_progress_milestones ? '复核生产里程碑和预计完成日期。'
+    : order.value?.status === 'confirmed' ? '确认 partner 分单、供应商 readiness 和生产计划。'
+    : '先记录客户确认，再规划生产或物流。'
   return {
     stage,
     nextAction,
-    production: totalMilestones ? `${completedMilestones}/${totalMilestones} milestones complete` : 'No milestones yet',
-    shipment: shipment?.total_plans ? `${shipment.active_plans} active / ${shipment.total_plans} total plans` : 'No shipment plan yet',
-    resources: `${visibleResourceCount.value} customer-visible resources`,
-    feedback: `${openFeedbackTickets.value.length} open feedback tickets`,
+    production: totalMilestones ? `${completedMilestones}/${totalMilestones} 个里程碑完成` : '暂无生产里程碑',
+    shipment: shipment?.total_plans ? `${shipment.active_plans} 个进行中 / ${shipment.total_plans} 个物流计划` : '暂无物流计划',
+    resources: `${visibleResourceCount.value} 个客户可见资料`,
+    feedback: `${openFeedbackTickets.value.length} 个未结反馈`,
   }
 })
 
@@ -208,7 +208,7 @@ async function load() {
     const tl = await fetchOrderTimeline(id)
     timelineItems.value = tl.items
   } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Failed to load order'
+    error.value = e instanceof Error ? e.message : '订单加载失败'
   } finally {
     loading.value = false
   }
@@ -503,12 +503,12 @@ onMounted(load)
 
 <template>
   <div class="page">
-    <el-button link type="primary" @click="router.push({ name: 'orders' })">← Orders</el-button>
+    <el-button link type="primary" @click="router.push({ name: 'orders' })">← 返回订单</el-button>
 
     <div v-if="loading" v-loading="true" style="min-height: 160px" />
     <template v-else-if="order">
       <h1>{{ order.order_number }}</h1>
-      <el-alert type="warning" :closable="false" show-icon title="Confirmation Safety" :description="SAFETY" class="mb" />
+      <el-alert type="warning" :closable="false" show-icon title="确认安全边界" :description="SAFETY" class="mb" />
       <el-alert v-if="error" type="error" :title="error" show-icon class="mb" @close="error = ''" />
       <el-alert v-if="successMsg" type="success" :title="successMsg" show-icon class="mb" @close="successMsg = ''" />
       <el-alert
@@ -521,10 +521,10 @@ onMounted(load)
       />
 
       <el-descriptions :column="2" border class="mb">
-        <el-descriptions-item label="Status">{{ order.status }}</el-descriptions-item>
-        <el-descriptions-item label="Active Confirmations">{{ order.confirmation_summary?.active_count ?? 0 }}</el-descriptions-item>
-        <el-descriptions-item label="Grand Total">{{ order.currency }} {{ order.grand_total }}</el-descriptions-item>
-        <el-descriptions-item label="Source Quote">
+        <el-descriptions-item label="状态">{{ order.status }}</el-descriptions-item>
+        <el-descriptions-item label="有效确认">{{ order.confirmation_summary?.active_count ?? 0 }}</el-descriptions-item>
+        <el-descriptions-item label="总金额">{{ order.currency }} {{ order.grand_total }}</el-descriptions-item>
+        <el-descriptions-item label="来源报价">
           <router-link
             v-if="order.source_quote"
             class="link"
@@ -538,13 +538,13 @@ onMounted(load)
 
       <section class="section mb">
         <div class="section-head">
-          <h3>Customer-visible operating summary</h3>
+          <h3>客户可见运营摘要</h3>
           <div class="flex gap-2">
             <el-button size="small" @click="router.push({ name: 'portal-customer-bridge', query: { order_id: order.id } })">
-              Portal preview
+              Portal 预览
             </el-button>
             <el-button size="small" @click="router.push({ name: 'feedback-tickets', query: { order_id: order.id } })">
-              Feedback queue
+              反馈队列
             </el-button>
           </div>
         </div>
@@ -552,69 +552,69 @@ onMounted(load)
           type="info"
           :closable="false"
           class="mb"
-          title="Customer-visible summaries use whitelisted production, shipment, resource, and feedback metadata only."
+          title="客户可见摘要只使用白名单内的生产、物流、资料和反馈元数据。"
         />
         <div class="customer-stage mb">
           <div>
-            <div class="summary-label">Current customer-facing step</div>
+            <div class="summary-label">当前客户可见阶段</div>
             <div class="customer-stage-title">{{ customerVisibleSummary.stage }}</div>
             <p class="customer-stage-copy">{{ customerVisibleSummary.nextAction }}</p>
           </div>
-          <el-tag effect="plain">Portal safe</el-tag>
+          <el-tag effect="plain">Portal 安全</el-tag>
         </div>
         <div class="summary-grid">
           <div class="summary-tile">
-            <div class="summary-label">Production</div>
+            <div class="summary-label">生产</div>
             <div class="summary-value">{{ customerVisibleSummary.production }}</div>
           </div>
           <div class="summary-tile">
-            <div class="summary-label">Shipment</div>
+            <div class="summary-label">物流</div>
             <div class="summary-value">{{ customerVisibleSummary.shipment }}</div>
           </div>
           <div class="summary-tile">
-            <div class="summary-label">Resources</div>
+            <div class="summary-label">资料</div>
             <div class="summary-value">{{ customerVisibleSummary.resources }}</div>
           </div>
           <div class="summary-tile">
-            <div class="summary-label">Feedback</div>
+            <div class="summary-label">反馈</div>
             <div class="summary-value">{{ customerVisibleSummary.feedback }}</div>
           </div>
         </div>
       </section>
 
       <section class="section mb">
-        <h3>Line Items</h3>
+        <h3>订单行</h3>
         <el-table :data="order.line_items" stripe>
-          <el-table-column prop="product_name" label="Product" />
-          <el-table-column prop="quantity" label="Qty" width="80" />
-          <el-table-column prop="unit_price" label="Unit Price" width="120" />
-          <el-table-column prop="total_price" label="Total" width="120" />
-          <el-table-column prop="status" label="Status" width="120" />
+          <el-table-column prop="product_name" label="产品" />
+          <el-table-column prop="quantity" label="数量" width="80" />
+          <el-table-column prop="unit_price" label="单价" width="120" />
+          <el-table-column prop="total_price" label="合计" width="120" />
+          <el-table-column prop="status" label="状态" width="120" />
         </el-table>
       </section>
 
       <section class="section mb">
         <div class="section-head">
-          <h3>Customer Confirmations</h3>
+          <h3>客户确认</h3>
           <el-button v-if="canAddConfirmation" type="primary" @click="showAddForm = !showAddForm">
-            Add Confirmation
+            添加确认
           </el-button>
         </div>
 
         <el-table :data="confirmations" stripe class="mb">
-          <el-table-column prop="confirmation_type" label="Type" width="140" />
-          <el-table-column label="Strength" width="100">
+          <el-table-column prop="confirmation_type" label="类型" width="140" />
+          <el-table-column label="强度" width="100">
             <template #default="{ row }">
               <el-tag :type="strengthTagType(row.confirmation_strength)" size="small">{{ row.confirmation_strength }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="confirmed_at" label="Confirmed At" width="180" />
-          <el-table-column prop="confirmed_by_name" label="By" width="120" />
-          <el-table-column prop="evidence_reference" label="Evidence" />
-          <el-table-column prop="status" label="Status" width="90" />
+          <el-table-column prop="confirmed_at" label="确认时间" width="180" />
+          <el-table-column prop="confirmed_by_name" label="确认人" width="120" />
+          <el-table-column prop="evidence_reference" label="证据" />
+          <el-table-column prop="status" label="状态" width="90" />
           <el-table-column label="" width="100">
             <template #default="{ row }">
-              <el-button v-if="row.status === 'active'" size="small" @click="onVoid(row)">Void</el-button>
+              <el-button v-if="row.status === 'active'" size="small" @click="onVoid(row)">作废</el-button>
             </template>
           </el-table-column>
         </el-table>

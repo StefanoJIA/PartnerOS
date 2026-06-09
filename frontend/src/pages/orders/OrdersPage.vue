@@ -10,7 +10,7 @@ const items = ref<OrderSummary[]>([])
 const statusFilter = ref('')
 
 const SAFETY =
-  'Customer orders are created manually from sent quotes. Order creation does not start production, notify suppliers, create shipments, or confirm inventory, certifications, or lead times.'
+  '客户订单由已发送报价人工创建。创建订单不会启动生产、通知供应商、创建物流，也不会确认库存、认证或交期。'
 
 async function load() {
   loading.value = true
@@ -19,7 +19,7 @@ async function load() {
     const data = await fetchOrders({ status: statusFilter.value || undefined })
     items.value = data.items
   } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Failed to load orders'
+    error.value = e instanceof Error ? e.message : '订单加载失败'
   } finally {
     loading.value = false
   }
@@ -30,14 +30,14 @@ onMounted(load)
 
 <template>
   <div class="page">
-    <h1>Customer Orders</h1>
-    <el-alert type="warning" :closable="false" show-icon title="Safety" :description="SAFETY" class="mb" />
+    <h1>客户订单</h1>
+    <el-alert type="warning" :closable="false" show-icon title="安全边界" :description="SAFETY" class="mb" />
 
     <div class="toolbar">
-      <el-select v-model="statusFilter" placeholder="Status" clearable style="width: 240px" @change="load">
-        <el-option label="Pending Customer Confirmation" value="pending_customer_confirmation" />
-        <el-option label="Confirmed" value="confirmed" />
-        <el-option label="Cancelled" value="cancelled" />
+      <el-select v-model="statusFilter" placeholder="状态" clearable style="width: 240px" @change="load">
+        <el-option label="待客户确认" value="pending_customer_confirmation" />
+        <el-option label="已确认" value="confirmed" />
+        <el-option label="已取消" value="cancelled" />
       </el-select>
     </div>
 
@@ -49,21 +49,21 @@ onMounted(load)
       stripe
       @row-click="(row: OrderSummary) => router.push({ name: 'order-detail', params: { orderId: row.id } })"
     >
-      <el-table-column prop="order_number" label="Order #" width="140" />
-      <el-table-column prop="bill_to_company" label="Company" />
-      <el-table-column prop="status" label="Status" width="220" />
-      <el-table-column prop="grand_total" label="Total" width="140">
+      <el-table-column prop="order_number" label="订单号" width="140" />
+      <el-table-column prop="bill_to_company" label="公司" />
+      <el-table-column prop="status" label="状态" width="220" />
+      <el-table-column prop="grand_total" label="金额" width="140">
         <template #default="{ row }">{{ row.currency }} {{ row.grand_total }}</template>
       </el-table-column>
-      <el-table-column prop="order_date" label="Order Date" width="120" />
-      <el-table-column label="Source Quote" width="140">
+      <el-table-column prop="order_date" label="订单日期" width="120" />
+      <el-table-column label="来源报价" width="140">
         <template #default="{ row }">
           <router-link
             class="link"
             :to="{ name: 'quote-detail', params: { id: row.source_quote_id } }"
             @click.stop
           >
-            View Quote
+            查看报价
           </router-link>
         </template>
       </el-table-column>

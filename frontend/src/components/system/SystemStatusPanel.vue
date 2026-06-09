@@ -2,11 +2,11 @@
   <el-card shadow="never" v-loading="loading">
     <template #header>
       <div class="flex flex-wrap items-center justify-between gap-2">
-        <span class="font-medium text-slate-800">System Status · Portal Readiness</span>
+        <span class="font-medium text-slate-800">系统状态 / Portal 准备度</span>
         <div class="flex gap-2">
-          <el-button size="small" @click="load">Refresh</el-button>
+          <el-button size="small" @click="load">刷新</el-button>
           <router-link v-if="showDetailLink" to="/system-health">
-            <el-button size="small" type="primary" link>Details</el-button>
+            <el-button size="small" type="primary" link>详情</el-button>
           </router-link>
         </div>
       </div>
@@ -18,7 +18,7 @@
       :closable="false"
       show-icon
       class="mb-3"
-      title="Database not ready"
+      title="数据库未就绪"
       :description="DB_HINT"
     />
 
@@ -32,11 +32,11 @@
       </div>
 
       <dl class="grid gap-2 text-sm md:grid-cols-2">
-        <div><dt class="text-slate-500">Database</dt><dd>{{ health.database_status || '—' }}</dd></div>
-        <div><dt class="text-slate-500">Lifecycle</dt><dd>{{ health.database_lifecycle_phase || '—' }}</dd></div>
+        <div><dt class="text-slate-500">数据库</dt><dd>{{ health.database_status || '—' }}</dd></div>
+        <div><dt class="text-slate-500">生命周期</dt><dd>{{ health.database_lifecycle_phase || '—' }}</dd></div>
         <div>
-          <dt class="text-slate-500">Migration pending</dt>
-          <dd>{{ health.migration_pending ? 'Yes' : 'No' }}</dd>
+          <dt class="text-slate-500">Migration 待执行</dt>
+          <dd>{{ health.migration_pending ? '是' : '否' }}</dd>
         </div>
         <div>
           <dt class="text-slate-500">Alembic</dt>
@@ -46,16 +46,16 @@
 
       <template v-if="readiness?.data">
         <el-divider class="my-3" />
-        <p class="mb-2 text-xs font-medium text-slate-600">Readiness (v1)</p>
+        <p class="mb-2 text-xs font-medium text-slate-600">准备度 (v1)</p>
         <div class="flex flex-wrap gap-2 text-xs">
           <el-tag :type="readiness.data.database_ready ? 'success' : 'warning'" size="small">
-            DB {{ readiness.data.database_ready ? 'ready' : 'not ready' }}
+            DB {{ readiness.data.database_ready ? '就绪' : '未就绪' }}
           </el-tag>
           <el-tag :type="readiness.data.redis_ready ? 'success' : 'info'" size="small">
-            Redis {{ readiness.data.redis_ready ? 'ready' : 'optional off' }}
+            Redis {{ readiness.data.redis_ready ? '就绪' : '可选关闭' }}
           </el-tag>
           <el-tag :type="readiness.data.worker_ready ? 'success' : 'info'" size="small">
-            Worker {{ readiness.data.worker_ready ? 'ready' : 'optional off' }}
+            Worker {{ readiness.data.worker_ready ? '就绪' : '可选关闭' }}
           </el-tag>
         </div>
         <ul v-if="readiness.data.warnings?.length" class="mt-2 list-disc pl-5 text-xs text-amber-700">
@@ -68,16 +68,16 @@
         <p class="mb-1 text-xs text-slate-600">
           <span class="font-medium">{{ manifest.data.service_name || manifest.data.service_id }}</span>
           · API {{ manifest.data.api_version || '—' }}
-          · {{ (manifest.data.modules || []).length }} modules
+          · {{ (manifest.data.modules || []).length }} 个模块
         </p>
         <p class="text-xs text-slate-500 line-clamp-2">
-          Capabilities: {{ (manifest.data.capabilities || []).slice(0, 8).join(', ') }}
+          能力：{{ (manifest.data.capabilities || []).slice(0, 8).join(', ') }}
           <span v-if="(manifest.data.capabilities || []).length > 8">…</span>
         </p>
       </template>
 
       <p v-if="compact" class="mt-3 text-xs text-slate-400">
-        Dev frontend port is shown in the Vite terminal (often 5173 or 5174).
+        开发前端端口以 Vite 终端输出为准，通常是 5173 或 5174。
       </p>
     </template>
   </el-card>
@@ -108,9 +108,9 @@ const manifest = ref<ManifestEnvelope | null>(null)
 
 const healthLabel = computed(() => {
   const s = health.value?.status
-  if (s === 'ok') return 'OK'
-  if (s === 'degraded') return 'Degraded'
-  return s || 'Unknown'
+  if (s === 'ok') return '正常'
+  if (s === 'degraded') return '降级'
+  return s || '未知'
 })
 
 const healthTagType = computed(() => {

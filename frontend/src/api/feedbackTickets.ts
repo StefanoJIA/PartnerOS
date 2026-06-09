@@ -105,4 +105,4 @@ export async function closeFeedbackTicket(
 }
 
 export const FEEDBACK_SAFETY_NOTE =
-  'Feedback operations are internal notes only. PartnerOS does not send email, notify customers, or promise an SLA from this console.'
+  '反馈处理仅记录内部操作。PartnerOS 不会从本控制台发送邮件、通知客户或承诺 SLA。'

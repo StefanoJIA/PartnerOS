@@ -2,66 +2,65 @@
   <div class="space-y-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h2 class="text-xl font-semibold text-slate-800">Portal Operations</h2>
-        <p class="mt-1 text-sm text-slate-600">Internal launch console for customer-visible Portal data.</p>
+        <h2 class="text-xl font-semibold text-slate-800">Portal 运营</h2>
+        <p class="mt-1 text-sm text-slate-600">客户可见 Portal 数据的内部联调与运营控制台。</p>
       </div>
-      <el-button type="primary" :loading="loading" @click="load">Refresh</el-button>
+      <el-button type="primary" :loading="loading" @click="load">刷新</el-button>
     </div>
 
     <el-alert
       type="warning"
       :closable="false"
       show-icon
-      title="Read-only operations view. No customer notification, supplier notification, carrier API call, or order status mutation is performed."
+      title="只读运营视图。本页不会通知客户或供应商，不调用承运商 API，也不会修改订单状态。"
     />
     <el-alert v-if="error" type="error" :closable="false" show-icon :title="error" />
 
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 class="font-semibold text-slate-800">Customer Portal operating value</h3>
+          <h3 class="font-semibold text-slate-800">客户 Portal 运营价值</h3>
           <p class="mt-1 text-sm text-slate-600">
-            This console proves the bridge from internal PartnerOS operations to the customer Portal: product visibility,
-            order status, production progress, shipment plan, resource center, and feedback intake.
+            本控制台展示 PartnerOS 内部运营到客户 Portal 的桥接：产品可见性、订单状态、生产进度、物流计划、资料中心和反馈入口。
           </p>
         </div>
         <el-tag type="info" effect="plain">READY_FOR_STAGING_HANDOFF</el-tag>
       </div>
       <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         <div class="rounded border border-slate-100 bg-slate-50 p-3">
-          <p class="text-xs uppercase text-slate-500">Products</p>
-          <p class="mt-1 text-sm text-slate-700">Customer-safe product fields define what the Portal can show.</p>
+          <p class="text-xs uppercase text-slate-500">产品</p>
+          <p class="mt-1 text-sm text-slate-700">客户安全字段决定 Portal 能展示哪些产品信息。</p>
         </div>
         <div class="rounded border border-slate-100 bg-slate-50 p-3">
-          <p class="text-xs uppercase text-slate-500">Orders</p>
-          <p class="mt-1 text-sm text-slate-700">Recent visible orders anchor the customer account timeline.</p>
+          <p class="text-xs uppercase text-slate-500">订单</p>
+          <p class="mt-1 text-sm text-slate-700">近期可见订单构成客户账号时间线。</p>
         </div>
         <div class="rounded border border-slate-100 bg-slate-50 p-3">
-          <p class="text-xs uppercase text-slate-500">Production</p>
-          <p class="mt-1 text-sm text-slate-700">Milestones become customer progress without exposing supplier notes.</p>
+          <p class="text-xs uppercase text-slate-500">生产</p>
+          <p class="mt-1 text-sm text-slate-700">里程碑转化为客户进度，不暴露供应商私有备注。</p>
         </div>
         <div class="rounded border border-slate-100 bg-slate-50 p-3">
-          <p class="text-xs uppercase text-slate-500">Shipment</p>
-          <p class="mt-1 text-sm text-slate-700">Manual logistics plans show ETD, ETA, and tracking when ready.</p>
+          <p class="text-xs uppercase text-slate-500">物流</p>
+          <p class="mt-1 text-sm text-slate-700">人工维护物流计划，在就绪后展示 ETD、ETA 和追踪信息。</p>
         </div>
         <div class="rounded border border-slate-100 bg-slate-50 p-3">
-          <p class="text-xs uppercase text-slate-500">Feedback</p>
-          <p class="mt-1 text-sm text-slate-700">Portal feedback enters the internal queue without auto-replies.</p>
+          <p class="text-xs uppercase text-slate-500">反馈</p>
+          <p class="mt-1 text-sm text-slate-700">Portal 反馈进入内部队列，不自动回复。</p>
         </div>
       </div>
     </section>
 
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex items-center justify-between">
-        <h3 class="font-semibold text-slate-800">Launch readiness</h3>
+        <h3 class="font-semibold text-slate-800">上线准备度</h3>
         <el-tag :type="data?.portal_launch_readiness.ready_for_real_staging ? 'success' : 'warning'">
-          {{ data?.portal_launch_readiness.ready_for_real_staging ? 'ready to connect' : 'needs attention' }}
+          {{ data?.portal_launch_readiness.ready_for_real_staging ? '可联调' : '需处理' }}
         </el-tag>
       </div>
       <div class="grid gap-2 md:grid-cols-3 xl:grid-cols-6">
         <div v-for="(ready, check) in data?.portal_launch_readiness.checks || {}" :key="check" class="rounded border border-slate-200 p-3">
           <p class="text-sm text-slate-500">{{ check }}</p>
-          <el-tag class="mt-2" size="small" :type="ready ? 'success' : 'warning'" effect="plain">{{ ready ? 'ok' : 'check' }}</el-tag>
+          <el-tag class="mt-2" size="small" :type="ready ? 'success' : 'warning'" effect="plain">{{ ready ? '通过' : '检查' }}</el-tag>
         </div>
       </div>
       <div v-if="data?.portal_launch_readiness.blockers.length" class="mt-3 flex flex-wrap gap-2">
@@ -74,47 +73,47 @@
 
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h3 class="font-semibold text-slate-800">Staging integration checklist</h3>
+        <h3 class="font-semibold text-slate-800">Staging 联调 checklist</h3>
         <div class="flex flex-wrap gap-2">
           <el-tag :type="data?.staging_integration_checklist.ready_for_staging_operator ? 'success' : 'warning'" effect="plain">
-            {{ data?.staging_integration_checklist.ready_for_staging_operator ? 'operator ready' : 'blocked' }}
+            {{ data?.staging_integration_checklist.ready_for_staging_operator ? '运营可接手' : '存在阻塞' }}
           </el-tag>
           <el-tag :type="data?.staging_integration_checklist.safety.staging_validated ? 'danger' : 'info'" effect="plain">
-            {{ data?.staging_integration_checklist.safety.staging_validated ? 'validated' : 'handoff only' }}
+            {{ data?.staging_integration_checklist.safety.staging_validated ? '已验证' : '仅 handoff' }}
           </el-tag>
         </div>
       </div>
       <div class="mb-3 grid gap-2 md:grid-cols-4">
         <div class="rounded border border-slate-200 p-3">
-          <p class="text-sm text-slate-500">Done</p>
+          <p class="text-sm text-slate-500">已完成</p>
           <p class="mt-1 font-medium text-slate-800">{{ data?.staging_integration_checklist.done_count ?? 0 }}</p>
         </div>
         <div class="rounded border border-slate-200 p-3">
-          <p class="text-sm text-slate-500">Operator actions</p>
+          <p class="text-sm text-slate-500">运营动作</p>
           <p class="mt-1 font-medium text-slate-800">{{ data?.staging_integration_checklist.operator_action_count ?? 0 }}</p>
         </div>
         <div class="rounded border border-slate-200 p-3">
-          <p class="text-sm text-slate-500">Blocked</p>
+          <p class="text-sm text-slate-500">阻塞</p>
           <p class="mt-1 font-medium text-slate-800">{{ data?.staging_integration_checklist.blocked_count ?? 0 }}</p>
         </div>
         <div class="rounded border border-slate-200 p-3">
           <p class="text-sm text-slate-500">Proof records</p>
-          <p class="mt-1 font-medium text-slate-800">{{ data?.staging_integration_checklist.safety.proof_record_created ? 'created' : 'none' }}</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.staging_integration_checklist.safety.proof_record_created ? '已创建' : '无' }}</p>
         </div>
       </div>
       <el-table :data="data?.staging_integration_checklist.items || []" class="w-full">
-        <el-table-column prop="label" label="Item" min-width="190" />
-        <el-table-column label="Status" width="160">
+        <el-table-column prop="label" label="项目" min-width="190" />
+        <el-table-column label="状态" width="160">
           <template #default="{ row }">
             <el-tag size="small" :type="checklistStatusType(row.status)" effect="plain">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="action" label="Action" min-width="360" />
-        <el-table-column prop="detail" label="Detail" min-width="230" />
-        <el-table-column label="Safety" width="155">
+        <el-table-column prop="action" label="动作" min-width="360" />
+        <el-table-column prop="detail" label="说明" min-width="230" />
+        <el-table-column label="安全" width="155">
           <template #default="{ row }">
             <el-tag size="small" :type="row.safety.proof_record_created || row.safety.token_value_exposed ? 'danger' : 'success'" effect="plain">
-              {{ row.safety.proof_record_created || row.safety.token_value_exposed ? 'check' : 'safe' }}
+              {{ row.safety.proof_record_created || row.safety.token_value_exposed ? '检查' : '安全' }}
             </el-tag>
           </template>
         </el-table-column>
@@ -125,49 +124,49 @@
       <div class="rounded border border-slate-200 bg-white p-4">
         <p class="text-sm text-slate-500">Portal API</p>
         <el-tag class="mt-2" :type="data?.status.enabled ? 'success' : 'danger'">
-          {{ data?.status.enabled ? 'enabled' : 'disabled' }}
+          {{ data?.status.enabled ? '已启用' : '未启用' }}
         </el-tag>
       </div>
       <div class="rounded border border-slate-200 bg-white p-4">
         <p class="text-sm text-slate-500">Token</p>
         <el-tag class="mt-2" :type="data?.status.token_configured ? 'success' : 'warning'">
-          {{ data?.status.token_configured ? 'configured' : 'missing' }}
+          {{ data?.status.token_configured ? '已配置' : '缺失' }}
         </el-tag>
       </div>
       <div class="rounded border border-slate-200 bg-white p-4">
         <p class="text-sm text-slate-500">Public base URL</p>
         <el-tag class="mt-2" :type="data?.status.public_base_url_configured ? 'success' : 'warning'">
-          {{ data?.status.public_base_url_configured ? 'configured' : 'missing' }}
+          {{ data?.status.public_base_url_configured ? '已配置' : '缺失' }}
         </el-tag>
       </div>
       <div class="rounded border border-slate-200 bg-white p-4">
-        <p class="text-sm text-slate-500">Forbidden field audit</p>
+        <p class="text-sm text-slate-500">禁用字段审计</p>
         <el-tag class="mt-2" :type="data?.forbidden_field_audit.hits.length ? 'danger' : 'success'">
-          {{ data?.forbidden_field_audit.hits.length ? `${data.forbidden_field_audit.hits.length} hit(s)` : 'clear' }}
+          {{ data?.forbidden_field_audit.hits.length ? `${data.forbidden_field_audit.hits.length} 个命中` : '通过' }}
         </el-tag>
         <p class="mt-2 text-xs text-slate-500">
-          {{ data?.forbidden_field_audit.checked_payloads?.join(', ') || 'not checked' }}
+          {{ data?.forbidden_field_audit.checked_payloads?.join(', ') || '未检查' }}
         </p>
       </div>
     </section>
 
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex items-center justify-between">
-        <h3 class="font-semibold text-slate-800">Runtime health</h3>
-        <el-tag :type="data?.runtime_health.ok ? 'success' : 'warning'">{{ data?.runtime_health.ok ? 'healthy' : 'check' }}</el-tag>
+        <h3 class="font-semibold text-slate-800">运行健康</h3>
+        <el-tag :type="data?.runtime_health.ok ? 'success' : 'warning'">{{ data?.runtime_health.ok ? '健康' : '需检查' }}</el-tag>
       </div>
       <div class="grid gap-2 md:grid-cols-4">
         <div class="rounded border border-slate-200 p-3">
-          <p class="text-sm text-slate-500">Database</p>
+          <p class="text-sm text-slate-500">数据库</p>
           <p class="mt-1 font-medium text-slate-800">{{ data?.runtime_health.database_status || '-' }}</p>
         </div>
         <div class="rounded border border-slate-200 p-3">
           <p class="text-sm text-slate-500">Migration</p>
-          <p class="mt-1 font-medium text-slate-800">{{ data?.runtime_health.migration_pending ? 'pending' : 'at head' }}</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.runtime_health.migration_pending ? '待升级' : '已到 head' }}</p>
         </div>
         <div class="rounded border border-slate-200 p-3">
           <p class="text-sm text-slate-500">Portal API</p>
-          <p class="mt-1 font-medium text-slate-800">{{ data?.runtime_health.portal_customer_api_ready ? 'ready' : 'needs config' }}</p>
+          <p class="mt-1 font-medium text-slate-800">{{ data?.runtime_health.portal_customer_api_ready ? '就绪' : '需配置' }}</p>
         </div>
         <div class="rounded border border-slate-200 p-3">
           <p class="text-sm text-slate-500">Alembic</p>
@@ -181,13 +180,13 @@
 
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex items-center justify-between">
-        <h3 class="font-semibold text-slate-800">Endpoint readiness</h3>
-        <el-tag :type="data?.status.ready ? 'success' : 'warning'">{{ data?.status.ready ? 'ready' : 'needs config' }}</el-tag>
+        <h3 class="font-semibold text-slate-800">接口准备度</h3>
+        <el-tag :type="data?.status.ready ? 'success' : 'warning'">{{ data?.status.ready ? '就绪' : '需配置' }}</el-tag>
       </div>
       <div class="grid gap-2 md:grid-cols-3 xl:grid-cols-6">
         <div v-for="(ready, name) in data?.endpoint_readiness || {}" :key="name" class="rounded border border-slate-200 p-3">
           <p class="text-sm capitalize text-slate-600">{{ name }}</p>
-          <el-tag class="mt-2" size="small" :type="ready ? 'success' : 'danger'">{{ ready ? 'ready' : 'not ready' }}</el-tag>
+          <el-tag class="mt-2" size="small" :type="ready ? 'success' : 'danger'">{{ ready ? '就绪' : '未就绪' }}</el-tag>
         </div>
       </div>
       <div v-if="data?.status.missing_config.length" class="mt-3 flex flex-wrap gap-2">
@@ -197,7 +196,7 @@
 
     <section class="grid gap-4 xl:grid-cols-[0.9fr_1.4fr]">
       <div class="rounded border border-slate-200 bg-white p-4">
-        <h3 class="mb-3 font-semibold text-slate-800">Staging connection</h3>
+        <h3 class="mb-3 font-semibold text-slate-800">Staging 连接</h3>
         <dl class="space-y-3 text-sm">
           <div>
             <dt class="text-slate-500">Public base URL</dt>
@@ -209,13 +208,13 @@
           </div>
           <div class="flex flex-wrap gap-2">
             <el-tag :type="data?.portal_contract.server_to_server_auth.required ? 'success' : 'warning'" effect="plain">
-              {{ data?.portal_contract.server_to_server_auth.required ? 'token required' : 'token optional' }}
+              {{ data?.portal_contract.server_to_server_auth.required ? '需要 token' : 'token 可选' }}
             </el-tag>
             <el-tag :type="data?.portal_contract.server_to_server_auth.token_configured ? 'success' : 'warning'" effect="plain">
-              {{ data?.portal_contract.server_to_server_auth.token_configured ? 'token configured' : 'token missing' }}
+              {{ data?.portal_contract.server_to_server_auth.token_configured ? 'token 已配置' : 'token 缺失' }}
             </el-tag>
             <el-tag :type="data?.portal_contract.safety.token_value_exposed ? 'danger' : 'success'" effect="plain">
-              {{ data?.portal_contract.safety.token_value_exposed ? 'token exposed' : 'token hidden' }}
+              {{ data?.portal_contract.safety.token_value_exposed ? 'token 暴露' : 'token 隐藏' }}
             </el-tag>
           </div>
           <div>
@@ -235,7 +234,7 @@
               >
                 <span class="font-medium text-slate-700">{{ item.name }}</span>
                 <el-tag size="small" :type="item.configured ? 'success' : 'warning'" effect="plain">
-                  {{ item.configured ? 'configured' : 'missing' }}
+                  {{ item.configured ? '已配置' : '缺失' }}
                 </el-tag>
               </div>
             </dd>
@@ -244,14 +243,14 @@
       </div>
 
       <div class="rounded border border-slate-200 bg-white p-4">
-        <h3 class="mb-3 font-semibold text-slate-800">Portal contract</h3>
+        <h3 class="mb-3 font-semibold text-slate-800">Portal 契约</h3>
         <el-table :data="data?.portal_contract.endpoints || []" class="w-full">
-          <el-table-column prop="method" label="Method" width="90" />
-          <el-table-column prop="name" label="Data" width="140" />
+          <el-table-column prop="method" label="方法" width="90" />
+          <el-table-column prop="name" label="数据" width="140" />
           <el-table-column prop="path" label="Path" min-width="310" />
           <el-table-column label="Ready" width="100">
             <template #default="{ row }">
-              <el-tag size="small" :type="row.ready ? 'success' : 'warning'">{{ row.ready ? 'ready' : 'check' }}</el-tag>
+              <el-tag size="small" :type="row.ready ? 'success' : 'warning'">{{ row.ready ? '就绪' : '检查' }}</el-tag>
             </template>
           </el-table-column>
         </el-table>

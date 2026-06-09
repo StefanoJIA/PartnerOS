@@ -2,10 +2,10 @@
   <div class="space-y-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h2 class="text-xl font-semibold text-slate-800">Feedback Tickets</h2>
-        <p class="mt-1 text-sm text-slate-600">Internal operations queue for customer portal feedback.</p>
+        <h2 class="text-xl font-semibold text-slate-800">客户反馈工单</h2>
+        <p class="mt-1 text-sm text-slate-600">客户 Portal 反馈的内部运营队列。</p>
       </div>
-      <el-button type="primary" :loading="loading" @click="load">Refresh</el-button>
+      <el-button type="primary" :loading="loading" @click="load">刷新</el-button>
     </div>
 
     <el-alert type="warning" :closable="false" show-icon :title="FEEDBACK_SAFETY_NOTE" />
@@ -14,75 +14,74 @@
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 class="font-semibold text-slate-800">Feedback operating loop</h3>
+          <h3 class="font-semibold text-slate-800">反馈运营闭环</h3>
           <p class="mt-1 text-sm text-slate-600">
-            Use this queue to connect customer Portal feedback back to order detail, shipment follow-up, and Market
-            Response review. Updates stay internal unless a human explicitly communicates outside PartnerOS.
+            用此队列把客户 Portal 反馈连接回订单详情、物流跟进和市场响应复核。除非人工在 PartnerOS 外沟通，否则更新只保留在内部。
           </p>
         </div>
-        <el-tag type="info" effect="plain">internal handling only</el-tag>
+        <el-tag type="info" effect="plain">仅内部处理</el-tag>
       </div>
       <div class="grid gap-3 md:grid-cols-3">
         <div class="rounded border border-slate-100 bg-slate-50 p-3">
-          <p class="text-xs uppercase text-slate-500">Order context</p>
-          <p class="mt-1 text-sm text-slate-700">Open the linked order to inspect production, shipment, and customer-visible status.</p>
+          <p class="text-xs uppercase text-slate-500">订单上下文</p>
+          <p class="mt-1 text-sm text-slate-700">打开关联订单，检查生产、物流和客户可见状态。</p>
         </div>
         <div class="rounded border border-slate-100 bg-slate-50 p-3">
-          <p class="text-xs uppercase text-slate-500">Logistics follow-up</p>
-          <p class="mt-1 text-sm text-slate-700">Shipment questions become internal action items without carrier automation.</p>
+          <p class="text-xs uppercase text-slate-500">物流跟进</p>
+          <p class="mt-1 text-sm text-slate-700">物流问题转为内部行动项，不触发承运商自动化。</p>
         </div>
         <div class="rounded border border-slate-100 bg-slate-50 p-3">
-          <p class="text-xs uppercase text-slate-500">Market response</p>
-          <p class="mt-1 text-sm text-slate-700">Repeated feedback becomes a human-reviewed product or partner signal.</p>
+          <p class="text-xs uppercase text-slate-500">市场响应</p>
+          <p class="mt-1 text-sm text-slate-700">重复反馈会成为人工审查的产品或 partner 信号。</p>
         </div>
       </div>
     </section>
 
     <div class="grid gap-3 md:grid-cols-6">
-      <el-select v-model="filters.status" clearable placeholder="Status">
+      <el-select v-model="filters.status" clearable placeholder="状态">
         <el-option v-for="s in statuses" :key="s" :label="s" :value="s" />
       </el-select>
-      <el-select v-model="filters.priority" clearable placeholder="Priority">
+      <el-select v-model="filters.priority" clearable placeholder="优先级">
         <el-option v-for="p in priorities" :key="p" :label="p" :value="p" />
       </el-select>
-      <el-select v-model="filters.operation_filter" clearable placeholder="Ops queue">
+      <el-select v-model="filters.operation_filter" clearable placeholder="运营队列">
         <el-option v-for="item in operationFilters" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
-      <el-input v-model="filters.feedback_type" clearable placeholder="Type" />
+      <el-input v-model="filters.feedback_type" clearable placeholder="类型" />
       <el-input v-model="filters.order_id" clearable placeholder="Order ID" @keyup.enter="load" />
-      <el-input v-model="filters.search" clearable placeholder="Search" @keyup.enter="load" />
+      <el-input v-model="filters.search" clearable placeholder="搜索" @keyup.enter="load" />
     </div>
 
     <el-table :data="tickets" v-loading="loading" class="w-full" @row-click="openTicket">
-      <el-table-column prop="ticket_number" label="Ticket" width="150" />
-      <el-table-column prop="subject" label="Subject" min-width="220" />
-      <el-table-column prop="feedback_type" label="Type" width="130" />
-      <el-table-column prop="status" label="Status" width="130">
+      <el-table-column prop="ticket_number" label="工单" width="150" />
+      <el-table-column prop="subject" label="主题" min-width="220" />
+      <el-table-column prop="feedback_type" label="类型" width="130" />
+      <el-table-column prop="status" label="状态" width="130">
         <template #default="{ row }">
           <el-tag size="small" :type="statusTag(row.status)">{{ row.status }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="priority" label="Priority" width="120">
+      <el-table-column prop="priority" label="优先级" width="120">
         <template #default="{ row }">
           <el-tag size="small" :type="priorityTag(row.priority)" effect="plain">{{ row.priority }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="Review" width="120">
+      <el-table-column label="复核" width="120">
         <template #default="{ row }">
           <el-tag size="small" :type="row.operation.needs_internal_review ? 'warning' : 'success'" effect="plain">
-            {{ row.operation.needs_internal_review ? 'review' : 'clear' }}
+            {{ row.operation.needs_internal_review ? '需复核' : '通过' }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="Age" width="90">
+      <el-table-column label="天数" width="90">
         <template #default="{ row }">{{ row.operation.age_days ?? '-' }}</template>
       </el-table-column>
-      <el-table-column prop="internal_owner" label="Owner" width="160" />
-      <el-table-column prop="created_at" label="Created" width="190" />
+      <el-table-column prop="internal_owner" label="负责人" width="160" />
+      <el-table-column prop="created_at" label="创建时间" width="190" />
     </el-table>
 
     <div class="flex items-center justify-between text-sm text-slate-500">
-      <span>Total {{ total }}</span>
+      <span>共 {{ total }} 条</span>
       <el-pagination
         v-model:current-page="page"
         v-model:page-size="limit"
@@ -92,49 +91,49 @@
       />
     </div>
 
-    <el-drawer v-model="drawerOpen" size="520px" title="Feedback ticket">
+    <el-drawer v-model="drawerOpen" size="520px" title="反馈工单">
       <template v-if="selected">
         <dl class="grid gap-3 text-sm">
           <div>
-            <dt class="text-slate-500">Ticket</dt>
+            <dt class="text-slate-500">工单</dt>
             <dd class="font-medium">{{ selected.ticket_number }}</dd>
           </div>
           <div>
-            <dt class="text-slate-500">Subject</dt>
+            <dt class="text-slate-500">主题</dt>
             <dd>{{ selected.subject }}</dd>
           </div>
           <div>
-            <dt class="text-slate-500">Message</dt>
+            <dt class="text-slate-500">消息</dt>
             <dd class="whitespace-pre-wrap rounded border border-slate-200 bg-slate-50 p-3">{{ selected.message }}</dd>
           </div>
           <div class="grid grid-cols-3 gap-2">
             <el-tag :type="selected.operation.activity_logging_enabled ? 'success' : 'warning'" effect="plain">
-              {{ selected.operation.activity_logging_enabled ? 'activity logging' : 'not logged' }}
+              {{ selected.operation.activity_logging_enabled ? '已记录活动' : '未记录' }}
             </el-tag>
             <el-tag :type="selected.operation.internal_handling_only ? 'info' : 'danger'" effect="plain">
-              internal handling
+              内部处理
             </el-tag>
             <el-tag :type="selected.safety.customer_notified ? 'danger' : 'success'" effect="plain">
-              {{ selected.safety.customer_notified ? 'customer notified' : 'no notification' }}
+              {{ selected.safety.customer_notified ? '已通知客户' : '未通知客户' }}
             </el-tag>
           </div>
           <div class="grid grid-cols-3 gap-2">
             <div class="rounded border border-slate-200 p-3">
-              <dt class="text-slate-500">Age</dt>
+              <dt class="text-slate-500">天数</dt>
               <dd class="font-medium">{{ selected.operation.age_days ?? '-' }}</dd>
             </div>
             <div class="rounded border border-slate-200 p-3">
-              <dt class="text-slate-500">Review</dt>
-              <dd class="font-medium">{{ selected.operation.needs_internal_review ? 'needed' : 'clear' }}</dd>
+              <dt class="text-slate-500">复核</dt>
+              <dd class="font-medium">{{ selected.operation.needs_internal_review ? '需要' : '通过' }}</dd>
             </div>
             <div class="rounded border border-slate-200 p-3">
-              <dt class="text-slate-500">Summary</dt>
-              <dd class="font-medium">{{ selected.operation.response_summary_missing ? 'missing' : 'ok' }}</dd>
+              <dt class="text-slate-500">摘要</dt>
+              <dd class="font-medium">{{ selected.operation.response_summary_missing ? '缺失' : '已填' }}</dd>
             </div>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <dt class="text-slate-500">Customer</dt>
+              <dt class="text-slate-500">客户</dt>
               <dd>{{ selected.customer_name || '-' }}</dd>
             </div>
             <div>
@@ -143,9 +142,9 @@
             </div>
           </div>
           <div v-if="selected.order_id">
-            <dt class="text-slate-500">Related order</dt>
+            <dt class="text-slate-500">关联订单</dt>
             <dd class="mt-1">
-              <el-button size="small" @click="openRelatedOrder(selected.order_id)">Open order</el-button>
+              <el-button size="small" @click="openRelatedOrder(selected.order_id)">打开订单</el-button>
             </dd>
           </div>
         </dl>
@@ -153,27 +152,27 @@
         <el-divider />
 
         <el-form label-position="top">
-          <el-form-item label="Status">
+          <el-form-item label="状态">
             <el-select v-model="form.status">
               <el-option v-for="s in statuses" :key="s" :label="s" :value="s" />
             </el-select>
           </el-form-item>
-          <el-form-item label="Priority">
+          <el-form-item label="优先级">
             <el-select v-model="form.priority">
               <el-option v-for="p in priorities" :key="p" :label="p" :value="p" />
             </el-select>
           </el-form-item>
-          <el-form-item label="Internal owner">
+          <el-form-item label="内部负责人">
             <el-input v-model="form.internal_owner" />
           </el-form-item>
-          <el-form-item label="Response summary">
+          <el-form-item label="处理摘要">
             <el-input v-model="form.response_summary" type="textarea" rows="4" />
           </el-form-item>
-          <el-alert type="info" :closable="false" show-icon title="Saving this form records internal handling only. No customer notification is sent." />
+          <el-alert type="info" :closable="false" show-icon title="保存只记录内部处理，不会通知客户。" />
           <div class="mt-4 flex flex-wrap gap-2">
-            <el-button type="primary" :loading="saving" @click="save">Save</el-button>
-            <el-button @click="quickStatus('resolved')">Mark resolved</el-button>
-            <el-button @click="quickStatus('closed')">Close</el-button>
+            <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+            <el-button @click="quickStatus('resolved')">标记已解决</el-button>
+            <el-button @click="quickStatus('closed')">关闭</el-button>
           </div>
         </el-form>
       </template>
@@ -199,10 +198,10 @@ import {
 const statuses = ['new', 'in_review', 'responded', 'resolved', 'closed']
 const priorities = ['low', 'normal', 'high', 'urgent']
 const operationFilters = [
-  { value: 'needs_internal_review', label: 'Needs review' },
-  { value: 'response_summary_missing', label: 'Missing summary' },
-  { value: 'ready_to_close', label: 'Ready to close' },
-  { value: 'open', label: 'Open tickets' },
+  { value: 'needs_internal_review', label: '需要复核' },
+  { value: 'response_summary_missing', label: '缺少摘要' },
+  { value: 'ready_to_close', label: '可关闭' },
+  { value: 'open', label: '未结工单' },
 ]
 
 const loading = ref(false)
@@ -251,7 +250,7 @@ async function load() {
     tickets.value = data.items
     total.value = data.total
   } catch (e) {
-    error.value = formatApiError(e, 'Failed to load feedback tickets.')
+    error.value = formatApiError(e, '反馈工单加载失败。')
   } finally {
     loading.value = false
   }
@@ -291,7 +290,7 @@ async function save() {
     })
     await load()
   } catch (e) {
-    error.value = formatApiError(e, 'Failed to save feedback ticket.')
+    error.value = formatApiError(e, '反馈工单保存失败。')
   } finally {
     saving.value = false
   }
@@ -319,7 +318,7 @@ async function quickStatus(status: 'resolved' | 'closed') {
     syncForm()
     await load()
   } catch (e) {
-    error.value = formatApiError(e, `Failed to mark feedback ticket ${status}.`)
+    error.value = formatApiError(e, `反馈工单状态更新失败：${status}。`)
   } finally {
     saving.value = false
   }

@@ -1,14 +1,14 @@
 <template>
   <div class="space-y-4">
     <div>
-      <h2 class="text-xl font-semibold text-slate-800">System Health · Portal Readiness</h2>
+      <h2 class="text-xl font-semibold text-slate-800">系统健康 / Portal 准备度</h2>
       <p class="mt-1 text-sm text-slate-600">
-        Read-only portal integration for external dashboards. Data from
+        面向外部看板的只读 Portal 集成状态。数据来自
         <code class="text-xs">/health</code>,
         <code class="text-xs">/api/v1/system/readiness</code>,
         <code class="text-xs">/api/v1/portal/manifest</code>,
         <code class="text-xs">/api/v1/portal/summary</code>, and
-        <code class="text-xs">/api/v1/portal/a-domain/status</code>. No secrets are shown.
+        <code class="text-xs">/api/v1/portal/a-domain/status</code>。不会展示密钥。
       </p>
     </div>
 
@@ -17,13 +17,13 @@
       :closable="false"
       show-icon
       class="mb-1"
-      title="Read-only portal integration"
-      description="No automatic sending. Human-reviewed outreach only. intelliOffice does not scrape LinkedIn or automate platform actions."
+      title="只读 Portal 集成"
+      description="不自动发送。客户开发只允许人工审查。intelliOffice 不抓取 LinkedIn，也不自动执行平台动作。"
     />
 
     <div class="flex flex-wrap gap-2">
       <router-link to="/portal-consumer-mock">
-        <el-button size="small" type="primary" plain>External Portal Consumer Mock</el-button>
+        <el-button size="small" type="primary" plain>外部 Portal 消费端模拟</el-button>
       </router-link>
     </div>
 
@@ -32,8 +32,8 @@
     <el-card v-loading="portalLoading" shadow="never">
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-2">
-          <span class="font-medium text-slate-800">Portal Readiness</span>
-          <el-tag size="small" type="info" effect="plain">Read-only</el-tag>
+          <span class="font-medium text-slate-800">Portal 准备度</span>
+          <el-tag size="small" type="info" effect="plain">只读</el-tag>
         </div>
       </template>
 
@@ -42,11 +42,11 @@
       <template v-else-if="portalSummary?.data">
         <dl class="grid gap-3 text-sm md:grid-cols-2 lg:grid-cols-3">
           <div>
-            <dt class="text-slate-500">Service</dt>
+            <dt class="text-slate-500">服务</dt>
             <dd class="font-medium">{{ portalSummary.data.service_id }} · {{ portalSummary.data.service_name }}</dd>
           </div>
           <div>
-            <dt class="text-slate-500">Runtime mode</dt>
+            <dt class="text-slate-500">运行模式</dt>
             <dd>{{ portalSummary.data.runtime_mode || '—' }}</dd>
           </div>
           <div>
@@ -54,40 +54,40 @@
             <dd>{{ portalSummary.data.api_version || '—' }}</dd>
           </div>
           <div>
-            <dt class="text-slate-500">Total leads</dt>
+            <dt class="text-slate-500">线索总数</dt>
             <dd class="font-semibold">{{ portalSummary.data.lead_intelligence?.total_leads ?? '—' }}</dd>
           </div>
           <div>
-            <dt class="text-slate-500">High priority</dt>
+            <dt class="text-slate-500">高优先级</dt>
             <dd class="font-semibold text-rose-700">{{ portalSummary.data.lead_intelligence?.high_priority ?? '—' }}</dd>
           </div>
           <div>
-            <dt class="text-slate-500">Waiting for reply</dt>
+            <dt class="text-slate-500">等待回复</dt>
             <dd>{{ portalSummary.data.lead_intelligence?.waiting_for_reply ?? '—' }}</dd>
           </div>
           <div>
-            <dt class="text-slate-500">Needs first outreach</dt>
+            <dt class="text-slate-500">待首次触达</dt>
             <dd>{{ portalSummary.data.lead_intelligence?.needs_first_outreach ?? '—' }}</dd>
           </div>
           <div>
-            <dt class="text-slate-500">Manual outreach ready</dt>
+            <dt class="text-slate-500">人工触达准备</dt>
             <dd>
               <el-tag size="small" :type="aDomainStatus?.data?.manual_outreach_ready ? 'success' : 'warning'">
-                {{ aDomainStatus?.data?.manual_outreach_ready ? 'Yes' : 'No' }}
+                {{ aDomainStatus?.data?.manual_outreach_ready ? '是' : '否' }}
               </el-tag>
             </dd>
           </div>
           <div>
-            <dt class="text-slate-500">Automatic sending</dt>
+            <dt class="text-slate-500">自动发送</dt>
             <dd>
-              <el-tag size="small" type="success" effect="plain">Disabled</el-tag>
+              <el-tag size="small" type="success" effect="plain">已禁用</el-tag>
             </dd>
           </div>
           <div>
             <dt class="text-slate-500">Portal summary endpoint</dt>
             <dd>
               <el-tag size="small" :type="summaryEndpointOk ? 'success' : 'danger'">
-                {{ summaryEndpointOk ? 'OK' : 'Error' }}
+                {{ summaryEndpointOk ? '正常' : '错误' }}
               </el-tag>
             </dd>
           </div>
@@ -95,22 +95,22 @@
 
         <p v-if="aDomainStatus?.data?.latest_stage" class="mt-3 text-xs text-slate-500">
           A-domain stage: {{ aDomainStatus.data.latest_stage }}
-          · daily workflow {{ aDomainStatus.data.daily_workflow_ready ? 'ready' : 'not ready' }}
+          · daily workflow {{ aDomainStatus.data.daily_workflow_ready ? '就绪' : '未就绪' }}
         </p>
       </template>
     </el-card>
 
     <el-card v-if="manifestModules.length" shadow="never">
-      <template #header>Portal modules (read-only)</template>
+      <template #header>Portal 模块（只读）</template>
       <el-table :data="manifestModules" size="small" stripe>
         <el-table-column prop="key" label="Key" width="160" />
-        <el-table-column prop="name" label="Name" />
-        <el-table-column prop="frontend_route" label="Route" />
+        <el-table-column prop="name" label="名称" />
+        <el-table-column prop="frontend_route" label="路由" />
       </el-table>
     </el-card>
 
     <el-card v-if="capabilities.length" shadow="never">
-      <template #header>Capabilities</template>
+      <template #header>能力</template>
       <div class="flex flex-wrap gap-1">
         <el-tag v-for="c in capabilities" :key="c" size="small" effect="plain">{{ c }}</el-tag>
       </div>
@@ -148,7 +148,7 @@ async function loadPortalData() {
     portalSummary.value = s
     aDomainStatus.value = a
   } catch (e: unknown) {
-    portalError.value = 'Failed to load portal summary. Is the backend running?'
+    portalError.value = 'Portal 摘要加载失败，请确认 backend 是否运行。'
     console.error(e)
   } finally {
     portalLoading.value = false
