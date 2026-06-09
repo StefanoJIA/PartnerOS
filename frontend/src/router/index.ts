@@ -39,6 +39,7 @@ const router = createRouter({
         { path: 'field-visits', name: 'field-visits', component: () => import('@/pages/field/FieldVisitsPage.vue') },
         { path: 'manufacturing-partners', name: 'partners', component: () => import('@/pages/partners/PartnersPage.vue') },
         { path: 'manufacturing-partners/:partnerId', name: 'partner-detail', component: () => import('@/pages/partners/PartnerDetailPage.vue') },
+        { path: 'partner-onboarding', name: 'partner-onboarding', component: () => import('@/pages/partners/PartnerOnboardingPage.vue') },
         { path: 'products', name: 'products', component: () => import('@/pages/products/ProductsPage.vue') },
         { path: 'products/:productId', name: 'product-detail', component: () => import('@/pages/products/ProductDetailPage.vue') },
         { path: 'quote-catalog', name: 'quote-catalog', component: () => import('@/pages/quotes/QuoteCatalogPage.vue') },

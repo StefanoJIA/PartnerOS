@@ -10,6 +10,7 @@ from app.api.v1.routes import (
     market_response,
     orders,
     partner_operations,
+    partner_onboarding,
     portal,
     portal_customer,
     portal_operations,
@@ -36,5 +37,6 @@ v1_router.include_router(quote_delivery.router)
 v1_router.include_router(quote_order_readiness.router)
 v1_router.include_router(orders.router)
 v1_router.include_router(partner_operations.router)
+v1_router.include_router(partner_onboarding.router)
 v1_router.include_router(quotes.router)
 v1_router.include_router(quote_pdf.router)
