@@ -159,6 +159,24 @@ const marketExplanationRows = computed(() =>
   })),
 )
 
+interface DemoControlLink {
+  label: string
+  path: string | null
+  orderId: string | null | undefined
+  detail: string
+}
+
+const demoControlLinks = computed(() => [
+  { label: 'Dashboard', path: '/', orderId: null, detail: 'Start with operating context and daily flow.' },
+  { label: 'Portal Operations', path: '/portal-integration', orderId: null, detail: 'Show customer Portal readiness and safe field contract.' },
+  { label: 'Market Response', path: '/market-intelligence', orderId: null, detail: 'Explain product and partner focus signals.' },
+  { label: 'Orders', path: '/orders', orderId: null, detail: 'Open the confirmed customer order list.' },
+  { label: 'Featured Order Detail', path: null, orderId: featuredOrder.value?.id, detail: 'Show customer-visible production, shipment, resource, and feedback summary.' },
+  { label: 'Feedback Tickets', path: '/feedback-tickets', orderId: null, detail: 'Operate the internal customer feedback queue.' },
+  { label: 'Quotes', path: '/quotes', orderId: null, detail: 'Show quote-to-order continuity.' },
+  { label: 'System Health', path: '/system-health', orderId: null, detail: 'Confirm local runtime health before live walkthrough.' },
+] satisfies DemoControlLink[])
+
 async function load() {
   loading.value = true
   error.value = ''
@@ -182,6 +200,14 @@ function open(path: string) {
 
 function openOrder(orderId: string | null | undefined) {
   if (orderId) router.push({ name: 'order-detail', params: { orderId } })
+}
+
+function openControlLink(link: DemoControlLink) {
+  if (link.orderId) {
+    openOrder(link.orderId)
+    return
+  }
+  if (link.path) open(link.path)
 }
 
 function focusLabel(key: string) {
@@ -237,6 +263,30 @@ onMounted(load)
           <div class="text-xs uppercase text-slate-500">{{ step.label }}</div>
           <div class="mt-1 text-lg font-semibold text-slate-900">{{ step.value }}</div>
           <p class="mt-2 text-sm text-slate-600">{{ step.detail }}</p>
+        </button>
+      </div>
+    </section>
+
+    <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 class="font-semibold text-slate-800">One-click walkthrough control panel</h3>
+          <p class="mt-1 text-sm text-slate-600">
+            Use these links during a live demo to keep the story moving without hunting through navigation.
+          </p>
+        </div>
+        <el-tag effect="plain">repeatable demo path</el-tag>
+      </div>
+      <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <button
+          v-for="link in demoControlLinks"
+          :key="link.label"
+          class="rounded border border-slate-200 bg-slate-50 p-3 text-left hover:border-blue-300 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+          :disabled="link.label === 'Featured Order Detail' && !link.orderId"
+          @click="openControlLink(link)"
+        >
+          <div class="font-semibold text-slate-900">{{ link.label }}</div>
+          <p class="mt-1 text-sm text-slate-600">{{ link.detail }}</p>
         </button>
       </div>
     </section>

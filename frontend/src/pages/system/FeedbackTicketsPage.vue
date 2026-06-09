@@ -11,6 +11,33 @@
     <el-alert type="warning" :closable="false" show-icon :title="FEEDBACK_SAFETY_NOTE" />
     <el-alert v-if="error" type="error" :closable="false" show-icon :title="error" />
 
+    <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 class="font-semibold text-slate-800">Feedback operating loop</h3>
+          <p class="mt-1 text-sm text-slate-600">
+            Use this queue to connect customer Portal feedback back to order detail, shipment follow-up, and Market
+            Response review. Updates stay internal unless a human explicitly communicates outside PartnerOS.
+          </p>
+        </div>
+        <el-tag type="info" effect="plain">internal handling only</el-tag>
+      </div>
+      <div class="grid gap-3 md:grid-cols-3">
+        <div class="rounded border border-slate-100 bg-slate-50 p-3">
+          <p class="text-xs uppercase text-slate-500">Order context</p>
+          <p class="mt-1 text-sm text-slate-700">Open the linked order to inspect production, shipment, and customer-visible status.</p>
+        </div>
+        <div class="rounded border border-slate-100 bg-slate-50 p-3">
+          <p class="text-xs uppercase text-slate-500">Logistics follow-up</p>
+          <p class="mt-1 text-sm text-slate-700">Shipment questions become internal action items without carrier automation.</p>
+        </div>
+        <div class="rounded border border-slate-100 bg-slate-50 p-3">
+          <p class="text-xs uppercase text-slate-500">Market response</p>
+          <p class="mt-1 text-sm text-slate-700">Repeated feedback becomes a human-reviewed product or partner signal.</p>
+        </div>
+      </div>
+    </section>
+
     <div class="grid gap-3 md:grid-cols-6">
       <el-select v-model="filters.status" clearable placeholder="Status">
         <el-option v-for="s in statuses" :key="s" :label="s" :value="s" />
