@@ -145,7 +145,23 @@ const customerVisibleSummary = computed(() => {
   const shipment = order.value?.shipment_summary
   const totalMilestones = production?.total_milestones ?? 0
   const completedMilestones = production?.completed_milestones ?? 0
+  const stage =
+    shipment?.delivered_plans ? 'Delivered'
+    : shipment?.shipped_plans ? 'In transit'
+    : production?.ready_to_ship_completed ? 'Ready to ship'
+    : production?.in_progress_milestones ? 'In production'
+    : order.value?.status === 'confirmed' ? 'Order confirmed'
+    : 'Order intake'
+  const nextAction =
+    shipment?.delivered_plans ? 'Collect feedback and close the operating loop.'
+    : shipment?.shipped_plans ? 'Monitor tracking and customer delivery feedback.'
+    : production?.ready_to_ship_completed ? 'Confirm logistics plan and customer-visible shipment details.'
+    : production?.in_progress_milestones ? 'Review production milestones and expected ready date.'
+    : order.value?.status === 'confirmed' ? 'Confirm partner split, supplier readiness, and production plan.'
+    : 'Record customer confirmation before production or shipment planning.'
   return {
+    stage,
+    nextAction,
     production: totalMilestones ? `${completedMilestones}/${totalMilestones} milestones complete` : 'No milestones yet',
     shipment: shipment?.total_plans ? `${shipment.active_plans} active / ${shipment.total_plans} total plans` : 'No shipment plan yet',
     resources: `${visibleResourceCount.value} customer-visible resources`,
@@ -538,6 +554,14 @@ onMounted(load)
           class="mb"
           title="Customer-visible summaries use whitelisted production, shipment, resource, and feedback metadata only."
         />
+        <div class="customer-stage mb">
+          <div>
+            <div class="summary-label">Current customer-facing step</div>
+            <div class="customer-stage-title">{{ customerVisibleSummary.stage }}</div>
+            <p class="customer-stage-copy">{{ customerVisibleSummary.nextAction }}</p>
+          </div>
+          <el-tag effect="plain">Portal safe</el-tag>
+        </div>
         <div class="summary-grid">
           <div class="summary-tile">
             <div class="summary-label">Production</div>
@@ -1007,6 +1031,18 @@ onMounted(load)
 .summary-tile { border: 1px solid var(--el-border-color); border-radius: 4px; padding: 12px; background: #f8fafc; }
 .summary-label { font-size: 12px; color: #64748b; text-transform: uppercase; }
 .summary-value { margin-top: 6px; font-weight: 600; color: #0f172a; }
+.customer-stage {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--el-border-color);
+  border-radius: 4px;
+  padding: 12px;
+  background: #f8fafc;
+}
+.customer-stage-title { margin-top: 4px; font-size: 18px; font-weight: 700; color: #0f172a; }
+.customer-stage-copy { margin: 6px 0 0; color: #475569; }
 @media (max-width: 900px) {
   .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

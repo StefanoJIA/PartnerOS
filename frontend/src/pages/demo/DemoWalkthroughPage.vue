@@ -12,7 +12,7 @@ const portal = ref<PortalOperationsConsole | null>(null)
 const market = ref<MarketResponseIntelligence | null>(null)
 
 const safety =
-  'Read-only demo guide. It does not validate staging, enter D9, notify customers or suppliers, send email/webhooks, call carriers, or expose token/cost/margin/private-note fields.'
+  'Read-only demo guide. It stays at READY_FOR_STAGING_HANDOFF and does not enter D9, validate staging, notify customers or suppliers, send email/webhooks, call carriers, or expose token/cost/margin/private-note fields.'
 
 const focusLabels: Record<string, string> = {
   adjustable_desk_frames: 'Adjustable desk frames',
@@ -24,10 +24,17 @@ const focusLabels: Record<string, string> = {
 
 const journey = computed(() => [
   {
+    key: 'development',
+    label: 'Customer development',
+    value: 'Brand + project intake',
+    detail: 'Start with a customer need, target brand direction, and project context before proposing a product line.',
+    route: '/leads',
+  },
+  {
     key: 'interest',
-    label: 'Product interest',
+    label: 'Product adaptation',
     value: `${market.value?.summary.feedback_ticket_count ?? 0} feedback / ${market.value?.summary.market_signal_count ?? 0} market notes`,
-    detail: 'Customer feedback, quote lines, order demand, and market notes are treated as advisory signals.',
+    detail: 'Customer feedback, quote lines, order demand, and market notes show which product line fits the opportunity.',
     route: '/market-intelligence',
   },
   {
@@ -66,6 +73,13 @@ const journey = computed(() => [
     route: '/portal-integration',
   },
   {
+    key: 'portal',
+    label: 'Portal',
+    value: `${portal.value?.customer_snapshot_readiness.snapshot_count ?? 0} customer snapshots`,
+    detail: 'Customer Portal reads whitelisted products, orders, production, shipment, resources, and feedback status.',
+    route: '/portal-integration',
+  },
+  {
     key: 'feedback',
     label: 'Feedback',
     value: `${portal.value?.feedback_operations.open_count ?? 0} open tickets`,
@@ -78,6 +92,31 @@ const journey = computed(() => [
     value: `${market.value?.summary.recommendation_count ?? 0} recommendations`,
     detail: 'Operators review signals before changing product focus, partner playbooks, or outreach.',
     route: '/market-intelligence',
+  },
+])
+
+const storyLine = computed(() => [
+  'Use PartnerOS to qualify a customer project, map it to the right partner product line, and keep the operator workflow connected after the quote becomes an order.',
+  'The customer-facing Portal remains a filtered bridge: customers can inspect product, order, production, shipment, resource, and feedback status without seeing internal operating data.',
+  'Market Response closes the loop by turning actual orders, delays, logistics risk, and feedback into human-reviewed product and partner priorities.',
+])
+
+const scenarioCards = computed(() => [
+  {
+    title: 'HOSUN lifting systems',
+    partner: hosunPartner.value?.partner_name || 'HOSUN',
+    focus: 'Desk frames, desk legs, lifting columns, and heavy-duty lifting projects',
+    story:
+      'The operator starts from adjustable workstation demand, prepares the quote, splits confirmed order lines to HOSUN, tracks production readiness, plans shipment, and watches logistics/feedback signals for the next market response.',
+    route: { name: 'market', query: { focus_category: 'lifting_columns' } },
+  },
+  {
+    title: 'JOOBOO education furniture',
+    partner: secondaryPartner.value?.partner_name || 'JOOBOO / future partner',
+    focus: 'Education furniture and project furniture programs',
+    story:
+      'The same operating loop works for classroom and project furniture: match product requirements, quote the program, split partner work, expose customer-safe delivery status, and convert feedback into partner focus.',
+    route: { name: 'market', query: { focus_category: 'education_furniture' } },
   },
 ])
 
@@ -156,10 +195,10 @@ onMounted(load)
   <div class="space-y-5" v-loading="loading">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h2 class="text-xl font-semibold text-slate-800">D8.3 business demo walkthrough</h2>
+        <h2 class="text-xl font-semibold text-slate-800">D8.4 business demo walkthrough</h2>
         <p class="mt-1 max-w-4xl text-sm text-slate-600">
-          A read-only operating scenario for intelliOffice PartnerOS: product interest to quote, order, partner split,
-          production, shipment, feedback, and market response.
+          A partner-facing operating story for intelliOffice PartnerOS: customer development to product adaptation,
+          quote, order, partner split, production, shipment, Portal, feedback, and market response.
         </p>
       </div>
       <div class="flex gap-2">
@@ -170,6 +209,18 @@ onMounted(load)
 
     <el-alert type="info" :closable="false" :title="safety" />
     <el-alert v-if="error" type="error" :closable="false" :title="error" />
+
+    <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <h3 class="font-semibold text-slate-800">Demo story</h3>
+        <el-tag effect="plain">agent operating system</el-tag>
+      </div>
+      <div class="grid gap-3 lg:grid-cols-3">
+        <div v-for="line in storyLine" :key="line" class="rounded border border-slate-100 bg-slate-50 p-3 text-sm text-slate-700">
+          {{ line }}
+        </div>
+      </div>
+    </section>
 
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -228,6 +279,26 @@ onMounted(load)
             </template>
           </el-table-column>
         </el-table>
+      </section>
+
+      <section class="rounded border border-slate-200 bg-white p-4">
+        <div class="mb-3 flex items-center justify-between gap-3">
+          <h3 class="font-semibold text-slate-800">Two demo scenarios</h3>
+          <el-tag type="success" effect="plain">HOSUN + JOOBOO</el-tag>
+        </div>
+        <div class="grid gap-3">
+          <button
+            v-for="scenario in scenarioCards"
+            :key="scenario.title"
+            class="rounded border border-slate-100 bg-slate-50 p-3 text-left hover:border-blue-300 hover:bg-blue-50"
+            @click="router.push(scenario.route)"
+          >
+            <div class="text-xs uppercase text-slate-500">{{ scenario.partner }}</div>
+            <div class="mt-1 font-semibold text-slate-900">{{ scenario.title }}</div>
+            <p class="mt-1 text-sm font-medium text-slate-700">{{ scenario.focus }}</p>
+            <p class="mt-2 text-sm text-slate-600">{{ scenario.story }}</p>
+          </button>
+        </div>
       </section>
 
       <section class="rounded border border-slate-200 bg-white p-4">

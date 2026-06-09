@@ -17,6 +17,41 @@
     <el-alert v-if="error" type="error" :closable="false" show-icon :title="error" />
 
     <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 class="font-semibold text-slate-800">Customer Portal operating value</h3>
+          <p class="mt-1 text-sm text-slate-600">
+            This console proves the bridge from internal PartnerOS operations to the customer Portal: product visibility,
+            order status, production progress, shipment plan, resource center, and feedback intake.
+          </p>
+        </div>
+        <el-tag type="info" effect="plain">READY_FOR_STAGING_HANDOFF</el-tag>
+      </div>
+      <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <div class="rounded border border-slate-100 bg-slate-50 p-3">
+          <p class="text-xs uppercase text-slate-500">Products</p>
+          <p class="mt-1 text-sm text-slate-700">Customer-safe product fields define what the Portal can show.</p>
+        </div>
+        <div class="rounded border border-slate-100 bg-slate-50 p-3">
+          <p class="text-xs uppercase text-slate-500">Orders</p>
+          <p class="mt-1 text-sm text-slate-700">Recent visible orders anchor the customer account timeline.</p>
+        </div>
+        <div class="rounded border border-slate-100 bg-slate-50 p-3">
+          <p class="text-xs uppercase text-slate-500">Production</p>
+          <p class="mt-1 text-sm text-slate-700">Milestones become customer progress without exposing supplier notes.</p>
+        </div>
+        <div class="rounded border border-slate-100 bg-slate-50 p-3">
+          <p class="text-xs uppercase text-slate-500">Shipment</p>
+          <p class="mt-1 text-sm text-slate-700">Manual logistics plans show ETD, ETA, and tracking when ready.</p>
+        </div>
+        <div class="rounded border border-slate-100 bg-slate-50 p-3">
+          <p class="text-xs uppercase text-slate-500">Feedback</p>
+          <p class="mt-1 text-sm text-slate-700">Portal feedback enters the internal queue without auto-replies.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex items-center justify-between">
         <h3 class="font-semibold text-slate-800">Launch readiness</h3>
         <el-tag :type="data?.portal_launch_readiness.ready_for_real_staging ? 'success' : 'warning'">

@@ -53,6 +53,25 @@
     </section>
 
     <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 class="font-semibold text-slate-800">Why operators should care</h3>
+          <p class="mt-1 text-sm text-slate-600">
+            Market Response combines demand, order conversion, production friction, shipment risk, and feedback into
+            human-reviewed partner and product focus. It does not auto-change quotes, orders, or partner selection.
+          </p>
+        </div>
+        <el-tag type="warning" effect="plain">advisory only</el-tag>
+      </div>
+      <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div v-for="item in signalExplanations" :key="item.title" class="rounded border border-slate-100 bg-slate-50 p-3">
+          <p class="text-sm font-semibold text-slate-800">{{ item.title }}</p>
+          <p class="mt-1 text-sm text-slate-600">{{ item.body }}</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex items-center justify-between gap-3">
         <h3 class="font-semibold text-slate-800">AI-assisted recommendations</h3>
         <el-tag type="warning" effect="plain">Human review required</el-tag>
@@ -231,6 +250,28 @@ const demandRows = computed(() => {
     return focusCategory.value === 'other' ? items.filter((item) => !item.focus_category) : items
   }
   return items.filter((item) => item.focus_category === focusCategory.value)
+})
+
+const signalExplanations = computed(() => {
+  const summary = data.value?.summary
+  return [
+    {
+      title: 'Demand fit',
+      body: `${summary?.quote_count ?? 0} quote(s) and ${summary?.order_count ?? 0} order(s) show where customer demand has moved beyond browsing.`,
+    },
+    {
+      title: 'Customer friction',
+      body: `${summary?.feedback_ticket_count ?? 0} feedback ticket(s) reveal delivery, quality, document, or expectation gaps to review.`,
+    },
+    {
+      title: 'Product readiness',
+      body: `${summary?.product_gap_count ?? 0} product gap(s) indicate missing attributes that can slow quotation or Portal presentation.`,
+    },
+    {
+      title: 'Partner focus',
+      body: `${summary?.recommendation_count ?? 0} recommendation(s) help operators decide which product line or partner playbook deserves attention.`,
+    },
+  ]
 })
 
 function focusLabel(key: string) {
