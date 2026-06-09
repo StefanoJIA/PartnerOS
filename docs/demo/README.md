@@ -10,6 +10,8 @@ This folder contains the partner-facing demo and staging handoff package for Par
 - [PartnerOS value proposition](partneros_value_proposition.md)
 - [Service Portal staging handoff checklist](service_portal_staging_handoff_checklist.md)
 - [HOSUN and JOOBOO demo narrative](hosun_jooboo_demo_narrative.md)
+- [D8.8 demo rehearsal checklist](d8_8_demo_rehearsal_checklist.md)
+- [Staging credentials request pack](staging_credentials_request_pack.md)
 
 ## Supporting Demo Materials
 
@@ -20,4 +22,3 @@ This folder contains the partner-facing demo and staging handoff package for Par
 ## Boundary
 
 PartnerOS is the internal source of truth. `service.intelli-opus.com` is the customer-facing Portal. Real staging still requires the private server-to-server token, allowed origin, backend HTTPS origin, and public base URL before external UAT can be claimed.
-
