@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchOrders, type OrderSummary } from '@/api/orders'
+import { ORDER_STATUS_LABELS, zhLabel } from '@/copy/zhCN'
 
 const router = useRouter()
 const loading = ref(true)
@@ -51,7 +52,9 @@ onMounted(load)
     >
       <el-table-column prop="order_number" label="订单号" width="140" />
       <el-table-column prop="bill_to_company" label="公司" />
-      <el-table-column prop="status" label="状态" width="220" />
+      <el-table-column label="状态" width="220">
+        <template #default="{ row }">{{ zhLabel(ORDER_STATUS_LABELS, row.status) }}</template>
+      </el-table-column>
       <el-table-column prop="grand_total" label="金额" width="140">
         <template #default="{ row }">{{ row.currency }} {{ row.grand_total }}</template>
       </el-table-column>

@@ -13,9 +13,9 @@
             class="rounded border border-slate-200 px-2 py-1 text-sm"
             @change="load"
           />
-          <el-button size="small" @click="load">Refresh</el-button>
+          <el-button size="small" @click="load">刷新</el-button>
           <el-button size="small" type="primary" :disabled="!data?.copyable_summary" @click="copySummary">
-            Copy Summary
+            复制总结
           </el-button>
         </div>
       </div>
@@ -26,7 +26,7 @@
       :closable="false"
       show-icon
       class="mb-4"
-      title="Manual records only"
+      title="仅人工记录"
       :description="EOD_SAFETY_NOTE"
     />
 
@@ -38,7 +38,7 @@
       :closable="false"
       show-icon
       class="mb-4"
-      title="Summary unavailable"
+      title="总结暂不可用"
       :description="error"
     />
 
@@ -48,22 +48,22 @@
       :closable="false"
       show-icon
       class="mb-4"
-      title="Degraded mode"
+      title="降级模式"
       :description="data.warnings?.[0] || EOD_DEGRADED_HINT"
     />
 
     <template v-if="data && !error">
       <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <SummaryCard label="Manual outreach sent" :value="data.summary.manual_outreach_sent" tone="success" />
-        <SummaryCard label="Contact research" :value="data.summary.contact_research_updates" tone="warning" />
-        <SummaryCard label="Follow-ups scheduled" :value="data.summary.follow_ups_scheduled" tone="info" />
-        <SummaryCard label="Leads touched" :value="data.summary.leads_touched" />
-        <SummaryCard label="Overdue remaining" :value="data.summary.overdue_remaining" tone="danger" />
-        <SummaryCard label="Due soon" :value="data.summary.due_soon" tone="info" />
+        <SummaryCard label="已人工触达" :value="data.summary.manual_outreach_sent" tone="success" />
+        <SummaryCard label="联系人调研" :value="data.summary.contact_research_updates" tone="warning" />
+        <SummaryCard label="已安排跟进" :value="data.summary.follow_ups_scheduled" tone="info" />
+        <SummaryCard label="已触达线索" :value="data.summary.leads_touched" />
+        <SummaryCard label="剩余逾期" :value="data.summary.overdue_remaining" tone="danger" />
+        <SummaryCard label="即将到期" :value="data.summary.due_soon" tone="info" />
       </div>
 
       <div class="mb-4">
-        <p class="mb-2 text-sm font-medium text-slate-700">Highlights</p>
+        <p class="mb-2 text-sm font-medium text-slate-700">今日亮点</p>
         <ul v-if="data.highlights.length" class="space-y-2 text-sm">
           <li
             v-for="h in data.highlights"
@@ -72,14 +72,14 @@
           >
             <span class="font-medium text-slate-800">{{ h.company_name }}</span>
             — {{ h.action }}
-            <span v-if="h.next_action" class="text-slate-500"> · Next: {{ h.next_action }}</span>
+            <span v-if="h.next_action" class="text-slate-500"> · 下一步：{{ h.next_action }}</span>
           </li>
         </ul>
         <p v-else class="text-sm text-slate-500">{{ EOD_EMPTY_HIGHLIGHTS }}</p>
       </div>
 
       <div>
-        <p class="mb-2 text-sm font-medium text-slate-700">Tomorrow Focus</p>
+        <p class="mb-2 text-sm font-medium text-slate-700">明日重点</p>
         <ul v-if="data.tomorrow_focus.length" class="space-y-2 text-sm">
           <li
             v-for="t in data.tomorrow_focus"
@@ -138,7 +138,7 @@ async function copySummary() {
     await navigator.clipboard.writeText(data.value.copyable_summary)
     copyMessage.value = EOD_COPY_SUCCESS
   } catch {
-    copyMessage.value = 'Copy failed — select text manually from preview below.'
+    copyMessage.value = '复制失败，请手动选择下方预览文本。'
   }
 }
 

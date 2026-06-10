@@ -39,10 +39,10 @@
 
     <div class="grid gap-3 md:grid-cols-6">
       <el-select v-model="filters.status" clearable placeholder="状态">
-        <el-option v-for="s in statuses" :key="s" :label="s" :value="s" />
+        <el-option v-for="s in statuses" :key="s" :label="zhLabel(FEEDBACK_STATUS_LABELS, s)" :value="s" />
       </el-select>
       <el-select v-model="filters.priority" clearable placeholder="优先级">
-        <el-option v-for="p in priorities" :key="p" :label="p" :value="p" />
+        <el-option v-for="p in priorities" :key="p" :label="zhLabel(FEEDBACK_PRIORITY_LABELS, p)" :value="p" />
       </el-select>
       <el-select v-model="filters.operation_filter" clearable placeholder="运营队列">
         <el-option v-for="item in operationFilters" :key="item.value" :label="item.label" :value="item.value" />
@@ -58,12 +58,12 @@
       <el-table-column prop="feedback_type" label="类型" width="130" />
       <el-table-column prop="status" label="状态" width="130">
         <template #default="{ row }">
-          <el-tag size="small" :type="statusTag(row.status)">{{ row.status }}</el-tag>
+          <el-tag size="small" :type="statusTag(row.status)">{{ zhLabel(FEEDBACK_STATUS_LABELS, row.status) }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="priority" label="优先级" width="120">
         <template #default="{ row }">
-          <el-tag size="small" :type="priorityTag(row.priority)" effect="plain">{{ row.priority }}</el-tag>
+          <el-tag size="small" :type="priorityTag(row.priority)" effect="plain">{{ zhLabel(FEEDBACK_PRIORITY_LABELS, row.priority) }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="复核" width="120">
@@ -154,12 +154,12 @@
         <el-form label-position="top">
           <el-form-item label="状态">
             <el-select v-model="form.status">
-              <el-option v-for="s in statuses" :key="s" :label="s" :value="s" />
+              <el-option v-for="s in statuses" :key="s" :label="zhLabel(FEEDBACK_STATUS_LABELS, s)" :value="s" />
             </el-select>
           </el-form-item>
           <el-form-item label="优先级">
             <el-select v-model="form.priority">
-              <el-option v-for="p in priorities" :key="p" :label="p" :value="p" />
+              <el-option v-for="p in priorities" :key="p" :label="zhLabel(FEEDBACK_PRIORITY_LABELS, p)" :value="p" />
             </el-select>
           </el-form-item>
           <el-form-item label="内部负责人">
@@ -194,6 +194,7 @@ import {
   type FeedbackTicket,
   type FeedbackTicketUpdatePayload,
 } from '@/api/feedbackTickets'
+import { FEEDBACK_PRIORITY_LABELS, FEEDBACK_STATUS_LABELS, zhLabel } from '@/copy/zhCN'
 
 const statuses = ['new', 'in_review', 'responded', 'resolved', 'closed']
 const priorities = ['low', 'normal', 'high', 'urgent']

@@ -99,7 +99,7 @@ describe('DailyOperationsPanel', () => {
     push.mockReset()
   })
 
-  it('renders Daily Operations title', async () => {
+  it('renders daily operations title', async () => {
     vi.mocked(dailyOps.fetchDailyOpsSummary).mockResolvedValue(mockSummary)
     const wrapper = mountPanel()
     await flushPromises()
@@ -110,8 +110,8 @@ describe('DailyOperationsPanel', () => {
     vi.mocked(dailyOps.fetchDailyOpsSummary).mockResolvedValue(mockSummary)
     const wrapper = mountPanel()
     await flushPromises()
-    expect(wrapper.text()).toContain('Overdue')
-    expect(wrapper.text()).toContain('Due Today')
+    expect(wrapper.text()).toContain('已逾期')
+    expect(wrapper.text()).toContain('今日到期')
     expect(wrapper.text()).toContain('2')
   })
 
@@ -119,7 +119,7 @@ describe('DailyOperationsPanel', () => {
     vi.mocked(dailyOps.fetchDailyOpsSummary).mockResolvedValue(mockSummary)
     const wrapper = mountPanel()
     await flushPromises()
-    expect(wrapper.text()).toContain('Quick Actions')
+    expect(wrapper.text()).toContain('快捷动作')
     expect(wrapper.text()).toContain('Import Leads')
     expect(wrapper.text()).toContain('System Health')
   })
@@ -135,17 +135,17 @@ describe('DailyOperationsPanel', () => {
     vi.mocked(dailyOps.fetchDailyOpsSummary).mockResolvedValue(mockSummary)
     const wrapper = mountPanel()
     await flushPromises()
-    expect(wrapper.text()).toContain('Today Focus')
+    expect(wrapper.text()).toContain('今日重点')
     expect(wrapper.text()).toContain('Acme Lift')
-    expect(wrapper.text()).toContain('Open Lead')
+    expect(wrapper.text()).toContain('打开线索')
   })
 
   it('renders recent activity', async () => {
     vi.mocked(dailyOps.fetchDailyOpsSummary).mockResolvedValue(mockSummary)
     const wrapper = mountPanel()
     await flushPromises()
-    expect(wrapper.text()).toContain('Recent Manual Outreach')
-    expect(wrapper.text()).toContain('Manual sent')
+    expect(wrapper.text()).toContain('近期人工触达')
+    expect(wrapper.text()).toContain('已人工发送')
   })
 
   it('renders empty recent activity state', async () => {
@@ -164,7 +164,7 @@ describe('DailyOperationsPanel', () => {
     vi.mocked(dailyOps.fetchDailyOpsSummary).mockRejectedValue(new Error('network'))
     const wrapper = mountPanel()
     await flushPromises()
-    expect(wrapper.text()).toContain('Daily operations unavailable')
+    expect(wrapper.text()).toContain('每日运营数据暂不可用')
   })
 
   it('renders degraded warning', async () => {
@@ -177,6 +177,6 @@ describe('DailyOperationsPanel', () => {
     })
     const wrapper = mountPanel()
     await flushPromises()
-    expect(wrapper.text()).toContain('Degraded mode')
+    expect(wrapper.text()).toContain('降级模式')
   })
 })

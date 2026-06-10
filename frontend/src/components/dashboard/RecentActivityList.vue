@@ -11,7 +11,7 @@
           <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-2">
               <span class="font-medium text-slate-800">{{ row.company_name }}</span>
-              <el-tag size="small" :type="badgeType(row.badge)">{{ row.badge }}</el-tag>
+              <el-tag size="small" :type="badgeType(row.badge)">{{ zhLabel(ACTIVITY_BADGE_LABELS, row.badge, row.badge) }}</el-tag>
             </div>
             <p class="mt-1 text-xs text-slate-500">
               {{ row.type }} · {{ row.channel }} · {{ formatTime(row.timestamp) }}
@@ -19,7 +19,7 @@
             <p v-if="row.summary" class="mt-1 line-clamp-2 text-xs text-slate-600">{{ row.summary }}</p>
           </div>
           <router-link :to="{ path: '/lead-intelligence', query: { leadId: row.lead_id } }">
-            <el-button size="small" type="primary" link>Open Lead</el-button>
+            <el-button size="small" type="primary" link>打开线索</el-button>
           </router-link>
         </li>
       </ul>
@@ -32,6 +32,7 @@
 import { computed } from 'vue'
 import type { DailyOpsRecentActivity } from '@/api/dailyOps'
 import { RECENT_ACTIVITY_EMPTY } from '@/constants/dailyOps'
+import { ACTIVITY_BADGE_LABELS, zhLabel } from '@/copy/zhCN'
 
 const props = withDefaults(
   defineProps<{
@@ -48,10 +49,10 @@ const props = withDefaults(
 const combined = computed(() => props.items ?? [])
 
 function formatTime(iso: string | null | undefined): string {
-  if (!iso) return 'Unknown time'
+  if (!iso) return '未知时间'
   try {
     const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return 'Unknown time'
+    if (Number.isNaN(d.getTime())) return '未知时间'
     return d.toLocaleString(undefined, {
       month: 'short',
       day: 'numeric',
@@ -59,7 +60,7 @@ function formatTime(iso: string | null | undefined): string {
       minute: '2-digit',
     })
   } catch {
-    return 'Unknown time'
+    return '未知时间'
   }
 }
 

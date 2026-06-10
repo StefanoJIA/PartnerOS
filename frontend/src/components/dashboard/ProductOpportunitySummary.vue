@@ -3,10 +3,10 @@
     <template #header>
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 class="text-base font-semibold text-slate-800">Product Opportunity Summary</h3>
-          <p class="text-xs text-slate-500">Batch product fit and quote-readiness overview (D5.13)</p>
+          <h3 class="text-base font-semibold text-slate-800">产品机会摘要</h3>
+          <p class="text-xs text-slate-500">批量查看产品匹配度与报价准备度。</p>
         </div>
-        <el-button size="small" @click="load">Refresh</el-button>
+        <el-button size="small" @click="load">刷新</el-button>
       </div>
     </template>
 
@@ -18,7 +18,7 @@
       :closable="false"
       show-icon
       class="mb-4"
-      title="Product opportunity summary unavailable"
+      title="产品机会摘要暂不可用"
       :description="error"
     />
 
@@ -28,8 +28,8 @@
       :closable="false"
       show-icon
       class="mb-4"
-      title="Degraded mode"
-      :description="data.warnings?.[0] || 'Board data unavailable.'"
+      title="降级模式"
+      :description="data.warnings?.[0] || '看板数据暂不可用。'"
     />
 
     <div v-if="data && !error" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -66,7 +66,7 @@ async function load() {
   try {
     data.value = await fetchProductOpportunityBoard()
   } catch (e) {
-    error.value = formatApiError(e, 'Check VITE_API_PROXY_TARGET and backend status.')
+    error.value = formatApiError(e, '请检查 VITE_API_PROXY_TARGET 和 backend 状态。')
     data.value = null
   } finally {
     loading.value = false

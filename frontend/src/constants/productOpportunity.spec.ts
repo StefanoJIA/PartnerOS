@@ -56,6 +56,6 @@ describe('productOpportunity constants', () => {
   })
 
   it('common questions text is non-empty', () => {
-    expect(COMMON_QUOTE_QUESTIONS).toContain('quantity or volume')
+    expect(COMMON_QUOTE_QUESTIONS).toContain('数量或体量')
   })
 })

@@ -75,7 +75,7 @@ describe('ProductOpportunitySummary', () => {
       global: { plugins: [ElementPlus], stubs: { SummaryCard: true } },
     })
     await flushPromises()
-    expect(wrapper.text()).toContain('Product Opportunity Summary')
+    expect(wrapper.text()).toContain('产品机会摘要')
     expect(wrapper.text()).toContain(PRODUCT_OPPORTUNITY_SAFETY)
   })
 
@@ -85,7 +85,7 @@ describe('ProductOpportunitySummary', () => {
       global: { plugins: [ElementPlus], stubs: { SummaryCard: true } },
     })
     await flushPromises()
-    expect(wrapper.text()).toContain('unavailable')
+    expect(wrapper.text()).toContain('暂不可用')
   })
 })
 

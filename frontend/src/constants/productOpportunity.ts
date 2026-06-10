@@ -21,7 +21,7 @@ export {
 }
 
 export const PRODUCT_OPPORTUNITY_SAFETY =
-  'Product opportunity insights are advisory only. intelliOffice does not create quotes or promise pricing, inventory, certifications, or lead times.'
+  '产品机会洞察仅作运营建议。intelliOffice 不会自动创建报价，也不承诺价格、库存、认证或交期。'
 
 export type ProductOpportunityFilterKey =
   | 'all'
@@ -42,21 +42,21 @@ export type ProductOpportunityFilterKey =
 
 export const PRODUCT_OPPORTUNITY_FILTER_OPTIONS: { key: ProductOpportunityFilterKey; label: string }[] =
   [
-    { key: 'all', label: 'All' },
-    { key: 'high_opportunity', label: 'High Opportunity' },
-    { key: 'promising', label: 'Promising' },
-    { key: 'quote_ready', label: 'Quote Ready' },
-    { key: 'almost_quote_ready', label: 'Almost Quote Ready' },
-    { key: 'sample_ready', label: 'Sample Ready' },
-    { key: 'needs_specs', label: 'Needs Specs' },
-    { key: 'lifting_system_fit', label: 'Lifting Systems' },
-    { key: 'project_supply', label: 'Project Supply' },
-    { key: 'education', label: 'Education' },
-    { key: 'medical', label: 'Medical' },
+    { key: 'all', label: '全部' },
+    { key: 'high_opportunity', label: '高机会' },
+    { key: 'promising', label: '值得跟进' },
+    { key: 'quote_ready', label: '可报价' },
+    { key: 'almost_quote_ready', label: '接近可报价' },
+    { key: 'sample_ready', label: '可推进样品' },
+    { key: 'needs_specs', label: '需补规格' },
+    { key: 'lifting_system_fit', label: '升降系统' },
+    { key: 'project_supply', label: '项目供应' },
+    { key: 'education', label: '教育家具' },
+    { key: 'medical', label: '医疗场景' },
     { key: 'oem_odm', label: 'OEM / ODM' },
-    { key: 'missing_quantity', label: 'Missing Quantity' },
-    { key: 'missing_timeline', label: 'Missing Timeline' },
-    { key: 'missing_contact', label: 'Missing Contact' },
+    { key: 'missing_quantity', label: '缺少数量' },
+    { key: 'missing_timeline', label: '缺少时间线' },
+    { key: 'missing_contact', label: '缺少联系人' },
   ]
 
 export const DASHBOARD_OPPORTUNITY_CARDS: {
@@ -65,14 +65,14 @@ export const DASHBOARD_OPPORTUNITY_CARDS: {
   summaryKey: keyof ProductOpportunitySummaryKeys
   tone?: 'primary' | 'success' | 'warning' | 'info' | 'danger'
 }[] = [
-  { key: 'high_opportunity', label: 'High Opportunity', summaryKey: 'high_opportunity', tone: 'success' },
-  { key: 'quote_ready', label: 'Quote Ready', summaryKey: 'quote_ready', tone: 'primary' },
-  { key: 'almost_quote_ready', label: 'Almost Quote Ready', summaryKey: 'almost_quote_ready', tone: 'warning' },
-  { key: 'sample_ready', label: 'Sample Ready', summaryKey: 'sample_ready', tone: 'info' },
-  { key: 'needs_specs', label: 'Needs Specs', summaryKey: 'needs_specs', tone: 'warning' },
-  { key: 'lifting_system_fit', label: 'Lifting System Fit', summaryKey: 'lifting_system_fit', tone: 'primary' },
-  { key: 'project_supply', label: 'Project Supply Fit', summaryKey: 'project_supply_fit', tone: 'info' },
-  { key: 'oem_odm', label: 'OEM / ODM Potential', summaryKey: 'oem_odm_fit', tone: 'success' },
+  { key: 'high_opportunity', label: '高机会', summaryKey: 'high_opportunity', tone: 'success' },
+  { key: 'quote_ready', label: '可报价', summaryKey: 'quote_ready', tone: 'primary' },
+  { key: 'almost_quote_ready', label: '接近可报价', summaryKey: 'almost_quote_ready', tone: 'warning' },
+  { key: 'sample_ready', label: '可推进样品', summaryKey: 'sample_ready', tone: 'info' },
+  { key: 'needs_specs', label: '需补规格', summaryKey: 'needs_specs', tone: 'warning' },
+  { key: 'lifting_system_fit', label: '升降系统匹配', summaryKey: 'lifting_system_fit', tone: 'primary' },
+  { key: 'project_supply', label: '项目供应匹配', summaryKey: 'project_supply_fit', tone: 'info' },
+  { key: 'oem_odm', label: 'OEM / ODM 潜力', summaryKey: 'oem_odm_fit', tone: 'success' },
 ]
 
 export type ProductOpportunitySummaryKeys = {
@@ -90,12 +90,12 @@ export type ProductOpportunitySummaryKeys = {
   oem_odm_fit: number
 }
 
-export const COMMON_QUOTE_QUESTIONS = `Common quote-readiness questions:
-1. What quantity or volume should we consider?
-2. What is the expected project timeline?
-3. Which product type is most relevant: adjustable desk frames, lifting columns, desk legs, or education furniture?
-4. Are there load capacity, size, color, finish, or certification requirements?
-5. What delivery location should be used for quotation planning?`
+export const COMMON_QUOTE_QUESTIONS = `报价准备常见问题：
+1. 需要按什么数量或体量报价？
+2. 项目预计时间线是什么？
+3. 最相关的产品类型是升降桌架、升降柱、桌腿，还是教育家具？
+4. 是否有承重、尺寸、颜色、表面处理或认证要求？
+5. 报价规划应使用哪个交付地点？`
 
 export type ProductOpportunityBoardRow = {
   leadId: string
@@ -148,18 +148,18 @@ export function mapBoardRow(raw: {
 
 export function quoteReadinessAdvice(quoteReadiness: string, sampleReadiness: string): string {
   if (quoteReadiness === 'ready') {
-    return 'Prepare quote manually after confirming latest specs. Review quantity, dimensions, delivery location, and certification needs.'
+    return '确认最新规格后人工准备报价，并复核数量、尺寸、交付地点和认证要求。'
   }
   if (quoteReadiness === 'almost_ready') {
-    return 'Ask for missing quote information before preparing quote. Use discovery questions below.'
+    return '先补齐缺失报价信息，再准备报价。可使用下方发现问题。'
   }
   if (sampleReadiness === 'ready') {
-    return 'Discuss sample request and target use case.'
+    return '可讨论样品需求和目标使用场景。'
   }
   if (sampleReadiness === 'needs_specs') {
-    return 'Ask for product size, load capacity, finish, and quantity before sample discussion.'
+    return '讨论样品前先确认产品尺寸、承重、表面处理和数量。'
   }
-  return 'Complete contact research and confirm product interest before quote discussion.'
+  return '先完成联系人调研并确认产品兴趣，再进入报价讨论。'
 }
 
 export function filterProductOpportunityRows(

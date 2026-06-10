@@ -5,6 +5,14 @@ import type { UploadRequestOptions } from 'element-plus'
 import { uploadFile } from '@/api/objects'
 import { fetchFeedbackTickets, type FeedbackTicket } from '@/api/feedbackTickets'
 import {
+  ORDER_STATUS_LABELS,
+  PRODUCTION_STATUS_LABELS,
+  RESOURCE_STATUS_LABELS,
+  SHIPMENT_STATUS_LABELS,
+  SUPPLIER_CONFIRMATION_LABELS,
+  zhLabel,
+} from '@/copy/zhCN'
+import {
   addSupplierConfirmation,
   cancelOrder,
   confirmOrderCustomer,
@@ -309,7 +317,7 @@ async function onPatchShipmentStatus(plan: ShipmentPlan, status: string) {
     order.value = await fetchOrder(order.value.id)
     const tl = await fetchOrderTimeline(order.value.id)
     timelineItems.value = tl.items
-    successMsg.value = status === 'cancelled' ? 'Shipment plan cancelled.' : 'Shipment status updated.'
+    successMsg.value = status === 'cancelled' ? '物流计划已取消。' : '物流状态已更新。'
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : 'Update shipment plan failed'
   } finally {
@@ -521,7 +529,7 @@ onMounted(load)
       />
 
       <el-descriptions :column="2" border class="mb">
-        <el-descriptions-item label="状态">{{ order.status }}</el-descriptions-item>
+        <el-descriptions-item label="状态">{{ zhLabel(ORDER_STATUS_LABELS, order.status) }}</el-descriptions-item>
         <el-descriptions-item label="有效确认">{{ order.confirmation_summary?.active_count ?? 0 }}</el-descriptions-item>
         <el-descriptions-item label="总金额">{{ order.currency }} {{ order.grand_total }}</el-descriptions-item>
         <el-descriptions-item label="来源报价">
@@ -589,7 +597,9 @@ onMounted(load)
           <el-table-column prop="quantity" label="数量" width="80" />
           <el-table-column prop="unit_price" label="单价" width="120" />
           <el-table-column prop="total_price" label="合计" width="120" />
-          <el-table-column prop="status" label="状态" width="120" />
+          <el-table-column label="状态" width="120">
+            <template #default="{ row }">{{ zhLabel(ORDER_STATUS_LABELS, row.status) }}</template>
+          </el-table-column>
         </el-table>
       </section>
 
@@ -659,7 +669,7 @@ onMounted(load)
             Ensure Partner Splits
           </el-button>
         </div>
-        <el-alert type="warning" :closable="false" show-icon title="Supplier Safety" :description="SUPPLIER_SAFETY_NOTE" class="mb" />
+        <el-alert type="warning" :closable="false" show-icon title="供应商安全边界" :description="SUPPLIER_SAFETY_NOTE" class="mb" />
         <el-alert
           v-if="order.status === 'pending_customer_confirmation'"
           type="warning"
@@ -671,18 +681,22 @@ onMounted(load)
           <el-descriptions-item label="Total Splits">{{ order.partner_splits_summary.total_splits }}</el-descriptions-item>
           <el-descriptions-item label="Confirmed">{{ order.partner_splits_summary.confirmed_splits }}</el-descriptions-item>
           <el-descriptions-item label="Pending">{{ order.partner_splits_summary.pending_splits }}</el-descriptions-item>
-          <el-descriptions-item label="Needs Clarification">{{ order.partner_splits_summary.needs_clarification_splits }}</el-descriptions-item>
+          <el-descriptions-item label="需澄清">{{ order.partner_splits_summary.needs_clarification_splits }}</el-descriptions-item>
         </el-descriptions>
         <el-table :data="partnerSplits" stripe class="mb">
           <el-table-column prop="split_number" label="Split" width="100" />
           <el-table-column prop="partner_name" label="Partner" width="160" />
-          <el-table-column prop="split_status" label="Split Status" width="180" />
-          <el-table-column prop="supplier_confirmation_status" label="Supplier Conf." width="140" />
+          <el-table-column label="分单状态" width="180">
+            <template #default="{ row }">{{ zhLabel(SUPPLIER_CONFIRMATION_LABELS, row.split_status) }}</template>
+          </el-table-column>
+          <el-table-column label="供应商确认" width="140">
+            <template #default="{ row }">{{ zhLabel(SUPPLIER_CONFIRMATION_LABELS, row.supplier_confirmation_status) }}</template>
+          </el-table-column>
           <el-table-column prop="line_item_count" label="Lines" width="80" />
           <el-table-column label="Subtotal" width="120">
             <template #default="{ row }">{{ row.currency }} {{ row.subtotal }}</template>
           </el-table-column>
-          <el-table-column prop="expected_ready_date" label="Expected Ready" width="120" />
+          <el-table-column prop="expected_ready_date" label="预计就绪" width="120" />
           <el-table-column label="" width="120">
             <template #default="{ row }">
               <el-button size="small" @click="toggleSplitDetail(row)">Details</el-button>
@@ -699,7 +713,9 @@ onMounted(load)
             </el-table>
             <h5>Supplier Confirmations</h5>
             <el-table :data="splitDetails[split.id]?.supplier_confirmations || []" stripe size="small" class="mb">
-              <el-table-column prop="confirmation_status" label="Status" width="120" />
+              <el-table-column label="状态" width="120">
+                <template #default="{ row }">{{ zhLabel(SUPPLIER_CONFIRMATION_LABELS, row.confirmation_status) }}</template>
+              </el-table-column>
               <el-table-column prop="confirmed_at" label="Confirmed At" width="160" />
               <el-table-column prop="confirmed_by_name" label="By" width="120" />
               <el-table-column label="Flags" width="200">
@@ -715,7 +731,7 @@ onMounted(load)
               size="small"
               @click="showSupplierFormFor = showSupplierFormFor === split.id ? null : split.id"
             >
-              Add Supplier Confirmation
+              新增供应商确认
             </el-button>
             <el-form
               v-if="showSupplierFormFor === split.id && canAddSupplierConfirmation"
@@ -723,11 +739,11 @@ onMounted(load)
               class="mt"
               @submit.prevent="onAddSupplierConfirmation(split.id)"
             >
-              <el-form-item label="Status">
+              <el-form-item label="状态">
                 <el-select v-model="supplierForm.confirmation_status" style="width: 220px">
                   <el-option label="Confirmed" value="confirmed" />
                   <el-option label="Partially Confirmed" value="partially_confirmed" />
-                  <el-option label="Needs Clarification" value="needs_clarification" />
+                  <el-option label="需澄清" value="needs_clarification" />
                   <el-option label="Rejected" value="rejected" />
                 </el-select>
               </el-form-item>
@@ -739,7 +755,7 @@ onMounted(load)
               <el-form-item label="Lead Time Confirmed"><el-checkbox v-model="supplierForm.lead_time_confirmed" /></el-form-item>
               <el-form-item label="Production Capacity"><el-checkbox v-model="supplierForm.production_capacity_confirmed" /></el-form-item>
               <el-form-item label="Expected Production Start"><el-input v-model="supplierForm.expected_production_start" placeholder="YYYY-MM-DD" /></el-form-item>
-              <el-form-item label="Expected Ready Date"><el-input v-model="supplierForm.expected_ready_date" placeholder="YYYY-MM-DD" /></el-form-item>
+              <el-form-item label="预计就绪日期"><el-input v-model="supplierForm.expected_ready_date" placeholder="YYYY-MM-DD" /></el-form-item>
               <el-form-item label="Supplier Reference"><el-input v-model="supplierForm.supplier_reference" /></el-form-item>
               <el-form-item label="Note"><el-input v-model="supplierForm.note" type="textarea" :rows="2" /></el-form-item>
               <el-form-item>
@@ -755,17 +771,19 @@ onMounted(load)
               :loading="actionLoading"
               @click="onEnsureMilestones(split.id)"
             >
-              Ensure Milestones
+              生成里程碑
             </el-button>
             <el-table :data="milestonesBySplit[split.id] || []" stripe size="small" class="mb">
               <el-table-column prop="sequence" label="#" width="50" />
-              <el-table-column prop="milestone_label" label="Milestone" />
-              <el-table-column prop="status" label="Status" width="110" />
-              <el-table-column prop="planned_date" label="Planned" width="110" />
-              <el-table-column prop="actual_date" label="Actual" width="110" />
+              <el-table-column prop="milestone_label" label="里程碑" />
+              <el-table-column label="状态" width="110">
+                <template #default="{ row }">{{ zhLabel(PRODUCTION_STATUS_LABELS, row.status) }}</template>
+              </el-table-column>
+              <el-table-column prop="planned_date" label="计划日期" width="110" />
+              <el-table-column prop="actual_date" label="实际日期" width="110" />
               <el-table-column label="" width="90">
                 <template #default="{ row }">
-                  <el-button v-if="canEnsureMilestones" size="small" @click="startEditMilestone(row)">Update</el-button>
+                  <el-button v-if="canEnsureMilestones" size="small" @click="startEditMilestone(row)">更新</el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -774,13 +792,13 @@ onMounted(load)
               label-width="140px"
               class="mt"
             >
-              <el-form-item label="Status">
+              <el-form-item label="状态">
                 <el-select v-model="milestoneForm.status" style="width: 200px">
-                  <el-option label="Planned" value="planned" />
-                  <el-option label="In Progress" value="in_progress" />
-                  <el-option label="Completed" value="completed" />
-                  <el-option label="Delayed" value="delayed" />
-                  <el-option label="Blocked" value="blocked" />
+                  <el-option label="已计划" value="planned" />
+                  <el-option label="进行中" value="in_progress" />
+                  <el-option label="已完成" value="completed" />
+                  <el-option label="延误" value="delayed" />
+                  <el-option label="阻塞" value="blocked" />
                 </el-select>
               </el-form-item>
               <el-form-item label="Planned Date"><el-input v-model="milestoneForm.planned_date" placeholder="YYYY-MM-DD" /></el-form-item>
@@ -802,26 +820,28 @@ onMounted(load)
       </section>
 
       <section v-if="order.production_summary" class="section mb">
-        <h3>Production Summary</h3>
+        <h3>生产摘要</h3>
         <el-descriptions :column="4" border>
-          <el-descriptions-item label="Total">{{ order.production_summary.total_milestones }}</el-descriptions-item>
-          <el-descriptions-item label="Completed">{{ order.production_summary.completed_milestones }}</el-descriptions-item>
-          <el-descriptions-item label="In Progress">{{ order.production_summary.in_progress_milestones }}</el-descriptions-item>
-          <el-descriptions-item label="Shipment Created">{{ order.production_summary.shipment_created ? 'Yes' : 'No' }}</el-descriptions-item>
+          <el-descriptions-item label="总数">{{ order.production_summary.total_milestones }}</el-descriptions-item>
+          <el-descriptions-item label="已完成">{{ order.production_summary.completed_milestones }}</el-descriptions-item>
+          <el-descriptions-item label="进行中">{{ order.production_summary.in_progress_milestones }}</el-descriptions-item>
+          <el-descriptions-item label="已创建物流">{{ order.production_summary.shipment_created ? '是' : '否' }}</el-descriptions-item>
         </el-descriptions>
       </section>
 
       <section class="section mb">
         <div class="section-head">
-          <h3>Shipment Plans</h3>
-          <el-tag type="info">Manual</el-tag>
+          <h3>物流计划</h3>
+          <el-tag type="info">人工维护</el-tag>
         </div>
         <el-alert type="info" :closable="false" :description="SHIPMENT_SAFETY_NOTE" class="mb" />
         <el-table :data="shipmentPlans" stripe class="mb">
-          <el-table-column prop="status" label="Status" width="110" />
-          <el-table-column prop="shipment_method" label="Method" width="110" />
-          <el-table-column prop="origin" label="Origin" />
-          <el-table-column prop="destination" label="Destination" />
+          <el-table-column label="状态" width="110">
+            <template #default="{ row }">{{ zhLabel(SHIPMENT_STATUS_LABELS, row.status) }}</template>
+          </el-table-column>
+          <el-table-column prop="shipment_method" label="方式" width="110" />
+          <el-table-column prop="origin" label="起运地" />
+          <el-table-column prop="destination" label="目的地" />
           <el-table-column prop="estimated_ship_date" label="ETD" width="120" />
           <el-table-column prop="estimated_arrival_date" label="ETA" width="120" />
           <el-table-column prop="tracking_number" label="Tracking" width="140" />
@@ -834,20 +854,22 @@ onMounted(load)
                 :disabled="!canManageShipments || actionLoading"
                 @change="(status: string) => onPatchShipmentStatus(row, status)"
               >
-                <el-option label="Draft" value="draft" />
-                <el-option label="Planned" value="planned" />
-                <el-option label="Shipped" value="shipped" />
-                <el-option label="Delivered" value="delivered" />
-                <el-option label="Cancelled" value="cancelled" />
+                <el-option label="草稿" value="draft" />
+                <el-option label="已计划" value="planned" />
+                <el-option label="已发运" value="shipped" />
+                <el-option label="已交付" value="delivered" />
+                <el-option label="已取消" value="cancelled" />
               </el-select>
             </template>
           </el-table-column>
         </el-table>
         <el-collapse v-if="shipmentPlans.length" class="mb">
-          <el-collapse-item title="Customer visible summary preview" name="shipment-summary">
+          <el-collapse-item title="客户可见物流摘要预览" name="shipment-summary">
             <el-table :data="shipmentPlans.map(p => p.portal_visible_fields || p)" stripe size="small">
-              <el-table-column prop="status" label="Status" width="110" />
-              <el-table-column prop="shipment_method" label="Method" width="110" />
+              <el-table-column label="状态" width="110">
+                <template #default="{ row }">{{ zhLabel(SHIPMENT_STATUS_LABELS, row.status) }}</template>
+              </el-table-column>
+              <el-table-column prop="shipment_method" label="方式" width="110" />
               <el-table-column prop="estimated_ship_date" label="ETD" width="120" />
               <el-table-column prop="estimated_arrival_date" label="ETA" width="120" />
               <el-table-column prop="tracking_number" label="Tracking" />
@@ -857,7 +879,7 @@ onMounted(load)
         <el-alert
           v-if="!canManageShipments"
           type="warning"
-          title="Shipment plans require a customer-confirmed order."
+          title="物流计划需要订单已完成客户确认。"
           show-icon
           class="mb"
         />
@@ -872,17 +894,17 @@ onMounted(load)
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="Method">
+          <el-form-item label="方式">
             <el-select v-model="shipmentForm.shipment_method" style="width: 180px">
-              <el-option label="Sea" value="sea" />
-              <el-option label="Air" value="air" />
-              <el-option label="Express" value="express" />
+              <el-option label="海运" value="sea" />
+              <el-option label="空运" value="air" />
+              <el-option label="快递" value="express" />
             </el-select>
           </el-form-item>
-          <el-form-item label="Status">
+          <el-form-item label="状态">
             <el-select v-model="shipmentForm.status" style="width: 180px">
-              <el-option label="Draft" value="draft" />
-              <el-option label="Planned" value="planned" />
+              <el-option label="草稿" value="draft" />
+              <el-option label="已计划" value="planned" />
             </el-select>
           </el-form-item>
           <el-form-item label="Incoterm"><el-input v-model="shipmentForm.incoterm" /></el-form-item>
@@ -893,32 +915,32 @@ onMounted(load)
           <el-form-item label="Tracking"><el-input v-model="shipmentForm.tracking_number" /></el-form-item>
           <el-form-item label="Notes"><el-input v-model="shipmentForm.notes" type="textarea" :rows="2" /></el-form-item>
           <el-form-item>
-            <el-button type="primary" :loading="actionLoading" @click="onCreateShipmentPlan">Create Plan</el-button>
+            <el-button type="primary" :loading="actionLoading" @click="onCreateShipmentPlan">创建计划</el-button>
           </el-form-item>
         </el-form>
       </section>
 
       <section class="section mb">
         <div class="section-head">
-          <h3>Resource Center</h3>
-          <el-tag type="info">Manual publish</el-tag>
+          <h3>资料中心</h3>
+          <el-tag type="info">人工发布</el-tag>
         </div>
         <el-alert type="info" :closable="false" :description="RESOURCE_SAFETY_NOTE" class="mb" />
         <el-table :data="orderResources" stripe class="mb">
-          <el-table-column prop="title" label="Title" min-width="180" />
-          <el-table-column prop="filename" label="File" min-width="180" />
-          <el-table-column prop="category" label="Category" width="130" />
-          <el-table-column prop="status" label="Status" width="110">
+          <el-table-column prop="title" label="标题" min-width="180" />
+          <el-table-column prop="filename" label="文件" min-width="180" />
+          <el-table-column prop="category" label="分类" width="130" />
+          <el-table-column label="状态" width="110">
             <template #default="{ row }">
               <el-tag :type="row.status === 'published' ? 'success' : row.status === 'archived' ? 'info' : 'warning'" size="small">
-                {{ row.status }}
+                {{ zhLabel(RESOURCE_STATUS_LABELS, row.status) }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="Customer" width="120">
+          <el-table-column label="客户可见" width="120">
             <template #default="{ row }">
               <el-tag :type="row.customer_visible ? 'success' : 'info'" size="small">
-                {{ row.customer_visible ? 'Visible' : 'Hidden' }}
+                {{ row.customer_visible ? '可见' : '隐藏' }}
               </el-tag>
             </template>
           </el-table-column>

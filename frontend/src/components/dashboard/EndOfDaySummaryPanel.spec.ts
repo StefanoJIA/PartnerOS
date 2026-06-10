@@ -78,7 +78,7 @@ describe('EndOfDaySummaryPanel', () => {
     vi.mocked(dailyWork.fetchDailyWorkSummary).mockResolvedValue(mockData)
     const wrapper = mount(EndOfDaySummaryPanel, { global: { plugins: [ElementPlus] } })
     await flushPromises()
-    expect(wrapper.text()).toContain('Manual outreach sent')
+    expect(wrapper.text()).toContain('人工触达')
     expect(wrapper.text()).toContain('3')
   })
 
@@ -127,6 +127,6 @@ describe('EndOfDaySummaryPanel', () => {
     vi.mocked(dailyWork.fetchDailyWorkSummary).mockRejectedValue(new Error('fail'))
     const wrapper = mount(EndOfDaySummaryPanel, { global: { plugins: [ElementPlus] } })
     await flushPromises()
-    expect(wrapper.text()).toContain('Summary unavailable')
+    expect(wrapper.text()).toContain('日终总结暂不可用')
   })
 })
