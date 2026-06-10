@@ -22,6 +22,8 @@ from app.models import (
     Contact,
     CustomerOrder,
     FeedbackTicket,
+    GrowthCampaign,
+    GrowthCampaignTask,
     Lead,
     MarketIntelligenceItem,
     OrderLineItem,
@@ -29,6 +31,7 @@ from app.models import (
     QuoteLineItem,
     ShipmentPlan,
 )
+from app.schemas.growth import CAMPAIGN_STATUS_LABELS, CAMPAIGN_TASK_STATUS_LABELS
 
 
 @dataclass(frozen=True)
@@ -426,3 +429,285 @@ def build_growth_operations_console(db: Session) -> dict[str, Any]:
             "human_review_required": True,
         },
     }
+
+
+def _task_type_label(task_type: str) -> str:
+    labels = {
+        "manual_outreach": "人工外联",
+        "qualification": "需求确认",
+        "quote_follow_up": "报价跟进",
+        "feedback_follow_up": "反馈复盘",
+    }
+    return labels.get(task_type, task_type)
+
+
+def _campaign_keywords(campaign: GrowthCampaign) -> list[str]:
+    values = [campaign.name, campaign.partner_focus, campaign.target_segment, campaign.goal, campaign.notes]
+    values.extend(campaign.product_focus or [])
+    keywords: list[str] = []
+    for value in values:
+        for chunk in str(value or "").replace("/", " ").replace(",", " ").split():
+            chunk = chunk.strip().lower()
+            if len(chunk) >= 2 and chunk not in keywords:
+                keywords.append(chunk)
+    return keywords
+
+
+def _matches_keywords(text: str, keywords: list[str]) -> bool:
+    lower = text.lower()
+    return any(keyword in lower for keyword in keywords)
+
+
+def _serialize_campaign(campaign: GrowthCampaign) -> dict[str, Any]:
+    return {
+        "id": str(campaign.id),
+        "name": campaign.name,
+        "partner_focus": campaign.partner_focus,
+        "product_focus": campaign.product_focus or [],
+        "target_segment": campaign.target_segment,
+        "goal": campaign.goal,
+        "status": campaign.status,
+        "status_label": CAMPAIGN_STATUS_LABELS.get(campaign.status, campaign.status),
+        "owner": campaign.owner,
+        "next_action": campaign.next_action,
+        "notes": campaign.notes,
+        "created_at": campaign.created_at.isoformat() if campaign.created_at else None,
+        "updated_at": campaign.updated_at.isoformat() if campaign.updated_at else None,
+    }
+
+
+def _serialize_task(task: GrowthCampaignTask) -> dict[str, Any]:
+    return {
+        "id": str(task.id),
+        "campaign_id": str(task.campaign_id),
+        "company_id": str(task.company_id) if task.company_id else None,
+        "contact_id": str(task.contact_id) if task.contact_id else None,
+        "company_name": task.company.company_name if task.company else None,
+        "contact_name": _contact_name(task.contact),
+        "task_type": task.task_type,
+        "task_type_label": _task_type_label(task.task_type),
+        "language": task.language,
+        "draft_subject": task.draft_subject,
+        "draft_body": task.draft_body,
+        "status": task.status,
+        "status_label": CAMPAIGN_TASK_STATUS_LABELS.get(task.status, task.status),
+        "due_date": task.due_date.isoformat() if task.due_date else None,
+        "notes": task.notes,
+        "created_at": task.created_at.isoformat() if task.created_at else None,
+        "updated_at": task.updated_at.isoformat() if task.updated_at else None,
+    }
+
+
+def _campaign_summary(db: Session, campaign: GrowthCampaign) -> dict[str, Any]:
+    keywords = _campaign_keywords(campaign)
+    quote_ids: list[str] = []
+    order_ids: list[str] = []
+    feedback_ids: list[str] = []
+    shipment_risk_ids: list[str] = []
+    market_signal_ids: list[str] = []
+
+    quote_value = Decimal("0")
+    order_value = Decimal("0")
+
+    for quote in db.query(Quote).all():
+        line_text = " ".join(_product_text(line) for line in quote.line_items)
+        text = _text(quote.quote_number, quote.status, getattr(quote, "notes", None), line_text)
+        if _matches_keywords(text, keywords):
+            quote_ids.append(str(quote.id))
+            quote_value += _money(getattr(quote, "total_amount", None))
+
+    for order in db.query(CustomerOrder).all():
+        line_text = " ".join(_product_text(line) for line in order.line_items)
+        text = _text(
+            order.order_number,
+            order.status,
+            getattr(order, "customer_notes", None),
+            getattr(order, "internal_notes", None),
+            line_text,
+        )
+        if _matches_keywords(text, keywords):
+            order_ids.append(str(order.id))
+            order_value += _money(getattr(order, "total_amount", None))
+
+    for ticket in db.query(FeedbackTicket).all():
+        text = _text(
+            getattr(ticket, "title", None),
+            getattr(ticket, "description", None),
+            getattr(ticket, "status", None),
+            getattr(ticket, "priority", None),
+            getattr(ticket, "category", None),
+        )
+        if _matches_keywords(text, keywords):
+            feedback_ids.append(str(ticket.id))
+
+    for shipment in db.query(ShipmentPlan).all():
+        text = _text(
+            getattr(shipment, "carrier", None),
+            getattr(shipment, "tracking_number", None),
+            getattr(shipment, "status", None),
+            getattr(shipment, "mode", None),
+            getattr(shipment, "origin", None),
+            getattr(shipment, "destination", None),
+        )
+        if _matches_keywords(text, keywords) or getattr(shipment, "status", None) in {"delayed", "exception", "blocked"}:
+            shipment_risk_ids.append(str(shipment.id))
+
+    for signal in db.query(MarketIntelligenceItem).all():
+        text = _text(
+            getattr(signal, "title", None),
+            getattr(signal, "summary", None),
+            getattr(signal, "category", None),
+            getattr(signal, "source", None),
+            getattr(signal, "status", None),
+        )
+        if _matches_keywords(text, keywords):
+            market_signal_ids.append(str(signal.id))
+
+    return {
+        "quote_count": len(quote_ids),
+        "order_count": len(order_ids),
+        "feedback_ticket_count": len(feedback_ids),
+        "shipment_risk_count": len(shipment_risk_ids),
+        "market_signal_count": len(market_signal_ids),
+        "quote_value": f"{quote_value:.2f}",
+        "order_value": f"{order_value:.2f}",
+        "quote_ids": quote_ids,
+        "order_ids": order_ids,
+        "feedback_ticket_ids": feedback_ids,
+        "shipment_risk_ids": shipment_risk_ids,
+        "market_signal_ids": market_signal_ids,
+        "explanation_zh": (
+            "系统按 campaign 的 partner、产品方向、目标分群和备注关键词，只读匹配现有报价、订单、反馈、物流和市场信号；"
+            "不会伪造转化，也不会修改任何业务状态。"
+        ),
+    }
+
+
+def _default_task_draft(campaign: GrowthCampaign, company: Company | None, contact: Contact | None, language: str) -> tuple[str, str]:
+    company_name = company.company_name if company else "目标客户"
+    contact_name = _contact_name(contact) or "您好"
+    product_focus = " / ".join((campaign.product_focus or [])[:3]) or "相关产品线"
+    if language == "en":
+        return (
+            f"{campaign.partner_focus} {product_focus} opportunity",
+            (
+                f"Hi {contact_name},\n\n"
+                f"We are reviewing {campaign.partner_focus} {product_focus} opportunities for {company_name}. "
+                "The next manual step is to confirm specs, quantity, target delivery timing, and quote requirements.\n\n"
+                "This is a draft only. PartnerOS will not send messages automatically."
+            ),
+        )
+    return (
+        f"{campaign.partner_focus} {product_focus} 合作沟通",
+        (
+            f"{contact_name}：\n\n"
+            f"我们正在为 {company_name} 梳理 {campaign.partner_focus} 的 {product_focus} 需求机会。"
+            "建议下一步人工确认规格、数量、目标交期、认证要求和报价节奏。\n\n"
+            "这是人工外联草稿，PartnerOS 不会自动发送邮件、短信或客户通知。"
+        ),
+    )
+
+
+def list_growth_campaigns(db: Session) -> dict[str, Any]:
+    rows = db.query(GrowthCampaign).order_by(GrowthCampaign.updated_at.desc()).all()
+    return {
+        "campaigns": [_serialize_campaign(row) | {"summary": _campaign_summary(db, row)} for row in rows],
+        "safety": {
+            "email_sent": False,
+            "sms_sent": False,
+            "linkedin_sent": False,
+            "customer_notified": False,
+            "supplier_notified": False,
+            "quote_status_changed": False,
+            "order_status_changed": False,
+            "external_crm_connected": False,
+        },
+    }
+
+
+def get_growth_campaign(db: Session, campaign_id: UUID) -> GrowthCampaign | None:
+    return db.get(GrowthCampaign, campaign_id)
+
+
+def get_growth_campaign_detail(db: Session, campaign_id: UUID) -> dict[str, Any] | None:
+    campaign = get_growth_campaign(db, campaign_id)
+    if campaign is None:
+        return None
+    return {
+        "campaign": _serialize_campaign(campaign),
+        "tasks": [_serialize_task(task) for task in campaign.tasks],
+        "summary": _campaign_summary(db, campaign),
+        "manual_status_options": [
+            {"value": value, "label": label} for value, label in CAMPAIGN_TASK_STATUS_LABELS.items()
+        ],
+        "safety": {
+            "email_sent": False,
+            "sms_sent": False,
+            "linkedin_sent": False,
+            "customer_notified": False,
+            "supplier_notified": False,
+            "quote_status_changed": False,
+            "order_status_changed": False,
+            "external_crm_connected": False,
+        },
+    }
+
+
+def create_growth_campaign(db: Session, payload: Any, actor: Any | None) -> dict[str, Any]:
+    campaign = GrowthCampaign(**payload.model_dump())
+    if actor:
+        campaign.created_by_id = actor.id
+        campaign.updated_by_id = actor.id
+    db.add(campaign)
+    db.commit()
+    db.refresh(campaign)
+    detail = get_growth_campaign_detail(db, campaign.id)
+    assert detail is not None
+    return detail
+
+
+def update_growth_campaign(db: Session, campaign_id: UUID, payload: Any, actor: Any | None) -> dict[str, Any] | None:
+    campaign = get_growth_campaign(db, campaign_id)
+    if campaign is None:
+        return None
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(campaign, key, value)
+    if actor:
+        campaign.updated_by_id = actor.id
+    db.commit()
+    db.refresh(campaign)
+    return get_growth_campaign_detail(db, campaign.id)
+
+
+def create_growth_campaign_task(db: Session, campaign_id: UUID, payload: Any, actor: Any | None) -> dict[str, Any] | None:
+    campaign = get_growth_campaign(db, campaign_id)
+    if campaign is None:
+        return None
+    data = payload.model_dump()
+    company = db.get(Company, data.get("company_id")) if data.get("company_id") else None
+    contact = db.get(Contact, data.get("contact_id")) if data.get("contact_id") else None
+    if not data.get("draft_subject") or not data.get("draft_body"):
+        subject, body = _default_task_draft(campaign, company, contact, data.get("language") or "zh")
+        data["draft_subject"] = data.get("draft_subject") or subject
+        data["draft_body"] = data.get("draft_body") or body
+    task = GrowthCampaignTask(campaign_id=campaign_id, **data)
+    if actor:
+        task.created_by_id = actor.id
+        task.updated_by_id = actor.id
+    db.add(task)
+    db.commit()
+    db.refresh(task)
+    return get_growth_campaign_detail(db, campaign_id)
+
+
+def update_growth_campaign_task(db: Session, task_id: UUID, payload: Any, actor: Any | None) -> dict[str, Any] | None:
+    task = db.get(GrowthCampaignTask, task_id)
+    if task is None:
+        return None
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(task, key, value)
+    if actor:
+        task.updated_by_id = actor.id
+    db.commit()
+    db.refresh(task)
+    return get_growth_campaign_detail(db, task.campaign_id)

@@ -109,3 +109,136 @@ export async function fetchGrowthOperationsConsole(): Promise<GrowthOperationsCo
   const { data } = await http.get<V1Envelope<GrowthOperationsConsole>>('/v1/growth/operations-console')
   return data.data
 }
+
+export interface GrowthCampaignWorkspaceSummary {
+  quote_count: number
+  order_count: number
+  feedback_ticket_count: number
+  shipment_risk_count: number
+  market_signal_count: number
+  quote_value: string
+  order_value: string
+  quote_ids: string[]
+  order_ids: string[]
+  feedback_ticket_ids: string[]
+  shipment_risk_ids: string[]
+  market_signal_ids: string[]
+  explanation_zh: string
+}
+
+export interface GrowthCampaignWorkspaceRow {
+  id: string
+  name: string
+  partner_focus: string
+  product_focus: string[]
+  target_segment: string | null
+  goal: string | null
+  status: string
+  status_label: string
+  owner: string | null
+  next_action: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+  summary?: GrowthCampaignWorkspaceSummary
+}
+
+export interface GrowthCampaignTaskRow {
+  id: string
+  campaign_id: string
+  company_id: string | null
+  contact_id: string | null
+  company_name: string | null
+  contact_name: string | null
+  task_type: string
+  task_type_label: string
+  language: string
+  draft_subject: string | null
+  draft_body: string | null
+  status: string
+  status_label: string
+  due_date: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface GrowthCampaignWorkspaceList {
+  campaigns: GrowthCampaignWorkspaceRow[]
+  safety: Record<string, boolean>
+}
+
+export interface GrowthCampaignWorkspaceDetail {
+  campaign: GrowthCampaignWorkspaceRow
+  tasks: GrowthCampaignTaskRow[]
+  summary: GrowthCampaignWorkspaceSummary
+  manual_status_options: Array<{ value: string; label: string }>
+  safety: Record<string, boolean>
+}
+
+export interface GrowthCampaignCreatePayload {
+  name: string
+  partner_focus: string
+  product_focus: string[]
+  target_segment?: string | null
+  goal?: string | null
+  status?: string
+  owner?: string | null
+  next_action?: string | null
+  notes?: string | null
+}
+
+export type GrowthCampaignUpdatePayload = Partial<GrowthCampaignCreatePayload>
+
+export interface GrowthCampaignTaskCreatePayload {
+  company_id?: string | null
+  contact_id?: string | null
+  task_type?: string
+  language?: string
+  draft_subject?: string | null
+  draft_body?: string | null
+  status?: string
+  due_date?: string | null
+  notes?: string | null
+}
+
+export type GrowthCampaignTaskUpdatePayload = Partial<GrowthCampaignTaskCreatePayload>
+
+export async function fetchGrowthCampaigns(): Promise<GrowthCampaignWorkspaceList> {
+  const { data } = await http.get<V1Envelope<GrowthCampaignWorkspaceList>>('/v1/growth/campaigns')
+  return data.data
+}
+
+export async function createGrowthCampaign(payload: GrowthCampaignCreatePayload): Promise<GrowthCampaignWorkspaceDetail> {
+  const { data } = await http.post<V1Envelope<GrowthCampaignWorkspaceDetail>>('/v1/growth/campaigns', payload)
+  return data.data
+}
+
+export async function fetchGrowthCampaignDetail(id: string): Promise<GrowthCampaignWorkspaceDetail> {
+  const { data } = await http.get<V1Envelope<GrowthCampaignWorkspaceDetail>>(`/v1/growth/campaigns/${id}`)
+  return data.data
+}
+
+export async function updateGrowthCampaign(
+  id: string,
+  payload: GrowthCampaignUpdatePayload,
+): Promise<GrowthCampaignWorkspaceDetail> {
+  const { data } = await http.patch<V1Envelope<GrowthCampaignWorkspaceDetail>>(`/v1/growth/campaigns/${id}`, payload)
+  return data.data
+}
+
+export async function createGrowthCampaignTask(
+  id: string,
+  payload: GrowthCampaignTaskCreatePayload,
+): Promise<GrowthCampaignWorkspaceDetail> {
+  const { data } = await http.post<V1Envelope<GrowthCampaignWorkspaceDetail>>(`/v1/growth/campaigns/${id}/tasks`, payload)
+  return data.data
+}
+
+export async function updateGrowthCampaignTask(
+  id: string,
+  payload: GrowthCampaignTaskUpdatePayload,
+): Promise<GrowthCampaignWorkspaceDetail> {
+  const { data } = await http.patch<V1Envelope<GrowthCampaignWorkspaceDetail>>(`/v1/growth/tasks/${id}`, payload)
+  return data.data
+}

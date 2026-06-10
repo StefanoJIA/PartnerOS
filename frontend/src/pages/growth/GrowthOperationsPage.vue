@@ -24,6 +24,136 @@
     <el-skeleton v-if="loading && !data" animated :rows="8" />
 
     <template v-else-if="data">
+      <section class="rounded border border-slate-200 bg-white p-4">
+        <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 class="font-semibold text-slate-900">Campaign 工作台</h2>
+            <p class="mt-1 text-sm text-slate-600">
+              保存增长战役、人工外联任务和状态推进。系统只保存草稿与人工状态，不自动发送、不改报价或订单。
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <el-button size="small" @click="applyCampaignTemplate('hosun')">套用 HOSUN 示例</el-button>
+            <el-button size="small" @click="applyCampaignTemplate('jooboo')">套用 JOOBOO 示例</el-button>
+          </div>
+        </div>
+
+        <div class="grid gap-4 xl:grid-cols-[minmax(320px,420px)_1fr]">
+          <div class="space-y-3 rounded border border-slate-100 bg-slate-50 p-3">
+            <el-input v-model="campaignForm.name" placeholder="Campaign 名称" />
+            <div class="grid gap-2 sm:grid-cols-2">
+              <el-input v-model="campaignForm.partner_focus" placeholder="Partner focus" />
+              <el-select v-model="campaignForm.status" placeholder="状态">
+                <el-option label="已规划" value="planned" />
+                <el-option label="推进中" value="active" />
+                <el-option label="已暂停" value="paused" />
+                <el-option label="已完成" value="completed" />
+                <el-option label="已归档" value="archived" />
+              </el-select>
+            </div>
+            <el-input v-model="campaignForm.product_focus_text" placeholder="产品方向，英文逗号分隔" />
+            <el-input v-model="campaignForm.target_segment" placeholder="目标分群" />
+            <el-input v-model="campaignForm.goal" type="textarea" :rows="2" placeholder="业务目标" />
+            <el-input v-model="campaignForm.next_action" type="textarea" :rows="2" placeholder="下一步人工动作" />
+            <div class="grid gap-2 sm:grid-cols-2">
+              <el-input v-model="campaignForm.owner" placeholder="负责人" />
+              <el-input v-model="campaignForm.notes" placeholder="备注" />
+            </div>
+            <el-button type="primary" :loading="savingCampaign" @click="saveCampaign">保存 Campaign</el-button>
+          </div>
+
+          <div class="min-w-0 space-y-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <el-select v-model="selectedWorkspaceCampaignId" class="min-w-72" placeholder="选择已保存 campaign">
+                <el-option
+                  v-for="row in workspaceCampaigns"
+                  :key="row.id"
+                  :label="`${row.name} · ${row.status_label}`"
+                  :value="row.id"
+                />
+              </el-select>
+              <el-button :disabled="!selectedWorkspaceCampaign" @click="advanceCampaignStatus('active')">标记推进中</el-button>
+              <el-button :disabled="!selectedWorkspaceCampaign" @click="advanceCampaignStatus('paused')">暂停</el-button>
+              <el-button :disabled="!selectedWorkspaceCampaign" @click="advanceCampaignStatus('completed')">完成</el-button>
+            </div>
+
+            <el-empty v-if="!selectedWorkspaceCampaign" description="暂无已保存 campaign，请先创建 HOSUN 或 JOOBOO 示例。" />
+            <template v-else>
+              <div class="rounded border border-slate-100 p-3">
+                <div class="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <div class="font-medium text-slate-900">{{ selectedWorkspaceCampaign.name }}</div>
+                    <div class="mt-1 text-xs text-slate-500">
+                      {{ selectedWorkspaceCampaign.partner_focus }} · {{ selectedWorkspaceCampaign.status_label }} ·
+                      {{ selectedWorkspaceCampaign.owner || '未指定负责人' }}
+                    </div>
+                  </div>
+                  <el-tag type="success" effect="plain">HOSUN / JOOBOO 平级运营</el-tag>
+                </div>
+                <div class="mt-3 grid gap-2 text-sm text-slate-700 md:grid-cols-5">
+                  <div>报价 {{ workspaceDetail?.summary.quote_count ?? selectedWorkspaceCampaign.summary?.quote_count ?? 0 }}</div>
+                  <div>订单 {{ workspaceDetail?.summary.order_count ?? selectedWorkspaceCampaign.summary?.order_count ?? 0 }}</div>
+                  <div>反馈 {{ workspaceDetail?.summary.feedback_ticket_count ?? selectedWorkspaceCampaign.summary?.feedback_ticket_count ?? 0 }}</div>
+                  <div>物流风险 {{ workspaceDetail?.summary.shipment_risk_count ?? selectedWorkspaceCampaign.summary?.shipment_risk_count ?? 0 }}</div>
+                  <div>市场信号 {{ workspaceDetail?.summary.market_signal_count ?? selectedWorkspaceCampaign.summary?.market_signal_count ?? 0 }}</div>
+                </div>
+                <p class="mt-2 text-xs text-slate-500">
+                  {{ workspaceDetail?.summary.explanation_zh || selectedWorkspaceCampaign.summary?.explanation_zh }}
+                </p>
+              </div>
+
+              <div class="grid gap-3 lg:grid-cols-[320px_1fr]">
+                <div class="space-y-2 rounded border border-slate-100 bg-slate-50 p-3">
+                  <h3 class="text-sm font-medium text-slate-900">创建人工外联任务</h3>
+                  <el-select v-model="taskForm.task_type" placeholder="任务类型">
+                    <el-option label="人工外联" value="manual_outreach" />
+                    <el-option label="需求确认" value="qualification" />
+                    <el-option label="报价跟进" value="quote_follow_up" />
+                    <el-option label="反馈复盘" value="feedback_follow_up" />
+                  </el-select>
+                  <el-select v-model="taskForm.language" placeholder="草稿语言">
+                    <el-option label="中文" value="zh" />
+                    <el-option label="英文" value="en" />
+                  </el-select>
+                  <el-input v-model="taskForm.due_date" placeholder="到期日期，例如 2026-06-15" />
+                  <el-input v-model="taskForm.draft_subject" placeholder="草稿标题，可留空自动生成" />
+                  <el-input v-model="taskForm.draft_body" type="textarea" :rows="4" placeholder="草稿正文，可留空自动生成" />
+                  <el-input v-model="taskForm.notes" placeholder="任务备注" />
+                  <el-button type="primary" :loading="savingTask" @click="saveTask">创建任务草稿</el-button>
+                </div>
+
+                <el-table :data="workspaceDetail?.tasks || []" border empty-text="暂无人工任务">
+                  <el-table-column label="任务" min-width="210">
+                    <template #default="{ row }">
+                      <div class="font-medium text-slate-900">{{ row.task_type_label }}</div>
+                      <div class="text-xs text-slate-500">{{ row.language }} · {{ row.due_date || '未设到期日' }}</div>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="草稿" min-width="280">
+                    <template #default="{ row }">
+                      <div class="font-medium text-slate-800">{{ row.draft_subject || '未填写标题' }}</div>
+                      <div class="line-clamp-2 text-xs text-slate-500">{{ row.draft_body || '未填写正文' }}</div>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="人工状态" width="180">
+                    <template #default="{ row }">
+                      <el-select :model-value="row.status" size="small" @change="updateTaskStatusFromSelect(row.id, $event)">
+                        <el-option
+                          v-for="item in workspaceDetail?.manual_status_options || []"
+                          :key="item.value"
+                          :label="item.label"
+                          :value="item.value"
+                        />
+                      </el-select>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </div>
+            </template>
+          </div>
+        </div>
+      </section>
+
       <section class="grid gap-3 lg:grid-cols-3">
         <div class="rounded border border-slate-200 bg-white p-4">
           <h2 class="font-semibold text-slate-900">销售易能力适配</h2>
@@ -199,26 +329,69 @@ import { useRouter } from 'vue-router'
 import { postLeadIntelligenceTouchpoint } from '@/api/aDomain'
 import { formatApiError } from '@/api/errors'
 import {
+  createGrowthCampaign,
+  createGrowthCampaignTask,
+  fetchGrowthCampaignDetail,
+  fetchGrowthCampaigns,
   fetchGrowthOperationsConsole,
+  updateGrowthCampaign,
+  updateGrowthCampaignTask,
   type GrowthOperationsConsole,
+  type GrowthCampaignWorkspaceDetail,
+  type GrowthCampaignWorkspaceRow,
   type GrowthOutreachSequence,
 } from '@/api/growthOperations'
 
 const router = useRouter()
 const data = ref<GrowthOperationsConsole | null>(null)
+const workspaceCampaigns = ref<GrowthCampaignWorkspaceRow[]>([])
+const workspaceDetail = ref<GrowthCampaignWorkspaceDetail | null>(null)
 const loading = ref(false)
 const error = ref('')
 const selectedCampaignId = ref('')
+const selectedWorkspaceCampaignId = ref('')
 const manualEvent = ref('manual_sent')
 const recording = ref(false)
+const savingCampaign = ref(false)
+const savingTask = ref(false)
+
+const campaignForm = ref({
+  name: '',
+  partner_focus: 'HOSUN',
+  product_focus_text: 'lifting systems, desk frames, desk legs, lifting columns, heavy-duty supply',
+  target_segment: '升降办公与项目制采购客户',
+  goal: '把产品兴趣推进到人工外联、报价请求和订单交付复盘。',
+  status: 'planned',
+  owner: '运营团队',
+  next_action: '人工筛选客户并创建外联任务。',
+  notes: '',
+})
+
+const taskForm = ref({
+  task_type: 'manual_outreach',
+  language: 'zh',
+  due_date: '',
+  draft_subject: '',
+  draft_body: '',
+  notes: '',
+})
 
 const selectedSequence = computed<GrowthOutreachSequence | null>(() => {
   if (!data.value) return null
   return data.value.outreach_sequences.find((row) => row.campaign_id === selectedCampaignId.value) || null
 })
 
+const selectedWorkspaceCampaign = computed<GrowthCampaignWorkspaceRow | null>(() => {
+  if (!selectedWorkspaceCampaignId.value) return workspaceCampaigns.value[0] || null
+  return workspaceCampaigns.value.find((row) => row.id === selectedWorkspaceCampaignId.value) || null
+})
+
 watch(selectedSequence, (row) => {
   manualEvent.value = row?.manual_event_options[0]?.value || 'manual_sent'
+})
+
+watch(selectedWorkspaceCampaignId, (id) => {
+  if (id) void loadWorkspaceDetail(id)
 })
 
 function campaignName(id: string): string {
@@ -233,13 +406,148 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    data.value = await fetchGrowthOperationsConsole()
+    const [consoleData, workspaceData] = await Promise.all([fetchGrowthOperationsConsole(), fetchGrowthCampaigns()])
+    data.value = consoleData
+    workspaceCampaigns.value = workspaceData.campaigns
     if (!selectedCampaignId.value) selectedCampaignId.value = data.value.campaigns[0]?.id || ''
+    if (!selectedWorkspaceCampaignId.value) {
+      selectedWorkspaceCampaignId.value = workspaceCampaigns.value[0]?.id || ''
+    }
+    if (selectedWorkspaceCampaignId.value) {
+      workspaceDetail.value = await fetchGrowthCampaignDetail(selectedWorkspaceCampaignId.value)
+    } else {
+      workspaceDetail.value = null
+    }
   } catch (err) {
     error.value = formatApiError(err, '增长运营数据加载失败。')
   } finally {
     loading.value = false
   }
+}
+
+async function loadWorkspaceDetail(id?: string) {
+  const targetId = id || selectedWorkspaceCampaignId.value
+  if (!targetId) {
+    workspaceDetail.value = null
+    return
+  }
+  try {
+    workspaceDetail.value = await fetchGrowthCampaignDetail(targetId)
+    selectedWorkspaceCampaignId.value = targetId
+  } catch (err) {
+    ElMessage.error(formatApiError(err, 'Campaign 详情加载失败。'))
+  }
+}
+
+function applyCampaignTemplate(kind: 'hosun' | 'jooboo') {
+  if (kind === 'jooboo') {
+    campaignForm.value = {
+      name: 'JOOBOO 教育家具项目制增长战役',
+      partner_focus: 'JOOBOO',
+      product_focus_text: 'education furniture, project furniture, classroom furniture, collaborative table',
+      target_segment: '教育空间、学校项目、项目制家具采购客户',
+      goal: '把教育家具和项目制家具兴趣推进到需求确认、项目报价和交付复盘。',
+      status: 'planned',
+      owner: '运营团队',
+      next_action: '整理教育家具项目客户清单并创建人工外联任务。',
+      notes: '用于证明 PartnerOS 支持多优质外贸品牌平级运营。',
+    }
+    return
+  }
+  campaignForm.value = {
+    name: 'HOSUN 升降系统增长战役',
+    partner_focus: 'HOSUN',
+    product_focus_text: 'lifting systems, desk frames, desk legs, lifting columns, heavy-duty supply',
+    target_segment: '升降办公、人体工学、项目制采购客户',
+    goal: '把升降桌架、桌腿、升降柱和重载升降系统兴趣推进到报价请求和订单交付。',
+    status: 'planned',
+    owner: '运营团队',
+    next_action: '筛选目标客户并创建人工外联任务。',
+    notes: 'HOSUN 是示例 partner 之一，不是唯一主品牌。',
+  }
+}
+
+async function saveCampaign() {
+  savingCampaign.value = true
+  try {
+    const detail = await createGrowthCampaign({
+      name: campaignForm.value.name,
+      partner_focus: campaignForm.value.partner_focus,
+      product_focus: campaignForm.value.product_focus_text
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean),
+      target_segment: campaignForm.value.target_segment,
+      goal: campaignForm.value.goal,
+      status: campaignForm.value.status,
+      owner: campaignForm.value.owner,
+      next_action: campaignForm.value.next_action,
+      notes: campaignForm.value.notes,
+    })
+    selectedWorkspaceCampaignId.value = detail.campaign.id
+    workspaceDetail.value = detail
+    const list = await fetchGrowthCampaigns()
+    workspaceCampaigns.value = list.campaigns
+    ElMessage.success('已保存增长 campaign。')
+  } catch (err) {
+    ElMessage.error(formatApiError(err, 'Campaign 保存失败。'))
+  } finally {
+    savingCampaign.value = false
+  }
+}
+
+async function advanceCampaignStatus(status: string) {
+  const id = selectedWorkspaceCampaign.value?.id
+  if (!id) return
+  try {
+    workspaceDetail.value = await updateGrowthCampaign(id, { status })
+    const list = await fetchGrowthCampaigns()
+    workspaceCampaigns.value = list.campaigns
+    ElMessage.success('Campaign 状态已更新。')
+  } catch (err) {
+    ElMessage.error(formatApiError(err, 'Campaign 状态更新失败。'))
+  }
+}
+
+async function saveTask() {
+  const id = selectedWorkspaceCampaign.value?.id
+  if (!id) {
+    ElMessage.warning('请先选择或创建 campaign。')
+    return
+  }
+  savingTask.value = true
+  try {
+    workspaceDetail.value = await createGrowthCampaignTask(id, {
+      task_type: taskForm.value.task_type,
+      language: taskForm.value.language,
+      due_date: taskForm.value.due_date || null,
+      draft_subject: taskForm.value.draft_subject || null,
+      draft_body: taskForm.value.draft_body || null,
+      notes: taskForm.value.notes || null,
+      status: 'planned',
+    })
+    taskForm.value.draft_subject = ''
+    taskForm.value.draft_body = ''
+    taskForm.value.notes = ''
+    ElMessage.success('已创建人工外联任务草稿。')
+  } catch (err) {
+    ElMessage.error(formatApiError(err, '任务创建失败。'))
+  } finally {
+    savingTask.value = false
+  }
+}
+
+async function updateTaskStatus(taskId: string, status: string) {
+  try {
+    workspaceDetail.value = await updateGrowthCampaignTask(taskId, { status })
+    ElMessage.success('任务状态已更新。')
+  } catch (err) {
+    ElMessage.error(formatApiError(err, '任务状态更新失败。'))
+  }
+}
+
+function updateTaskStatusFromSelect(taskId: string, value: unknown) {
+  void updateTaskStatus(taskId, String(value))
 }
 
 async function recordManualEvent() {
