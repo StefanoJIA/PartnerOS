@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-      <h2 class="text-xl font-semibold text-slate-800">Contacts</h2>
+      <h2 class="text-xl font-semibold text-slate-800">联系人</h2>
       <el-button type="primary" @click="dialog = true">新建</el-button>
     </div>
 

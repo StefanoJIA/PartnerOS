@@ -4,9 +4,9 @@
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 class="text-lg font-semibold text-slate-800">Lead Completeness</h2>
+            <h2 class="text-lg font-semibold text-slate-800">线索完整度</h2>
             <p class="mt-1 text-xs text-slate-500">
-              Profile gaps before outreach — contact, website, enrichment, and next action (D5.4)
+              触达前检查联系人、官网、补全信息和下一步动作缺口。
             </p>
           </div>
         </div>
@@ -15,35 +15,35 @@
       <div class="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
         <div class="rounded border border-slate-200 bg-slate-50 px-2 py-2 text-center">
           <p class="text-lg font-semibold text-slate-800">{{ completenessSummary.total }}</p>
-          <p class="text-xs text-slate-500">Total Leads</p>
+          <p class="text-xs text-slate-500">线索总数</p>
         </div>
         <div class="rounded border border-green-200 bg-green-50 px-2 py-2 text-center">
           <p class="text-lg font-semibold text-green-800">{{ completenessSummary.complete }}</p>
-          <p class="text-xs text-green-700">Complete</p>
+          <p class="text-xs text-green-700">已完整</p>
         </div>
         <div class="rounded border border-blue-200 bg-blue-50 px-2 py-2 text-center">
           <p class="text-lg font-semibold text-blue-800">{{ completenessSummary.readyForOutreach }}</p>
-          <p class="text-xs text-blue-700">Ready for Outreach</p>
+          <p class="text-xs text-blue-700">可触达</p>
         </div>
         <div class="rounded border border-violet-200 bg-violet-50 px-2 py-2 text-center">
           <p class="text-lg font-semibold text-violet-800">{{ completenessSummary.needsContactResearch }}</p>
-          <p class="text-xs text-violet-700">Needs Contact Research</p>
+          <p class="text-xs text-violet-700">需联系人调研</p>
         </div>
         <div class="rounded border border-red-200 bg-red-50 px-2 py-2 text-center">
           <p class="text-lg font-semibold text-red-800">{{ completenessSummary.incomplete }}</p>
-          <p class="text-xs text-red-700">Incomplete</p>
+          <p class="text-xs text-red-700">未完整</p>
         </div>
         <div class="rounded border border-amber-200 bg-amber-50 px-2 py-2 text-center">
           <p class="text-lg font-semibold text-amber-800">{{ completenessSummary.missingWebsite }}</p>
-          <p class="text-xs text-amber-700">Missing Website</p>
+          <p class="text-xs text-amber-700">缺官网</p>
         </div>
         <div class="rounded border border-orange-200 bg-orange-50 px-2 py-2 text-center">
           <p class="text-lg font-semibold text-orange-800">{{ completenessSummary.missingContactMethod }}</p>
-          <p class="text-xs text-orange-700">Missing Contact Method</p>
+          <p class="text-xs text-orange-700">缺联系方式</p>
         </div>
       </div>
 
-      <p class="mb-1 text-xs font-medium text-slate-600">Completeness filters</p>
+      <p class="mb-1 text-xs font-medium text-slate-600">完整度筛选</p>
       <el-radio-group v-model="completenessFilter" size="small" class="mb-3 flex flex-wrap gap-1">
         <el-radio-button v-for="opt in COMPLETENESS_FILTER_OPTIONS" :key="opt.key" :value="opt.key">
           {{ opt.label }}
@@ -58,20 +58,20 @@
         :empty-text="completenessEmptyText"
         @row-click="onCompletenessRowClick"
       >
-        <el-table-column prop="companyName" label="Company" min-width="130" show-overflow-tooltip />
-        <el-table-column label="Score" width="64" sortable :sort-method="sortCompletenessByScore">
+        <el-table-column prop="companyName" label="公司" min-width="130" show-overflow-tooltip />
+        <el-table-column label="分数" width="64" sortable :sort-method="sortCompletenessByScore">
           <template #default="{ row }">
             <span class="font-semibold">{{ row.score }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="Status" width="150">
+        <el-table-column label="状态" width="150">
           <template #default="{ row }">
             <el-tag size="small" :type="completenessStatusTagType(row.status)" effect="plain">
               {{ row.statusLabel }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="Missing Fields" min-width="140">
+        <el-table-column label="缺失字段" min-width="140">
           <template #default="{ row }">
             <span v-if="row.missingFields.length" class="text-xs text-amber-700">
               {{ formatMissingFields(row.missingFields) }}
@@ -81,11 +81,11 @@
         </el-table-column>
         <el-table-column
           prop="recommendedResearchAction"
-          label="Recommended Research Action"
+          label="建议调研动作"
           min-width="180"
           show-overflow-tooltip
         />
-        <el-table-column label="Segment" min-width="120">
+        <el-table-column label="分组" min-width="120">
           <template #default="{ row }">
             <el-tag v-if="row.segments[0]" size="small" :type="segmentTagType(row.segments[0])" effect="plain">
               {{ segmentLabel(row.segments[0]) }}
@@ -93,12 +93,12 @@
             <span v-else class="text-xs text-slate-400">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="nextAction" label="Next Action" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="lastTouch" label="Last Touchpoint" min-width="100" show-overflow-tooltip />
+        <el-table-column prop="nextAction" label="下一步" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="lastTouch" label="上次触达" min-width="100" show-overflow-tooltip />
         <el-table-column label="" width="130" fixed="right">
           <template #default="{ row }">
             <el-button size="small" type="primary" plain @click.stop="openContactResearch(row)">
-              Research / Edit
+              调研 / 编辑
             </el-button>
           </template>
         </el-table-column>
@@ -452,7 +452,7 @@
               </p>
 
               <div class="mb-3 flex flex-wrap gap-1">
-                <el-button size="small" @click="applyContactResearchTouchPreset">Contact research preset</el-button>
+                <el-button size="small" @click="applyContactResearchTouchPreset">联系人调研预设</el-button>
                 <el-button
                   v-for="s in NEXT_ACTION_SUGGESTIONS.slice(0, 4)"
                   :key="s"
@@ -777,17 +777,17 @@ const filteredCompletenessRows = computed(() =>
 const completenessSummary = computed(() => computeCompletenessSummary(completenessRows.value))
 
 const completenessEmptyText = computed(() => {
-  if (reviewLoading.value) return 'Loading completeness...'
-  if (!completenessRows.value.length) return 'No leads — refresh or import leads.'
-  if (!filteredCompletenessRows.value.length) return 'No leads match this completeness filter.'
-  return 'No leads.'
+  if (reviewLoading.value) return '正在加载线索完整度...'
+  if (!completenessRows.value.length) return '暂无线索，请刷新或导入线索。'
+  if (!filteredCompletenessRows.value.length) return '没有符合当前完整度筛选的线索。'
+  return '暂无线索。'
 })
 
 const queueEmptyText = computed(() => {
-  if (reviewLoading.value) return 'Loading leads...'
-  if (!reviewRows.value.length) return 'No leads in queue - refresh or import leads.'
-  if (!filteredReviewRows.value.length) return 'No leads match this filter.'
-  return 'No leads in queue - refresh or import leads.'
+  if (reviewLoading.value) return '正在加载线索...'
+  if (!reviewRows.value.length) return '队列中暂无线索，请刷新或导入线索。'
+  if (!filteredReviewRows.value.length) return '没有符合当前筛选的线索。'
+  return '队列中暂无线索，请刷新或导入线索。'
 })
 
 function sortByScore(a: ReviewRow, b: ReviewRow) {
@@ -840,7 +840,7 @@ async function onContactResearchSaved() {
 
 function applyContactResearchTouchPreset() {
   applyContactResearchPreset(touch.value)
-  ElMessage.info('Contact research preset applied — save when ready.')
+  ElMessage.info('已套用联系人调研预设，确认后保存。')
 }
 
 function formatDate(iso: string) {
@@ -853,10 +853,10 @@ function formatDate(iso: string) {
 
 function displayEnrichmentStatus(status: string, pending: number): string {
   const s = (status || '').toLowerCase()
-  if (s === 'completed') return pending > 0 ? `Completed (${pending} pending)` : 'Completed'
-  if (s === 'running') return 'Running'
-  if (s === 'failed') return 'Failed'
-  if (s === 'pending') return 'Pending'
+  if (s === 'completed') return pending > 0 ? `已完成（${pending} 条待处理）` : '已完成'
+  if (s === 'running') return '运行中'
+  if (s === 'failed') return '失败'
+  if (s === 'pending') return '等待中'
   return status || '—'
 }
 

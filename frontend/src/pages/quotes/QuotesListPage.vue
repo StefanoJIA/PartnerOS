@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { deleteQuote, fetchQuotes, type QuoteSummary } from '@/api/quotes'
+import { QUOTE_STATUS_LABELS, zhLabel } from '@/copy/zhCN'
 
 const router = useRouter()
 const loading = ref(true)
@@ -11,7 +12,7 @@ const statusFilter = ref('')
 const deletingId = ref('')
 
 const SAFETY =
-  'Quote records are manually prepared. intelliOffice does not send quotes automatically, does not promise inventory, certifications, or lead times.'
+  '报价记录由人工准备。intelliOffice 不会自动发送报价，也不会承诺库存、认证或交期。'
 
 async function load() {
   loading.value = true
@@ -20,7 +21,7 @@ async function load() {
     const data = await fetchQuotes({ status: statusFilter.value || undefined })
     items.value = data.items
   } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Failed to load quotes'
+    error.value = e instanceof Error ? e.message : '报价列表加载失败'
   } finally {
     loading.value = false
   }
@@ -52,30 +53,32 @@ onMounted(load)
 
 <template>
   <div class="page">
-    <h1>Customer Quotes</h1>
-    <el-alert type="warning" :closable="false" show-icon title="Safety" :description="SAFETY" class="mb" />
+    <h1>客户报价单</h1>
+    <el-alert type="warning" :closable="false" show-icon title="安全边界" :description="SAFETY" class="mb" />
 
     <div class="toolbar">
-      <el-select v-model="statusFilter" placeholder="Status" clearable style="width: 200px" @change="load">
-        <el-option label="Internal Review" value="internal_review" />
-        <el-option label="Ready to Send" value="ready_to_send" />
-        <el-option label="Sent" value="sent" />
-        <el-option label="Revised" value="revised" />
-        <el-option label="Expired" value="expired" />
+      <el-select v-model="statusFilter" placeholder="状态" clearable style="width: 200px" @change="load">
+        <el-option label="内部审核" value="internal_review" />
+        <el-option label="待发送" value="ready_to_send" />
+        <el-option label="已发送" value="sent" />
+        <el-option label="已修订" value="revised" />
+        <el-option label="已过期" value="expired" />
       </el-select>
-      <el-button type="primary" @click="router.push({ name: 'quote-new' })">New Quote</el-button>
+      <el-button type="primary" @click="router.push({ name: 'quote-new' })">新建报价</el-button>
     </div>
 
     <el-alert v-if="error" type="error" :title="error" show-icon class="mb" />
     <div v-if="loading" v-loading="true" style="min-height: 120px" />
     <el-table v-else :data="items" stripe @row-click="(row: QuoteSummary) => router.push({ name: 'quote-detail', params: { id: row.id } })">
-      <el-table-column prop="quote_number" label="Quote #" width="140" />
-      <el-table-column prop="bill_to_company" label="Company" />
-      <el-table-column prop="status" label="Status" width="140" />
-      <el-table-column prop="grand_total" label="Total" width="120">
+      <el-table-column prop="quote_number" label="报价号" width="140" />
+      <el-table-column prop="bill_to_company" label="公司" />
+      <el-table-column label="状态" width="140">
+        <template #default="{ row }">{{ zhLabel(QUOTE_STATUS_LABELS, row.status) }}</template>
+      </el-table-column>
+      <el-table-column prop="grand_total" label="金额" width="120">
         <template #default="{ row }">{{ row.currency }} {{ row.grand_total }}</template>
       </el-table-column>
-      <el-table-column prop="valid_until" label="Valid Until" width="120" />
+      <el-table-column prop="valid_until" label="有效期至" width="120" />
       <el-table-column label="操作" width="120" align="right">
         <template #default="{ row }">
           <el-button

@@ -1,15 +1,15 @@
 <template>
   <div>
     <div class="mb-4 flex items-center justify-between">
-      <h2 class="text-xl font-semibold text-slate-800">Companies</h2>
-      <el-button type="primary" @click="openDialog">Add</el-button>
+      <h2 class="text-xl font-semibold text-slate-800">公司</h2>
+      <el-button type="primary" @click="openDialog">新增</el-button>
     </div>
-    <el-input v-model="q" placeholder="Search" class="mb-4 max-w-md" clearable @keyup.enter="load" />
+    <el-input v-model="q" placeholder="搜索" class="mb-4 max-w-md" clearable @keyup.enter="load" />
     <el-table :data="rows" stripe v-loading="loading">
       <template #empty>
         <el-empty description="暂无公司，可点击新增" />
       </template>
-      <el-table-column label="Name">
+      <el-table-column label="名称">
         <template #default="{ row }">
           <router-link
             class="text-blue-600 hover:underline"
@@ -19,9 +19,9 @@
           </router-link>
         </template>
       </el-table-column>
-      <el-table-column prop="company_type" label="Type" width="160" />
-      <el-table-column prop="city" label="City" width="120" />
-      <el-table-column prop="state" label="State" width="80" />
+      <el-table-column prop="company_type" label="类型" width="160" />
+      <el-table-column prop="city" label="城市" width="120" />
+      <el-table-column prop="state" label="州/省" width="80" />
     </el-table>
     <el-pagination
       class="mt-4"
@@ -33,16 +33,16 @@
       @current-change="load"
     />
 
-    <el-dialog v-model="dialog" title="New company" width="520px">
+    <el-dialog v-model="dialog" title="新建公司" width="520px">
       <el-form label-position="top">
-        <el-form-item label="Name"><el-input v-model="form.company_name" /></el-form-item>
-        <el-form-item label="Type"><el-input v-model="form.company_type" placeholder="e.g. Office Furniture Dealer" /></el-form-item>
-        <el-form-item label="City"><el-input v-model="form.city" /></el-form-item>
-        <el-form-item label="State"><el-input v-model="form.state" /></el-form-item>
+        <el-form-item label="名称"><el-input v-model="form.company_name" /></el-form-item>
+        <el-form-item label="类型"><el-input v-model="form.company_type" placeholder="例如 Office Furniture Dealer" /></el-form-item>
+        <el-form-item label="城市"><el-input v-model="form.city" /></el-form-item>
+        <el-form-item label="州/省"><el-input v-model="form.state" /></el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialog = false">Cancel</el-button>
-        <el-button type="primary" @click="save">Save</el-button>
+        <el-button @click="dialog = false">取消</el-button>
+        <el-button type="primary" @click="save">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -85,7 +85,7 @@ function openDialog() {
 
 async function save() {
   await http.post('/companies', form)
-  ElMessage.success('Saved')
+  ElMessage.success('已保存')
   dialog.value = false
   await load()
 }

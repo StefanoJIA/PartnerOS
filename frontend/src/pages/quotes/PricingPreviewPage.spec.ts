@@ -56,8 +56,8 @@ describe('PricingPreviewPage', () => {
   it('renders form and safety note', async () => {
     const wrapper = mount(PricingPreviewPage, { global: { plugins: [ElementPlus] } })
     await flushPromises()
-    expect(wrapper.text()).toContain('Pricing Preview')
-    expect(wrapper.text()).toContain('Does not create quotes')
+    expect(wrapper.text()).toContain('价格预览')
+    expect(wrapper.text()).toContain('不会创建报价')
   })
 
   it('calls preview API', async () => {

@@ -1,15 +1,15 @@
 <template>
   <div>
-    <h2 class="mb-4 text-xl font-semibold text-slate-800">Products</h2>
+    <h2 class="mb-4 text-xl font-semibold text-slate-800">产品库</h2>
     <el-table :data="rows" stripe v-loading="loading">
-      <el-table-column label="Name" min-width="200">
+      <el-table-column label="名称" min-width="200">
         <template #default="{ row }">
           <router-link class="text-blue-600 hover:underline" :to="{ name: 'product-detail', params: { productId: row.id } }">
             {{ row.product_name }}
           </router-link>
         </template>
       </el-table-column>
-      <el-table-column prop="product_category" label="Category" width="200" />
+      <el-table-column prop="product_category" label="分类" width="200" />
     </el-table>
     <el-pagination
       class="mt-4"

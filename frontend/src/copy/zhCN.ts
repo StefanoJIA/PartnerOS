@@ -21,6 +21,7 @@ export const QUOTE_STATUS_LABELS: Record<string, string> = {
   rejected: '已拒绝',
   expired: '已过期',
   converted: '已转订单',
+  converted_to_order: '已转订单',
 }
 
 export const FEEDBACK_STATUS_LABELS: Record<string, string> = {

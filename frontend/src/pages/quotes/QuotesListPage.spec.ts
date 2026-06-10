@@ -53,8 +53,8 @@ describe('QuotesListPage', () => {
   it('renders safety note and quote list', async () => {
     const wrapper = mount(QuotesListPage, { global: { plugins: [ElementPlus] } })
     await flushPromises()
-    expect(wrapper.text()).toContain('Safety')
-    expect(wrapper.text()).toContain('does not send quotes automatically')
+    expect(wrapper.text()).toContain('安全边界')
+    expect(wrapper.text()).toContain('不会自动发送报价')
     expect(wrapper.text()).toContain('Q-2026-0001')
     expect(wrapper.text()).toContain('删除')
   })

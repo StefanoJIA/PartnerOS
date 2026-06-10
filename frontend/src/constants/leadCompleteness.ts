@@ -17,32 +17,32 @@ export type CompletenessFilterKey =
   | 'missing_enrichment'
 
 export const COMPLETENESS_STATUS_LABELS: Record<CompletenessStatus, string> = {
-  complete: 'Complete',
-  ready_for_outreach: 'Ready for Outreach',
-  needs_contact_research: 'Needs Contact Research',
-  incomplete: 'Incomplete',
+  complete: '资料完整',
+  ready_for_outreach: '可准备触达',
+  needs_contact_research: '需联系人调研',
+  incomplete: '资料不完整',
 }
 
 export const COMPLETENESS_FILTER_OPTIONS: { key: CompletenessFilterKey; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'complete', label: 'Complete' },
-  { key: 'ready_for_outreach', label: 'Ready for Outreach' },
-  { key: 'needs_contact_research', label: 'Needs Contact Research' },
-  { key: 'incomplete', label: 'Incomplete' },
-  { key: 'missing_website', label: 'Missing Website' },
-  { key: 'missing_email_linkedin', label: 'Missing Email / LinkedIn' },
-  { key: 'missing_next_action', label: 'Missing Next Action' },
-  { key: 'missing_enrichment', label: 'Missing Enrichment' },
+  { key: 'all', label: '全部' },
+  { key: 'complete', label: '资料完整' },
+  { key: 'ready_for_outreach', label: '可准备触达' },
+  { key: 'needs_contact_research', label: '需联系人调研' },
+  { key: 'incomplete', label: '资料不完整' },
+  { key: 'missing_website', label: '缺官网' },
+  { key: 'missing_email_linkedin', label: '缺邮箱 / LinkedIn' },
+  { key: 'missing_next_action', label: '缺下一步动作' },
+  { key: 'missing_enrichment', label: '缺线索增强' },
 ]
 
 export const MISSING_FIELD_LABELS: Record<string, string> = {
-  website: 'website',
-  contact_name: 'contact_name',
-  contact_email_or_linkedin: 'email / LinkedIn',
-  contact_title: 'contact_title',
-  next_action: 'next_action',
-  enrichment: 'enrichment',
-  touchpoint: 'touchpoint',
+  website: '官网',
+  contact_name: '联系人姓名',
+  contact_email_or_linkedin: '邮箱 / LinkedIn',
+  contact_title: '联系人职位',
+  next_action: '下一步动作',
+  enrichment: '线索增强',
+  touchpoint: '触达记录',
 }
 
 export type CompletenessInput = {
@@ -102,17 +102,17 @@ function statusFromScore(score: number): CompletenessStatus {
 }
 
 function recommendAction(missing: string[], status: CompletenessStatus): string {
-  if (missing.includes('website')) return 'Add website before enrichment.'
-  if (missing.includes('contact_name')) return 'Find decision maker contact.'
-  if (missing.includes('contact_email_or_linkedin')) return 'Add email or LinkedIn URL.'
-  if (missing.includes('contact_title')) return 'Add contact title.'
-  if (missing.includes('enrichment')) return 'Run enrichment before outreach.'
-  if (missing.includes('next_action')) return 'Set next action.'
+  if (missing.includes('website')) return '先补充官网，再做线索增强。'
+  if (missing.includes('contact_name')) return '补充决策人或采购联系人。'
+  if (missing.includes('contact_email_or_linkedin')) return '补充邮箱或 LinkedIn 链接。'
+  if (missing.includes('contact_title')) return '补充联系人职位，便于判断采购角色。'
+  if (missing.includes('enrichment')) return '触达前先完成线索增强。'
+  if (missing.includes('next_action')) return '设置下一步运营动作。'
   if (status === 'complete' || status === 'ready_for_outreach') {
-    return 'Generate draft and send by manual review.'
+    return '可生成触达草稿，人工复核后再发送。'
   }
-  if (missing.includes('touchpoint')) return 'Generate draft after contact is confirmed.'
-  return 'Review lead profile and fill missing fields.'
+  if (missing.includes('touchpoint')) return '确认联系人后再生成触达草稿。'
+  return '复核线索资料并补齐缺失字段。'
 }
 
 export function computeLeadCompleteness(input: CompletenessInput): CompletenessResult {
@@ -216,9 +216,9 @@ export function applyContactResearchPreset(touch: {
 }) {
   touch.interaction_type = 'contact_research'
   touch.channel = 'manual_research'
-  touch.subject = 'Contact research'
-  touch.summary = 'Contact research needed / contact info updated'
+  touch.subject = '联系人调研'
+  touch.summary = '需要联系人调研 / 联系方式已更新'
   if (!touch.next_action?.trim()) {
-    touch.next_action = 'Confirm decision maker and contact method before outreach'
+    touch.next_action = '触达前确认决策人和联系方式'
   }
 }

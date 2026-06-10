@@ -20,9 +20,9 @@ const sampleRow = {
   companyName: 'Transfer Enterprises',
   score: 42,
   status: 'needs_contact_research' as const,
-  statusLabel: 'Needs Contact Research',
+  statusLabel: '需联系人调研',
   missingFields: ['contact_email_or_linkedin', 'website'],
-  recommendedResearchAction: 'Add email or LinkedIn profile.',
+  recommendedResearchAction: '补充邮箱或 LinkedIn 链接。',
   segments: [],
   nextAction: 'Research contact',
   lastTouch: '—',
@@ -39,7 +39,7 @@ describe('ContactResearchDrawer', () => {
       global: { plugins: [ElementPlus] },
     })
     await flushPromises()
-    expect(wrapper.text()).toContain('does not search LinkedIn')
+    expect(wrapper.text()).toContain('不会搜索 LinkedIn')
     expect(wrapper.text()).toContain('Transfer Enterprises')
   })
 
@@ -49,7 +49,7 @@ describe('ContactResearchDrawer', () => {
       global: { plugins: [ElementPlus] },
     })
     await flushPromises()
-    expect(wrapper.text()).toContain('email / LinkedIn')
+    expect(wrapper.text()).toContain('邮箱 / LinkedIn')
   })
 
   it('calls contact research API on save', async () => {
