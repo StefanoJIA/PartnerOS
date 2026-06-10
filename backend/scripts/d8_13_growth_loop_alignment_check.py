@@ -130,7 +130,7 @@ def main() -> int:
 
     ok, missing = _contains_all(
         "\n".join([service, page]),
-        ("partner_focus", "product_focus", "target_segment", "goal", "status", "next_action", "Campaign Planning"),
+        ("partner_focus", "product_focus", "target_segment", "goal", "status", "next_action", "Campaign 规划视图"),
     )
     checks[1].pass_("campaign planning fields present") if ok else checks[1].fail(missing)
 
@@ -143,7 +143,7 @@ def main() -> int:
     )
     checks[3].pass_("manual draft and touchpoint record path present") if ok else checks[3].fail(missing)
 
-    ok, missing = _contains_all("\n".join([service, page]), ("attribution", "quote_count", "order_count", "Campaign → Quote → Order"))
+    ok, missing = _contains_all("\n".join([service, page]), ("attribution", "quote_count", "order_count", "Campaign 到报价和订单的归因"))
     checks[4].pass_("quote/order attribution present") if ok else checks[4].fail(missing)
 
     ok, missing = _contains_all(

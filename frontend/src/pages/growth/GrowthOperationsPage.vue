@@ -42,7 +42,7 @@
           <div class="space-y-3 rounded border border-slate-100 bg-slate-50 p-3">
             <el-input v-model="campaignForm.name" placeholder="Campaign 名称" />
             <div class="grid gap-2 sm:grid-cols-2">
-              <el-input v-model="campaignForm.partner_focus" placeholder="Partner focus" />
+              <el-input v-model="campaignForm.partner_focus" placeholder="Partner 方向，例如 HOSUN / JOOBOO" />
               <el-select v-model="campaignForm.status" placeholder="状态">
                 <el-option label="已规划" value="planned" />
                 <el-option label="推进中" value="active" />
@@ -180,9 +180,9 @@
       <section class="rounded border border-slate-200 bg-white p-4">
         <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 class="font-semibold text-slate-900">Campaign Planning</h2>
+            <h2 class="font-semibold text-slate-900">Campaign 规划视图</h2>
             <p class="mt-1 text-sm text-slate-600">
-              每个 campaign 都绑定 partner focus、product focus、target segment、goal、status 和 next action。
+              每个 campaign 都绑定 Partner 方向、产品方向、目标分群、业务目标、状态和下一步人工动作。
             </p>
           </div>
           <el-tag type="success" effect="plain">HOSUN / JOOBOO / Future Partner 平级</el-tag>
@@ -260,7 +260,7 @@
                 <el-input type="textarea" :rows="7" readonly :model-value="selectedSequence.drafts.zh.body" />
               </div>
               <div>
-                <p class="mb-1 text-xs font-medium text-slate-600">English Draft</p>
+                <p class="mb-1 text-xs font-medium text-slate-600">英文草稿</p>
                 <el-input readonly :model-value="selectedSequence.drafts.en.subject" class="mb-2" />
                 <el-input type="textarea" :rows="7" readonly :model-value="selectedSequence.drafts.en.body" />
               </div>
@@ -292,7 +292,7 @@
 
       <section class="grid gap-5 xl:grid-cols-2">
         <div class="rounded border border-slate-200 bg-white p-4">
-          <h2 class="mb-3 font-semibold text-slate-900">Campaign → Quote → Order 归因</h2>
+          <h2 class="mb-3 font-semibold text-slate-900">Campaign 到报价和订单的归因</h2>
           <el-table :data="data.attribution" stripe>
             <el-table-column label="Campaign" min-width="220">
               <template #default="{ row }">{{ campaignName(row.campaign_id) }}</template>
