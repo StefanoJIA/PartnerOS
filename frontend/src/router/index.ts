@@ -25,6 +25,7 @@ const router = createRouter({
         { path: 'portal-integration', name: 'portal-integration', component: () => import('@/pages/system/PortalOperationsPage.vue') },
         { path: 'feedback-tickets', name: 'feedback-tickets', component: () => import('@/pages/system/FeedbackTicketsPage.vue') },
         { path: 'lead-intelligence', name: 'lead-intelligence', component: () => import('@/pages/leads/LeadIntelligenceWorkbenchPage.vue') },
+        { path: 'growth-operations', name: 'growth-operations', component: () => import('@/pages/growth/GrowthOperationsPage.vue') },
         { path: 'lead-intake', name: 'lead-intake', component: () => import('@/pages/leads/LeadIntakePage.vue') },
         { path: 'companies', name: 'companies', component: () => import('@/pages/companies/CompaniesPage.vue') },
         { path: 'companies/:companyId', name: 'company-detail', component: () => import('@/pages/companies/CompanyDetailPage.vue') },

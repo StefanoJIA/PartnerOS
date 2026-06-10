@@ -59,6 +59,7 @@ const navGroups = [
       { path: '/companies', label: '公司' },
       { path: '/contacts', label: '联系人' },
       { path: '/lead-intelligence', label: '线索智能工作台' },
+      { path: '/growth-operations', label: '增长运营' },
       { path: '/lead-intake', label: '线索录入' },
       { path: '/leads', label: '线索列表' },
       { path: '/tasks', label: '任务' },
