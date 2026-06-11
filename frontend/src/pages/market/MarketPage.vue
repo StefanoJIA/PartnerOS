@@ -72,6 +72,33 @@
     </section>
 
     <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 class="font-semibold text-slate-800">Partner 产品方向解释</h3>
+          <p class="mt-1 text-sm text-slate-600">
+            市场响应用于判断 HOSUN lifting systems、desk frames、desk legs、lifting columns、heavy-duty supply，
+            以及 JOOBOO education furniture / project furniture 是否值得继续投入。信号来自订单、物流、生产延迟和客户反馈。
+          </p>
+        </div>
+        <el-tag type="success" effect="plain">HOSUN / JOOBOO 平级</el-tag>
+      </div>
+      <div class="grid gap-3 md:grid-cols-2">
+        <div class="rounded border border-slate-100 bg-slate-50 p-3">
+          <p class="text-sm font-semibold text-slate-800">HOSUN lifting systems</p>
+          <p class="mt-1 text-sm text-slate-600">
+            重点看 desk frames、desk legs、lifting columns 和 heavy-duty supply 的报价、订单、物流风险与反馈。
+          </p>
+        </div>
+        <div class="rounded border border-slate-100 bg-slate-50 p-3">
+          <p class="text-sm font-semibold text-slate-800">JOOBOO education furniture</p>
+          <p class="mt-1 text-sm text-slate-600">
+            重点看 education furniture / project furniture 的项目制采购、交付风险和客户反馈回流。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex items-center justify-between gap-3">
         <h3 class="font-semibold text-slate-800">AI 辅助建议</h3>
         <el-tag type="warning" effect="plain">需要人工审查</el-tag>

@@ -27,8 +27,15 @@ const journey = computed(() => [
     key: 'development',
     label: '客户开发',
     value: '品牌 + 项目线索',
-    detail: '先确认客户需求、目标品牌方向和项目背景，再进入产品线匹配。',
+    detail: '先确认客户需求、目标品牌方向和项目背景，再进入 Campaign / 营销活动和产品线匹配。',
     route: '/leads',
+  },
+  {
+    key: 'campaign',
+    label: 'Campaign / 营销活动',
+    value: '人工外联任务',
+    detail: '用 Growth Operations 规划 HOSUN / JOOBOO 分群、生成中英文草稿、记录人工状态；系统不自动发送。',
+    route: '/growth-operations',
   },
   {
     key: 'interest',
@@ -96,7 +103,7 @@ const journey = computed(() => [
 ])
 
 const storyLine = computed(() => [
-  '用 PartnerOS 判断客户项目，匹配合适的 partner 产品线，并在报价转订单后保持运营链路连续。',
+  '用 PartnerOS 判断客户项目，从 Campaign / 营销活动进入人工外联，匹配合适的 partner 产品线，并在报价转订单后保持运营链路连续。',
   '客户 Portal 仍是过滤后的桥接层：客户能查看产品、订单、生产、物流、资料和反馈状态，但看不到内部运营数据。',
   'Market Response 把订单、延期、物流风险和反馈转化为需要人工审查的产品与 partner 优先级。',
 ])
@@ -223,7 +230,7 @@ onMounted(load)
       <div>
         <h2 class="text-xl font-semibold text-slate-800">D8.4 业务演示流程</h2>
         <p class="mt-1 max-w-4xl text-sm text-slate-600">
-          面向 partner 的 PartnerOS 运营故事：客户开发、产品适配、报价、订单、partner 分单、生产、物流、Portal、反馈和市场响应。
+          面向 partner 的 PartnerOS 运营故事：客户开发、Campaign / 营销活动、人工外联、产品适配、报价、订单、partner 分单、生产、物流、Portal、反馈和市场响应。
         </p>
       </div>
       <div class="flex gap-2">
