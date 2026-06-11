@@ -4,7 +4,7 @@
       <div>
         <h1 class="text-xl font-semibold text-slate-900">增长运营闭环</h1>
         <p class="mt-1 max-w-4xl text-sm text-slate-600">
-          {{ data?.positioning_zh || '连接客户开发、Campaign、外联、报价、订单、Portal、反馈和市场响应。' }}
+          {{ data?.positioning_zh || '连接客户开发、Campaign / 营销活动、外联、报价、订单、Portal、反馈和市场响应。' }}
         </p>
       </div>
       <div class="flex flex-wrap gap-2">
@@ -27,9 +27,10 @@
       <section class="rounded border border-slate-200 bg-white p-4">
         <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 class="font-semibold text-slate-900">Campaign 工作台</h2>
+            <h2 class="font-semibold text-slate-900">Campaign 工作台 / 营销活动</h2>
             <p class="mt-1 text-sm text-slate-600">
-              保存增长战役、人工外联任务和状态推进。系统只保存草稿与人工状态，不自动发送、不改报价或订单。
+              保存 Campaign / 营销活动、人工外联任务和状态推进。操作顺序：规划活动 → 选择分群 → 创建外联任务 → 更新状态 →
+              查看报价/订单/反馈/市场响应。系统只保存草稿与人工状态，不自动发送、不改报价或订单。
             </p>
           </div>
           <div class="flex flex-wrap gap-2">
@@ -40,7 +41,7 @@
 
         <div class="grid gap-4 xl:grid-cols-[minmax(320px,420px)_1fr]">
           <div class="space-y-3 rounded border border-slate-100 bg-slate-50 p-3">
-            <el-input v-model="campaignForm.name" placeholder="Campaign 名称" />
+            <el-input v-model="campaignForm.name" placeholder="Campaign / 营销活动名称" />
             <div class="grid gap-2 sm:grid-cols-2">
               <el-input v-model="campaignForm.partner_focus" placeholder="Partner 方向，例如 HOSUN / JOOBOO" />
               <el-select v-model="campaignForm.status" placeholder="状态">
@@ -59,12 +60,12 @@
               <el-input v-model="campaignForm.owner" placeholder="负责人" />
               <el-input v-model="campaignForm.notes" placeholder="备注" />
             </div>
-            <el-button type="primary" :loading="savingCampaign" @click="saveCampaign">保存 Campaign</el-button>
+            <el-button type="primary" :loading="savingCampaign" @click="saveCampaign">保存 Campaign / 营销活动</el-button>
           </div>
 
           <div class="min-w-0 space-y-3">
             <div class="flex flex-wrap items-center gap-2">
-              <el-select v-model="selectedWorkspaceCampaignId" class="min-w-72" placeholder="选择已保存 campaign">
+              <el-select v-model="selectedWorkspaceCampaignId" class="min-w-72" placeholder="选择已保存 Campaign / 营销活动">
                 <el-option
                   v-for="row in workspaceCampaigns"
                   :key="row.id"
@@ -77,7 +78,7 @@
               <el-button :disabled="!selectedWorkspaceCampaign" @click="advanceCampaignStatus('completed')">完成</el-button>
             </div>
 
-            <el-empty v-if="!selectedWorkspaceCampaign" description="暂无已保存 campaign，请先创建 HOSUN 或 JOOBOO 示例。" />
+            <el-empty v-if="!selectedWorkspaceCampaign" description="暂无已保存 Campaign / 营销活动，请先创建 HOSUN 或 JOOBOO 示例。" />
             <template v-else>
               <div class="rounded border border-slate-100 p-3">
                 <div class="flex flex-wrap items-start justify-between gap-2">
@@ -180,15 +181,15 @@
       <section class="rounded border border-slate-200 bg-white p-4">
         <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 class="font-semibold text-slate-900">Campaign 规划视图</h2>
+            <h2 class="font-semibold text-slate-900">Campaign / 营销活动规划视图</h2>
             <p class="mt-1 text-sm text-slate-600">
-              每个 campaign 都绑定 Partner 方向、产品方向、目标分群、业务目标、状态和下一步人工动作。
+              每个 Campaign / 营销活动都绑定 Partner 方向、产品方向、目标分群、业务目标、状态和下一步人工动作。
             </p>
           </div>
           <el-tag type="success" effect="plain">HOSUN / JOOBOO / Future Partner 平级</el-tag>
         </div>
-        <el-table :data="data.campaigns" border empty-text="暂无增长 campaign">
-          <el-table-column label="Campaign" min-width="230">
+        <el-table :data="data.campaigns" border empty-text="暂无增长 Campaign / 营销活动">
+          <el-table-column label="Campaign / 营销活动" min-width="230">
             <template #default="{ row }">
               <div class="font-medium text-slate-900">{{ row.name }}</div>
               <div class="text-xs text-slate-500">{{ row.partner_focus }} · {{ row.status }}</div>
@@ -292,9 +293,9 @@
 
       <section class="grid gap-5 xl:grid-cols-2">
         <div class="rounded border border-slate-200 bg-white p-4">
-          <h2 class="mb-3 font-semibold text-slate-900">Campaign 到报价和订单的归因</h2>
+          <h2 class="mb-3 font-semibold text-slate-900">Campaign / 营销活动到报价和订单的归因</h2>
           <el-table :data="data.attribution" stripe>
-            <el-table-column label="Campaign" min-width="220">
+            <el-table-column label="Campaign / 营销活动" min-width="220">
               <template #default="{ row }">{{ campaignName(row.campaign_id) }}</template>
             </el-table-column>
             <el-table-column prop="quote_count" label="报价" width="80" />
@@ -308,7 +309,7 @@
         <div class="rounded border border-slate-200 bg-white p-4">
           <h2 class="mb-3 font-semibold text-slate-900">反馈 / 物流风险 / 市场信号回流</h2>
           <el-table :data="data.feedback_loop" stripe>
-            <el-table-column label="Campaign" min-width="220">
+            <el-table-column label="Campaign / 营销活动" min-width="220">
               <template #default="{ row }">{{ campaignName(row.campaign_id) }}</template>
             </el-table-column>
             <el-table-column prop="feedback_ticket_count" label="反馈" width="80" />
@@ -435,7 +436,7 @@ async function loadWorkspaceDetail(id?: string) {
     workspaceDetail.value = await fetchGrowthCampaignDetail(targetId)
     selectedWorkspaceCampaignId.value = targetId
   } catch (err) {
-    ElMessage.error(formatApiError(err, 'Campaign 详情加载失败。'))
+    ElMessage.error(formatApiError(err, 'Campaign / 营销活动详情加载失败。'))
   }
 }
 
@@ -488,9 +489,9 @@ async function saveCampaign() {
     workspaceDetail.value = detail
     const list = await fetchGrowthCampaigns()
     workspaceCampaigns.value = list.campaigns
-    ElMessage.success('已保存增长 campaign。')
+    ElMessage.success('已保存增长 Campaign / 营销活动。')
   } catch (err) {
-    ElMessage.error(formatApiError(err, 'Campaign 保存失败。'))
+    ElMessage.error(formatApiError(err, 'Campaign / 营销活动保存失败。'))
   } finally {
     savingCampaign.value = false
   }
@@ -503,16 +504,16 @@ async function advanceCampaignStatus(status: string) {
     workspaceDetail.value = await updateGrowthCampaign(id, { status })
     const list = await fetchGrowthCampaigns()
     workspaceCampaigns.value = list.campaigns
-    ElMessage.success('Campaign 状态已更新。')
+    ElMessage.success('Campaign / 营销活动状态已更新。')
   } catch (err) {
-    ElMessage.error(formatApiError(err, 'Campaign 状态更新失败。'))
+    ElMessage.error(formatApiError(err, 'Campaign / 营销活动状态更新失败。'))
   }
 }
 
 async function saveTask() {
   const id = selectedWorkspaceCampaign.value?.id
   if (!id) {
-    ElMessage.warning('请先选择或创建 campaign。')
+    ElMessage.warning('请先选择或创建 Campaign / 营销活动。')
     return
   }
   savingTask.value = true
@@ -553,7 +554,7 @@ function updateTaskStatusFromSelect(taskId: string, value: unknown) {
 async function recordManualEvent() {
   const sequence = selectedSequence.value
   if (!sequence?.lead_id) {
-    ElMessage.warning('当前 campaign 暂无可记录的线索，请先在客户开发中补充线索。')
+    ElMessage.warning('当前 Campaign / 营销活动暂无可记录的线索，请先在客户开发中补充线索。')
     return
   }
   recording.value = true
