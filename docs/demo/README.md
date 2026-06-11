@@ -12,6 +12,9 @@ This folder contains the partner-facing demo and staging handoff package for Par
 - [HOSUN and JOOBOO demo narrative](hosun_jooboo_demo_narrative.md)
 - [D8.8 demo rehearsal checklist](d8_8_demo_rehearsal_checklist.md)
 - [Staging credentials request pack](staging_credentials_request_pack.md)
+- [D8.18 partner rehearsal pack](d8_18_partner_rehearsal_pack.md)
+- [D8.18 final demo script](d8_18_demo_script_final.md)
+- [D8.18 partner feedback form](d8_18_partner_feedback_form.md)
 
 ## Supporting Demo Materials
 
