@@ -4,6 +4,7 @@
       <h2 class="text-xl font-semibold text-slate-800">行动看板</h2>
       <div class="flex gap-2">
         <el-button size="small" type="primary" plain @click="router.push({ name: 'demo-walkthrough' })">Demo walkthrough</el-button>
+        <el-button size="small" type="warning" plain @click="router.push({ name: 'external-execution' })">外部执行 / Staging</el-button>
         <el-button size="small" @click="load">刷新</el-button>
       </div>
     </div>
@@ -336,6 +337,7 @@ const operatingMap = computed<OperatingMapEntry[]>(() => {
       nextAction: '复核产品、报价、Portal、演示和交付准备度，补齐下一步动作。',
       links: [
         { label: 'Partner 接入', path: '/partner-onboarding' },
+        { label: '外部执行', path: '/external-execution' },
         { label: '演示流程', path: '/demo-walkthrough' },
       ],
     },

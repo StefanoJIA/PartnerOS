@@ -181,6 +181,7 @@ const demoControlLinks = computed(() => [
   { label: '重点订单详情', path: null, orderId: featuredOrder.value?.id, detail: '展示客户可见的生产、物流、资料和反馈摘要。' },
   { label: '客户反馈', path: '/feedback-tickets', orderId: null, detail: '操作内部客户反馈队列。' },
   { label: '报价单', path: '/quotes', orderId: null, detail: '展示报价到订单的连续性。' },
+  { label: '外部执行 / Staging', path: '/external-execution', orderId: null, detail: '把 rehearsal、UAT、security review 和 staging credentials 进入人工跟踪。' },
   { label: '系统健康', path: '/system-health', orderId: null, detail: '在现场演示前确认本地运行状态。' },
 ] satisfies DemoControlLink[])
 

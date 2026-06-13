@@ -119,6 +119,7 @@ const navGroups = [
     key: 'demo-docs',
     label: '演示与资料',
     items: [
+      { path: '/external-execution', label: '外部执行 / Staging' },
       { path: '/knowledge-base', label: '资料库' },
       { path: '/ai-assistant', label: 'AI 助手' },
       { path: '/ai-outputs', label: 'AI 输出' },

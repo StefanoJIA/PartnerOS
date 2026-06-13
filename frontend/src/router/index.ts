@@ -19,6 +19,8 @@ const router = createRouter({
         { path: '', name: 'dashboard', component: () => import('@/pages/dashboard/DashboardPage.vue') },
         { path: 'demo-walkthrough', name: 'demo-walkthrough', component: () => import('@/pages/demo/DemoWalkthroughPage.vue') },
         { path: 'system-health', name: 'system-health', component: () => import('@/pages/system/SystemHealthPage.vue') },
+        { path: 'external-execution', name: 'external-execution', component: () => import('@/pages/execution/ExternalExecutionPage.vue') },
+        { path: 'staging-readiness', redirect: '/external-execution' },
         { path: 'portal-consumer-mock', redirect: '/portal-customer-bridge' },
         { path: 'portal-operations', redirect: '/portal-integration' },
         { path: 'portal-customer-bridge', name: 'portal-customer-bridge', component: () => import('@/pages/system/PortalConsumerMockPage.vue') },
