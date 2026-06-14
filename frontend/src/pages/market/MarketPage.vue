@@ -211,19 +211,37 @@
       />
       <el-alert v-if="reviewError" class="mb-3" type="error" :closable="false" :title="reviewError" />
 
-      <div class="mb-3 grid gap-3 lg:grid-cols-4">
+      <div class="mb-3 grid gap-3 lg:grid-cols-5">
         <el-select v-model="reviewFilters.partner_focus" clearable placeholder="Partner">
           <el-option label="HOSUN" value="HOSUN" />
           <el-option label="JOOBOO" value="JOOBOO" />
           <el-option label="future partner" value="future partner" />
         </el-select>
+        <el-input v-model="reviewFilters.focus_category" clearable placeholder="产品方向，例如 adjustable_desk_frames" />
         <el-select v-model="reviewFilters.visibility_class" clearable placeholder="可见性分类">
           <el-option v-for="item in reviewConsole?.visibility_options || []" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
         <el-select v-model="reviewFilters.status" clearable placeholder="审查状态">
           <el-option v-for="item in reviewConsole?.status_options || []" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
-        <el-button :loading="reviewLoading" type="primary" plain @click="loadReviews">应用筛选</el-button>
+        <el-button :loading="reviewLoading" type="primary" plain @click="applyReviewFilters">应用筛选</el-button>
+      </div>
+
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-3 rounded border border-slate-100 bg-slate-50 p-3">
+        <div>
+          <p class="text-sm font-semibold text-slate-800">当前审查筛选：{{ activeReviewFilterLabel }}</p>
+          <p class="mt-1 text-xs text-slate-500">
+            URL 可分享；筛选只影响人工审查队列，不自动通知客户、不调用外部 API、不改变报价或订单状态。
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <el-button size="small" plain type="warning" @click="setReviewQuickFilter({ status: 'needs review' })">只看待审查</el-button>
+          <el-button size="small" plain type="danger" @click="setReviewQuickFilter({ visibility_class: 'pilot blocker' })">Pilot blocker</el-button>
+          <el-button size="small" plain @click="setReviewQuickFilter({ partner_focus: 'HOSUN' })">HOSUN</el-button>
+          <el-button size="small" plain @click="setReviewQuickFilter({ partner_focus: 'JOOBOO' })">JOOBOO</el-button>
+          <el-button size="small" plain @click="setReviewQuickFilter({ partner_focus: 'future partner' })">Future partner</el-button>
+          <el-button size="small" plain @click="clearReviewFilters">清空筛选</el-button>
+        </div>
       </div>
 
       <el-table :data="reviewConsole?.reviews || []" stripe>
@@ -315,7 +333,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { http } from '@/api/http'
 import {
@@ -331,6 +349,7 @@ import {
 import { formatApiError } from '@/api/errors'
 
 const route = useRoute()
+const router = useRouter()
 const rows = ref<unknown[]>([])
 const filterCompanyId = ref<string | null>(null)
 const focusCategory = ref<string | null>(null)
@@ -343,9 +362,12 @@ const reviewSaving = ref<string | null>(null)
 const reviewError = ref('')
 const reviewFilters = ref({
   partner_focus: '',
+  focus_category: '',
   visibility_class: '',
   status: '',
 })
+const reviewFilterKeys = ['partner_focus', 'focus_category', 'visibility_class', 'status'] as const
+type ReviewFilterKey = (typeof reviewFilterKeys)[number]
 const reviewForm = ref({
   id: '',
   partner_focus: 'HOSUN',
@@ -411,16 +433,65 @@ async function load() {
   }
 }
 
-function reviewQueryParams() {
-  const partnerFromRoute = typeof route.query.partner_focus === 'string' ? route.query.partner_focus : ''
-  if (partnerFromRoute && reviewFilters.value.partner_focus !== partnerFromRoute) {
-    reviewFilters.value.partner_focus = partnerFromRoute
+function routeQueryString(key: ReviewFilterKey) {
+  const value = route.query[key]
+  return typeof value === 'string' ? value : ''
+}
+
+function syncReviewFiltersFromRoute() {
+  for (const key of reviewFilterKeys) {
+    reviewFilters.value[key] = routeQueryString(key)
   }
-  const params: { partner_focus?: string; visibility_class?: string; status?: string } = {}
-  if (reviewFilters.value.partner_focus) params.partner_focus = reviewFilters.value.partner_focus
-  if (reviewFilters.value.visibility_class) params.visibility_class = reviewFilters.value.visibility_class
-  if (reviewFilters.value.status) params.status = reviewFilters.value.status
+}
+
+function reviewQueryParams() {
+  const params: {
+    partner_focus?: string
+    focus_category?: string
+    visibility_class?: string
+    status?: string
+  } = {}
+  for (const key of reviewFilterKeys) {
+    const value = reviewFilters.value[key].trim()
+    if (value) params[key] = value
+  }
   return params
+}
+
+function currentReviewQuerySignature() {
+  return reviewFilterKeys.map((key) => `${key}:${routeQueryString(key)}`).join('|')
+}
+
+async function applyReviewFilters() {
+  const before = currentReviewQuerySignature()
+  const query = { ...route.query }
+  for (const key of reviewFilterKeys) {
+    const value = reviewFilters.value[key].trim()
+    if (value) {
+      query[key] = value
+    } else {
+      delete query[key]
+    }
+  }
+  await router.replace({ path: route.path, query })
+  if (before === currentReviewQuerySignature()) {
+    await loadReviews()
+  }
+}
+
+async function setReviewQuickFilter(partial: Partial<Record<ReviewFilterKey, string>>) {
+  reviewFilters.value = { ...reviewFilters.value, ...partial }
+  await applyReviewFilters()
+}
+
+async function clearReviewFilters() {
+  reviewFilters.value = {
+    partner_focus: '',
+    focus_category: '',
+    visibility_class: '',
+    status: '',
+  }
+  await applyReviewFilters()
 }
 
 async function loadReviews() {
@@ -529,11 +600,18 @@ async function saveReview(row: MarketResponseReview, payload: Partial<MarketResp
 }
 
 onMounted(() => {
+  syncReviewFiltersFromRoute()
   load()
   loadReviews()
 })
 watch(() => [route.query.companyId, route.query.focus_category], load)
-watch(() => route.query.partner_focus, loadReviews)
+watch(
+  () => [route.query.partner_focus, route.query.focus_category, route.query.visibility_class, route.query.status],
+  () => {
+    syncReviewFiltersFromRoute()
+    loadReviews()
+  },
+)
 
 const focusCategoryItems = computed(() =>
   Object.entries(data.value?.summary.focus_category_counts || {}).map(([key, count]) => ({ key, count })),
@@ -545,6 +623,15 @@ const demandRows = computed(() => {
     return focusCategory.value === 'other' ? items.filter((item) => !item.focus_category) : items
   }
   return items.filter((item) => item.focus_category === focusCategory.value)
+})
+
+const activeReviewFilterLabel = computed(() => {
+  const labels: string[] = []
+  if (reviewFilters.value.partner_focus) labels.push(`Partner=${reviewFilters.value.partner_focus}`)
+  if (reviewFilters.value.focus_category) labels.push(`方向=${focusLabel(reviewFilters.value.focus_category)}`)
+  if (reviewFilters.value.visibility_class) labels.push(`可见性=${reviewFilters.value.visibility_class}`)
+  if (reviewFilters.value.status) labels.push(`状态=${reviewFilters.value.status}`)
+  return labels.length ? labels.join(' / ') : '全部审查项'
 })
 
 const signalExplanations = computed(() => {
