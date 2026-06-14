@@ -40,6 +40,8 @@ const filters = reactive({
   owner: '',
   keyword: '',
 })
+const externalFilterKeys = ['status', 'action_type', 'owner', 'keyword'] as const
+type ExternalFilterKey = (typeof externalFilterKeys)[number]
 const intakeForm = reactive({
   status: 'draft' as ExternalActionStatus,
   response_summary: '',
@@ -114,6 +116,14 @@ const statusOptions = computed(() => consoleData.value?.status_options || [])
 const stagingReadiness = computed(() => consoleData.value?.staging_readiness || [])
 const hosunFieldRows = computed(() => consoleData.value?.lifting_systems_field_review || [])
 const partnerCoverage = computed(() => consoleData.value?.partner_coverage || [])
+const activeExternalFilterLabel = computed(() => {
+  const labels: string[] = []
+  if (filters.status) labels.push(`状态=${filters.status}`)
+  if (filters.action_type) labels.push(`动作=${filters.action_type}`)
+  if (filters.owner) labels.push(`负责人=${filters.owner}`)
+  if (filters.keyword) labels.push(`关键词=${filters.keyword}`)
+  return labels.length ? labels.join(' / ') : '全部外部动作'
+})
 
 const hasSensitiveBoundary = computed(() =>
   Boolean(consoleData.value?.status === 'READY_FOR_STAGING_HANDOFF' && consoleData.value?.external_staging_state),
@@ -134,13 +144,50 @@ function applyConsole(next: ExternalExecutionConsole) {
   consoleData.value = next
 }
 
+function routeQueryString(key: ExternalFilterKey) {
+  const value = route.query[key]
+  return typeof value === 'string' ? value : ''
+}
+
+function syncFiltersFromRoute() {
+  filters.status = routeQueryString('status') as ExternalActionStatus | ''
+  filters.action_type = routeQueryString('action_type')
+  filters.owner = routeQueryString('owner')
+  filters.keyword = routeQueryString('keyword')
+}
+
+function externalFilterQuerySignature() {
+  return externalFilterKeys.map((key) => `${key}:${routeQueryString(key)}`).join('|')
+}
+
+async function applyExternalFilters() {
+  const before = externalFilterQuerySignature()
+  const query = { ...route.query }
+  for (const key of externalFilterKeys) {
+    const value = String(filters[key]).trim()
+    if (value) {
+      query[key] = value
+    } else {
+      delete query[key]
+    }
+  }
+  await router.replace({ path: route.path, query })
+  if (before === externalFilterQuerySignature()) {
+    syncFiltersFromRoute()
+  }
+}
+
 function applyStatusFilter(status: ExternalActionStatus | '') {
   filters.status = status
-  router.replace({ path: route.path, query: status ? { ...route.query, status } : { ...route.query, status: undefined } })
+  void applyExternalFilters()
 }
 
 function onStatusFilterChange(value: string) {
   applyStatusFilter((value || '') as ExternalActionStatus | '')
+}
+
+function onExternalFilterChange() {
+  void applyExternalFilters()
 }
 
 function resetFilters() {
@@ -148,7 +195,7 @@ function resetFilters() {
   filters.action_type = ''
   filters.owner = ''
   filters.keyword = ''
-  router.replace({ path: route.path, query: { ...route.query, status: undefined } })
+  void applyExternalFilters()
 }
 
 function toNullable(value: string) {
@@ -294,14 +341,13 @@ function editablePayload(row: ExternalExecutionAction): ExternalExecutionActionP
 }
 
 onMounted(() => {
-  const status = typeof route.query.status === 'string' ? route.query.status : ''
-  if (status) filters.status = status
+  syncFiltersFromRoute()
   load()
 })
 watch(
-  () => route.query.status,
-  (status) => {
-    filters.status = typeof status === 'string' ? status : ''
+  () => [route.query.status, route.query.action_type, route.query.owner, route.query.keyword],
+  () => {
+    syncFiltersFromRoute()
   },
 )
 </script>
@@ -364,18 +410,19 @@ watch(
         <el-select v-model="filters.status" clearable placeholder="状态筛选" @change="onStatusFilterChange">
           <el-option v-for="status in statusOptions" :key="status.value" :label="status.label" :value="status.value" />
         </el-select>
-        <el-select v-model="filters.action_type" clearable placeholder="动作类型">
+        <el-select v-model="filters.action_type" clearable placeholder="动作类型" @change="onExternalFilterChange">
           <el-option v-for="item in actionTypeOptions" :key="item" :label="item" :value="item" />
         </el-select>
-        <el-input v-model="filters.owner" clearable placeholder="负责人" />
-        <el-input v-model="filters.keyword" clearable placeholder="Partner / 依赖 / 下一步关键词" />
+        <el-input v-model="filters.owner" clearable placeholder="负责人" @change="onExternalFilterChange" />
+        <el-input v-model="filters.keyword" clearable placeholder="Partner / 依赖 / 下一步关键词" @change="onExternalFilterChange" />
         <div class="flex flex-wrap gap-2">
+          <el-button size="small" type="primary" plain @click="onExternalFilterChange">应用筛选链接</el-button>
           <el-button size="small" type="danger" plain @click="applyStatusFilter('blocked')">只看阻塞</el-button>
           <el-button size="small" plain @click="resetFilters">清空</el-button>
         </div>
       </div>
       <div class="mb-2 text-xs text-slate-500">
-        当前显示 {{ filteredActions.length }} / {{ actions.length }} 个动作；状态来自人工记录，不能替代真实外部回复或 sign-off。
+        当前筛选：{{ activeExternalFilterLabel }}。URL 可分享；当前显示 {{ filteredActions.length }} / {{ actions.length }} 个动作；状态来自人工记录，不能替代真实外部回复或 sign-off。
       </div>
       <el-table :data="filteredActions" border size="small" empty-text="暂无匹配的外部执行动作">
         <el-table-column prop="action_type" label="Action type" min-width="180" />
