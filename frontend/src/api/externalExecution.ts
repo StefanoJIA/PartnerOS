@@ -55,6 +55,9 @@ export interface ReadinessRow {
   item: string
   status: string
   detail: string
+  next_action?: string
+  linked_action_ids?: string[]
+  linked_action_statuses?: string[]
 }
 
 export interface HosunFieldReviewRow {

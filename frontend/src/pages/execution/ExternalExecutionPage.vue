@@ -250,6 +250,13 @@ onMounted(load)
           <div class="text-sm font-semibold text-slate-800">{{ row.item }}</div>
           <el-tag class="my-2" type="warning" effect="plain">{{ row.status }}</el-tag>
           <p class="text-xs text-slate-600">{{ row.detail }}</p>
+          <p v-if="row.next_action" class="mt-2 text-xs font-medium text-slate-700">下一步：{{ row.next_action }}</p>
+          <div v-if="row.linked_action_statuses?.length" class="mt-2 flex flex-wrap gap-1">
+            <el-tag v-for="status in row.linked_action_statuses" :key="status" size="small" effect="plain">
+              action: {{ status }}
+            </el-tag>
+          </div>
+          <p v-else class="mt-2 text-xs text-slate-400">尚未关联外部执行动作</p>
         </div>
       </div>
     </section>

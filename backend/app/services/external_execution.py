@@ -118,6 +118,27 @@ STAGING_READINESS = (
     ("D9 entry gate", "blocked", "任一 P0 条件缺失都不得进入 D9。"),
 )
 
+READINESS_ACTION_KEYS = {
+    "backend HTTPS origin": ("credentials",),
+    "Portal origin": ("credentials",),
+    "PORTAL_CUSTOMER_API_TOKEN": ("credentials",),
+    "PORTAL_CUSTOMER_ALLOWED_ORIGINS": ("credentials",),
+    "PUBLIC_BASE_URL": ("credentials",),
+    "security signoff": ("security_signoff",),
+    "business signoff": ("business_signoff",),
+    "UAT seed data approval": ("uat_data_approval",),
+    "real staging smoke test": ("real_smoke_test",),
+    "rollback owner": ("credentials", "real_smoke_test"),
+    "D9 entry gate": (
+        "credentials",
+        "security_signoff",
+        "business_signoff",
+        "uat_data_approval",
+        "real_smoke_test",
+        "partner_feedback",
+    ),
+}
+
 LIFTING_SYSTEMS_FIELD_REVIEW = (
     ("load", "customer-safe candidate", "需要资料支持；未经业务确认不得给客户看。"),
     ("stability", "customer-safe candidate", "可转为 stability summary，raw test notes internal-only。"),
@@ -156,10 +177,15 @@ def _actor_id(actor: Any | None) -> Any | None:
 
 
 def _ensure_default_actions(db: Session, actor: Any | None = None) -> None:
-    if db.query(ExternalExecutionAction).count():
-        return
     actor_id = _actor_id(actor)
+    existing = {
+        (row.action_type, row.target_partner_system)
+        for row in db.query(ExternalExecutionAction.action_type, ExternalExecutionAction.target_partner_system).all()
+    }
+    inserted = False
     for item in DEFAULT_ACTIONS:
+        if (item.action_type, item.target_partner_system) in existing:
+            continue
         db.add(
             ExternalExecutionAction(
                 action_type=item.action_type,
@@ -177,7 +203,9 @@ def _ensure_default_actions(db: Session, actor: Any | None = None) -> None:
                 updated_by_id=actor_id,
             )
         )
-    db.commit()
+        inserted = True
+    if inserted:
+        db.commit()
 
 
 def _serialize_action(action: ExternalExecutionAction) -> dict[str, Any]:
@@ -221,6 +249,80 @@ def safety_flags() -> dict[str, bool]:
     }
 
 
+def _actions_for_readiness_key(rows: list[ExternalExecutionAction], key: str) -> list[ExternalExecutionAction]:
+    return [
+        row
+        for row in rows
+        if row.staging_readiness_key == key or row.pilot_readiness_key == key
+    ]
+
+
+def _readiness_status(base_status: str, linked_actions: list[ExternalExecutionAction], item: str) -> str:
+    if item == "D9 entry gate":
+        return "blocked"
+    statuses = {row.status for row in linked_actions}
+    if not linked_actions:
+        return base_status
+    if "blocked" in statuses:
+        return "blocked by action"
+    if "response received" in statuses:
+        return "response received - review required"
+    if "sent manually" in statuses:
+        return "sent manually - waiting response"
+    if "ready to send" in statuses:
+        return "ready to send"
+    if "complete" in statuses:
+        return "manual record complete - evidence still required"
+    if "draft" in statuses:
+        return "draft"
+    return base_status
+
+
+def _readiness_next_action(linked_actions: list[ExternalExecutionAction], item: str) -> str:
+    if item == "D9 entry gate":
+        return "Do not enter D9 until real staging smoke, security signoff, business signoff, UAT seed approval, rollback owner, and no P0 blockers are all confirmed."
+    blocked = [row for row in linked_actions if row.status == "blocked"]
+    if blocked:
+        return blocked[0].blocker_notes or blocked[0].next_step or blocked[0].dependency or "Resolve the blocked external action first."
+    received = [row for row in linked_actions if row.status == "response received"]
+    if received:
+        return received[0].next_step or "Review the real response and decide whether it affects staging, pilot, or roadmap priority."
+    sent = [row for row in linked_actions if row.status == "sent manually"]
+    if sent:
+        return sent[0].next_step or "Wait for a real reply before marking response received."
+    ready = [row for row in linked_actions if row.status == "ready to send"]
+    if ready:
+        return ready[0].next_step or "Manually send through the approved external channel."
+    draft = [row for row in linked_actions if row.status == "draft"]
+    if draft:
+        return draft[0].next_step or "Assign owner, due date, dependency, and manual send plan."
+    complete = [row for row in linked_actions if row.status == "complete"]
+    if complete:
+        return "Verify owner/date/scope and attach only redacted evidence references; do not write STAGING_VALIDATED from this local record."
+    return "Create or link an External Execution action so this gate has an owner and next step."
+
+
+def _build_staging_readiness(rows: list[ExternalExecutionAction]) -> list[dict[str, Any]]:
+    readiness: list[dict[str, Any]] = []
+    for item, base_status, detail in STAGING_READINESS:
+        keys = READINESS_ACTION_KEYS.get(item, ())
+        linked: list[ExternalExecutionAction] = []
+        for key in keys:
+            linked.extend(_actions_for_readiness_key(rows, key))
+        unique_linked = list({row.id: row for row in linked}.values())
+        readiness.append(
+            {
+                "item": item,
+                "status": _readiness_status(base_status, unique_linked, item),
+                "detail": detail,
+                "next_action": _readiness_next_action(unique_linked, item),
+                "linked_action_ids": [str(row.id) for row in unique_linked],
+                "linked_action_statuses": sorted({row.status for row in unique_linked}),
+            }
+        )
+    return readiness
+
+
 def build_external_execution_console(db: Session, actor: Any | None = None) -> dict[str, Any]:
     _ensure_default_actions(db, actor)
     rows = (
@@ -239,9 +341,7 @@ def build_external_execution_console(db: Session, actor: Any | None = None) -> d
             {"value": value, "label": label} for value, label in EXTERNAL_ACTION_STATUS_LABELS.items()
         ],
         "status_counts": counts,
-        "staging_readiness": [
-            {"item": item, "status": status, "detail": detail} for item, status, detail in STAGING_READINESS
-        ],
+        "staging_readiness": _build_staging_readiness(rows),
         "lifting_systems_field_review": [
             {"field": field, "review_class": review_class, "rule": rule}
             for field, review_class, rule in LIFTING_SYSTEMS_FIELD_REVIEW

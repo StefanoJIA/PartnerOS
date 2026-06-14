@@ -42,6 +42,7 @@ def main() -> int:
         actor = db.query(User).filter(User.email == "admin@example.com").first()
         payload = build_external_execution_console(db, actor)
         actions = payload.get("actions") or []
+        readiness = payload.get("staging_readiness") or []
         safety = payload.get("safety") or {}
         db_count = db.query(ExternalExecutionAction).count()
         checks = [
@@ -50,6 +51,15 @@ def main() -> int:
             ("actions persisted", db_count >= 5 and len(actions) >= 5),
             ("manual safety", safety.get("email_sent") is False and safety.get("external_api_called") is False),
             ("no staging validation", safety.get("staging_validated") is False and safety.get("d9_entered") is False),
+            (
+                "readiness derived from actions",
+                any(row.get("linked_action_statuses") for row in readiness)
+                and any(row.get("next_action") for row in readiness),
+            ),
+            (
+                "D9 remains blocked",
+                any(row.get("item") == "D9 entry gate" and row.get("status") == "blocked" for row in readiness),
+            ),
             ("lifting systems field review", any(row.get("field") == "load" for row in payload.get("lifting_systems_field_review") or [])),
             ("multi partner coverage", any(row.get("partner") == "JOOBOO" for row in payload.get("partner_coverage") or [])),
         ]

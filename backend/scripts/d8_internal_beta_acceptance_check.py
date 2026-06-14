@@ -176,6 +176,8 @@ def main() -> int:
             "Market Response 运营审查队列",
             "fetchMarketResponseReviews",
             "fetchExternalExecutionConsole",
+            "linked_action_statuses",
+            "next_action",
             "updateMarketResponseReview",
             "market-response-reviews",
             "needs%20review",
