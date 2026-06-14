@@ -216,8 +216,14 @@ import { useRouter } from 'vue-router'
 import { fetchDashboardActions, type DashboardActions, type RecommendedAction } from '@/api/dashboard'
 import { fetchFeedbackTickets, type FeedbackTicketList } from '@/api/feedbackTickets'
 import { fetchGrowthOperationsConsole, type GrowthOperationsConsole } from '@/api/growthOperations'
-import { fetchMarketResponseIntelligence, type MarketResponseIntelligence } from '@/api/marketResponse'
+import {
+  fetchMarketResponseIntelligence,
+  fetchMarketResponseReviews,
+  type MarketResponseIntelligence,
+  type MarketResponseReviewConsole,
+} from '@/api/marketResponse'
 import { fetchPartnerOnboarding, type PartnerOnboardingResponse } from '@/api/partnerOnboarding'
+import { fetchExternalExecutionConsole, type ExternalExecutionConsole } from '@/api/externalExecution'
 import ActionTaskList from './dashboard/ActionTaskList.vue'
 import ActionLeadList from './dashboard/ActionLeadList.vue'
 import RfqMini from './dashboard/RfqMini.vue'
@@ -232,7 +238,9 @@ const data = ref<DashboardActions | null>(null)
 const growth = ref<GrowthOperationsConsole | null>(null)
 const feedback = ref<FeedbackTicketList | null>(null)
 const market = ref<MarketResponseIntelligence | null>(null)
+const marketReviews = ref<MarketResponseReviewConsole | null>(null)
 const partner = ref<PartnerOnboardingResponse | null>(null)
+const externalExecution = ref<ExternalExecutionConsole | null>(null)
 const supportWarning = ref('')
 
 type OperatingMapEntry = {
@@ -269,8 +277,16 @@ const operatingMap = computed<OperatingMapEntry[]>(() => {
       )
     : null
   const feedbackCount = feedback.value?.total ?? null
-  const marketCount = market.value?.summary.recommendation_count ?? market.value?.recommendations.length ?? null
+  const marketCount = marketReviews.value
+    ? marketReviews.value.reviews.filter((row) => ['needs review', 'blocked', 'watching'].includes(row.status)).length
+    : (market.value?.summary.recommendation_count ?? market.value?.recommendations.length ?? null)
   const partnerGapCount = partner.value ? partner.value.items.filter((row) => row.missing_items.length > 0).length : null
+  const externalBlockedCount = externalExecution.value
+    ? externalExecution.value.actions.filter((row) => ['blocked', 'draft', 'ready to send'].includes(row.status)).length
+    : null
+  const stagingPendingCount = externalExecution.value
+    ? externalExecution.value.staging_readiness.filter((row) => !['ready', 'verified', 'complete'].includes(row.status)).length
+    : null
   const leadCount = data.value ? sumLengths(data.value.leads_follow_up_due_today, data.value.hot_leads, data.value.leads_needing_follow_up) : null
 
   return [
@@ -321,12 +337,15 @@ const operatingMap = computed<OperatingMapEntry[]>(() => {
     },
     {
       perspective: '管理决策',
-      title: 'Market Response 推荐',
+      title: 'Market Response 待审查',
       metric: numberLabel(marketCount),
       tone: 'success',
-      description: `市场响应建议 ${numberLabel(marketCount)}，结合订单需求、生产/物流风险、客户反馈和 watchlist 判断产品方向。`,
-      nextAction: '用市场信号判断是否继续推进某个 partner / product focus。',
-      links: [{ label: '市场响应', path: '/market-response' }],
+      description: `Market Response 审查项 ${numberLabel(marketCount)}，把订单、物流、反馈和 onboarding 缺口沉淀为 HOSUN / JOOBOO / future partner 产品判断。`,
+      nextAction: '优先处理 needs validation、internal-only 和 pilot blocker；customer-safe candidate 仍需业务确认后才能对外展示。',
+      links: [
+        { label: '市场响应', path: '/market-response' },
+        { label: '审查队列', path: '/market-response?status=needs%20review' },
+      ],
     },
     {
       perspective: '管理决策',
@@ -339,6 +358,18 @@ const operatingMap = computed<OperatingMapEntry[]>(() => {
         { label: 'Partner 接入', path: '/partner-onboarding' },
         { label: '外部执行', path: '/external-execution' },
         { label: '演示流程', path: '/demo-walkthrough' },
+      ],
+    },
+    {
+      perspective: '内部 Beta / Staging',
+      title: '外部执行与 Staging Gate',
+      metric: numberLabel((externalBlockedCount ?? 0) + (stagingPendingCount ?? 0)),
+      tone: externalBlockedCount || stagingPendingCount ? 'warning' : 'info',
+      description: `外部动作待处理 ${numberLabel(externalBlockedCount)}，staging / D9 前置条件待补 ${numberLabel(stagingPendingCount)}。本地 dry-run 不能替代真实 staging evidence。`,
+      nextAction: '跟进 partner rehearsal、business sign-off、security review、credentials request 和 rollback owner；不记录 raw token，不写 STAGING_VALIDATED。',
+      links: [
+        { label: '外部执行', path: '/external-execution' },
+        { label: 'Staging readiness', path: '/staging-readiness' },
       ],
     },
   ]
@@ -368,12 +399,16 @@ async function load() {
       fetchGrowthOperationsConsole(),
       fetchFeedbackTickets({ operation_filter: 'needs_internal_review', limit: 1 }),
       fetchMarketResponseIntelligence(),
+      fetchMarketResponseReviews(),
       fetchPartnerOnboarding(),
+      fetchExternalExecutionConsole(),
     ])
     if (supportResults[0].status === 'fulfilled') growth.value = supportResults[0].value
     if (supportResults[1].status === 'fulfilled') feedback.value = supportResults[1].value
     if (supportResults[2].status === 'fulfilled') market.value = supportResults[2].value
-    if (supportResults[3].status === 'fulfilled') partner.value = supportResults[3].value
+    if (supportResults[3].status === 'fulfilled') marketReviews.value = supportResults[3].value
+    if (supportResults[4].status === 'fulfilled') partner.value = supportResults[4].value
+    if (supportResults[5].status === 'fulfilled') externalExecution.value = supportResults[5].value
     const failed = supportResults.filter((result) => result.status === 'rejected').length
     if (failed) supportWarning.value = `${failed} 个只读聚合接口暂不可用，核心行动看板仍可继续使用。`
   } finally {

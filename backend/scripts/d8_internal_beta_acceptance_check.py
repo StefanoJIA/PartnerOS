@@ -139,11 +139,15 @@ def main() -> int:
         dashboard + "\n" + nav + "\n" + demo,
         (
             "外部执行 / Staging",
+            "Market Response 待审查",
+            "外部执行与 Staging Gate",
+            "本地 dry-run 不能替代真实 staging evidence",
             "/external-execution",
+            "/staging-readiness",
             "external-execution",
         ),
     )
-    checks[1].pass_("dashboard, nav, and demo walkthrough expose external execution") if ok else checks[1].fail(missing)
+    checks[1].pass_("dashboard, nav, and demo walkthrough expose response review and external execution gates") if ok else checks[1].fail(missing)
 
     ok, missing = contains_all(
         combined,
@@ -171,8 +175,10 @@ def main() -> int:
             "response-reviews",
             "Market Response 运营审查队列",
             "fetchMarketResponseReviews",
+            "fetchExternalExecutionConsole",
             "updateMarketResponseReview",
             "market-response-reviews",
+            "needs%20review",
             "createPartnerOnboardingMarketResponseReviews",
             "生成市场审查项",
         ),
