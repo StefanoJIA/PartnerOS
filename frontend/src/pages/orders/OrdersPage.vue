@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchOrders, type OrderSummary } from '@/api/orders'
 import { ORDER_STATUS_LABELS, zhLabel } from '@/copy/zhCN'
+import OperationalTracePanel from '@/components/dashboard/OperationalTracePanel.vue'
 
 const router = useRouter()
 const loading = ref(true)
@@ -33,6 +34,13 @@ onMounted(load)
   <div class="page">
     <h1>客户订单</h1>
     <el-alert type="warning" :closable="false" show-icon title="安全边界" :description="SAFETY" class="mb" />
+
+    <OperationalTracePanel
+      title="Daily Queue / 订单交付回流"
+      description="显示订单交付风险是否进入今日队列、谁在处理、是否阻塞、下一次跟进和内部处理备注。"
+      category="order delivery"
+      class="mb"
+    />
 
     <div class="toolbar">
       <el-select v-model="statusFilter" placeholder="状态" clearable style="width: 240px" @change="load">

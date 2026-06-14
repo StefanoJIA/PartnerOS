@@ -11,6 +11,12 @@
     <el-alert type="warning" :closable="false" show-icon :title="FEEDBACK_SAFETY_NOTE" />
     <el-alert v-if="error" type="error" :closable="false" show-icon :title="error" />
 
+    <OperationalTracePanel
+      title="Daily Queue / Feedback 回流"
+      description="显示客户反馈是否进入今日队列、内部 owner、阻塞原因、follow-up 和是否需要回流 Market Response。"
+      category="feedback"
+    />
+
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -195,6 +201,7 @@ import {
   type FeedbackTicketUpdatePayload,
 } from '@/api/feedbackTickets'
 import { FEEDBACK_PRIORITY_LABELS, FEEDBACK_STATUS_LABELS, zhLabel } from '@/copy/zhCN'
+import OperationalTracePanel from '@/components/dashboard/OperationalTracePanel.vue'
 
 const statuses = ['new', 'in_review', 'responded', 'resolved', 'closed']
 const priorities = ['low', 'normal', 'high', 'urgent']

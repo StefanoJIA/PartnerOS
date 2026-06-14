@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -51,10 +51,20 @@ def dashboard_daily_decision_queue(
 
 @router.get("/daily-decision-queue/handling", response_model=list[DailyQueueHandlingRecordOut])
 def dashboard_daily_queue_handling_records(
+    source_type: str | None = Query(None),
+    source_id: str | None = Query(None),
+    partner_focus: str | None = Query(None),
+    category: str | None = Query(None),
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ) -> list[DailyQueueHandlingRecordOut]:
-    return list_daily_queue_handling(db)
+    return list_daily_queue_handling(
+        db,
+        source_type=source_type,
+        source_id=source_id,
+        partner_focus=partner_focus,
+        category=category,
+    )
 
 
 @router.patch("/daily-decision-queue/handling", response_model=DailyQueueHandlingRecordOut)

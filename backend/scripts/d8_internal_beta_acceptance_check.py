@@ -73,8 +73,11 @@ def main() -> int:
         "frontend/src/api/marketResponse.ts",
         "frontend/src/api/partnerOnboarding.ts",
         "frontend/src/pages/execution/ExternalExecutionPage.vue",
+        "frontend/src/components/dashboard/OperationalTracePanel.vue",
         "frontend/src/pages/market/MarketPage.vue",
         "frontend/src/pages/partners/PartnerOnboardingPage.vue",
+        "frontend/src/pages/orders/OrdersPage.vue",
+        "frontend/src/pages/system/FeedbackTicketsPage.vue",
         "frontend/src/router/index.ts",
         "frontend/src/layouts/MainLayout.vue",
         "frontend/src/pages/dashboard/DashboardPage.vue",
@@ -98,6 +101,7 @@ def main() -> int:
     dashboard_route = read("backend/app/api/routes/dashboard.py")
     dashboard_schema = read("backend/app/schemas/dashboard_actions.py")
     dashboard_api = read("frontend/src/api/dashboard.ts")
+    trace_panel = read("frontend/src/components/dashboard/OperationalTracePanel.vue")
     market_review_service = read("backend/app/services/market_response_reviews.py")
     partner_onboarding_service = read("backend/app/services/partner_onboarding.py")
     migration = read("backend/alembic/versions/0019_external_execution.py")
@@ -111,6 +115,8 @@ def main() -> int:
     market_api = read("frontend/src/api/marketResponse.ts")
     partner_page = read("frontend/src/pages/partners/PartnerOnboardingPage.vue")
     partner_api = read("frontend/src/api/partnerOnboarding.ts")
+    orders_page = read("frontend/src/pages/orders/OrdersPage.vue")
+    feedback_page = read("frontend/src/pages/system/FeedbackTicketsPage.vue")
     combined = "\n".join(
         [
             external_page,
@@ -122,6 +128,7 @@ def main() -> int:
             dashboard_route,
             dashboard_schema,
             dashboard_api,
+            trace_panel,
             migration,
             daily_queue_migration,
             market_route,
@@ -133,6 +140,8 @@ def main() -> int:
             market_api,
             partner_page,
             partner_api,
+            orders_page,
+            feedback_page,
             router,
             nav,
             dashboard,
@@ -271,6 +280,19 @@ def main() -> int:
             "接手",
             "延期/备注",
             "处理备注",
+            "fetchDailyQueueHandling",
+            "OperationalTracePanel",
+            "Daily Queue 处理回流",
+            "Daily Queue / Market Response 回流",
+            "Daily Queue / Partner Onboarding 回流",
+            "Daily Queue / 订单交付回流",
+            "Daily Queue / Feedback 回流",
+            "source_type",
+            "source_id",
+            "partner_focus",
+            "category",
+            "进入源对象",
+            "internal handling layer",
         ),
     )
     checks[2].pass_("tracker includes required fields, statuses, API persistence, and migration") if ok else checks[2].fail(missing)

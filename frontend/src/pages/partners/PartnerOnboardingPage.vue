@@ -28,6 +28,12 @@
         </div>
       </section>
 
+      <OperationalTracePanel
+        title="Daily Queue / Partner Onboarding 回流"
+        description="显示 partner onboarding 缺口是否进入今日队列、谁接手、是否等待 business/security/partner 外部输入，以及下一次跟进。"
+        category="partner onboarding"
+      />
+
       <section class="rounded border border-slate-200 bg-white p-4">
         <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -166,6 +172,7 @@ import {
   type PartnerOnboardingResponse,
   type PartnerOnboardingStage,
 } from '@/api/partnerOnboarding'
+import OperationalTracePanel from '@/components/dashboard/OperationalTracePanel.vue'
 
 const router = useRouter()
 const data = ref<PartnerOnboardingResponse | null>(null)

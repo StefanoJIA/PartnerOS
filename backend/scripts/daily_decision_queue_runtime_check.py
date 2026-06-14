@@ -79,6 +79,31 @@ def main() -> int:
         )
         refreshed = build_daily_decision_queue(db, actor)
         refreshed_target = next((item for item in refreshed.items if item.id == target.id), None)
+        category_targets = {}
+        for item in items:
+            category_targets.setdefault(item.category, item)
+        for category, item in category_targets.items():
+            if category == target.category:
+                continue
+            update_daily_queue_handling(
+                db,
+                actor,
+                DailyQueueHandlingUpdate(
+                    queue_item_id=item.id,
+                    source_type=item.source_type,
+                    source_id=item.source_id,
+                    source_path=item.source_path,
+                    title=item.title,
+                    category=item.category,
+                    priority=item.priority,
+                    partner_focus=item.partner_focus,
+                    product_focus=item.product_focus,
+                    customer_or_account=item.customer_or_account,
+                    action="acknowledge",
+                    owner=actor.email,
+                    internal_note=f"Runtime traceability check for {category}.",
+                ),
+            )
         unsafe_rejected = False
         try:
             update_daily_queue_handling(
@@ -146,6 +171,10 @@ def main() -> int:
             ("unsafe handling claim rejected", unsafe_rejected),
             ("handling summary", refreshed.summary.in_progress >= 1 and refreshed.summary.my_items >= 1),
             (
+                "representative category handling records",
+                {"external execution", "market response", "partner onboarding"}.issubset(category_targets.keys()),
+            ),
+            (
                 "manual-only safety",
                 safety.get("email_sent") is False
                 and safety.get("external_api_called") is False
@@ -185,10 +214,22 @@ def main() -> int:
                     "internal_note": "HTTP route handling check.",
                 },
             )
+            filtered = client.get(
+                "/api/dashboard/daily-decision-queue/handling",
+                headers={"Authorization": f"Bearer {token}"},
+                params={"category": target.category},
+            )
+            source_filtered = client.get(
+                "/api/dashboard/daily-decision-queue/handling",
+                headers={"Authorization": f"Bearer {token}"},
+                params={"source_type": target.source_type, "source_id": target.source_id},
+            )
         response_data = response.json() if response.status_code == 200 else {}
         checks.append(("route daily queue", response.status_code == 200 and response_data.get("items")))
         checks.append(("route safety flags", response_data.get("safety", {}).get("staging_validated") is False))
         checks.append(("route handling patch", patch.status_code == 200 and patch.json().get("handling_status") == "acknowledged"))
+        checks.append(("route handling category filter", filtered.status_code == 200 and filtered.json()))
+        checks.append(("route handling source filter", source_filtered.status_code == 200 and source_filtered.json()[0]["queue_item_id"] == target.id))
 
         for label, ok in checks:
             print(f"[{'PASS' if ok else 'FAIL'}] {label}")

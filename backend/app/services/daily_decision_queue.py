@@ -200,8 +200,24 @@ def update_daily_queue_handling(
     return _handling_out(record)
 
 
-def list_daily_queue_handling(db: Session) -> list[DailyQueueHandlingRecordOut]:
-    rows = db.query(DailyQueueHandlingRecord).order_by(DailyQueueHandlingRecord.updated_at.desc()).limit(200).all()
+def list_daily_queue_handling(
+    db: Session,
+    *,
+    source_type: str | None = None,
+    source_id: str | None = None,
+    partner_focus: str | None = None,
+    category: str | None = None,
+) -> list[DailyQueueHandlingRecordOut]:
+    query = db.query(DailyQueueHandlingRecord)
+    if source_type:
+        query = query.filter(DailyQueueHandlingRecord.source_type == source_type)
+    if source_id:
+        query = query.filter(DailyQueueHandlingRecord.source_id == source_id)
+    if partner_focus:
+        query = query.filter(DailyQueueHandlingRecord.partner_focus == partner_focus)
+    if category:
+        query = query.filter(DailyQueueHandlingRecord.category == category)
+    rows = query.order_by(DailyQueueHandlingRecord.updated_at.desc()).limit(200).all()
     return [_handling_out(row) for row in rows]
 
 

@@ -22,6 +22,13 @@
     />
     <el-alert v-if="error" type="error" :closable="false" :title="error" />
 
+    <OperationalTracePanel
+      title="Daily Queue / Market Response 回流"
+      description="追踪 Market Response 审查项是否进入今日队列、谁在处理、是否是 pilot blocker / needs validation，以及内部处理备注。"
+      category="market response"
+      :partner-focus="reviewFilters.partner_focus || ''"
+    />
+
     <div class="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
       <div v-for="metric in metrics" :key="metric.label" class="rounded border border-slate-200 bg-white p-4">
         <div class="text-xs uppercase text-slate-500">{{ metric.label }}</div>
@@ -347,6 +354,7 @@ import {
   type MarketResponseReviewPayload,
 } from '@/api/marketResponse'
 import { formatApiError } from '@/api/errors'
+import OperationalTracePanel from '@/components/dashboard/OperationalTracePanel.vue'
 
 const route = useRoute()
 const router = useRouter()

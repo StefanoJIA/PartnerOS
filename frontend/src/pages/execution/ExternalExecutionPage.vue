@@ -12,6 +12,7 @@ import {
   type ExternalExecutionActionPayload,
   type ExternalExecutionConsole,
 } from '@/api/externalExecution'
+import OperationalTracePanel from '@/components/dashboard/OperationalTracePanel.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -385,6 +386,12 @@ watch(
       :title="`当前仍是 ${consoleData?.status}；外部 staging 仍是 ${consoleData?.external_staging_state}。没有真实回复不能标记 response received；没有真实签字不能 approved；不能记录 raw token；不能进入 D9。`"
     />
     <el-alert v-if="error" type="error" :closable="false" :title="error" />
+
+    <OperationalTracePanel
+      title="Daily Queue 处理回流"
+      description="显示从 Daily Queue 回流到 External Execution 的内部处理记录：谁接手、是否等待外部输入、阻塞原因和最近内部决策。"
+      category="external execution"
+    />
 
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex flex-wrap items-center justify-between gap-2">

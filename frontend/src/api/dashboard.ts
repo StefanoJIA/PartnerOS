@@ -171,3 +171,13 @@ export async function updateDailyQueueHandling(payload: DailyQueueHandlingUpdate
   const { data } = await http.patch<DailyQueueHandlingRecord>('/dashboard/daily-decision-queue/handling', payload)
   return data
 }
+
+export async function fetchDailyQueueHandling(params?: {
+  source_type?: string
+  source_id?: string
+  partner_focus?: string
+  category?: string
+}) {
+  const { data } = await http.get<DailyQueueHandlingRecord[]>('/dashboard/daily-decision-queue/handling', { params })
+  return data
+}
