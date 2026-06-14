@@ -19,6 +19,8 @@ const loading = ref(false)
 const saving = ref(false)
 const error = ref('')
 const consoleData = ref<ExternalExecutionConsole | null>(null)
+const intakeVisible = ref(false)
+const intakeAction = ref<ExternalExecutionAction | null>(null)
 
 const newAction = reactive({
   action_type: 'partner rehearsal request',
@@ -38,6 +40,14 @@ const filters = reactive({
   owner: '',
   keyword: '',
 })
+const intakeForm = reactive({
+  status: 'draft' as ExternalActionStatus,
+  response_summary: '',
+  risk_notes: '',
+  blocker_notes: '',
+  redacted_credential_status: '',
+  notes: '',
+})
 
 const statusType: Record<ExternalActionStatus, 'info' | 'primary' | 'warning' | 'success' | 'danger'> = {
   draft: 'info',
@@ -47,6 +57,15 @@ const statusType: Record<ExternalActionStatus, 'info' | 'primary' | 'warning' | 
   blocked: 'danger',
   complete: 'success',
 }
+const redactedCredentialOptions = [
+  { value: '', label: '未收到 / 不适用' },
+  { value: 'pending', label: 'pending' },
+  { value: 'PROVIDED_VIA_SECURE_CHANNEL', label: 'PROVIDED_VIA_SECURE_CHANNEL' },
+  { value: 'configured without raw value', label: 'configured without raw value' },
+  { value: 'verified without raw value', label: 'verified without raw value' },
+  { value: 'rejected or incomplete', label: 'rejected or incomplete' },
+]
+const tokenLikeMarkers = ['bearer ', 'authorization:', 'api_key', 'api-key', 'token=', 'sk-', 'ghp_', 'xoxb-', 'actual-secret']
 
 const actions = computed(() => consoleData.value?.actions || [])
 const actionTypeOptions = computed(() => Array.from(new Set(actions.value.map((row) => row.action_type))).sort())
@@ -130,6 +149,69 @@ function resetFilters() {
   filters.owner = ''
   filters.keyword = ''
   router.replace({ path: route.path, query: { ...route.query, status: undefined } })
+}
+
+function toNullable(value: string) {
+  const trimmed = value.trim()
+  return trimmed ? trimmed : null
+}
+
+function hasTokenLikeText(...values: string[]) {
+  const text = values.join('\n').toLowerCase()
+  return tokenLikeMarkers.some((marker) => text.includes(marker))
+}
+
+function openIntake(row: ExternalExecutionAction) {
+  intakeAction.value = row
+  intakeForm.status = row.status
+  intakeForm.response_summary = row.response_summary || ''
+  intakeForm.risk_notes = row.risk_notes || ''
+  intakeForm.blocker_notes = row.blocker_notes || ''
+  intakeForm.redacted_credential_status = row.redacted_credential_status || ''
+  intakeForm.notes = row.notes || ''
+  intakeVisible.value = true
+}
+
+function validateIntake() {
+  if (intakeForm.status === 'response received' && !intakeForm.response_summary.trim()) {
+    return '标记 response received 前必须录入真实回复摘要。'
+  }
+  if (hasTokenLikeText(intakeForm.response_summary, intakeForm.risk_notes, intakeForm.blocker_notes, intakeForm.redacted_credential_status, intakeForm.notes)) {
+    return '录入内容疑似包含 raw token 或 credential，请改为 PROVIDED_VIA_SECURE_CHANNEL 等脱敏状态。'
+  }
+  return ''
+}
+
+async function saveIntake() {
+  if (!intakeAction.value) return
+  const validationError = validateIntake()
+  if (validationError) {
+    error.value = validationError
+    ElMessage.error(validationError)
+    return
+  }
+  saving.value = true
+  error.value = ''
+  try {
+    applyConsole(
+      await updateExternalExecutionAction(intakeAction.value.id, {
+        status: intakeForm.status,
+        response_summary: toNullable(intakeForm.response_summary),
+        risk_notes: toNullable(intakeForm.risk_notes),
+        blocker_notes: toNullable(intakeForm.blocker_notes),
+        redacted_credential_status: toNullable(intakeForm.redacted_credential_status),
+        notes: toNullable(intakeForm.notes),
+      }),
+    )
+    ElMessage.success('真实回复录入已保存')
+    intakeVisible.value = false
+    intakeAction.value = null
+  } catch (e) {
+    error.value = formatApiError(e, '真实回复录入保存失败。')
+    await load()
+  } finally {
+    saving.value = false
+  }
 }
 
 async function load() {
@@ -335,8 +417,48 @@ watch(
             <el-input class="mt-2" v-model="row.notes" type="textarea" :rows="2" placeholder="Notes，不要粘贴 raw token" @change="saveAction(row, { notes: row.notes })" />
           </template>
         </el-table-column>
+        <el-table-column label="操作" width="130" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" type="primary" plain @click="openIntake(row)">回复录入</el-button>
+          </template>
+        </el-table-column>
       </el-table>
     </section>
+
+    <el-drawer v-model="intakeVisible" size="520px" title="真实回复安全录入">
+      <div class="space-y-4">
+        <el-alert
+          type="warning"
+          :closable="false"
+          show-icon
+          title="只有用户贴出的真实回复才能标记 response received；不得把口头未确认内容写成 sign-off；raw token 只能记录为 PROVIDED_VIA_SECURE_CHANNEL。"
+        />
+        <div v-if="intakeAction" class="rounded border border-slate-200 bg-slate-50 p-3 text-sm">
+          <div class="font-semibold text-slate-800">{{ intakeAction.action_type }}</div>
+          <div class="mt-1 text-slate-600">{{ intakeAction.target_partner_system }}</div>
+          <div class="mt-1 text-xs text-slate-500">当前状态：{{ intakeAction.status }} / 负责人：{{ intakeAction.owner || '未指定' }}</div>
+        </div>
+        <el-select v-model="intakeForm.status" class="w-full" placeholder="状态">
+          <el-option v-for="status in statusOptions" :key="status.value" :label="status.label" :value="status.value" />
+        </el-select>
+        <el-input
+          v-model="intakeForm.response_summary"
+          type="textarea"
+          :rows="4"
+          placeholder="真实回复摘要；标记 response received 前必填。不要粘贴 token、报价成本、利润或供应商私密信息。"
+        />
+        <el-input v-model="intakeForm.risk_notes" type="textarea" :rows="3" placeholder="风险说明；区分 partner feedback、system issue、roadmap candidate。" />
+        <el-input v-model="intakeForm.blocker_notes" type="textarea" :rows="3" placeholder="阻塞说明；如果 status=blocked，写清 owner / dependency / next step。" />
+        <el-select v-model="intakeForm.redacted_credential_status" class="w-full" placeholder="脱敏凭证状态">
+          <el-option v-for="item in redactedCredentialOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+        <el-input v-model="intakeForm.notes" type="textarea" :rows="3" placeholder="内部备注；不得包含 raw token、真实客户私密信息或未确认签字。" />
+        <div class="flex justify-end gap-2">
+          <el-button @click="intakeVisible = false">取消</el-button>
+          <el-button type="primary" :loading="saving" @click="saveIntake">保存录入</el-button>
+        </div>
+      </div>
+    </el-drawer>
 
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
