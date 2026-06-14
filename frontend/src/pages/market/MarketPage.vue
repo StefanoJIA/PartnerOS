@@ -193,6 +193,117 @@
     </section>
 
     <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 class="font-semibold text-slate-800">Market Response 运营审查队列</h3>
+          <p class="mt-1 text-sm text-slate-600">
+            把 HOSUN 升降系统、JOOBOO 教育家具和 future partner 信号沉淀为人工审查项；这里只保存状态和下一步，不自动通知、不改报价/订单状态。
+          </p>
+        </div>
+        <el-button :loading="reviewLoading" @click="loadReviews">刷新审查队列</el-button>
+      </div>
+      <el-alert
+        v-if="reviewConsole"
+        class="mb-3"
+        type="warning"
+        :closable="false"
+        title="客户可见内容必须先过白名单：customer-safe candidate 不是 approved；needs validation/internal-only/pilot blocker 不得直接给客户看。"
+      />
+      <el-alert v-if="reviewError" class="mb-3" type="error" :closable="false" :title="reviewError" />
+
+      <div class="mb-3 grid gap-3 lg:grid-cols-4">
+        <el-select v-model="reviewFilters.partner_focus" clearable placeholder="Partner">
+          <el-option label="HOSUN" value="HOSUN" />
+          <el-option label="JOOBOO" value="JOOBOO" />
+          <el-option label="future partner" value="future partner" />
+        </el-select>
+        <el-select v-model="reviewFilters.visibility_class" clearable placeholder="可见性分类">
+          <el-option v-for="item in reviewConsole?.visibility_options || []" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+        <el-select v-model="reviewFilters.status" clearable placeholder="审查状态">
+          <el-option v-for="item in reviewConsole?.status_options || []" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+        <el-button :loading="reviewLoading" type="primary" plain @click="loadReviews">应用筛选</el-button>
+      </div>
+
+      <el-table :data="reviewConsole?.reviews || []" stripe>
+        <el-table-column prop="partner_focus" label="Partner" width="120" />
+        <el-table-column prop="review_dimension_label" label="维度" width="130" />
+        <el-table-column label="产品方向" min-width="220">
+          <template #default="{ row }">
+            <div class="flex flex-wrap gap-1">
+              <el-tag v-for="item in row.product_focus" :key="item" size="small" effect="plain">{{ item }}</el-tag>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="可见性" width="170">
+          <template #default="{ row }">
+            <el-select v-model="row.visibility_class" size="small" @change="saveReview(row, { visibility_class: row.visibility_class })">
+              <el-option v-for="item in reviewConsole?.visibility_options || []" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="150">
+          <template #default="{ row }">
+            <el-select v-model="row.status" size="small" @change="saveReview(row, { status: row.status })">
+              <el-option v-for="item in reviewConsole?.status_options || []" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
+          </template>
+        </el-table-column>
+        <el-table-column label="优先级" width="120">
+          <template #default="{ row }">
+            <el-select v-model="row.priority" size="small" @change="saveReview(row, { priority: row.priority })">
+              <el-option v-for="item in reviewConsole?.priority_options || []" :key="item.value" :label="item.value" :value="item.value" />
+            </el-select>
+          </template>
+        </el-table-column>
+        <el-table-column prop="source_summary" label="信号摘要" min-width="320" />
+        <el-table-column prop="next_action" label="下一步" min-width="260" />
+        <el-table-column label="操作" width="120" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" link type="primary" :loading="reviewSaving === row.id" @click="openReview(row)">编辑</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <el-collapse class="mt-4">
+        <el-collapse-item title="新增 / 编辑审查项" name="form">
+          <div class="grid gap-3 lg:grid-cols-3">
+            <el-input v-model="reviewForm.partner_focus" placeholder="Partner，例如 HOSUN / JOOBOO / future partner" />
+            <el-input v-model="reviewForm.focus_category" placeholder="方向，例如 adjustable_desk_frames" />
+            <el-select v-model="reviewForm.review_dimension" placeholder="审查维度">
+              <el-option v-for="item in reviewConsole?.review_dimension_options || []" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
+            <el-select v-model="reviewForm.visibility_class" placeholder="可见性分类">
+              <el-option v-for="item in reviewConsole?.visibility_options || []" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
+            <el-select v-model="reviewForm.priority" placeholder="优先级">
+              <el-option v-for="item in reviewConsole?.priority_options || []" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
+            <el-select v-model="reviewForm.status" placeholder="状态">
+              <el-option v-for="item in reviewConsole?.status_options || []" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
+          </div>
+          <div class="mt-3 grid gap-3 lg:grid-cols-2">
+            <el-input v-model="reviewForm.product_focus_text" type="textarea" :rows="2" placeholder="产品方向，逗号分隔" />
+            <el-input v-model="reviewForm.owner" placeholder="负责人" />
+            <el-input v-model="reviewForm.source_summary" type="textarea" :rows="2" placeholder="信号摘要" />
+            <el-input v-model="reviewForm.evidence_summary" type="textarea" :rows="2" placeholder="证据摘要" />
+            <el-input v-model="reviewForm.customer_safe_summary" type="textarea" :rows="2" placeholder="客户可见摘要；仅候选文案，不代表 approved" />
+            <el-input v-model="reviewForm.internal_notes" type="textarea" :rows="2" placeholder="内部备注；不得包含 raw token / 成本 / 利润 / 供应商私密信息" />
+            <el-input v-model="reviewForm.next_action" type="textarea" :rows="2" placeholder="下一步" />
+          </div>
+          <div class="mt-3 flex gap-2">
+            <el-button type="primary" :loading="reviewSaving === 'form'" @click="submitReviewForm">
+              {{ reviewForm.id ? '保存审查项' : '新增审查项' }}
+            </el-button>
+            <el-button @click="resetReviewForm">清空</el-button>
+          </div>
+        </el-collapse-item>
+      </el-collapse>
+    </section>
+
+    <section class="rounded border border-slate-200 bg-white p-4">
       <h3 class="mb-3 font-semibold text-slate-800">市场情报来源</h3>
       <el-table :data="rows" stripe>
         <el-table-column prop="title" label="标题" />
@@ -205,8 +316,18 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { http } from '@/api/http'
-import { fetchMarketResponseIntelligence, type MarketResponseIntelligence } from '@/api/marketResponse'
+import {
+  createMarketResponseReview,
+  fetchMarketResponseIntelligence,
+  fetchMarketResponseReviews,
+  updateMarketResponseReview,
+  type MarketResponseIntelligence,
+  type MarketResponseReview,
+  type MarketResponseReviewConsole,
+  type MarketResponseReviewPayload,
+} from '@/api/marketResponse'
 import { formatApiError } from '@/api/errors'
 
 const route = useRoute()
@@ -216,6 +337,32 @@ const focusCategory = ref<string | null>(null)
 const data = ref<MarketResponseIntelligence | null>(null)
 const loading = ref(false)
 const error = ref('')
+const reviewConsole = ref<MarketResponseReviewConsole | null>(null)
+const reviewLoading = ref(false)
+const reviewSaving = ref<string | null>(null)
+const reviewError = ref('')
+const reviewFilters = ref({
+  partner_focus: '',
+  visibility_class: '',
+  status: '',
+})
+const reviewForm = ref({
+  id: '',
+  partner_focus: 'HOSUN',
+  focus_category: 'adjustable_desk_frames',
+  product_focus_text: 'lifting systems, desk frames, desk legs, lifting columns, heavy-duty supply',
+  review_dimension: 'load',
+  visibility_class: 'needs validation',
+  priority: 'P1',
+  status: 'needs review',
+  source_type: 'operator review',
+  source_summary: '',
+  evidence_summary: '',
+  customer_safe_summary: '',
+  internal_notes: '',
+  next_action: '',
+  owner: '',
+})
 
 const metrics = computed(() => {
   const summary = data.value?.summary
@@ -264,7 +411,123 @@ async function load() {
   }
 }
 
-onMounted(load)
+function reviewQueryParams() {
+  const params: { partner_focus?: string; visibility_class?: string; status?: string } = {}
+  if (reviewFilters.value.partner_focus) params.partner_focus = reviewFilters.value.partner_focus
+  if (reviewFilters.value.visibility_class) params.visibility_class = reviewFilters.value.visibility_class
+  if (reviewFilters.value.status) params.status = reviewFilters.value.status
+  return params
+}
+
+async function loadReviews() {
+  reviewLoading.value = true
+  reviewError.value = ''
+  try {
+    reviewConsole.value = await fetchMarketResponseReviews(reviewQueryParams())
+  } catch (e) {
+    reviewError.value = formatApiError(e, 'Market Response 审查队列加载失败。')
+  } finally {
+    reviewLoading.value = false
+  }
+}
+
+function resetReviewForm() {
+  reviewForm.value = {
+    id: '',
+    partner_focus: 'HOSUN',
+    focus_category: 'adjustable_desk_frames',
+    product_focus_text: 'lifting systems, desk frames, desk legs, lifting columns, heavy-duty supply',
+    review_dimension: 'load',
+    visibility_class: 'needs validation',
+    priority: 'P1',
+    status: 'needs review',
+    source_type: 'operator review',
+    source_summary: '',
+    evidence_summary: '',
+    customer_safe_summary: '',
+    internal_notes: '',
+    next_action: '',
+    owner: '',
+  }
+}
+
+function openReview(row: MarketResponseReview) {
+  reviewForm.value = {
+    id: row.id,
+    partner_focus: row.partner_focus,
+    focus_category: row.focus_category,
+    product_focus_text: row.product_focus.join(', '),
+    review_dimension: row.review_dimension,
+    visibility_class: row.visibility_class,
+    priority: row.priority,
+    status: row.status,
+    source_type: row.source_type,
+    source_summary: row.source_summary,
+    evidence_summary: row.evidence_summary || '',
+    customer_safe_summary: row.customer_safe_summary || '',
+    internal_notes: row.internal_notes || '',
+    next_action: row.next_action || '',
+    owner: row.owner || '',
+  }
+}
+
+function reviewPayloadFromForm(): MarketResponseReviewPayload {
+  return {
+    partner_focus: reviewForm.value.partner_focus,
+    focus_category: reviewForm.value.focus_category,
+    product_focus: reviewForm.value.product_focus_text
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean),
+    review_dimension: reviewForm.value.review_dimension,
+    visibility_class: reviewForm.value.visibility_class,
+    priority: reviewForm.value.priority,
+    status: reviewForm.value.status,
+    source_type: reviewForm.value.source_type,
+    source_summary: reviewForm.value.source_summary,
+    evidence_summary: reviewForm.value.evidence_summary || null,
+    customer_safe_summary: reviewForm.value.customer_safe_summary || null,
+    internal_notes: reviewForm.value.internal_notes || null,
+    next_action: reviewForm.value.next_action || null,
+    owner: reviewForm.value.owner || null,
+  }
+}
+
+async function submitReviewForm() {
+  reviewSaving.value = 'form'
+  reviewError.value = ''
+  try {
+    const payload = reviewPayloadFromForm()
+    reviewConsole.value = reviewForm.value.id
+      ? await updateMarketResponseReview(reviewForm.value.id, payload)
+      : await createMarketResponseReview(payload)
+    ElMessage.success('Market Response 审查项已保存')
+    resetReviewForm()
+  } catch (e) {
+    reviewError.value = formatApiError(e, 'Market Response 审查项保存失败。')
+  } finally {
+    reviewSaving.value = null
+  }
+}
+
+async function saveReview(row: MarketResponseReview, payload: Partial<MarketResponseReviewPayload>) {
+  reviewSaving.value = row.id
+  reviewError.value = ''
+  try {
+    reviewConsole.value = await updateMarketResponseReview(row.id, payload)
+    ElMessage.success('审查状态已更新')
+  } catch (e) {
+    reviewError.value = formatApiError(e, '审查状态更新失败。')
+    await loadReviews()
+  } finally {
+    reviewSaving.value = null
+  }
+}
+
+onMounted(() => {
+  load()
+  loadReviews()
+})
 watch(() => [route.query.companyId, route.query.focus_category], load)
 
 const focusCategoryItems = computed(() =>

@@ -12,6 +12,7 @@ from app.models.feedback import FeedbackTicket
 from app.models.external_execution import ExternalExecutionAction
 from app.models.growth import GrowthCampaign, GrowthCampaignTask
 from app.models.market import MarketIntelligenceItem
+from app.models.market_response import MarketResponseReview
 from app.models.orders import Order, OrderItem, ProductionMilestone, ShippingRecord
 from app.models.partners import ManufacturingPartner, PartnerCapability, PartnerContact
 from app.models.products import Product, ProductCategory, ProductDocument, ProductPartnerLink
@@ -71,6 +72,7 @@ __all__ = [
     "ManufacturingPartner",
     "MarginStrategyTier",
     "MarketIntelligenceItem",
+    "MarketResponseReview",
     "Note",
     "ObjectTag",
     "OrderResource",

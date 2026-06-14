@@ -57,11 +57,17 @@ def main() -> int:
     required_files = (
         "backend/alembic/versions/0019_external_execution.py",
         "backend/app/models/external_execution.py",
+        "backend/app/models/market_response.py",
         "backend/app/schemas/external_execution.py",
+        "backend/app/schemas/market_response_reviews.py",
         "backend/app/services/external_execution.py",
+        "backend/app/services/market_response_reviews.py",
         "backend/app/api/v1/routes/external_execution.py",
+        "backend/app/api/v1/routes/market_response.py",
         "frontend/src/api/externalExecution.ts",
+        "frontend/src/api/marketResponse.ts",
         "frontend/src/pages/execution/ExternalExecutionPage.vue",
+        "frontend/src/pages/market/MarketPage.vue",
         "frontend/src/router/index.ts",
         "frontend/src/layouts/MainLayout.vue",
         "frontend/src/pages/dashboard/DashboardPage.vue",
@@ -77,13 +83,35 @@ def main() -> int:
     external_page = read("frontend/src/pages/execution/ExternalExecutionPage.vue")
     external_api = read("frontend/src/api/externalExecution.ts")
     backend_route = read("backend/app/api/v1/routes/external_execution.py")
+    market_route = read("backend/app/api/v1/routes/market_response.py")
     backend_service = read("backend/app/services/external_execution.py")
+    market_review_service = read("backend/app/services/market_response_reviews.py")
     migration = read("backend/alembic/versions/0019_external_execution.py")
+    market_migration = read("backend/alembic/versions/0020_market_response_reviews.py")
     router = read("frontend/src/router/index.ts")
     nav = read("frontend/src/layouts/MainLayout.vue")
     dashboard = read("frontend/src/pages/dashboard/DashboardPage.vue")
     demo = read("frontend/src/pages/demo/DemoWalkthroughPage.vue")
-    combined = "\n".join([external_page, external_api, backend_route, backend_service, migration, router, nav, dashboard, demo])
+    market_page = read("frontend/src/pages/market/MarketPage.vue")
+    market_api = read("frontend/src/api/marketResponse.ts")
+    combined = "\n".join(
+        [
+            external_page,
+            external_api,
+            backend_route,
+            backend_service,
+            migration,
+            market_route,
+            market_review_service,
+            market_migration,
+            market_page,
+            market_api,
+            router,
+            nav,
+            dashboard,
+            demo,
+        ]
+    )
 
     ok, missing = contains_all(
         router,
@@ -127,6 +155,11 @@ def main() -> int:
             "/v1/external-execution/console",
             "/v1/external-execution/actions",
             "external_execution_actions",
+            "market_response_reviews",
+            "response-reviews",
+            "Market Response 运营审查队列",
+            "fetchMarketResponseReviews",
+            "updateMarketResponseReview",
         ),
     )
     checks[2].pass_("tracker includes required fields, statuses, API persistence, and migration") if ok else checks[2].fail(missing)
