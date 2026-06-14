@@ -412,6 +412,10 @@ async function load() {
 }
 
 function reviewQueryParams() {
+  const partnerFromRoute = typeof route.query.partner_focus === 'string' ? route.query.partner_focus : ''
+  if (partnerFromRoute && reviewFilters.value.partner_focus !== partnerFromRoute) {
+    reviewFilters.value.partner_focus = partnerFromRoute
+  }
   const params: { partner_focus?: string; visibility_class?: string; status?: string } = {}
   if (reviewFilters.value.partner_focus) params.partner_focus = reviewFilters.value.partner_focus
   if (reviewFilters.value.visibility_class) params.visibility_class = reviewFilters.value.visibility_class
@@ -529,6 +533,7 @@ onMounted(() => {
   loadReviews()
 })
 watch(() => [route.query.companyId, route.query.focus_category], load)
+watch(() => route.query.partner_focus, loadReviews)
 
 const focusCategoryItems = computed(() =>
   Object.entries(data.value?.summary.focus_category_counts || {}).map(([key, count]) => ({ key, count })),

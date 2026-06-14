@@ -67,3 +67,19 @@ export async function fetchPartnerOnboarding() {
   return data.data
 }
 
+export interface PartnerOnboardingMarketResponseResult {
+  found: boolean
+  partner_id: string
+  partner_name: string
+  created: string[]
+  existing: string[]
+  market_response_link: string
+  safety: Record<string, boolean>
+}
+
+export async function createPartnerOnboardingMarketResponseReviews(partnerId: string) {
+  const { data } = await http.post<V1Envelope<PartnerOnboardingMarketResponseResult>>(
+    `/v1/partner-onboarding/${partnerId}/market-response-reviews`,
+  )
+  return data.data
+}

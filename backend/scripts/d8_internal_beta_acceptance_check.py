@@ -62,12 +62,16 @@ def main() -> int:
         "backend/app/schemas/market_response_reviews.py",
         "backend/app/services/external_execution.py",
         "backend/app/services/market_response_reviews.py",
+        "backend/app/services/partner_onboarding.py",
         "backend/app/api/v1/routes/external_execution.py",
         "backend/app/api/v1/routes/market_response.py",
+        "backend/app/api/v1/routes/partner_onboarding.py",
         "frontend/src/api/externalExecution.ts",
         "frontend/src/api/marketResponse.ts",
+        "frontend/src/api/partnerOnboarding.ts",
         "frontend/src/pages/execution/ExternalExecutionPage.vue",
         "frontend/src/pages/market/MarketPage.vue",
+        "frontend/src/pages/partners/PartnerOnboardingPage.vue",
         "frontend/src/router/index.ts",
         "frontend/src/layouts/MainLayout.vue",
         "frontend/src/pages/dashboard/DashboardPage.vue",
@@ -84,8 +88,10 @@ def main() -> int:
     external_api = read("frontend/src/api/externalExecution.ts")
     backend_route = read("backend/app/api/v1/routes/external_execution.py")
     market_route = read("backend/app/api/v1/routes/market_response.py")
+    partner_route = read("backend/app/api/v1/routes/partner_onboarding.py")
     backend_service = read("backend/app/services/external_execution.py")
     market_review_service = read("backend/app/services/market_response_reviews.py")
+    partner_onboarding_service = read("backend/app/services/partner_onboarding.py")
     migration = read("backend/alembic/versions/0019_external_execution.py")
     market_migration = read("backend/alembic/versions/0020_market_response_reviews.py")
     router = read("frontend/src/router/index.ts")
@@ -94,6 +100,8 @@ def main() -> int:
     demo = read("frontend/src/pages/demo/DemoWalkthroughPage.vue")
     market_page = read("frontend/src/pages/market/MarketPage.vue")
     market_api = read("frontend/src/api/marketResponse.ts")
+    partner_page = read("frontend/src/pages/partners/PartnerOnboardingPage.vue")
+    partner_api = read("frontend/src/api/partnerOnboarding.ts")
     combined = "\n".join(
         [
             external_page,
@@ -102,10 +110,14 @@ def main() -> int:
             backend_service,
             migration,
             market_route,
+            partner_route,
             market_review_service,
+            partner_onboarding_service,
             market_migration,
             market_page,
             market_api,
+            partner_page,
+            partner_api,
             router,
             nav,
             dashboard,
@@ -160,6 +172,9 @@ def main() -> int:
             "Market Response 运营审查队列",
             "fetchMarketResponseReviews",
             "updateMarketResponseReview",
+            "market-response-reviews",
+            "createPartnerOnboardingMarketResponseReviews",
+            "生成市场审查项",
         ),
     )
     checks[2].pass_("tracker includes required fields, statuses, API persistence, and migration") if ok else checks[2].fail(missing)

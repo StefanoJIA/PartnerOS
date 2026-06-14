@@ -57,7 +57,10 @@ REVIEW_DIMENSION_LABELS = {
     "delivery consistency": "交付一致性",
     "resource needs": "资料需求",
     "feedback after use": "使用后反馈",
+    "project acceptance criteria": "项目验收标准",
+    "product family": "产品族",
     "quote logic": "报价逻辑",
+    "delivery requirement": "交付要求",
     "customer-visible fields": "客户可见字段",
     "market response metrics": "市场响应指标",
 }

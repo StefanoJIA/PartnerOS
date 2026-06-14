@@ -112,6 +112,16 @@
                 <el-button size="small" link type="primary" @click="go(row.links.partner_detail)">Partner</el-button>
                 <el-button size="small" link type="primary" @click="go(row.links.product_catalog)">产品目录</el-button>
                 <el-button size="small" link type="primary" @click="go(row.links.market_response)">市场响应</el-button>
+                <el-button
+                  size="small"
+                  link
+                  type="primary"
+                  :disabled="!canCreateMarketReviews(row)"
+                  :loading="creatingReviews === row.partner_id"
+                  @click="createMarketReviews(row)"
+                >
+                  生成市场审查项
+                </el-button>
               </div>
             </template>
           </el-table-column>
@@ -146,14 +156,22 @@
 
 <script setup lang="ts">
 import { Refresh } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { fetchPartnerOnboarding, type PartnerOnboardingResponse, type PartnerOnboardingStage } from '@/api/partnerOnboarding'
+import {
+  createPartnerOnboardingMarketResponseReviews,
+  fetchPartnerOnboarding,
+  type PartnerOnboardingRecord,
+  type PartnerOnboardingResponse,
+  type PartnerOnboardingStage,
+} from '@/api/partnerOnboarding'
 
 const router = useRouter()
 const data = ref<PartnerOnboardingResponse | null>(null)
 const loading = ref(false)
 const error = ref('')
+const creatingReviews = ref<string | null>(null)
 
 const metrics = computed(() => {
   const summary = data.value?.summary
@@ -209,6 +227,31 @@ function stageType(stage: PartnerOnboardingStage) {
 
 function go(path: string) {
   router.push(path)
+}
+
+function canCreateMarketReviews(row: PartnerOnboardingRecord) {
+  return row.partner_id !== '00000000-0000-0000-0000-000000000000'
+}
+
+async function createMarketReviews(row: PartnerOnboardingRecord) {
+  if (!canCreateMarketReviews(row)) {
+    ElMessage.warning('请先创建真实 partner 记录，再生成 Market Response 审查项。')
+    return
+  }
+  creatingReviews.value = row.partner_id
+  error.value = ''
+  try {
+    const result = await createPartnerOnboardingMarketResponseReviews(row.partner_id)
+    const createdCount = result.created?.length || 0
+    const existingCount = result.existing?.length || 0
+    ElMessage.success(`已同步审查项：新增 ${createdCount} 条，已有 ${existingCount} 条。`)
+    await load()
+    router.push(result.market_response_link || row.links.market_response)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Market Response 审查项生成失败'
+  } finally {
+    creatingReviews.value = null
+  }
 }
 
 async function load() {

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from urllib.parse import quote
 from uuid import UUID
 
 from sqlalchemy import func
@@ -11,12 +12,14 @@ from sqlalchemy.orm import Session
 from app.models import (
     CustomerOrder,
     ManufacturingPartner,
+    MarketResponseReview,
     OrderPartnerSplit,
     OrderProductionMilestone,
     ProductCatalog,
     ProductPartnerLink,
     ProductPriceTier,
     ShipmentPlan,
+    User,
 )
 from app.schemas.partner_onboarding import (
     PartnerOnboardingChecklistItem,
@@ -62,6 +65,15 @@ CHECKLIST_LABELS = {
 }
 
 REFERENCE_PARTNER_CODES = ("H" + "OSUN", "J" + "OOBOO")
+
+ONBOARDING_REVIEW_DIMENSIONS = {
+    "product_categories_mapped": ("product family", "P1"),
+    "pricing_basis_available": ("quote logic", "P1"),
+    "quote_flow_ready": ("quote logic", "P1"),
+    "production_shipment_flow_mapped": ("delivery requirement", "P1"),
+    "portal_visibility_reviewed": ("customer-visible fields", "P0"),
+    "market_response_focus_defined": ("market response metrics", "P1"),
+}
 
 
 def _split_terms(*values: str | None) -> list[str]:
@@ -163,6 +175,8 @@ def build_partner_onboarding(db: Session) -> PartnerOnboardingResponse:
         .order_by(ManufacturingPartner.is_active.desc(), ManufacturingPartner.partner_name.asc())
         .all()
     )
+
+
     partner_ids = [partner.id for partner in partners]
 
     catalog_counts = dict(
@@ -319,6 +333,79 @@ def build_partner_onboarding(db: Session) -> PartnerOnboardingResponse:
     )
 
 
+def create_partner_market_response_reviews(db: Session, partner_id: UUID, actor: User | None = None) -> dict[str, object]:
+    partner = db.get(ManufacturingPartner, partner_id)
+    if partner is None:
+        return {"found": False, "created": [], "existing": [], "safety": _safety()}
+
+    response = build_partner_onboarding(db)
+    record = next((item for item in response.items if item.partner_id == partner_id), None)
+    if record is None:
+        return {"found": False, "created": [], "existing": [], "safety": _safety()}
+
+    actor_id = getattr(actor, "id", None) if actor is not None else None
+    created: list[str] = []
+    existing: list[str] = []
+    missing_review_keys = [key for key in record.missing_items if key in ONBOARDING_REVIEW_DIMENSIONS]
+    if not missing_review_keys:
+        missing_review_keys = ["market_response_focus_defined"]
+
+    focus_category = _focus_category_for_partner(record)
+    for key in missing_review_keys:
+        review_dimension, priority = ONBOARDING_REVIEW_DIMENSIONS[key]
+        current = (
+            db.query(MarketResponseReview)
+            .filter(
+                MarketResponseReview.partner_focus == record.partner_name,
+                MarketResponseReview.review_dimension == review_dimension,
+                MarketResponseReview.source_type == "partner onboarding",
+            )
+            .first()
+        )
+        if current is not None:
+            existing.append(str(current.id))
+            continue
+        review = MarketResponseReview(
+            partner_focus=record.partner_name,
+            focus_category=focus_category,
+            product_focus=record.product_focus,
+            review_dimension=review_dimension,
+            visibility_class="needs validation",
+            priority=priority,
+            status="needs review",
+            source_type="partner onboarding",
+            source_summary=f"Partner onboarding gap: {CHECKLIST_LABELS.get(key, key)}.",
+            evidence_summary=record.readiness_summary,
+            customer_safe_summary=None,
+            internal_notes="Generated from internal onboarding readiness. Not a business sign-off, security approval, or staging evidence.",
+            next_action=record.next_action,
+            owner="partner onboarding owner",
+            created_by_id=actor_id,
+            updated_by_id=actor_id,
+        )
+        db.add(review)
+        db.flush()
+        created.append(str(review.id))
+    db.commit()
+
+    return {
+        "found": True,
+        "partner_id": str(partner_id),
+        "partner_name": record.partner_name,
+        "created": created,
+        "existing": existing,
+        "market_response_link": f"/market-response?partner_focus={quote(record.partner_name)}",
+        "safety": {
+            **_safety(),
+            "market_response_review_created": bool(created),
+            "customer_notified": False,
+            "supplier_notified": False,
+            "quote_status_changed": False,
+            "order_status_changed": False,
+        },
+    }
+
+
 def _detail_for_check(
     key: str,
     *,
@@ -342,6 +429,21 @@ def _detail_for_check(
         "demo_narrative_prepared": "Reference demo narrative is prepared for existing sample partners; future partners need their own talk track.",
     }
     return details[key]
+
+
+def _focus_category_for_partner(record: PartnerOnboardingRecord) -> str:
+    blob = " ".join([record.partner_name, *(record.product_focus or [])]).lower()
+    if any(term in blob for term in ("lifting column", "column")):
+        return "lifting_columns"
+    if any(term in blob for term in ("desk leg", "leg")):
+        return "desk_legs"
+    if any(term in blob for term in ("lifting", "desk frame", "height adjustable", "heavy-duty", "heavy duty")):
+        return "adjustable_desk_frames"
+    if any(term in blob for term in ("education", "school", "classroom")):
+        return "education_furniture"
+    if "project" in blob:
+        return "project_furniture"
+    return "future_partner_onboarding"
 
 
 def _safety() -> dict[str, bool]:
