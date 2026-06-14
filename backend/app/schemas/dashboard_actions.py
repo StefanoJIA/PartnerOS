@@ -137,6 +137,7 @@ class DailyDecisionQueueItem(BaseModel):
     affects_d9: bool = False
     affects_pilot: bool = False
     customer_safe_boundary: str | None = None
+    handling: "DailyQueueHandlingRecordOut | None" = None
 
 
 class DailyDecisionQueueSummary(BaseModel):
@@ -150,6 +151,13 @@ class DailyDecisionQueueSummary(BaseModel):
     security_signoff_required: int
     partner_feedback_required: int
     order_or_feedback_risk: int
+    acknowledged: int = 0
+    in_progress: int = 0
+    blocked: int = 0
+    deferred: int = 0
+    waiting_external: int = 0
+    overdue_followups: int = 0
+    my_items: int = 0
     status: str
     external_staging_state: str
 
@@ -158,3 +166,50 @@ class DailyDecisionQueueOut(BaseModel):
     summary: DailyDecisionQueueSummary
     items: list[DailyDecisionQueueItem]
     safety: dict[str, bool]
+
+
+class DailyQueueHandlingRecordOut(BaseModel):
+    id: UUID
+    queue_item_id: str
+    source_type: str
+    source_id: str | None
+    source_path: str
+    title: str
+    category: str
+    priority: str
+    partner_focus: str | None = None
+    product_focus: list[str] = Field(default_factory=list)
+    customer_or_account: str | None = None
+    owner: str | None = None
+    handling_status: str
+    follow_up_date: date | None = None
+    blocked_reason: str | None = None
+    internal_note: str | None = None
+    decision_summary: str | None = None
+    last_action: str | None = None
+    action_count: int
+    handling_events: list[dict] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class DailyQueueHandlingUpdate(BaseModel):
+    queue_item_id: str
+    source_type: str
+    source_id: str | None = None
+    source_path: str
+    title: str
+    category: str
+    priority: str
+    partner_focus: str | None = None
+    product_focus: list[str] = Field(default_factory=list)
+    customer_or_account: str | None = None
+    action: str
+    owner: str | None = None
+    handling_status: str | None = None
+    follow_up_date: date | None = None
+    blocked_reason: str | None = None
+    internal_note: str | None = None
+    decision_summary: str | None = None

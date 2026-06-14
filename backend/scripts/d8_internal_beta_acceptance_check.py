@@ -56,6 +56,8 @@ def main() -> int:
 
     required_files = (
         "backend/alembic/versions/0019_external_execution.py",
+        "backend/alembic/versions/0021_daily_queue_handling.py",
+        "backend/app/models/daily_queue.py",
         "backend/app/models/external_execution.py",
         "backend/app/models/market_response.py",
         "backend/app/schemas/external_execution.py",
@@ -90,6 +92,7 @@ def main() -> int:
     backend_route = read("backend/app/api/v1/routes/external_execution.py")
     market_route = read("backend/app/api/v1/routes/market_response.py")
     partner_route = read("backend/app/api/v1/routes/partner_onboarding.py")
+    daily_queue_model = read("backend/app/models/daily_queue.py")
     backend_service = read("backend/app/services/external_execution.py")
     daily_queue_service = read("backend/app/services/daily_decision_queue.py")
     dashboard_route = read("backend/app/api/routes/dashboard.py")
@@ -99,6 +102,7 @@ def main() -> int:
     partner_onboarding_service = read("backend/app/services/partner_onboarding.py")
     migration = read("backend/alembic/versions/0019_external_execution.py")
     market_migration = read("backend/alembic/versions/0020_market_response_reviews.py")
+    daily_queue_migration = read("backend/alembic/versions/0021_daily_queue_handling.py")
     router = read("frontend/src/router/index.ts")
     nav = read("frontend/src/layouts/MainLayout.vue")
     dashboard = read("frontend/src/pages/dashboard/DashboardPage.vue")
@@ -111,6 +115,7 @@ def main() -> int:
         [
             external_page,
             external_api,
+            daily_queue_model,
             backend_route,
             backend_service,
             daily_queue_service,
@@ -118,6 +123,7 @@ def main() -> int:
             dashboard_schema,
             dashboard_api,
             migration,
+            daily_queue_migration,
             market_route,
             partner_route,
             market_review_service,
@@ -247,6 +253,24 @@ def main() -> int:
             "partner_onboarding",
             "feedback_ticket",
             "order delivery",
+            "daily_queue_handling_records",
+            "DailyQueueHandlingRecord",
+            "DailyQueueHandlingUpdate",
+            "DailyQueueHandlingRecordOut",
+            "updateDailyQueueHandling",
+            "update_daily_queue_handling",
+            "handling_status",
+            "handling_events",
+            "acknowledged",
+            "in_progress",
+            "deferred",
+            "waiting_external",
+            "decision_recorded",
+            "处理今日运营决策项",
+            "知晓",
+            "接手",
+            "延期/备注",
+            "处理备注",
         ),
     )
     checks[2].pass_("tracker includes required fields, statuses, API persistence, and migration") if ok else checks[2].fail(missing)

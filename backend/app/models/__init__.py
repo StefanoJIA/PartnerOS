@@ -36,6 +36,7 @@ from app.models.customer_quotes import (
     QuoteTerms,
     QuoteVersion,
 )
+from app.models.daily_queue import DailyQueueHandlingRecord
 from app.models.quote_catalog import (
     FxRate,
     MarginStrategyTier,
@@ -55,6 +56,7 @@ __all__ = [
     "CompanyEnrichmentSuggestion",
     "Contact",
     "CustomerOrder",
+    "DailyQueueHandlingRecord",
     "ExternalExecutionAction",
     "FactoryAudit",
     "FeedbackTicket",

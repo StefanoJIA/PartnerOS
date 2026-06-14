@@ -38,7 +38,8 @@ from fastapi.testclient import TestClient  # noqa: E402
 from app.core.database import SessionLocal  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.models import User  # noqa: E402
-from app.services.daily_decision_queue import build_daily_decision_queue  # noqa: E402
+from app.schemas.dashboard_actions import DailyQueueHandlingUpdate  # noqa: E402
+from app.services.daily_decision_queue import build_daily_decision_queue, update_daily_queue_handling  # noqa: E402
 
 
 def _has_category(items: list, category: str) -> bool:
@@ -56,6 +57,51 @@ def main() -> int:
         payload = build_daily_decision_queue(db, actor)
         items = payload.items
         safety = payload.safety
+        target = items[0]
+        handling = update_daily_queue_handling(
+            db,
+            actor,
+            DailyQueueHandlingUpdate(
+                queue_item_id=target.id,
+                source_type=target.source_type,
+                source_id=target.source_id,
+                source_path=target.source_path,
+                title=target.title,
+                category=target.category,
+                priority=target.priority,
+                partner_focus=target.partner_focus,
+                product_focus=target.product_focus,
+                customer_or_account=target.customer_or_account,
+                action="assign",
+                owner=actor.email,
+                internal_note="Runtime check: internal handling record only; no external evidence or source status mutation.",
+            ),
+        )
+        refreshed = build_daily_decision_queue(db, actor)
+        refreshed_target = next((item for item in refreshed.items if item.id == target.id), None)
+        unsafe_rejected = False
+        try:
+            update_daily_queue_handling(
+                db,
+                actor,
+                DailyQueueHandlingUpdate(
+                    queue_item_id=target.id,
+                    source_type=target.source_type,
+                    source_id=target.source_id,
+                    source_path=target.source_path,
+                    title=target.title,
+                    category=target.category,
+                    priority=target.priority,
+                    partner_focus=target.partner_focus,
+                    product_focus=target.product_focus,
+                    customer_or_account=target.customer_or_account,
+                    action="record_decision",
+                    handling_status="STAGING_VALIDATED",
+                    decision_summary="STAGING_VALIDATED",
+                ),
+            )
+        except ValueError:
+            unsafe_rejected = True
         checks = [
             ("status boundary", payload.summary.status == "READY_FOR_STAGING_HANDOFF"),
             ("external staging boundary", payload.summary.external_staging_state == "WAITING_FOR_REAL_STAGING_EVIDENCE"),
@@ -90,6 +136,15 @@ def main() -> int:
                 "future partner peer path",
                 any((item.partner_focus or "").lower() == "future partner" or "future partner" in item.title.lower() for item in items),
             ),
+            ("handling record created", handling.queue_item_id == target.id and handling.handling_status == "in_progress"),
+            (
+                "handling persists after refresh",
+                refreshed_target is not None
+                and refreshed_target.handling is not None
+                and refreshed_target.handling.owner == actor.email,
+            ),
+            ("unsafe handling claim rejected", unsafe_rejected),
+            ("handling summary", refreshed.summary.in_progress >= 1 and refreshed.summary.my_items >= 1),
             (
                 "manual-only safety",
                 safety.get("email_sent") is False
@@ -111,9 +166,29 @@ def main() -> int:
             login = client.post("/api/auth/login", json={"email": "admin@example.com", "password": "admin123"})
             token = login.json()["access_token"]
             response = client.get("/api/dashboard/daily-decision-queue", headers={"Authorization": f"Bearer {token}"})
+            patch = client.patch(
+                "/api/dashboard/daily-decision-queue/handling",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "queue_item_id": target.id,
+                    "source_type": target.source_type,
+                    "source_id": target.source_id,
+                    "source_path": target.source_path,
+                    "title": target.title,
+                    "category": target.category,
+                    "priority": target.priority,
+                    "partner_focus": target.partner_focus,
+                    "product_focus": target.product_focus,
+                    "customer_or_account": target.customer_or_account,
+                    "action": "acknowledge",
+                    "owner": actor.email,
+                    "internal_note": "HTTP route handling check.",
+                },
+            )
         response_data = response.json() if response.status_code == 200 else {}
         checks.append(("route daily queue", response.status_code == 200 and response_data.get("items")))
         checks.append(("route safety flags", response_data.get("safety", {}).get("staging_validated") is False))
+        checks.append(("route handling patch", patch.status_code == 200 and patch.json().get("handling_status") == "acknowledged"))
 
         for label, ok in checks:
             print(f"[{'PASS' if ok else 'FAIL'}] {label}")

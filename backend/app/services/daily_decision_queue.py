@@ -7,18 +7,63 @@ secrets.
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timezone
 from urllib.parse import urlencode
 
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from app.models import FeedbackTicket, User
-from app.schemas.dashboard_actions import DailyDecisionQueueItem, DailyDecisionQueueOut, DailyDecisionQueueSummary
+from app.models import DailyQueueHandlingRecord, FeedbackTicket, User
+from app.schemas.dashboard_actions import (
+    DailyDecisionQueueItem,
+    DailyDecisionQueueOut,
+    DailyDecisionQueueSummary,
+    DailyQueueHandlingRecordOut,
+    DailyQueueHandlingUpdate,
+)
 from app.services.dashboard_actions import build_dashboard_actions
 from app.services.external_execution import build_external_execution_console
 from app.services.market_response_reviews import build_market_response_review_console
 from app.services.partner_onboarding import build_partner_onboarding
+
+ALLOWED_HANDLING_ACTIONS = {
+    "acknowledge",
+    "assign",
+    "defer",
+    "mark_blocked",
+    "add_note",
+    "set_follow_up",
+    "record_decision",
+    "wait_external",
+}
+
+ALLOWED_HANDLING_STATUSES = {
+    "new",
+    "acknowledged",
+    "in_progress",
+    "deferred",
+    "blocked",
+    "waiting_external",
+    "decision_recorded",
+}
+
+UNSAFE_HANDLING_STATUSES = {
+    "approved",
+    "complete",
+    "completed",
+    "response received",
+    "staging_validated",
+    "STAGING_VALIDATED",
+    "d9_entered",
+}
+
+UNSAFE_TEXT_MARKERS = (
+    "STAGING_VALIDATED",
+    "raw token",
+    "PORTAL_CUSTOMER_API_TOKEN=",
+    "Bearer ",
+    "sk-",
+)
 
 
 def _path(path: str, **query: str | None) -> str:
@@ -35,8 +80,12 @@ def _state_rank(value: str) -> int:
         "blocked": 0,
         "overdue": 1,
         "needs review": 2,
+        "waiting_external": 3,
         "ready to send": 3,
         "draft": 4,
+        "deferred": 4,
+        "in_progress": 5,
+        "acknowledged": 6,
         "waiting response": 5,
         "pending": 6,
     }.get(value, 9)
@@ -44,6 +93,116 @@ def _state_rank(value: str) -> int:
 
 def _decision_id(prefix: str, value: object) -> str:
     return f"{prefix}:{value}"
+
+
+def _handling_status_for_action(action: str, existing_status: str | None = None) -> str:
+    if action == "acknowledge":
+        return "acknowledged"
+    if action in {"assign", "set_follow_up"}:
+        return "in_progress"
+    if action == "defer":
+        return "deferred"
+    if action == "mark_blocked":
+        return "blocked"
+    if action == "record_decision":
+        return "decision_recorded"
+    if action == "wait_external":
+        return "waiting_external"
+    return existing_status if existing_status in ALLOWED_HANDLING_STATUSES else "in_progress"
+
+
+def _assert_safe_handling_text(*values: str | None) -> None:
+    for value in values:
+        if not value:
+            continue
+        for marker in UNSAFE_TEXT_MARKERS:
+            if marker in value:
+                raise ValueError(f"Unsafe handling text contains forbidden marker: {marker}")
+
+
+def _append_event(record: DailyQueueHandlingRecord, user: User, body: DailyQueueHandlingUpdate) -> None:
+    events = list(record.handling_events or [])
+    events.append(
+        {
+            "at": datetime.now(timezone.utc).isoformat(),
+            "actor_email": user.email,
+            "action": body.action,
+            "handling_status": record.handling_status,
+            "owner": record.owner,
+            "follow_up_date": record.follow_up_date.isoformat() if record.follow_up_date else None,
+            "blocked_reason": body.blocked_reason,
+            "internal_note": body.internal_note,
+            "decision_summary": body.decision_summary,
+        }
+    )
+    record.handling_events = events[-25:]
+    record.action_count = (record.action_count or 0) + 1
+
+
+def _handling_out(record: DailyQueueHandlingRecord) -> DailyQueueHandlingRecordOut:
+    return DailyQueueHandlingRecordOut.model_validate(record)
+
+
+def update_daily_queue_handling(
+    db: Session,
+    user: User,
+    body: DailyQueueHandlingUpdate,
+) -> DailyQueueHandlingRecordOut:
+    if body.action not in ALLOWED_HANDLING_ACTIONS:
+        raise ValueError(f"Unsupported handling action: {body.action}")
+    if body.handling_status in UNSAFE_HANDLING_STATUSES:
+        raise ValueError("Handling status cannot claim external approval, completion, staging validation, or response receipt.")
+    if body.handling_status and body.handling_status not in ALLOWED_HANDLING_STATUSES:
+        raise ValueError(f"Unsupported handling status: {body.handling_status}")
+
+    _assert_safe_handling_text(
+        body.owner,
+        body.blocked_reason,
+        body.internal_note,
+        body.decision_summary,
+        body.title,
+        body.source_path,
+    )
+
+    record = (
+        db.query(DailyQueueHandlingRecord)
+        .filter(DailyQueueHandlingRecord.queue_item_id == body.queue_item_id)
+        .first()
+    )
+    if record is None:
+        record = DailyQueueHandlingRecord(
+            queue_item_id=body.queue_item_id,
+            created_by_id=user.id,
+        )
+        db.add(record)
+
+    record.source_type = body.source_type
+    record.source_id = body.source_id
+    record.source_path = body.source_path
+    record.title = body.title
+    record.category = body.category
+    record.priority = body.priority
+    record.partner_focus = body.partner_focus
+    record.product_focus = body.product_focus
+    record.customer_or_account = body.customer_or_account
+    record.owner = body.owner if body.owner is not None else record.owner
+    record.handling_status = body.handling_status or _handling_status_for_action(body.action, record.handling_status)
+    record.follow_up_date = body.follow_up_date if body.follow_up_date is not None else record.follow_up_date
+    record.blocked_reason = body.blocked_reason if body.blocked_reason is not None else record.blocked_reason
+    record.internal_note = body.internal_note if body.internal_note is not None else record.internal_note
+    record.decision_summary = body.decision_summary if body.decision_summary is not None else record.decision_summary
+    record.last_action = body.action
+    record.updated_by_id = user.id
+    _append_event(record, user, body)
+
+    db.commit()
+    db.refresh(record)
+    return _handling_out(record)
+
+
+def list_daily_queue_handling(db: Session) -> list[DailyQueueHandlingRecordOut]:
+    rows = db.query(DailyQueueHandlingRecord).order_by(DailyQueueHandlingRecord.updated_at.desc()).limit(200).all()
+    return [_handling_out(row) for row in rows]
 
 
 def _risk_for_gap(gap: dict) -> str:
@@ -248,7 +407,8 @@ def _feedback_item(row: FeedbackTicket) -> DailyDecisionQueueItem:
     )
 
 
-def _summary(items: list[DailyDecisionQueueItem]) -> DailyDecisionQueueSummary:
+def _summary(items: list[DailyDecisionQueueItem], user: User) -> DailyDecisionQueueSummary:
+    today = date.today()
     return DailyDecisionQueueSummary(
         total=len(items),
         p0=sum(1 for item in items if item.priority == "P0"),
@@ -260,6 +420,17 @@ def _summary(items: list[DailyDecisionQueueItem]) -> DailyDecisionQueueSummary:
         security_signoff_required=sum(1 for item in items if item.needs_security_signoff),
         partner_feedback_required=sum(1 for item in items if item.needs_partner_feedback),
         order_or_feedback_risk=sum(1 for item in items if item.category in {"order delivery", "feedback"}),
+        acknowledged=sum(1 for item in items if item.handling and item.handling.handling_status == "acknowledged"),
+        in_progress=sum(1 for item in items if item.handling and item.handling.handling_status == "in_progress"),
+        blocked=sum(1 for item in items if item.handling and item.handling.handling_status == "blocked"),
+        deferred=sum(1 for item in items if item.handling and item.handling.handling_status == "deferred"),
+        waiting_external=sum(1 for item in items if item.handling and item.handling.handling_status == "waiting_external"),
+        overdue_followups=sum(
+            1
+            for item in items
+            if item.handling and item.handling.follow_up_date is not None and item.handling.follow_up_date < today
+        ),
+        my_items=sum(1 for item in items if item.handling and item.handling.owner == user.email),
         status="READY_FOR_STAGING_HANDOFF",
         external_staging_state="WAITING_FOR_REAL_STAGING_EVIDENCE",
     )
@@ -276,6 +447,20 @@ def _sort_items(items: list[DailyDecisionQueueItem]) -> list[DailyDecisionQueueI
             item.title,
         ),
     )
+
+
+def _apply_handling_layer(db: Session, items: list[DailyDecisionQueueItem]) -> None:
+    item_ids = [item.id for item in items]
+    if not item_ids:
+        return
+    rows = (
+        db.query(DailyQueueHandlingRecord)
+        .filter(DailyQueueHandlingRecord.queue_item_id.in_(item_ids))
+        .all()
+    )
+    handling_by_item = {row.queue_item_id: _handling_out(row) for row in rows}
+    for item in items:
+        item.handling = handling_by_item.get(item.id)
 
 
 def build_daily_decision_queue(db: Session, user: User) -> DailyDecisionQueueOut:
@@ -322,9 +507,10 @@ def build_daily_decision_queue(db: Session, user: User) -> DailyDecisionQueueOut
     )
     items.extend(_feedback_item(row) for row in feedback_rows)
 
+    _apply_handling_layer(db, items)
     sorted_items = _sort_items(items)[:40]
     return DailyDecisionQueueOut(
-        summary=_summary(sorted_items),
+        summary=_summary(sorted_items, user),
         items=sorted_items,
         safety={
             "manual_only": True,

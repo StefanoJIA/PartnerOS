@@ -88,6 +88,52 @@ export type DailyDecisionQueueItem = {
   affects_d9: boolean
   affects_pilot: boolean
   customer_safe_boundary: string | null
+  handling: DailyQueueHandlingRecord | null
+}
+
+export type DailyQueueHandlingRecord = {
+  id: string
+  queue_item_id: string
+  source_type: string
+  source_id: string | null
+  source_path: string
+  title: string
+  category: string
+  priority: string
+  partner_focus: string | null
+  product_focus: string[]
+  customer_or_account: string | null
+  owner: string | null
+  handling_status: string
+  follow_up_date: string | null
+  blocked_reason: string | null
+  internal_note: string | null
+  decision_summary: string | null
+  last_action: string | null
+  action_count: number
+  handling_events: Array<Record<string, unknown>>
+  created_at: string
+  updated_at: string
+}
+
+export type DailyQueueHandlingUpdate = {
+  queue_item_id: string
+  source_type: string
+  source_id: string | null
+  source_path: string
+  title: string
+  category: string
+  priority: string
+  partner_focus: string | null
+  product_focus: string[]
+  customer_or_account: string | null
+  action: string
+  owner?: string | null
+  handling_status?: string | null
+  follow_up_date?: string | null
+  blocked_reason?: string | null
+  internal_note?: string | null
+  decision_summary?: string | null
 }
 
 export type DailyDecisionQueue = {
@@ -102,6 +148,13 @@ export type DailyDecisionQueue = {
     security_signoff_required: number
     partner_feedback_required: number
     order_or_feedback_risk: number
+    acknowledged: number
+    in_progress: number
+    blocked: number
+    deferred: number
+    waiting_external: number
+    overdue_followups: number
+    my_items: number
     status: string
     external_staging_state: string
   }
@@ -111,5 +164,10 @@ export type DailyDecisionQueue = {
 
 export async function fetchDailyDecisionQueue() {
   const { data } = await http.get<DailyDecisionQueue>('/dashboard/daily-decision-queue')
+  return data
+}
+
+export async function updateDailyQueueHandling(payload: DailyQueueHandlingUpdate) {
+  const { data } = await http.patch<DailyQueueHandlingRecord>('/dashboard/daily-decision-queue/handling', payload)
   return data
 }

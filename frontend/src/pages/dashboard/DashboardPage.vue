@@ -26,6 +26,10 @@
           <el-tag type="primary" effect="plain">Staging/D9 {{ decisionQueue?.summary.staging_or_d9 ?? 0 }}</el-tag>
           <el-tag type="success" effect="plain">Pilot {{ decisionQueue?.summary.pilot ?? 0 }}</el-tag>
           <el-tag type="info" effect="plain">外部输入 {{ decisionQueue?.summary.external_input_required ?? 0 }}</el-tag>
+          <el-tag type="primary" effect="plain">我的 {{ decisionQueue?.summary.my_items ?? 0 }}</el-tag>
+          <el-tag type="danger" effect="plain">处理阻塞 {{ decisionQueue?.summary.blocked ?? 0 }}</el-tag>
+          <el-tag type="warning" effect="plain">等外部 {{ decisionQueue?.summary.waiting_external ?? 0 }}</el-tag>
+          <el-tag type="info" effect="plain">逾期 follow-up {{ decisionQueue?.summary.overdue_followups ?? 0 }}</el-tag>
         </div>
       </div>
       <el-alert
@@ -52,6 +56,11 @@
           <template #default="{ row }">
             <div class="text-sm text-slate-700">{{ row.owner || '未指定' }}</div>
             <el-tag class="mt-1" size="small" effect="plain">{{ row.severity }}</el-tag>
+            <div v-if="row.handling" class="mt-2 rounded bg-slate-50 p-2 text-xs text-slate-600">
+              <div>处理：{{ handlingStatusLabel(row.handling.handling_status) }}</div>
+              <div v-if="row.handling.owner">接手人：{{ row.handling.owner }}</div>
+              <div v-if="row.handling.follow_up_date">跟进：{{ row.handling.follow_up_date }}</div>
+            </div>
             <p class="mt-1 text-xs text-slate-500">{{ row.risk }}</p>
           </template>
         </el-table-column>
@@ -74,11 +83,21 @@
               <el-tag v-if="row.needs_staging_credentials" size="small" effect="plain">staging credentials</el-tag>
               <el-tag v-if="row.depends_on_external_input" size="small" type="warning" effect="plain">真实外部输入</el-tag>
             </div>
+            <p v-if="row.handling?.internal_note" class="mt-2 text-xs text-slate-500">处理备注：{{ row.handling.internal_note }}</p>
+            <p v-if="row.handling?.blocked_reason" class="mt-2 text-xs text-rose-600">阻塞原因：{{ row.handling.blocked_reason }}</p>
+            <p v-if="row.handling?.decision_summary" class="mt-2 text-xs text-emerald-700">内部决策：{{ row.handling.decision_summary }}</p>
           </template>
         </el-table-column>
-        <el-table-column label="处理" width="120" fixed="right">
+        <el-table-column label="协作处理" width="260" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" type="primary" plain @click="router.push(row.source_path)">进入</el-button>
+            <div class="flex flex-wrap gap-1">
+              <el-button size="small" type="primary" plain @click="quickHandle(row, 'acknowledge')">知晓</el-button>
+              <el-button size="small" type="success" plain @click="quickHandle(row, 'assign')">接手</el-button>
+              <el-button size="small" type="warning" plain @click="quickHandle(row, 'wait_external')">等外部</el-button>
+              <el-button size="small" plain @click="openHandlingDialog(row, 'defer')">延期/备注</el-button>
+              <el-button size="small" type="danger" plain @click="openHandlingDialog(row, 'mark_blocked')">阻塞</el-button>
+              <el-button size="small" type="primary" link @click="router.push(row.source_path)">进入源对象</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -279,16 +298,62 @@
         </div>
       </el-collapse-item>
     </el-collapse>
+
+    <el-dialog v-model="handlingDialogVisible" title="处理今日运营决策项" width="560px">
+      <div v-if="handlingTarget" class="space-y-3">
+        <div>
+          <div class="text-sm font-semibold text-slate-900">{{ handlingTarget.title }}</div>
+          <p class="mt-1 text-xs text-slate-500">
+            只记录内部处理，不写真实签字、不写 staging evidence、不自动修改源对象。
+          </p>
+        </div>
+        <el-form label-position="top">
+          <el-form-item label="处理动作">
+            <el-select v-model="handlingForm.action" class="w-full">
+              <el-option label="知晓" value="acknowledge" />
+              <el-option label="接手 / 分配 owner" value="assign" />
+              <el-option label="延期" value="defer" />
+              <el-option label="标记阻塞" value="mark_blocked" />
+              <el-option label="等待外部输入" value="wait_external" />
+              <el-option label="记录内部决策" value="record_decision" />
+              <el-option label="追加内部备注" value="add_note" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Owner">
+            <el-input v-model="handlingForm.owner" placeholder="例如 operator@example.com" />
+          </el-form-item>
+          <el-form-item label="Follow-up 日期">
+            <el-date-picker v-model="handlingForm.follow_up_date" class="w-full" type="date" value-format="YYYY-MM-DD" placeholder="选择后续跟进日期" />
+          </el-form-item>
+          <el-form-item label="内部备注">
+            <el-input v-model="handlingForm.internal_note" type="textarea" :rows="3" placeholder="记录内部处理进展；不要粘贴 token、真实签字或未确认外部回复。" />
+          </el-form-item>
+          <el-form-item label="阻塞原因">
+            <el-input v-model="handlingForm.blocked_reason" type="textarea" :rows="2" placeholder="仅在 blocked 时填写，例如等待 business/security/staging 外部输入。" />
+          </el-form-item>
+          <el-form-item label="内部决策摘要">
+            <el-input v-model="handlingForm.decision_summary" type="textarea" :rows="2" placeholder="仅记录内部判断，不声明 approved / complete / STAGING_VALIDATED。" />
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <el-button @click="handlingDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="handlingSaving" @click="saveHandling">保存处理记录</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import {
   fetchDailyDecisionQueue,
   fetchDashboardActions,
+  updateDailyQueueHandling,
   type DailyDecisionQueue,
+  type DailyDecisionQueueItem,
   type DashboardActions,
   type RecommendedAction,
 } from '@/api/dashboard'
@@ -321,6 +386,17 @@ const marketReviews = ref<MarketResponseReviewConsole | null>(null)
 const partner = ref<PartnerOnboardingResponse | null>(null)
 const externalExecution = ref<ExternalExecutionConsole | null>(null)
 const supportWarning = ref('')
+const handlingDialogVisible = ref(false)
+const handlingSaving = ref(false)
+const handlingTarget = ref<DailyDecisionQueueItem | null>(null)
+const handlingForm = ref({
+  action: 'add_note',
+  owner: '',
+  follow_up_date: '',
+  blocked_reason: '',
+  internal_note: '',
+  decision_summary: '',
+})
 
 type OperatingMapEntry = {
   perspective: string
@@ -344,6 +420,92 @@ function priorityTag(priority: string) {
   if (priority === 'P0') return 'danger'
   if (priority === 'P1') return 'warning'
   return 'info'
+}
+
+function handlingStatusLabel(status: string) {
+  const labels: Record<string, string> = {
+    new: '未处理',
+    acknowledged: '已知晓',
+    in_progress: '处理中',
+    deferred: '已延期',
+    blocked: '处理阻塞',
+    waiting_external: '等待外部输入',
+    decision_recorded: '已记录内部决策',
+  }
+  return labels[status] || status
+}
+
+function currentOwner() {
+  return localStorage.getItem('partneros_email') || 'operator'
+}
+
+function handlingPayload(row: DailyDecisionQueueItem, action: string) {
+  return {
+    queue_item_id: row.id,
+    source_type: row.source_type,
+    source_id: row.source_id,
+    source_path: row.source_path,
+    title: row.title,
+    category: row.category,
+    priority: row.priority,
+    partner_focus: row.partner_focus,
+    product_focus: row.product_focus,
+    customer_or_account: row.customer_or_account,
+    action,
+  }
+}
+
+async function quickHandle(row: DailyDecisionQueueItem, action: string) {
+  try {
+    const payload = {
+      ...handlingPayload(row, action),
+      owner: action === 'assign' ? currentOwner() : (row.handling?.owner || null),
+      internal_note:
+        action === 'wait_external'
+          ? '等待真实外部输入；未收到回复前不得标记 approved、complete 或 response received。'
+          : undefined,
+    }
+    await updateDailyQueueHandling(payload)
+    ElMessage.success('已保存内部处理记录')
+    await load()
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '保存处理记录失败')
+  }
+}
+
+function openHandlingDialog(row: DailyDecisionQueueItem, action: string) {
+  handlingTarget.value = row
+  handlingForm.value = {
+    action,
+    owner: row.handling?.owner || row.owner || currentOwner(),
+    follow_up_date: row.handling?.follow_up_date || '',
+    blocked_reason: row.handling?.blocked_reason || '',
+    internal_note: row.handling?.internal_note || '',
+    decision_summary: row.handling?.decision_summary || '',
+  }
+  handlingDialogVisible.value = true
+}
+
+async function saveHandling() {
+  if (!handlingTarget.value) return
+  handlingSaving.value = true
+  try {
+    await updateDailyQueueHandling({
+      ...handlingPayload(handlingTarget.value, handlingForm.value.action),
+      owner: handlingForm.value.owner || null,
+      follow_up_date: handlingForm.value.follow_up_date || null,
+      blocked_reason: handlingForm.value.blocked_reason || null,
+      internal_note: handlingForm.value.internal_note || null,
+      decision_summary: handlingForm.value.decision_summary || null,
+    })
+    handlingDialogVisible.value = false
+    ElMessage.success('已保存内部处理记录')
+    await load()
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '保存处理记录失败')
+  } finally {
+    handlingSaving.value = false
+  }
 }
 
 const operatingMap = computed<OperatingMapEntry[]>(() => {

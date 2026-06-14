@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -17,9 +17,18 @@ from app.models import (
     User,
 )
 from app.schemas.dashboard import DashboardSummary
-from app.schemas.dashboard_actions import DailyDecisionQueueOut, DashboardActionsOut
+from app.schemas.dashboard_actions import (
+    DailyDecisionQueueOut,
+    DailyQueueHandlingRecordOut,
+    DailyQueueHandlingUpdate,
+    DashboardActionsOut,
+)
 from app.services.dashboard_actions import build_dashboard_actions
-from app.services.daily_decision_queue import build_daily_decision_queue
+from app.services.daily_decision_queue import (
+    build_daily_decision_queue,
+    list_daily_queue_handling,
+    update_daily_queue_handling,
+)
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -38,6 +47,26 @@ def dashboard_daily_decision_queue(
     user: User = Depends(get_current_user),
 ) -> DailyDecisionQueueOut:
     return build_daily_decision_queue(db, user)
+
+
+@router.get("/daily-decision-queue/handling", response_model=list[DailyQueueHandlingRecordOut])
+def dashboard_daily_queue_handling_records(
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> list[DailyQueueHandlingRecordOut]:
+    return list_daily_queue_handling(db)
+
+
+@router.patch("/daily-decision-queue/handling", response_model=DailyQueueHandlingRecordOut)
+def dashboard_update_daily_queue_handling(
+    body: DailyQueueHandlingUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> DailyQueueHandlingRecordOut:
+    try:
+        return update_daily_queue_handling(db, user, body)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 
 @router.get("/summary", response_model=DashboardSummary)
