@@ -55,6 +55,12 @@ def main() -> int:
     ]
 
     required_files = (
+        "backend/alembic/versions/0019_external_execution.py",
+        "backend/app/models/external_execution.py",
+        "backend/app/schemas/external_execution.py",
+        "backend/app/services/external_execution.py",
+        "backend/app/api/v1/routes/external_execution.py",
+        "frontend/src/api/externalExecution.ts",
         "frontend/src/pages/execution/ExternalExecutionPage.vue",
         "frontend/src/router/index.ts",
         "frontend/src/layouts/MainLayout.vue",
@@ -69,11 +75,15 @@ def main() -> int:
         return 1
 
     external_page = read("frontend/src/pages/execution/ExternalExecutionPage.vue")
+    external_api = read("frontend/src/api/externalExecution.ts")
+    backend_route = read("backend/app/api/v1/routes/external_execution.py")
+    backend_service = read("backend/app/services/external_execution.py")
+    migration = read("backend/alembic/versions/0019_external_execution.py")
     router = read("frontend/src/router/index.ts")
     nav = read("frontend/src/layouts/MainLayout.vue")
     dashboard = read("frontend/src/pages/dashboard/DashboardPage.vue")
     demo = read("frontend/src/pages/demo/DemoWalkthroughPage.vue")
-    combined = "\n".join([external_page, router, nav, dashboard, demo])
+    combined = "\n".join([external_page, external_api, backend_route, backend_service, migration, router, nav, dashboard, demo])
 
     ok, missing = contains_all(
         router,
@@ -96,13 +106,13 @@ def main() -> int:
     checks[1].pass_("dashboard, nav, and demo walkthrough expose external execution") if ok else checks[1].fail(missing)
 
     ok, missing = contains_all(
-        external_page,
+        combined,
         (
-            "actionType",
+            "action_type",
             "owner",
-            "dueDate",
+            "due_date",
             "dependency",
-            "nextStep",
+            "next_step",
             "status",
             "notes",
             "draft",
@@ -111,13 +121,18 @@ def main() -> int:
             "response received",
             "blocked",
             "complete",
-            "localStorage",
+            "fetchExternalExecutionConsole",
+            "createExternalExecutionAction",
+            "updateExternalExecutionAction",
+            "/v1/external-execution/console",
+            "/v1/external-execution/actions",
+            "external_execution_actions",
         ),
     )
-    checks[2].pass_("tracker includes required fields, statuses, and local persistence") if ok else checks[2].fail(missing)
+    checks[2].pass_("tracker includes required fields, statuses, API persistence, and migration") if ok else checks[2].fail(missing)
 
     ok, missing = contains_all(
-        external_page,
+        combined,
         (
             "不自动发送邮件、短信、LinkedIn 或客户通知",
             "没有真实回复不能标记 response received",
@@ -130,12 +145,12 @@ def main() -> int:
     checks[3].pass_("manual-only guardrails are visible") if ok else checks[3].fail(missing)
 
     ok, missing = contains_all(
-        external_page,
+        combined,
         (
             "READY_FOR_STAGING_HANDOFF",
             "WAITING_FOR_REAL_STAGING_EVIDENCE",
             "backend HTTPS origin",
-            "service.intelli-opus.com real origin",
+            "Portal origin",
             "PORTAL_CUSTOMER_API_TOKEN",
             "PORTAL_CUSTOMER_ALLOWED_ORIGINS",
             "PUBLIC_BASE_URL",
@@ -148,7 +163,7 @@ def main() -> int:
     checks[4].pass_("staging readiness and D9 boundary are visible") if ok else checks[4].fail(missing)
 
     ok, missing = contains_all(
-        external_page,
+        combined,
         (
             "HOSUN",
             "lifting systems",

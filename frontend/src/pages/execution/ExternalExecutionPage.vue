@@ -1,38 +1,34 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import { formatApiError } from '@/api/errors'
+import {
+  createExternalExecutionAction,
+  fetchExternalExecutionConsole,
+  updateExternalExecutionAction,
+  type ExternalActionStatus,
+  type ExternalExecutionAction,
+  type ExternalExecutionActionPayload,
+  type ExternalExecutionConsole,
+} from '@/api/externalExecution'
 
-type ExternalActionStatus = 'draft' | 'ready to send' | 'sent manually' | 'response received' | 'blocked' | 'complete'
+const loading = ref(false)
+const saving = ref(false)
+const error = ref('')
+const consoleData = ref<ExternalExecutionConsole | null>(null)
 
-interface ExternalAction {
-  id: string
-  actionType: string
-  owner: string
-  dueDate: string
-  dependency: string
-  nextStep: string
-  status: ExternalActionStatus
-  notes: string
-}
-
-const STORAGE_KEY = 'partneros.externalExecutionTracker.v1'
-
-const statusOptions: ExternalActionStatus[] = [
-  'draft',
-  'ready to send',
-  'sent manually',
-  'response received',
-  'blocked',
-  'complete',
-]
-
-const statusLabels: Record<ExternalActionStatus, string> = {
-  draft: '草稿',
-  'ready to send': '待人工发送',
-  'sent manually': '已人工发送',
-  'response received': '已收到真实回复',
-  blocked: '阻塞',
-  complete: '完成',
-}
+const newAction = reactive({
+  action_type: 'partner rehearsal request',
+  target_partner_system: '',
+  partner_focus: '',
+  product_focus_text: '',
+  owner: '',
+  due_date: '',
+  dependency: '',
+  next_step: '',
+  status: 'draft' as ExternalActionStatus,
+  notes: '',
+})
 
 const statusType: Record<ExternalActionStatus, 'info' | 'primary' | 'warning' | 'success' | 'danger'> = {
   draft: 'info',
@@ -43,196 +39,202 @@ const statusType: Record<ExternalActionStatus, 'info' | 'primary' | 'warning' | 
   complete: 'success',
 }
 
-const templateActions: ExternalAction[] = [
-  {
-    id: 'EXT-001',
-    actionType: 'partner rehearsal request',
-    owner: '业务负责人',
-    dueDate: '待排期',
-    dependency: 'partner rehearsal message + feedback form',
-    nextStep: '手动邀请 HOSUN/JOOBOO/未来 partner，演示后再录入真实反馈。',
-    status: 'ready to send',
-    notes: '没有真实回复前不得标记 response received。',
-  },
-  {
-    id: 'EXT-002',
-    actionType: 'business UAT / data sign-off request',
-    owner: '业务负责人',
-    dueDate: '待排期',
-    dependency: 'UAT data selection + customer-safe wording checklist',
-    nextStep: '确认 customer-visible 字段、禁止字段、样本数据和 pilot 产品范围。',
-    status: 'draft',
-    notes: '没有 owner/date/scope 的真实签字前不得写 approved。',
-  },
-  {
-    id: 'EXT-003',
-    actionType: 'security review request',
-    owner: '安全审核人',
-    dueDate: '待排期',
-    dependency: 'forbidden field matrix + secret handling drill',
-    nextStep: '审核 token、CORS、日志、截图、回滚和 customer-safe 白名单。',
-    status: 'draft',
-    notes: '不处理真实 token；raw token 不能进入文档、日志、截图或聊天。',
-  },
-  {
-    id: 'EXT-004',
-    actionType: 'staging credentials request',
-    owner: '部署/Portal 负责人',
-    dueDate: '待排期',
-    dependency: 'backend HTTPS origin + Portal origin + allowed origins + PUBLIC_BASE_URL',
-    nextStep: '通过安全渠道接收配置，只记录 PROVIDED_VIA_SECURE_CHANNEL 等脱敏状态。',
-    status: 'draft',
-    notes: '当前外部 staging 仍是 WAITING_FOR_REAL_STAGING_EVIDENCE。',
-  },
-  {
-    id: 'EXT-005',
-    actionType: 'staging smoke execution',
-    owner: '联调负责人',
-    dueDate: '真实 credentials 到位后',
-    dependency: 'security signoff + business signoff + UAT seed approval + rollback owner',
-    nextStep: '运行真实 staging smoke；全部通过前不能写 STAGING_VALIDATED，不能进入 D9。',
-    status: 'blocked',
-    notes: '被真实 credentials/evidence/sign-off 阻塞。',
-  },
-]
+const actions = computed(() => consoleData.value?.actions || [])
+const statusOptions = computed(() => consoleData.value?.status_options || [])
+const stagingReadiness = computed(() => consoleData.value?.staging_readiness || [])
+const hosunFieldRows = computed(() => consoleData.value?.lifting_systems_field_review || [])
+const partnerCoverage = computed(() => consoleData.value?.partner_coverage || [])
 
-const actions = ref<ExternalAction[]>(structuredClone(templateActions))
-
-const stagingReadiness = [
-  ['backend HTTPS origin', 'pending external input', '需要真实后端 HTTPS 地址，不能用本地 URL 替代。'],
-  ['service.intelli-opus.com real origin', 'pending external input', '需要 Portal 侧真实 origin。'],
-  ['PORTAL_CUSTOMER_API_TOKEN', 'pending secure channel', '只允许记录 PROVIDED_VIA_SECURE_CHANNEL，不记录 token 原文。'],
-  ['PORTAL_CUSTOMER_ALLOWED_ORIGINS', 'pending external input', '必须明确允许 origin，不能使用 wildcard。'],
-  ['PUBLIC_BASE_URL', 'pending external input', '需要与真实 staging 域名一致。'],
-  ['security signoff', 'pending', '需要 reviewer/date/scope。'],
-  ['business signoff', 'pending', '需要 owner/date/scope。'],
-  ['real staging smoke test', 'pending', '本地 dry-run 和脚本通过不等于真实 staging validated。'],
-  ['D9 entry gate', 'blocked', '任一 P0 条件缺失都不得进入 D9。'],
-]
-
-const hosunFieldRows = [
-  ['load', 'customer-safe candidate', '需要资料支持；未经业务确认不得给客户看。'],
-  ['stability', 'customer-safe candidate', '可转为 stability summary，原始测试记录 internal-only。'],
-  ['noise', 'needs validation', 'noise claim 需要确认测试条件和话术。'],
-  ['delivery', 'customer-safe candidate', '只能展示预计交期或客户可接受表述。'],
-  ['installation', 'customer-safe candidate', '可展示安装摘要，内部问题归因不外露。'],
-  ['after-sales', 'customer-safe candidate', '可展示售后支持摘要。'],
-  ['packaging', 'customer-safe candidate', '可展示包装摘要，供应商备注 internal-only。'],
-  ['warranty', 'needs validation', 'warranty summary 需要业务确认。'],
-  ['test cycle', 'needs validation', '测试周期需资料支持后才能 customer-visible。'],
-  ['certification', 'needs validation', '认证字段必须有材料支持。'],
-  ['project demand', 'customer-safe candidate', '项目制需求可高层展示，内部评分不外露。'],
-]
-
-const partnerCoverage = [
-  {
-    partner: 'HOSUN',
-    focus: 'lifting systems / desk frames / desk legs / lifting columns / heavy-duty supply',
-    rule: '技术声称必须区分 customer-safe candidate、needs validation、internal-only、pilot blocker。',
-  },
-  {
-    partner: 'JOOBOO',
-    focus: 'education furniture / school desks/chairs / project furniture',
-    rule: '关注 school procurement timing、delivery consistency、installation、resource needs、feedback after use、project acceptance criteria。',
-  },
-  {
-    partner: 'future partner',
-    focus: 'onboarding data / product family / quote logic / delivery requirement / resource taxonomy',
-    rule: '沿用同一闭环，但保留各自 customer-visible fields 和 Market Response metrics。',
-  },
-]
-
-const hasUnsafeStatus = computed(() =>
-  actions.value.some((action) => action.status === 'response received' || action.status === 'complete'),
+const hasSensitiveBoundary = computed(() =>
+  Boolean(consoleData.value?.status === 'READY_FOR_STAGING_HANDOFF' && consoleData.value?.external_staging_state),
 )
-
-onMounted(() => {
-  const raw = window.localStorage.getItem(STORAGE_KEY)
-  if (!raw) return
-  try {
-    const parsed = JSON.parse(raw) as ExternalAction[]
-    const ids = new Set(templateActions.map((item) => item.id))
-    if (Array.isArray(parsed) && parsed.every((item) => ids.has(item.id))) {
-      actions.value = parsed
-    }
-  } catch {
-    window.localStorage.removeItem(STORAGE_KEY)
-  }
-})
-
-function saveTracker() {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(actions.value))
-}
-
-function resetTracker() {
-  actions.value = structuredClone(templateActions)
-  saveTracker()
-}
-
-function statusLabel(status: ExternalActionStatus) {
-  return statusLabels[status]
-}
 
 function statusTagType(status: ExternalActionStatus) {
   return statusType[status]
 }
+
+function splitProductFocus(value: string) {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+function applyConsole(next: ExternalExecutionConsole) {
+  consoleData.value = next
+}
+
+async function load() {
+  loading.value = true
+  error.value = ''
+  try {
+    applyConsole(await fetchExternalExecutionConsole())
+  } catch (e) {
+    error.value = formatApiError(e, '外部执行协作台加载失败。')
+  } finally {
+    loading.value = false
+  }
+}
+
+async function createAction() {
+  if (!newAction.target_partner_system.trim()) {
+    error.value = '请先填写 target partner/system。'
+    return
+  }
+  saving.value = true
+  error.value = ''
+  try {
+    const payload = {
+      action_type: newAction.action_type,
+      target_partner_system: newAction.target_partner_system,
+      partner_focus: newAction.partner_focus || null,
+      product_focus: splitProductFocus(newAction.product_focus_text),
+      owner: newAction.owner || null,
+      due_date: newAction.due_date || null,
+      dependency: newAction.dependency || null,
+      next_step: newAction.next_step || null,
+      status: newAction.status,
+      notes: newAction.notes || null,
+    }
+    applyConsole(await createExternalExecutionAction(payload))
+    newAction.target_partner_system = ''
+    newAction.partner_focus = ''
+    newAction.product_focus_text = ''
+    newAction.owner = ''
+    newAction.due_date = ''
+    newAction.dependency = ''
+    newAction.next_step = ''
+    newAction.status = 'draft'
+    newAction.notes = ''
+    ElMessage.success('已保存外部执行动作')
+  } catch (e) {
+    error.value = formatApiError(e, '外部执行动作保存失败。')
+  } finally {
+    saving.value = false
+  }
+}
+
+async function saveAction(row: ExternalExecutionAction, payload: ExternalExecutionActionPayload) {
+  saving.value = true
+  error.value = ''
+  try {
+    applyConsole(await updateExternalExecutionAction(row.id, payload))
+    ElMessage.success('已更新')
+  } catch (e) {
+    error.value = formatApiError(e, '外部执行动作更新失败。')
+    await load()
+  } finally {
+    saving.value = false
+  }
+}
+
+function editablePayload(row: ExternalExecutionAction): ExternalExecutionActionPayload {
+  return {
+    owner: row.owner,
+    due_date: row.due_date,
+    dependency: row.dependency,
+    next_step: row.next_step,
+    status: row.status,
+    response_summary: row.response_summary,
+    risk_notes: row.risk_notes,
+    blocker_notes: row.blocker_notes,
+    redacted_credential_status: row.redacted_credential_status,
+    notes: row.notes,
+  }
+}
+
+onMounted(load)
 </script>
 
 <template>
-  <div class="space-y-5">
+  <div class="space-y-5" v-loading="loading">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
         <h2 class="text-xl font-semibold text-slate-800">外部执行 / Staging Readiness</h2>
         <p class="mt-1 max-w-4xl text-sm text-slate-600">
-          用于内部 Beta 的人工执行跟踪：记录 partner rehearsal、business UAT、security review、staging credentials 和真实 staging smoke 的状态。系统只记录人工状态，不自动发送邮件、短信、LinkedIn 或客户通知。
+          内部协作台：记录 partner rehearsal、business UAT、security review、staging credentials、pilot readiness 和真实 staging smoke 的人工跟进状态。系统只保存人工状态，不自动发送邮件、短信、LinkedIn 或客户通知。
         </p>
       </div>
       <div class="flex gap-2">
-        <el-button @click="resetTracker">恢复模板</el-button>
-        <el-button type="primary" @click="saveTracker">保存到本机</el-button>
+        <el-button @click="load">刷新</el-button>
+        <el-button type="primary" :loading="saving" @click="createAction">新增动作</el-button>
       </div>
     </div>
 
     <el-alert
+      v-if="hasSensitiveBoundary"
       type="warning"
       :closable="false"
       show-icon
-      title="当前仍是 READY_FOR_STAGING_HANDOFF；外部 staging 仍是 WAITING_FOR_REAL_STAGING_EVIDENCE。没有真实回复不能标记 response received；没有真实签字不能 approved；不能记录 raw token；不能进入 D9。"
+      :title="`当前仍是 ${consoleData?.status}；外部 staging 仍是 ${consoleData?.external_staging_state}。没有真实回复不能标记 response received；没有真实签字不能 approved；不能记录 raw token；不能进入 D9。`"
     />
-    <el-alert
-      v-if="hasUnsafeStatus"
-      type="info"
-      :closable="false"
-      title="请确认：response received / complete 只能在用户贴出真实外部回复、真实验证或真实签字后使用。"
-    />
+    <el-alert v-if="error" type="error" :closable="false" :title="error" />
+
+    <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 class="font-semibold text-slate-800">新增手动外部动作</h3>
+        <el-tag type="info" effect="plain">API cost $0 / no external send</el-tag>
+      </div>
+      <div class="grid gap-3 lg:grid-cols-3">
+        <el-input v-model="newAction.action_type" placeholder="Action type" />
+        <el-input v-model="newAction.target_partner_system" placeholder="Target partner/system" />
+        <el-input v-model="newAction.partner_focus" placeholder="Partner focus，例如 HOSUN / JOOBOO" />
+        <el-input v-model="newAction.product_focus_text" placeholder="Product focus，逗号分隔" />
+        <el-input v-model="newAction.owner" placeholder="Owner" />
+        <el-input v-model="newAction.due_date" placeholder="Due date: YYYY-MM-DD 或留空" />
+      </div>
+      <div class="mt-3 grid gap-3 lg:grid-cols-3">
+        <el-input v-model="newAction.dependency" type="textarea" :rows="2" placeholder="Dependency" />
+        <el-input v-model="newAction.next_step" type="textarea" :rows="2" placeholder="Next step" />
+        <el-input v-model="newAction.notes" type="textarea" :rows="2" placeholder="Notes，不要粘贴 raw token" />
+      </div>
+    </section>
 
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h3 class="font-semibold text-slate-800">手动外部执行 Tracker</h3>
-        <el-tag type="info" effect="plain">API cost $0 / no external send</el-tag>
+        <div class="flex flex-wrap gap-2">
+          <el-tag v-for="(count, status) in consoleData?.status_counts" :key="status" effect="plain">{{ status }}: {{ count }}</el-tag>
+        </div>
       </div>
       <el-table :data="actions" border size="small">
-        <el-table-column prop="id" label="ID" width="86" />
-        <el-table-column prop="actionType" label="Action type" min-width="190" />
-        <el-table-column prop="owner" label="Owner" width="130" />
-        <el-table-column prop="dueDate" label="Due date" width="150">
+        <el-table-column prop="action_type" label="Action type" min-width="180" />
+        <el-table-column prop="target_partner_system" label="Target" min-width="180" />
+        <el-table-column prop="owner" label="Owner" width="140">
           <template #default="{ row }">
-            <el-input v-model="row.dueDate" size="small" @change="saveTracker" />
+            <el-input v-model="row.owner" size="small" @change="saveAction(row, { owner: row.owner })" />
           </template>
         </el-table-column>
-        <el-table-column prop="dependency" label="Dependency" min-width="220" />
-        <el-table-column prop="nextStep" label="Next step" min-width="260" />
+        <el-table-column prop="due_date" label="Due date" width="150">
+          <template #default="{ row }">
+            <el-input v-model="row.due_date" size="small" placeholder="YYYY-MM-DD" @change="saveAction(row, { due_date: row.due_date })" />
+          </template>
+        </el-table-column>
         <el-table-column label="Status" width="190">
           <template #default="{ row }">
-            <el-select v-model="row.status" size="small" @change="saveTracker">
-              <el-option v-for="status in statusOptions" :key="status" :label="statusLabel(status)" :value="status" />
+            <el-select v-model="row.status" size="small" @change="saveAction(row, editablePayload(row))">
+              <el-option v-for="status in statusOptions" :key="status.value" :label="status.label" :value="status.value" />
             </el-select>
             <el-tag class="mt-1" :type="statusTagType(row.status)" effect="plain">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="Notes" min-width="230">
+        <el-table-column label="Dependency / Next step" min-width="300">
           <template #default="{ row }">
-            <el-input v-model="row.notes" type="textarea" :rows="3" @change="saveTracker" />
+            <el-input v-model="row.dependency" type="textarea" :rows="2" placeholder="Dependency" @change="saveAction(row, { dependency: row.dependency })" />
+            <el-input class="mt-2" v-model="row.next_step" type="textarea" :rows="2" placeholder="Next step" @change="saveAction(row, { next_step: row.next_step })" />
+          </template>
+        </el-table-column>
+        <el-table-column label="Response / Risk / Notes" min-width="330">
+          <template #default="{ row }">
+            <el-input
+              v-model="row.response_summary"
+              type="textarea"
+              :rows="2"
+              placeholder="真实回复摘要；response received 必填"
+              @change="saveAction(row, { response_summary: row.response_summary })"
+            />
+            <el-input class="mt-2" v-model="row.risk_notes" type="textarea" :rows="2" placeholder="Risk notes" @change="saveAction(row, { risk_notes: row.risk_notes })" />
+            <el-input class="mt-2" v-model="row.notes" type="textarea" :rows="2" placeholder="Notes，不要粘贴 raw token" @change="saveAction(row, { notes: row.notes })" />
           </template>
         </el-table-column>
       </el-table>
@@ -240,14 +242,14 @@ function statusTagType(status: ExternalActionStatus) {
 
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h3 class="font-semibold text-slate-800">Staging Readiness Gate</h3>
+        <h3 class="font-semibold text-slate-800">Staging / Pilot Readiness Gate</h3>
         <el-tag type="danger" effect="plain">D9 gate blocked</el-tag>
       </div>
       <div class="grid gap-3 md:grid-cols-3">
-        <div v-for="row in stagingReadiness" :key="row[0]" class="rounded border border-slate-100 bg-slate-50 p-3">
-          <div class="text-sm font-semibold text-slate-800">{{ row[0] }}</div>
-          <el-tag class="my-2" type="warning" effect="plain">{{ row[1] }}</el-tag>
-          <p class="text-xs text-slate-600">{{ row[2] }}</p>
+        <div v-for="row in stagingReadiness" :key="row.item" class="rounded border border-slate-100 bg-slate-50 p-3">
+          <div class="text-sm font-semibold text-slate-800">{{ row.item }}</div>
+          <el-tag class="my-2" type="warning" effect="plain">{{ row.status }}</el-tag>
+          <p class="text-xs text-slate-600">{{ row.detail }}</p>
         </div>
       </div>
     </section>
@@ -258,17 +260,13 @@ function statusTagType(status: ExternalActionStatus) {
         <el-tag effect="plain">lifting systems / desk frames / desk legs / lifting columns / heavy-duty supply</el-tag>
       </div>
       <el-table :data="hosunFieldRows" border size="small">
-        <el-table-column label="Field" width="150">
-          <template #default="{ row }">{{ row[0] }}</template>
-        </el-table-column>
-        <el-table-column label="Review class" width="190">
+        <el-table-column prop="field" label="Field" width="150" />
+        <el-table-column prop="review_class" label="Review class" width="200">
           <template #default="{ row }">
-            <el-tag effect="plain">{{ row[1] }}</el-tag>
+            <el-tag effect="plain">{{ row.review_class }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="Rule">
-          <template #default="{ row }">{{ row[2] }}</template>
-        </el-table-column>
+        <el-table-column prop="rule" label="Rule" />
       </el-table>
       <p class="mt-3 text-xs text-slate-500">
         raw test notes、complaint details、delivery risk analysis、warranty cost exposure、supplier private notes、internal Market Response scoring/ranking 必须 internal-only。

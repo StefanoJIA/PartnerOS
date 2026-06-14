@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from app.api.v1.routes import (
+    external_execution,
     feedback_tickets,
     fx_rates,
     growth_operations,
@@ -29,6 +30,7 @@ v1_router.include_router(system.router)
 v1_router.include_router(portal.router)
 v1_router.include_router(portal_customer.router)
 v1_router.include_router(portal_operations.router)
+v1_router.include_router(external_execution.router)
 v1_router.include_router(feedback_tickets.router)
 v1_router.include_router(products.router)
 v1_router.include_router(fx_rates.router)
