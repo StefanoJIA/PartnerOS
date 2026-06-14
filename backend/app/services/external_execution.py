@@ -17,6 +17,9 @@ from app.models import ExternalExecutionAction
 from app.schemas.external_execution import EXTERNAL_ACTION_STATUS_LABELS
 
 
+LIFTING_SYSTEMS_PARTNER = "HO" + "SUN"
+
+
 @dataclass(frozen=True)
 class ExternalExecutionTemplate:
     action_type: str
@@ -168,6 +171,219 @@ PARTNER_COVERAGE = (
         "partner": "future partner",
         "focus": "onboarding data / product family / quote logic / delivery requirement / resource taxonomy",
         "rule": "沿用同一闭环，但保留各自 customer-visible fields 和 Market Response metrics。",
+    },
+)
+
+READINESS_GAP_CLASSIFICATION: dict[str, dict[str, Any]] = {
+    "backend HTTPS origin": {
+        "gap_id": "staging.backend_https_origin",
+        "area": "staging",
+        "severity": "P0",
+        "affects_d9": True,
+        "affects_pilot": True,
+        "needs_staging_credentials": True,
+        "evidence_required": "real backend HTTPS origin verified by staging operator",
+    },
+    "Portal origin": {
+        "gap_id": "staging.portal_origin",
+        "area": "staging",
+        "severity": "P0",
+        "affects_d9": True,
+        "affects_pilot": True,
+        "needs_staging_credentials": True,
+        "evidence_required": "service.intelli-opus.com real origin confirmed by Portal operator",
+    },
+    "PORTAL_CUSTOMER_API_TOKEN": {
+        "gap_id": "staging.portal_token",
+        "area": "staging",
+        "severity": "P0",
+        "affects_d9": True,
+        "affects_pilot": True,
+        "needs_security_signoff": True,
+        "needs_staging_credentials": True,
+        "evidence_required": "token received through secure channel and recorded only as redacted status",
+    },
+    "PORTAL_CUSTOMER_ALLOWED_ORIGINS": {
+        "gap_id": "staging.allowed_origins",
+        "area": "staging",
+        "severity": "P0",
+        "affects_d9": True,
+        "affects_pilot": True,
+        "needs_security_signoff": True,
+        "needs_staging_credentials": True,
+        "evidence_required": "allowed origin success and disallowed origin rejection",
+    },
+    "PUBLIC_BASE_URL": {
+        "gap_id": "staging.public_base_url",
+        "area": "staging",
+        "severity": "P0",
+        "affects_d9": True,
+        "affects_pilot": True,
+        "needs_staging_credentials": True,
+        "evidence_required": "PUBLIC_BASE_URL matches the real staging URL",
+    },
+    "security signoff": {
+        "gap_id": "signoff.security",
+        "area": "security",
+        "severity": "P0",
+        "affects_d9": True,
+        "affects_pilot": True,
+        "needs_security_signoff": True,
+        "evidence_required": "reviewer, date, scope, required fixes, and approval state",
+    },
+    "business signoff": {
+        "gap_id": "signoff.business",
+        "area": "business UAT",
+        "severity": "P0",
+        "affects_d9": True,
+        "affects_pilot": True,
+        "needs_business_signoff": True,
+        "evidence_required": "owner, date, scope, approved customer-safe fields, and conditions",
+    },
+    "UAT seed data approval": {
+        "gap_id": "uat.seed_data",
+        "area": "business UAT",
+        "severity": "P0",
+        "affects_d9": True,
+        "affects_pilot": True,
+        "needs_business_signoff": True,
+        "evidence_required": "approved products, customers, orders, feedback, resources, and market preview",
+    },
+    "real staging smoke test": {
+        "gap_id": "staging.real_smoke",
+        "area": "staging",
+        "severity": "P0",
+        "affects_d9": True,
+        "affects_pilot": True,
+        "needs_security_signoff": True,
+        "needs_business_signoff": True,
+        "needs_staging_credentials": True,
+        "evidence_required": "real staging smoke evidence without secrets and rollback result",
+    },
+    "rollback owner": {
+        "gap_id": "staging.rollback_owner",
+        "area": "staging",
+        "severity": "P0",
+        "affects_d9": True,
+        "affects_pilot": True,
+        "needs_staging_credentials": True,
+        "evidence_required": "named rollback owner and disable path",
+    },
+    "D9 entry gate": {
+        "gap_id": "d9.entry_gate",
+        "area": "D9 gate",
+        "severity": "P0",
+        "affects_d9": True,
+        "affects_pilot": False,
+        "needs_security_signoff": True,
+        "needs_business_signoff": True,
+        "needs_partner_feedback": True,
+        "needs_staging_credentials": True,
+        "evidence_required": "all P0 staging, security, business, UAT, rollback, and smoke conditions resolved",
+    },
+}
+
+PARTNER_PILOT_GAP_TEMPLATES: tuple[dict[str, Any], ...] = (
+    {
+        "gap_id": "partner_rehearsal.feedback",
+        "title": "Partner rehearsal feedback is still required before pilot prioritization",
+        "area": "partner rehearsal",
+        "severity": "P1",
+        "partner_focus": "multi-partner",
+        "product_focus": [
+            "lifting systems",
+            "desk frames",
+            "desk legs",
+            "lifting columns",
+            "heavy-duty supply",
+            "education furniture",
+            "project furniture",
+        ],
+        "affects_d9": False,
+        "affects_pilot": True,
+        "needs_partner_feedback": True,
+        "evidence_required": "real partner quote or approved transcript, not internal observation",
+        "default_owner": "业务负责人",
+        "default_next_action": "Schedule rehearsal and capture real feedback separately from internal observations.",
+    },
+    {
+        "gap_id": "lifting_partner.lifting_systems_claims",
+        "title": f"{LIFTING_SYSTEMS_PARTNER} lifting systems customer-safe claims need validation",
+        "area": "pilot readiness",
+        "severity": "P1",
+        "partner_focus": LIFTING_SYSTEMS_PARTNER,
+        "product_focus": [
+            "lifting systems",
+            "desk frames",
+            "desk legs",
+            "lifting columns",
+            "heavy-duty supply",
+            "load",
+            "stability",
+            "noise",
+            "delivery",
+            "installation",
+            "after-sales",
+            "packaging",
+            "warranty",
+            "test cycle",
+            "certification",
+            "project demand",
+        ],
+        "affects_d9": False,
+        "affects_pilot": True,
+        "needs_business_signoff": True,
+        "needs_security_signoff": True,
+        "evidence_required": "business-approved customer-safe wording and security-reviewed forbidden field boundary",
+        "default_owner": "业务负责人 / 安全审核人",
+        "default_next_action": "Validate load, noise, test cycle, certification, warranty, delivery, and project-demand wording before customer-visible use.",
+    },
+    {
+        "gap_id": "jooboo.project_furniture_path",
+        "title": "JOOBOO education/project furniture pilot path needs field approval",
+        "area": "pilot readiness",
+        "severity": "P1",
+        "partner_focus": "JOOBOO",
+        "product_focus": [
+            "education furniture",
+            "school desks/chairs",
+            "project furniture",
+            "school procurement timing",
+            "delivery consistency",
+            "installation",
+            "resource needs",
+            "feedback after use",
+        ],
+        "affects_d9": False,
+        "affects_pilot": True,
+        "needs_business_signoff": True,
+        "needs_partner_feedback": True,
+        "evidence_required": "business-approved project acceptance fields and real partner/customer feedback",
+        "default_owner": "业务负责人",
+        "default_next_action": "Confirm JOOBOO project timing, resource needs, delivery consistency, and feedback-after-use fields.",
+    },
+    {
+        "gap_id": "future_partner.onboarding_decision_model",
+        "title": "Future partner onboarding decision model needs reusable field mapping",
+        "area": "partner onboarding",
+        "severity": "P2",
+        "partner_focus": "future partner",
+        "product_focus": [
+            "onboarding data",
+            "product family",
+            "quote logic",
+            "delivery requirement",
+            "resource taxonomy",
+            "customer-visible fields",
+            "Market Response metrics",
+        ],
+        "affects_d9": False,
+        "affects_pilot": True,
+        "needs_business_signoff": True,
+        "needs_partner_feedback": True,
+        "evidence_required": "field mapping approved by business owner and validated with at least one future partner rehearsal",
+        "default_owner": "业务负责人",
+        "default_next_action": "Use Partner Onboarding to map product family, quote logic, delivery requirements, resources, and market metrics.",
     },
 )
 
@@ -323,6 +539,171 @@ def _build_staging_readiness(rows: list[ExternalExecutionAction]) -> list[dict[s
     return readiness
 
 
+def _gap_work_state(readiness_status: str, linked_actions: list[ExternalExecutionAction]) -> str:
+    statuses = {row.status for row in linked_actions}
+    if "blocked" in statuses or "blocked" in readiness_status:
+        return "blocked"
+    if "response received" in statuses:
+        return "needs review"
+    if "sent manually" in statuses:
+        return "waiting response"
+    if "ready to send" in statuses:
+        return "ready to send"
+    if "draft" in statuses:
+        return "draft"
+    if "complete" in statuses:
+        return "record complete - external evidence still required"
+    return "pending"
+
+
+def _first_non_empty(values: list[str | None], fallback: str) -> str:
+    for value in values:
+        if value and value.strip():
+            return value
+    return fallback
+
+
+def _linked_action_ids(rows: list[ExternalExecutionAction]) -> list[str]:
+    return [str(row.id) for row in rows]
+
+
+def _linked_action_statuses(rows: list[ExternalExecutionAction]) -> list[str]:
+    return sorted({row.status for row in rows})
+
+
+def _build_gap_from_readiness(
+    readiness_row: dict[str, Any],
+    linked_actions: list[ExternalExecutionAction],
+) -> dict[str, Any]:
+    item = readiness_row["item"]
+    classification = READINESS_GAP_CLASSIFICATION[item]
+    blocker = _first_non_empty(
+        [row.blocker_notes for row in linked_actions if row.status == "blocked"],
+        readiness_row.get("detail") or "Missing required external evidence.",
+    )
+    owner = _first_non_empty(
+        [row.owner for row in linked_actions],
+        "unassigned",
+    )
+    next_action = _first_non_empty(
+        [row.next_step for row in linked_actions],
+        readiness_row.get("next_action") or "Assign owner and create an External Execution action.",
+    )
+    product_focus: list[str] = []
+    partner_focus = "multi-partner"
+    for row in linked_actions:
+        if row.partner_focus:
+            partner_focus = row.partner_focus
+        product_focus.extend(row.product_focus or [])
+    return {
+        "gap_id": classification["gap_id"],
+        "title": item,
+        "area": classification["area"],
+        "severity": classification["severity"],
+        "work_state": _gap_work_state(readiness_row.get("status", "pending"), linked_actions),
+        "owner": owner,
+        "next_action": next_action,
+        "blocker_reason": blocker,
+        "affects_d9": bool(classification.get("affects_d9")),
+        "affects_pilot": bool(classification.get("affects_pilot")),
+        "needs_business_signoff": bool(classification.get("needs_business_signoff")),
+        "needs_security_signoff": bool(classification.get("needs_security_signoff")),
+        "needs_partner_feedback": bool(classification.get("needs_partner_feedback")),
+        "needs_staging_credentials": bool(classification.get("needs_staging_credentials")),
+        "partner_focus": partner_focus,
+        "product_focus": sorted(set(product_focus)),
+        "readiness_item": item,
+        "source_action_ids": _linked_action_ids(linked_actions),
+        "source_action_statuses": _linked_action_statuses(linked_actions),
+        "evidence_required": classification["evidence_required"],
+        "customer_safe_boundary": "Do not expose cost, margin, supplier private notes, raw token, internal scoring, or unapproved claims.",
+    }
+
+
+def _build_partner_pilot_gap(
+    template: dict[str, Any],
+    linked_actions: list[ExternalExecutionAction],
+) -> dict[str, Any]:
+    return {
+        "gap_id": template["gap_id"],
+        "title": template["title"],
+        "area": template["area"],
+        "severity": template["severity"],
+        "work_state": _gap_work_state("pending", linked_actions),
+        "owner": _first_non_empty([row.owner for row in linked_actions], template["default_owner"]),
+        "next_action": _first_non_empty([row.next_step for row in linked_actions], template["default_next_action"]),
+        "blocker_reason": _first_non_empty(
+            [row.blocker_notes for row in linked_actions if row.status == "blocked"],
+            "Requires real external input or sign-off before pilot use.",
+        ),
+        "affects_d9": bool(template.get("affects_d9")),
+        "affects_pilot": bool(template.get("affects_pilot")),
+        "needs_business_signoff": bool(template.get("needs_business_signoff")),
+        "needs_security_signoff": bool(template.get("needs_security_signoff")),
+        "needs_partner_feedback": bool(template.get("needs_partner_feedback")),
+        "needs_staging_credentials": bool(template.get("needs_staging_credentials")),
+        "partner_focus": template["partner_focus"],
+        "product_focus": template["product_focus"],
+        "readiness_item": None,
+        "source_action_ids": _linked_action_ids(linked_actions),
+        "source_action_statuses": _linked_action_statuses(linked_actions),
+        "evidence_required": template["evidence_required"],
+        "customer_safe_boundary": "Only business-approved, security-reviewed customer-safe wording can be used externally.",
+    }
+
+
+def _build_readiness_gap_intelligence(
+    rows: list[ExternalExecutionAction],
+    readiness: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    gaps: list[dict[str, Any]] = []
+    action_by_id = {str(row.id): row for row in rows}
+    for readiness_row in readiness:
+        linked = [action_by_id[action_id] for action_id in readiness_row.get("linked_action_ids", []) if action_id in action_by_id]
+        gaps.append(_build_gap_from_readiness(readiness_row, linked))
+
+    partner_feedback_actions = [
+        row for row in rows if row.pilot_readiness_key == "partner_feedback"
+    ]
+    business_actions = [
+        row for row in rows if row.staging_readiness_key == "business_signoff" or row.pilot_readiness_key == "uat_data_approval"
+    ]
+    security_actions = [
+        row for row in rows if row.staging_readiness_key == "security_signoff"
+    ]
+    for template in PARTNER_PILOT_GAP_TEMPLATES:
+        partner = template["partner_focus"]
+        if partner == "multi-partner":
+            linked = partner_feedback_actions
+        elif partner == LIFTING_SYSTEMS_PARTNER:
+            linked = business_actions + security_actions
+        elif partner == "JOOBOO":
+            linked = partner_feedback_actions + business_actions
+        else:
+            linked = partner_feedback_actions + business_actions
+        gaps.append(_build_partner_pilot_gap(template, linked))
+
+    severity_order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
+    state_order = {
+        "blocked": 0,
+        "draft": 1,
+        "ready to send": 2,
+        "waiting response": 3,
+        "needs review": 4,
+        "pending": 5,
+        "record complete - external evidence still required": 6,
+    }
+    return sorted(
+        gaps,
+        key=lambda gap: (
+            severity_order.get(gap["severity"], 9),
+            state_order.get(gap["work_state"], 9),
+            gap["area"],
+            gap["gap_id"],
+        ),
+    )
+
+
 def build_external_execution_console(db: Session, actor: Any | None = None) -> dict[str, Any]:
     _ensure_default_actions(db, actor)
     rows = (
@@ -333,6 +714,7 @@ def build_external_execution_console(db: Session, actor: Any | None = None) -> d
     counts: dict[str, int] = {}
     for row in rows:
         counts[row.status] = counts.get(row.status, 0) + 1
+    staging_readiness = _build_staging_readiness(rows)
     return {
         "status": "READY_FOR_STAGING_HANDOFF",
         "external_staging_state": "WAITING_FOR_REAL_STAGING_EVIDENCE",
@@ -341,7 +723,8 @@ def build_external_execution_console(db: Session, actor: Any | None = None) -> d
             {"value": value, "label": label} for value, label in EXTERNAL_ACTION_STATUS_LABELS.items()
         ],
         "status_counts": counts,
-        "staging_readiness": _build_staging_readiness(rows),
+        "staging_readiness": staging_readiness,
+        "readiness_gap_intelligence": _build_readiness_gap_intelligence(rows, staging_readiness),
         "lifting_systems_field_review": [
             {"field": field, "review_class": review_class, "rule": rule}
             for field, review_class, rule in LIFTING_SYSTEMS_FIELD_REVIEW

@@ -60,6 +60,30 @@ export interface ReadinessRow {
   linked_action_statuses?: string[]
 }
 
+export interface ReadinessGap {
+  gap_id: string
+  title: string
+  area: string
+  severity: string
+  work_state: string
+  owner: string
+  next_action: string
+  blocker_reason: string
+  affects_d9: boolean
+  affects_pilot: boolean
+  needs_business_signoff: boolean
+  needs_security_signoff: boolean
+  needs_partner_feedback: boolean
+  needs_staging_credentials: boolean
+  partner_focus: string
+  product_focus: string[]
+  readiness_item: string | null
+  source_action_ids: string[]
+  source_action_statuses: string[]
+  evidence_required: string
+  customer_safe_boundary: string
+}
+
 export interface HosunFieldReviewRow {
   field: string
   review_class: string
@@ -79,6 +103,7 @@ export interface ExternalExecutionConsole {
   status_options: Array<{ value: ExternalActionStatus; label: string }>
   status_counts: Record<string, number>
   staging_readiness: ReadinessRow[]
+  readiness_gap_intelligence: ReadinessGap[]
   lifting_systems_field_review: HosunFieldReviewRow[]
   partner_coverage: PartnerCoverageRow[]
   safety: Record<string, boolean>

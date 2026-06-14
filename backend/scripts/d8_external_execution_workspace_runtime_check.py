@@ -43,6 +43,7 @@ def main() -> int:
         payload = build_external_execution_console(db, actor)
         actions = payload.get("actions") or []
         readiness = payload.get("staging_readiness") or []
+        gaps = payload.get("readiness_gap_intelligence") or []
         safety = payload.get("safety") or {}
         db_count = db.query(ExternalExecutionAction).count()
         checks = [
@@ -57,6 +58,30 @@ def main() -> int:
                 and any(row.get("next_action") for row in readiness),
             ),
             (
+                "readiness gap intelligence",
+                any(row.get("affects_d9") and row.get("severity") == "P0" for row in gaps)
+                and any(row.get("affects_pilot") for row in gaps)
+                and any(row.get("needs_staging_credentials") for row in gaps)
+                and any(row.get("needs_business_signoff") for row in gaps)
+                and any(row.get("needs_security_signoff") for row in gaps)
+                and any(row.get("needs_partner_feedback") for row in gaps),
+            ),
+            (
+                "HOSUN readiness dimensions",
+                any(
+                    row.get("partner_focus") == "HOSUN"
+                    and "load" in (row.get("product_focus") or [])
+                    and "noise" in (row.get("product_focus") or [])
+                    and "test cycle" in (row.get("product_focus") or [])
+                    for row in gaps
+                ),
+            ),
+            (
+                "JOOBOO and future partner readiness gaps",
+                any(row.get("partner_focus") == "JOOBOO" for row in gaps)
+                and any(row.get("partner_focus") == "future partner" for row in gaps),
+            ),
+            (
                 "D9 remains blocked",
                 any(row.get("item") == "D9 entry gate" and row.get("status") == "blocked" for row in readiness),
             ),
@@ -68,7 +93,9 @@ def main() -> int:
             login = client.post("/api/auth/login", json={"email": "admin@example.com", "password": "admin123"})
             token = login.json()["access_token"]
             response = client.get("/api/v1/external-execution/console", headers={"Authorization": f"Bearer {token}"})
-        checks.append(("route console", response.status_code == 200 and response.json()["data"]["actions"]))
+        response_data = response.json()["data"] if response.status_code == 200 else {}
+        checks.append(("route console", response.status_code == 200 and response_data.get("actions")))
+        checks.append(("route gap intelligence", bool(response_data.get("readiness_gap_intelligence"))))
         for label, ok in checks:
             print(f"[{'PASS' if ok else 'FAIL'}] {label}")
         return 0 if all(ok for _, ok in checks) else 1

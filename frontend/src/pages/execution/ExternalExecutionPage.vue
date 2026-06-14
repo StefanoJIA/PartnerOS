@@ -114,8 +114,18 @@ const filteredActions = computed(() => {
 })
 const statusOptions = computed(() => consoleData.value?.status_options || [])
 const stagingReadiness = computed(() => consoleData.value?.staging_readiness || [])
+const readinessGaps = computed(() => consoleData.value?.readiness_gap_intelligence || [])
 const hosunFieldRows = computed(() => consoleData.value?.lifting_systems_field_review || [])
 const partnerCoverage = computed(() => consoleData.value?.partner_coverage || [])
+const readinessGapSummary = computed(() => {
+  const gaps = readinessGaps.value
+  return {
+    p0: gaps.filter((gap) => gap.severity === 'P0').length,
+    d9: gaps.filter((gap) => gap.affects_d9).length,
+    pilot: gaps.filter((gap) => gap.affects_pilot).length,
+    blocked: gaps.filter((gap) => gap.work_state === 'blocked').length,
+  }
+})
 const activeExternalFilterLabel = computed(() => {
   const labels: string[] = []
   if (filters.status) labels.push(`状态=${filters.status}`)
@@ -506,6 +516,75 @@ watch(
         </div>
       </div>
     </el-drawer>
+
+    <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 class="font-semibold text-slate-800">Readiness Gap Intelligence</h3>
+          <p class="mt-1 text-sm text-slate-600">
+            把 staging、D9、pilot、partner rehearsal 的外部依赖转成可执行缺口：谁负责、下一步是什么、是否影响 D9 / pilot、需要哪类签字或凭证。
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <el-tag type="danger" effect="plain">P0 {{ readinessGapSummary.p0 }}</el-tag>
+          <el-tag type="warning" effect="plain">D9 {{ readinessGapSummary.d9 }}</el-tag>
+          <el-tag type="success" effect="plain">Pilot {{ readinessGapSummary.pilot }}</el-tag>
+          <el-tag type="danger" effect="plain">Blocked {{ readinessGapSummary.blocked }}</el-tag>
+        </div>
+      </div>
+      <el-table :data="readinessGaps" border size="small" empty-text="暂无 readiness gap">
+        <el-table-column label="Gap / Impact" min-width="260">
+          <template #default="{ row }">
+            <div class="font-semibold text-slate-800">{{ row.title }}</div>
+            <div class="mt-1 flex flex-wrap gap-1">
+              <el-tag size="small" type="danger" effect="plain">{{ row.severity }}</el-tag>
+              <el-tag size="small" effect="plain">{{ row.area }}</el-tag>
+              <el-tag v-if="row.affects_d9" size="small" type="danger" effect="plain">影响 D9</el-tag>
+              <el-tag v-if="row.affects_pilot" size="small" type="success" effect="plain">影响 Pilot</el-tag>
+            </div>
+            <p class="mt-1 text-xs text-slate-500">{{ row.gap_id }}</p>
+          </template>
+        </el-table-column>
+        <el-table-column label="Owner / State" min-width="190">
+          <template #default="{ row }">
+            <div class="text-sm text-slate-700">{{ row.owner }}</div>
+            <el-tag class="mt-1" effect="plain">{{ row.work_state }}</el-tag>
+            <div v-if="row.source_action_statuses?.length" class="mt-1 flex flex-wrap gap-1">
+              <el-tag v-for="status in row.source_action_statuses" :key="status" size="small" effect="plain">
+                {{ status }}
+              </el-tag>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="下一步 / 阻塞原因" min-width="330">
+          <template #default="{ row }">
+            <p class="text-sm text-slate-700">{{ row.next_action }}</p>
+            <p class="mt-2 text-xs text-slate-500">阻塞：{{ row.blocker_reason }}</p>
+            <p class="mt-1 text-xs text-slate-500">证据：{{ row.evidence_required }}</p>
+          </template>
+        </el-table-column>
+        <el-table-column label="依赖类型" min-width="220">
+          <template #default="{ row }">
+            <div class="flex flex-wrap gap-1">
+              <el-tag v-if="row.needs_business_signoff" size="small" effect="plain">business sign-off</el-tag>
+              <el-tag v-if="row.needs_security_signoff" size="small" effect="plain">security sign-off</el-tag>
+              <el-tag v-if="row.needs_partner_feedback" size="small" effect="plain">partner feedback</el-tag>
+              <el-tag v-if="row.needs_staging_credentials" size="small" effect="plain">staging credentials</el-tag>
+            </div>
+            <p class="mt-2 text-xs text-slate-500">{{ row.customer_safe_boundary }}</p>
+          </template>
+        </el-table-column>
+        <el-table-column label="Partner / Product" min-width="260">
+          <template #default="{ row }">
+            <div class="text-sm font-medium text-slate-800">{{ row.partner_focus }}</div>
+            <div class="mt-1 flex flex-wrap gap-1">
+              <el-tag v-for="item in row.product_focus.slice(0, 8)" :key="item" size="small" effect="plain">{{ item }}</el-tag>
+              <el-tag v-if="row.product_focus.length > 8" size="small" type="info" effect="plain">+{{ row.product_focus.length - 8 }}</el-tag>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+    </section>
 
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
