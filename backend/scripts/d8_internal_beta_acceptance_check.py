@@ -61,6 +61,7 @@ def main() -> int:
         "backend/app/schemas/external_execution.py",
         "backend/app/schemas/market_response_reviews.py",
         "backend/app/services/external_execution.py",
+        "backend/app/services/daily_decision_queue.py",
         "backend/app/services/market_response_reviews.py",
         "backend/app/services/partner_onboarding.py",
         "backend/app/api/v1/routes/external_execution.py",
@@ -90,6 +91,10 @@ def main() -> int:
     market_route = read("backend/app/api/v1/routes/market_response.py")
     partner_route = read("backend/app/api/v1/routes/partner_onboarding.py")
     backend_service = read("backend/app/services/external_execution.py")
+    daily_queue_service = read("backend/app/services/daily_decision_queue.py")
+    dashboard_route = read("backend/app/api/routes/dashboard.py")
+    dashboard_schema = read("backend/app/schemas/dashboard_actions.py")
+    dashboard_api = read("frontend/src/api/dashboard.ts")
     market_review_service = read("backend/app/services/market_response_reviews.py")
     partner_onboarding_service = read("backend/app/services/partner_onboarding.py")
     migration = read("backend/alembic/versions/0019_external_execution.py")
@@ -108,6 +113,10 @@ def main() -> int:
             external_api,
             backend_route,
             backend_service,
+            daily_queue_service,
+            dashboard_route,
+            dashboard_schema,
+            dashboard_api,
             migration,
             market_route,
             partner_route,
@@ -226,6 +235,18 @@ def main() -> int:
             "status",
             "createPartnerOnboardingMarketResponseReviews",
             "生成市场审查项",
+            "daily-decision-queue",
+            "DailyDecisionQueueItem",
+            "DailyDecisionQueueOut",
+            "build_daily_decision_queue",
+            "fetchDailyDecisionQueue",
+            "今日运营决策队列",
+            "depends_on_external_input",
+            "readiness_gap_intelligence",
+            "market_response_review",
+            "partner_onboarding",
+            "feedback_ticket",
+            "order delivery",
         ),
     )
     checks[2].pass_("tracker includes required fields, statuses, API persistence, and migration") if ok else checks[2].fail(missing)

@@ -109,3 +109,52 @@ class DashboardActionsOut(BaseModel):
     orders_eta_passed_not_delivered: list[OrderActionBrief]
     recent_ai_outputs: list[AIOutputBrief]
     recommended_actions: list[RecommendedAction]
+
+
+class DailyDecisionQueueItem(BaseModel):
+    id: str
+    title: str
+    category: str
+    priority: str
+    severity: str
+    owner: str | None = None
+    due_date: date | None = None
+    partner_focus: str | None = None
+    product_focus: list[str] = Field(default_factory=list)
+    customer_or_account: str | None = None
+    readiness_impact: list[str] = Field(default_factory=list)
+    risk: str
+    reason: str
+    next_action: str
+    source_type: str
+    source_id: str | None = None
+    source_path: str
+    depends_on_external_input: bool = False
+    needs_business_signoff: bool = False
+    needs_security_signoff: bool = False
+    needs_partner_feedback: bool = False
+    needs_staging_credentials: bool = False
+    affects_d9: bool = False
+    affects_pilot: bool = False
+    customer_safe_boundary: str | None = None
+
+
+class DailyDecisionQueueSummary(BaseModel):
+    total: int
+    p0: int
+    p1: int
+    staging_or_d9: int
+    pilot: int
+    external_input_required: int
+    business_signoff_required: int
+    security_signoff_required: int
+    partner_feedback_required: int
+    order_or_feedback_risk: int
+    status: str
+    external_staging_state: str
+
+
+class DailyDecisionQueueOut(BaseModel):
+    summary: DailyDecisionQueueSummary
+    items: list[DailyDecisionQueueItem]
+    safety: dict[str, bool]

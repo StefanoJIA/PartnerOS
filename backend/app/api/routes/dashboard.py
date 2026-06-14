@@ -17,8 +17,9 @@ from app.models import (
     User,
 )
 from app.schemas.dashboard import DashboardSummary
-from app.schemas.dashboard_actions import DashboardActionsOut
+from app.schemas.dashboard_actions import DailyDecisionQueueOut, DashboardActionsOut
 from app.services.dashboard_actions import build_dashboard_actions
+from app.services.daily_decision_queue import build_daily_decision_queue
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -29,6 +30,14 @@ def dashboard_actions(
     user: User = Depends(get_current_user),
 ) -> DashboardActionsOut:
     return build_dashboard_actions(db, user)
+
+
+@router.get("/daily-decision-queue", response_model=DailyDecisionQueueOut)
+def dashboard_daily_decision_queue(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> DailyDecisionQueueOut:
+    return build_daily_decision_queue(db, user)
 
 
 @router.get("/summary", response_model=DashboardSummary)

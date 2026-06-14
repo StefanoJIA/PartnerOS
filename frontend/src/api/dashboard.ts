@@ -61,3 +61,55 @@ export async function fetchDashboardActions() {
   const { data } = await http.get<DashboardActions>('/dashboard/actions')
   return data
 }
+
+export type DailyDecisionQueueItem = {
+  id: string
+  title: string
+  category: string
+  priority: string
+  severity: string
+  owner: string | null
+  due_date: string | null
+  partner_focus: string | null
+  product_focus: string[]
+  customer_or_account: string | null
+  readiness_impact: string[]
+  risk: string
+  reason: string
+  next_action: string
+  source_type: string
+  source_id: string | null
+  source_path: string
+  depends_on_external_input: boolean
+  needs_business_signoff: boolean
+  needs_security_signoff: boolean
+  needs_partner_feedback: boolean
+  needs_staging_credentials: boolean
+  affects_d9: boolean
+  affects_pilot: boolean
+  customer_safe_boundary: string | null
+}
+
+export type DailyDecisionQueue = {
+  summary: {
+    total: number
+    p0: number
+    p1: number
+    staging_or_d9: number
+    pilot: number
+    external_input_required: number
+    business_signoff_required: number
+    security_signoff_required: number
+    partner_feedback_required: number
+    order_or_feedback_risk: number
+    status: string
+    external_staging_state: string
+  }
+  items: DailyDecisionQueueItem[]
+  safety: Record<string, boolean>
+}
+
+export async function fetchDailyDecisionQueue() {
+  const { data } = await http.get<DailyDecisionQueue>('/dashboard/daily-decision-queue')
+  return data
+}

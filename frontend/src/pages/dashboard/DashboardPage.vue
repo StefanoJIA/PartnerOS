@@ -15,6 +15,78 @@
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
+          <h3 class="text-base font-semibold text-slate-900">今日运营决策队列</h3>
+          <p class="mt-1 max-w-4xl text-sm text-slate-600">
+            按 P0/P1、owner、due date、partner/product focus、readiness impact 和风险排序，直接告诉团队今天先推进什么。
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <el-tag type="danger" effect="plain">P0 {{ decisionQueue?.summary.p0 ?? 0 }}</el-tag>
+          <el-tag type="warning" effect="plain">P1 {{ decisionQueue?.summary.p1 ?? 0 }}</el-tag>
+          <el-tag type="primary" effect="plain">Staging/D9 {{ decisionQueue?.summary.staging_or_d9 ?? 0 }}</el-tag>
+          <el-tag type="success" effect="plain">Pilot {{ decisionQueue?.summary.pilot ?? 0 }}</el-tag>
+          <el-tag type="info" effect="plain">外部输入 {{ decisionQueue?.summary.external_input_required ?? 0 }}</el-tag>
+        </div>
+      </div>
+      <el-alert
+        class="mb-3"
+        type="warning"
+        :closable="false"
+        show-icon
+        title="队列只做内部行动排序：不自动发送外部消息、不记录 raw token、不把本地检查当真实 staging evidence、不改报价或订单状态。"
+      />
+      <el-table :data="decisionQueue?.items || []" border size="small" empty-text="暂无今日运营决策项">
+        <el-table-column label="优先动作" min-width="280">
+          <template #default="{ row }">
+            <div class="font-semibold text-slate-900">{{ row.title }}</div>
+            <div class="mt-1 flex flex-wrap gap-1">
+              <el-tag size="small" :type="priorityTag(row.priority)" effect="plain">{{ row.priority }}</el-tag>
+              <el-tag size="small" effect="plain">{{ row.category }}</el-tag>
+              <el-tag v-if="row.affects_d9" size="small" type="danger" effect="plain">影响 D9</el-tag>
+              <el-tag v-if="row.affects_pilot" size="small" type="success" effect="plain">影响 Pilot</el-tag>
+            </div>
+            <p class="mt-1 text-xs text-slate-500">{{ row.reason }}</p>
+          </template>
+        </el-table-column>
+        <el-table-column label="Owner / 风险" min-width="200">
+          <template #default="{ row }">
+            <div class="text-sm text-slate-700">{{ row.owner || '未指定' }}</div>
+            <el-tag class="mt-1" size="small" effect="plain">{{ row.severity }}</el-tag>
+            <p class="mt-1 text-xs text-slate-500">{{ row.risk }}</p>
+          </template>
+        </el-table-column>
+        <el-table-column label="Partner / Product" min-width="240">
+          <template #default="{ row }">
+            <div class="text-sm font-medium text-slate-800">{{ row.partner_focus || row.customer_or_account || '内部运营' }}</div>
+            <div class="mt-1 flex flex-wrap gap-1">
+              <el-tag v-for="item in row.product_focus.slice(0, 5)" :key="item" size="small" effect="plain">{{ item }}</el-tag>
+              <el-tag v-if="row.product_focus.length > 5" size="small" type="info" effect="plain">+{{ row.product_focus.length - 5 }}</el-tag>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="下一步 / 依赖" min-width="320">
+          <template #default="{ row }">
+            <p class="text-sm text-slate-700">{{ row.next_action }}</p>
+            <div class="mt-2 flex flex-wrap gap-1">
+              <el-tag v-if="row.needs_business_signoff" size="small" effect="plain">business sign-off</el-tag>
+              <el-tag v-if="row.needs_security_signoff" size="small" effect="plain">security sign-off</el-tag>
+              <el-tag v-if="row.needs_partner_feedback" size="small" effect="plain">partner feedback</el-tag>
+              <el-tag v-if="row.needs_staging_credentials" size="small" effect="plain">staging credentials</el-tag>
+              <el-tag v-if="row.depends_on_external_input" size="small" type="warning" effect="plain">真实外部输入</el-tag>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="处理" width="120" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" type="primary" plain @click="router.push(row.source_path)">进入</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </section>
+
+    <section class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
           <h3 class="text-base font-semibold text-slate-900">每日操作地图</h3>
           <p class="mt-1 max-w-4xl text-sm text-slate-600">
             从这里开始当天工作：业务开发看客户与 Campaign / 营销活动，运营交付看订单、物流与反馈，管理者看 Partner、产品方向和市场响应。
@@ -213,7 +285,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { fetchDashboardActions, type DashboardActions, type RecommendedAction } from '@/api/dashboard'
+import {
+  fetchDailyDecisionQueue,
+  fetchDashboardActions,
+  type DailyDecisionQueue,
+  type DashboardActions,
+  type RecommendedAction,
+} from '@/api/dashboard'
 import { fetchFeedbackTickets, type FeedbackTicketList } from '@/api/feedbackTickets'
 import { fetchGrowthOperationsConsole, type GrowthOperationsConsole } from '@/api/growthOperations'
 import {
@@ -235,6 +313,7 @@ import EndOfDaySummaryPanel from '@/components/dashboard/EndOfDaySummaryPanel.vu
 const router = useRouter()
 const loading = ref(false)
 const data = ref<DashboardActions | null>(null)
+const decisionQueue = ref<DailyDecisionQueue | null>(null)
 const growth = ref<GrowthOperationsConsole | null>(null)
 const feedback = ref<FeedbackTicketList | null>(null)
 const market = ref<MarketResponseIntelligence | null>(null)
@@ -259,6 +338,12 @@ function numberLabel(value: number | null, unit = '项') {
 
 function sumLengths(...items: Array<unknown[] | undefined>) {
   return items.reduce((total, item) => total + (item?.length || 0), 0)
+}
+
+function priorityTag(priority: string) {
+  if (priority === 'P0') return 'danger'
+  if (priority === 'P1') return 'warning'
+  return 'info'
 }
 
 const operatingMap = computed<OperatingMapEntry[]>(() => {
@@ -397,6 +482,7 @@ async function load() {
   try {
     data.value = await fetchDashboardActions()
     const supportResults = await Promise.allSettled([
+      fetchDailyDecisionQueue(),
       fetchGrowthOperationsConsole(),
       fetchFeedbackTickets({ operation_filter: 'needs_internal_review', limit: 1 }),
       fetchMarketResponseIntelligence(),
@@ -404,12 +490,13 @@ async function load() {
       fetchPartnerOnboarding(),
       fetchExternalExecutionConsole(),
     ])
-    if (supportResults[0].status === 'fulfilled') growth.value = supportResults[0].value
-    if (supportResults[1].status === 'fulfilled') feedback.value = supportResults[1].value
-    if (supportResults[2].status === 'fulfilled') market.value = supportResults[2].value
-    if (supportResults[3].status === 'fulfilled') marketReviews.value = supportResults[3].value
-    if (supportResults[4].status === 'fulfilled') partner.value = supportResults[4].value
-    if (supportResults[5].status === 'fulfilled') externalExecution.value = supportResults[5].value
+    if (supportResults[0].status === 'fulfilled') decisionQueue.value = supportResults[0].value
+    if (supportResults[1].status === 'fulfilled') growth.value = supportResults[1].value
+    if (supportResults[2].status === 'fulfilled') feedback.value = supportResults[2].value
+    if (supportResults[3].status === 'fulfilled') market.value = supportResults[3].value
+    if (supportResults[4].status === 'fulfilled') marketReviews.value = supportResults[4].value
+    if (supportResults[5].status === 'fulfilled') partner.value = supportResults[5].value
+    if (supportResults[6].status === 'fulfilled') externalExecution.value = supportResults[6].value
     const failed = supportResults.filter((result) => result.status === 'rejected').length
     if (failed) supportWarning.value = `${failed} 个只读聚合接口暂不可用，核心行动看板仍可继续使用。`
   } finally {
