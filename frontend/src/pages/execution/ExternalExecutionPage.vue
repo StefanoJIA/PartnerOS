@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { formatApiError } from '@/api/errors'
 import {
@@ -12,6 +13,8 @@ import {
   type ExternalExecutionConsole,
 } from '@/api/externalExecution'
 
+const route = useRoute()
+const router = useRouter()
 const loading = ref(false)
 const saving = ref(false)
 const error = ref('')
@@ -29,6 +32,12 @@ const newAction = reactive({
   status: 'draft' as ExternalActionStatus,
   notes: '',
 })
+const filters = reactive({
+  status: '',
+  action_type: '',
+  owner: '',
+  keyword: '',
+})
 
 const statusType: Record<ExternalActionStatus, 'info' | 'primary' | 'warning' | 'success' | 'danger'> = {
   draft: 'info',
@@ -40,6 +49,48 @@ const statusType: Record<ExternalActionStatus, 'info' | 'primary' | 'warning' | 
 }
 
 const actions = computed(() => consoleData.value?.actions || [])
+const actionTypeOptions = computed(() => Array.from(new Set(actions.value.map((row) => row.action_type))).sort())
+const filteredActions = computed(() => {
+  const keyword = filters.keyword.trim().toLowerCase()
+  const owner = filters.owner.trim().toLowerCase()
+  const statusOrder: Record<string, number> = {
+    blocked: 0,
+    'ready to send': 1,
+    draft: 2,
+    'sent manually': 3,
+    'response received': 4,
+    complete: 5,
+  }
+  return actions.value
+    .filter((row) => {
+      if (filters.status && row.status !== filters.status) return false
+      if (filters.action_type && row.action_type !== filters.action_type) return false
+      if (owner && !(row.owner || '').toLowerCase().includes(owner)) return false
+      if (!keyword) return true
+      return [
+        row.action_type,
+        row.target_partner_system,
+        row.partner_focus || '',
+        row.product_focus.join(' '),
+        row.dependency || '',
+        row.next_step || '',
+        row.response_summary || '',
+        row.risk_notes || '',
+        row.blocker_notes || '',
+        row.notes || '',
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(keyword)
+    })
+    .sort((left, right) => {
+      const statusDiff = (statusOrder[left.status] ?? 99) - (statusOrder[right.status] ?? 99)
+      if (statusDiff) return statusDiff
+      const leftDue = left.due_date || '9999-12-31'
+      const rightDue = right.due_date || '9999-12-31'
+      return leftDue.localeCompare(rightDue) || left.target_partner_system.localeCompare(right.target_partner_system)
+    })
+})
 const statusOptions = computed(() => consoleData.value?.status_options || [])
 const stagingReadiness = computed(() => consoleData.value?.staging_readiness || [])
 const hosunFieldRows = computed(() => consoleData.value?.lifting_systems_field_review || [])
@@ -62,6 +113,23 @@ function splitProductFocus(value: string) {
 
 function applyConsole(next: ExternalExecutionConsole) {
   consoleData.value = next
+}
+
+function applyStatusFilter(status: ExternalActionStatus | '') {
+  filters.status = status
+  router.replace({ path: route.path, query: status ? { ...route.query, status } : { ...route.query, status: undefined } })
+}
+
+function onStatusFilterChange(value: string) {
+  applyStatusFilter((value || '') as ExternalActionStatus | '')
+}
+
+function resetFilters() {
+  filters.status = ''
+  filters.action_type = ''
+  filters.owner = ''
+  filters.keyword = ''
+  router.replace({ path: route.path, query: { ...route.query, status: undefined } })
 }
 
 async function load() {
@@ -143,7 +211,17 @@ function editablePayload(row: ExternalExecutionAction): ExternalExecutionActionP
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  const status = typeof route.query.status === 'string' ? route.query.status : ''
+  if (status) filters.status = status
+  load()
+})
+watch(
+  () => route.query.status,
+  (status) => {
+    filters.status = typeof status === 'string' ? status : ''
+  },
+)
 </script>
 
 <template>
@@ -192,12 +270,32 @@ onMounted(load)
 
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h3 class="font-semibold text-slate-800">手动外部执行 Tracker</h3>
+        <div>
+          <h3 class="font-semibold text-slate-800">手动外部执行 Tracker</h3>
+          <p class="mt-1 text-xs text-slate-500">队列筛选优先显示 blocked、ready to send 和即将到期动作；筛选只影响视图，不会自动发送或改状态。</p>
+        </div>
         <div class="flex flex-wrap gap-2">
           <el-tag v-for="(count, status) in consoleData?.status_counts" :key="status" effect="plain">{{ status }}: {{ count }}</el-tag>
         </div>
       </div>
-      <el-table :data="actions" border size="small">
+      <div class="mb-3 grid gap-3 lg:grid-cols-5">
+        <el-select v-model="filters.status" clearable placeholder="状态筛选" @change="onStatusFilterChange">
+          <el-option v-for="status in statusOptions" :key="status.value" :label="status.label" :value="status.value" />
+        </el-select>
+        <el-select v-model="filters.action_type" clearable placeholder="动作类型">
+          <el-option v-for="item in actionTypeOptions" :key="item" :label="item" :value="item" />
+        </el-select>
+        <el-input v-model="filters.owner" clearable placeholder="负责人" />
+        <el-input v-model="filters.keyword" clearable placeholder="Partner / 依赖 / 下一步关键词" />
+        <div class="flex flex-wrap gap-2">
+          <el-button size="small" type="danger" plain @click="applyStatusFilter('blocked')">只看阻塞</el-button>
+          <el-button size="small" plain @click="resetFilters">清空</el-button>
+        </div>
+      </div>
+      <div class="mb-2 text-xs text-slate-500">
+        当前显示 {{ filteredActions.length }} / {{ actions.length }} 个动作；状态来自人工记录，不能替代真实外部回复或 sign-off。
+      </div>
+      <el-table :data="filteredActions" border size="small" empty-text="暂无匹配的外部执行动作">
         <el-table-column prop="action_type" label="Action type" min-width="180" />
         <el-table-column prop="target_partner_system" label="Target" min-width="180" />
         <el-table-column prop="owner" label="Owner" width="140">

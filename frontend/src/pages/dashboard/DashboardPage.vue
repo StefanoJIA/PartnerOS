@@ -368,6 +368,7 @@ const operatingMap = computed<OperatingMapEntry[]>(() => {
       description: `外部动作待处理 ${numberLabel(externalBlockedCount)}，staging / D9 前置条件待补 ${numberLabel(stagingPendingCount)}。本地 dry-run 不能替代真实 staging evidence。`,
       nextAction: '跟进 partner rehearsal、business sign-off、security review、credentials request 和 rollback owner；不记录 raw token，不写 STAGING_VALIDATED。',
       links: [
+        { label: '阻塞动作', path: '/external-execution?status=blocked' },
         { label: '外部执行', path: '/external-execution' },
         { label: 'Staging readiness', path: '/staging-readiness' },
       ],
