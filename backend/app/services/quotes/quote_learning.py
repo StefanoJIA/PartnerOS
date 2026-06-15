@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any
 from uuid import UUID
 
@@ -148,6 +148,193 @@ def _priority(row: QuoteLearningRecord) -> str:
     return "P2"
 
 
+LIFTING_SYSTEM_QUOTE_DIMENSIONS = [
+    "load",
+    "stability",
+    "noise",
+    "delivery",
+    "installation",
+    "after-sales",
+    "packaging",
+    "warranty",
+    "test cycle",
+    "certification",
+    "project demand",
+]
+
+
+JOOBOO_QUOTE_DIMENSIONS = [
+    "durability",
+    "school procurement timing",
+    "classroom deployment",
+    "delivery consistency",
+    "resource needs",
+    "feedback after use",
+    "project acceptance criteria",
+]
+
+
+FUTURE_PARTNER_QUOTE_DIMENSIONS = [
+    "product family",
+    "quote logic",
+    "delivery requirement",
+    "resource taxonomy",
+    "customer-visible fields",
+    "Market Response metrics",
+]
+
+
+def _latest_learning_model(quote: Quote) -> QuoteLearningRecord | None:
+    records = sorted(
+        quote.learning_records or [],
+        key=lambda row: row.updated_at or row.created_at or datetime.min.replace(tzinfo=timezone.utc),
+        reverse=True,
+    )
+    return records[0] if records else None
+
+
+def _dimension_baseline(partner_focus: str) -> list[str]:
+    if partner_focus == _brand("HO", "SUN"):
+        return LIFTING_SYSTEM_QUOTE_DIMENSIONS
+    if partner_focus == _brand("JOO", "BOO"):
+        return JOOBOO_QUOTE_DIMENSIONS
+    return FUTURE_PARTNER_QUOTE_DIMENSIONS
+
+
+def _quote_due_state(quote: Quote) -> str:
+    if quote.follow_up_date and quote.follow_up_date <= date.today() and quote.status not in {"converted_to_order"}:
+        return "due"
+    if quote.follow_up_date and quote.follow_up_date > date.today():
+        return "scheduled"
+    return "missing"
+
+
+def build_quote_commercial_intelligence(quote: Quote) -> dict[str, Any]:
+    latest = _latest_learning_model(quote)
+    learning_records = quote.learning_records or []
+    partner_focus = _partner_focus(quote)
+    product_focus = _quote_product_focus(quote)
+    baseline_dimensions = _dimension_baseline(partner_focus)
+    captured_dimensions = sorted(
+        {
+            str(dimension)
+            for record in learning_records
+            for dimension in (record.product_dimensions or [])
+            if dimension
+        }
+    )
+    missing_inputs: list[str] = []
+    if quote.status in {"sent", "revised", "expired"} and not latest:
+        missing_inputs.extend(["customer feedback", "won/lost reason"])
+    if quote.status in {"sent", "revised"} and _quote_due_state(quote) == "missing":
+        missing_inputs.append("follow-up date")
+    if len(quote.versions or []) > 1 and not (
+        latest and (latest.customer_objection or latest.price_feedback or latest.delivery_feedback)
+    ):
+        missing_inputs.append("revision reason")
+    if quote.status == "converted_to_order" and not (latest and latest.won_reason):
+        missing_inputs.append("won reason")
+    if (quote.status == "expired" or (latest and latest.outcome_status == "lost")) and not (latest and latest.lost_reason):
+        missing_inputs.append("lost reason")
+    if not captured_dimensions:
+        missing_inputs.append("product dimension feedback")
+
+    priority_dimensions = {"load", "noise", "warranty", "certification", "delivery consistency", "project demand"}
+    dimensions_need_review = [dimension for dimension in baseline_dimensions if dimension not in captured_dimensions]
+    has_priority_dimension_gap = bool(priority_dimensions & set(dimensions_need_review))
+    due_state = _quote_due_state(quote)
+    learning_affects_market = bool(
+        latest and (latest.affects_market_response or latest.affects_product_intelligence or latest.affects_opportunity)
+    )
+
+    if quote.status == "converted_to_order":
+        health = "converted_learning_ready" if not missing_inputs else "converted_learning_gap"
+        business_focus = "成交复盘"
+    elif quote.status == "expired" or (latest and latest.outcome_status == "lost"):
+        health = "lost_learning_gap" if missing_inputs else "lost_review_ready"
+        business_focus = "丢单复盘"
+    elif due_state == "due":
+        health = "follow_up_due"
+        business_focus = "报价跟进"
+    elif len(quote.versions or []) > 1 and missing_inputs:
+        health = "revision_learning_gap"
+        business_focus = "修订原因"
+    elif has_priority_dimension_gap:
+        health = "dimension_validation_gap"
+        business_focus = "产品维度验证"
+    elif missing_inputs:
+        health = "needs_quote_learning"
+        business_focus = "客户反馈沉淀"
+    else:
+        health = "conversion_ready"
+        business_focus = "成交推进"
+
+    score = 55
+    if quote.manual_sent:
+        score += 8
+    if latest:
+        score += 12
+    if quote.status == "converted_to_order":
+        score += 18
+    if quote.status in {"expired"}:
+        score -= 14
+    if due_state == "due":
+        score -= 10
+    score -= min(len(missing_inputs) * 6, 24)
+    score -= 8 if has_priority_dimension_gap else 0
+    score = max(0, min(100, score))
+
+    if health == "follow_up_due":
+        next_action = "今天人工跟进客户，并记录回复、异议和下一次 follow-up。"
+    elif health in {"lost_learning_gap", "converted_learning_gap"}:
+        next_action = "补齐赢单/丢单原因，把可复用经验沉淀到报价学习和 Market Response。"
+    elif health == "dimension_validation_gap":
+        next_action = "确认关键产品维度是否已有业务认可表述，再决定是否进入客户可见材料。"
+    elif health == "revision_learning_gap":
+        next_action = "补录报价修订原因，区分价格、交期、认证、安装或质保问题。"
+    elif health == "needs_quote_learning":
+        next_action = "记录客户反馈、报价状态、异议、owner 和后续人工动作。"
+    else:
+        next_action = latest.next_action if latest and latest.next_action else "继续人工推进成交，并把客户反馈回流到产品和 Market Response。"
+
+    readiness_impact: list[str] = []
+    if missing_inputs:
+        readiness_impact.append("commercial pilot learning gap")
+    if learning_affects_market or has_priority_dimension_gap:
+        readiness_impact.append("Market Response review")
+    if partner_focus in {_brand("HO", "SUN"), _brand("JOO", "BOO")} and dimensions_need_review:
+        readiness_impact.append("business wording sign-off")
+
+    return {
+        "health": health,
+        "score": score,
+        "priority": "P1" if health in {"follow_up_due", "lost_learning_gap", "dimension_validation_gap"} else "P2",
+        "business_focus": business_focus,
+        "partner_focus": partner_focus,
+        "product_focus": product_focus,
+        "version_count": len(quote.versions or []),
+        "latest_outcome_status": latest.outcome_status if latest else None,
+        "follow_up_state": due_state,
+        "missing_inputs": missing_inputs,
+        "captured_dimensions": captured_dimensions,
+        "dimension_review_needs": dimensions_need_review[:8],
+        "market_response_review_needed": learning_affects_market or has_priority_dimension_gap,
+        "quote_learning_impacts": [
+            value
+            for value, enabled in [
+                ("opportunity", bool(latest and latest.affects_opportunity)),
+                ("product intelligence", bool(latest and latest.affects_product_intelligence)),
+                ("market response", bool(latest and latest.affects_market_response)),
+            ]
+            if enabled
+        ],
+        "readiness_impact": readiness_impact,
+        "next_best_action": next_action,
+        "customer_safe_boundary": "内部经营判断；进入 Portal 或客户材料前必须经过 customer-safe wording 与 business/security sign-off。",
+        "safety": dict(QUOTE_LEARNING_SAFETY),
+    }
+
+
 def quote_learning_to_dict(row: QuoteLearningRecord) -> dict[str, Any]:
     return {
         "id": str(row.id),
@@ -177,12 +364,8 @@ def quote_learning_to_dict(row: QuoteLearningRecord) -> dict[str, Any]:
 
 
 def latest_quote_learning(quote: Quote) -> dict[str, Any] | None:
-    records = sorted(
-        quote.learning_records or [],
-        key=lambda row: row.updated_at or row.created_at or datetime.min.replace(tzinfo=timezone.utc),
-        reverse=True,
-    )
-    return quote_learning_to_dict(records[0]) if records else None
+    row = _latest_learning_model(quote)
+    return quote_learning_to_dict(row) if row else None
 
 
 def list_quote_learning(db: Session, quote_id: UUID) -> dict[str, Any]:

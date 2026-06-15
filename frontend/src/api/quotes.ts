@@ -73,6 +73,27 @@ export interface QuoteLearningPayload {
   internal_only?: boolean
 }
 
+export interface QuoteCommercialIntelligence {
+  health: string
+  score: number
+  priority: string
+  business_focus: string
+  partner_focus: string
+  product_focus: string[]
+  version_count: number
+  latest_outcome_status: string | null
+  follow_up_state: string
+  missing_inputs: string[]
+  captured_dimensions: string[]
+  dimension_review_needs: string[]
+  market_response_review_needed: boolean
+  quote_learning_impacts: string[]
+  readiness_impact: string[]
+  next_best_action: string
+  customer_safe_boundary: string
+  safety: QuoteLearningSafety
+}
+
 export interface QuoteLearningMarketResponsePromotion {
   created: boolean
   review: {
@@ -234,6 +255,7 @@ export interface QuoteDetail extends QuoteSummary {
   send_channel: string | null
   follow_up_date: string | null
   latest_learning?: QuoteLearningRecord | null
+  commercial_intelligence?: QuoteCommercialIntelligence
 }
 
 export interface QuoteListData {

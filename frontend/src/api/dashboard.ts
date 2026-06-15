@@ -286,6 +286,23 @@ export type BusinessExecution = {
     learning_signal: string
     next_action: string
     path: string
+    commercial_intelligence: {
+      health: string
+      score: number
+      priority: string
+      business_focus: string
+      partner_focus: string
+      product_focus: string[]
+      missing_inputs: string[]
+      captured_dimensions: string[]
+      dimension_review_needs: string[]
+      market_response_review_needed: boolean
+      quote_learning_impacts: string[]
+      readiness_impact: string[]
+      next_best_action: string
+      customer_safe_boundary: string
+      safety: Record<string, boolean>
+    }
   }>
   products: Array<{
     partner_focus: string

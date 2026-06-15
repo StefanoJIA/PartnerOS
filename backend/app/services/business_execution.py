@@ -39,6 +39,7 @@ from app.schemas.business_execution import (
 )
 from app.services.growth_operations import derive_opportunity_stage_gate
 from app.services.partner_onboarding import build_partner_onboarding
+from app.services.quotes.quote_learning import build_quote_commercial_intelligence
 
 
 LIFECYCLE_ORDER = {
@@ -806,6 +807,7 @@ def _build_quotation_intelligence(db: Session) -> list[QuotationIntelligenceItem
     for quote in rows:
         company = db.get(Company, quote.company_id) if quote.company_id else None
         version_count = len(quote.versions)
+        commercial_intelligence = build_quote_commercial_intelligence(quote)
         latest_learning = (
             db.query(QuoteLearningRecord)
             .filter(QuoteLearningRecord.quote_id == quote.id)
@@ -827,6 +829,11 @@ def _build_quotation_intelligence(db: Session) -> list[QuotationIntelligenceItem
             outcome = "active customer review"
         else:
             outcome = "internal quote preparation"
+        next_action = commercial_intelligence.get("next_best_action") or (
+            latest_learning.next_action
+            if latest_learning and latest_learning.next_action
+            else "Record revision reason, customer objection, won/lost reason, and follow-up date."
+        )
         items.append(
             QuotationIntelligenceItem(
                 quote_id=str(quote.id),
@@ -845,12 +852,9 @@ def _build_quotation_intelligence(db: Session) -> list[QuotationIntelligenceItem
                     if has_feedback
                     else "missing customer feedback / won-lost reason"
                 ),
-                next_action=(
-                    latest_learning.next_action
-                    if latest_learning and latest_learning.next_action
-                    else "Record revision reason, customer objection, won/lost reason, and follow-up date."
-                ),
+                next_action=next_action,
                 path=f"/quotes/{quote.id}",
+                commercial_intelligence=commercial_intelligence,
             )
         )
     return items

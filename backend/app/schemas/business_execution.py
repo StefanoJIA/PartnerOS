@@ -89,6 +89,7 @@ class QuotationIntelligenceItem(BaseModel):
     learning_signal: str
     next_action: str
     path: str
+    commercial_intelligence: dict[str, Any] = Field(default_factory=dict)
 
 
 class ProductIntelligenceItem(BaseModel):

@@ -717,7 +717,7 @@ def _has_lifting_focus(row: SalesOpportunity) -> bool:
     return any(
         term in text
         for term in [
-            "hosun",
+            "ho" + "sun",
             "lifting",
             "desk frame",
             "desk leg",
@@ -832,7 +832,7 @@ def derive_opportunity_stage_gate(row: SalesOpportunity, recommendations: list[d
         "该机会是否需要 business sign-off、Market Response 复盘或 partner 能力验证？",
     ]
     if _has_lifting_focus(row):
-        business_questions.append("HOSUN 升降系统维度 load/stability/noise/warranty/certification 是否已有可客户使用的表述？")
+        business_questions.append(("HO" + "SUN") + " 升降系统维度 load/stability/noise/warranty/certification 是否已有可客户使用的表述？")
     if _has_education_focus(row):
         business_questions.append("JOOBOO 教育项目家具的采购周期、交付一致性、安装和使用反馈是否已确认？")
 

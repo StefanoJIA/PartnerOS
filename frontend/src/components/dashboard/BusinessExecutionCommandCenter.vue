@@ -192,6 +192,27 @@
               <template #default="{ row }">
                 <p class="text-xs text-slate-700">{{ row.outcome_signal }}</p>
                 <p class="mt-1 text-xs text-amber-700">{{ row.learning_signal }}</p>
+                <div v-if="row.commercial_intelligence" class="mt-2 rounded border border-blue-100 bg-blue-50 p-2">
+                  <div class="flex flex-wrap items-center gap-1">
+                    <el-tag size="small" :type="priorityType(row.commercial_intelligence.priority)" effect="plain">
+                      {{ row.commercial_intelligence.priority }}
+                    </el-tag>
+                    <el-tag size="small" effect="plain">{{ row.commercial_intelligence.business_focus }}</el-tag>
+                    <el-tag size="small" type="info" effect="plain">{{ row.commercial_intelligence.score }}/100</el-tag>
+                    <el-tag
+                      v-if="row.commercial_intelligence.market_response_review_needed"
+                      size="small"
+                      type="success"
+                      effect="plain"
+                    >
+                      Market Response
+                    </el-tag>
+                  </div>
+                  <p class="mt-1 text-xs text-slate-700">{{ row.commercial_intelligence.next_best_action }}</p>
+                  <p v-if="row.commercial_intelligence.dimension_review_needs.length" class="mt-1 text-xs text-slate-500">
+                    维度缺口：{{ row.commercial_intelligence.dimension_review_needs.slice(0, 4).join(' / ') }}
+                  </p>
+                </div>
               </template>
             </el-table-column>
             <el-table-column label="入口" width="90">

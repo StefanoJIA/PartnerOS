@@ -71,6 +71,12 @@ def main() -> int:
         account_sources = {source for item in payload.account_lifecycle for source in item.source_counts}
         account_impacts = {impact for item in payload.account_lifecycle for impact in item.readiness_impact}
         account_health_items = [item.commercial_health for item in payload.account_lifecycle if item.commercial_health]
+        quote_commercial_items = [item.commercial_intelligence for item in payload.quotations if item.commercial_intelligence]
+        quote_commercial_dimensions = {
+            dimension
+            for item in quote_commercial_items
+            for dimension in item.get("dimension_review_needs", [])
+        }
         stage_gate_items = [item.stage_gate for item in payload.opportunities if item.stage_gate]
         all_stage_gate_dimensions = {
             dimension
@@ -160,6 +166,35 @@ def main() -> int:
                 any("feedback" in item.learning_signal.lower() or "won" in item.outcome_signal.lower() for item in payload.quotations),
             ),
             (
+                "quote commercial intelligence present",
+                bool(quote_commercial_items)
+                and all(
+                    item.get("health")
+                    and item.get("business_focus")
+                    and item.get("next_best_action")
+                    and isinstance(item.get("score"), int)
+                    for item in quote_commercial_items
+                ),
+            ),
+            (
+                "quote commercial intelligence has safe boundaries",
+                all(
+                    item.get("safety", {}).get("external_message_sent") is False
+                    and item.get("safety", {}).get("quote_status_changed") is False
+                    and item.get("safety", {}).get("order_status_changed") is False
+                    and item.get("customer_safe_boundary")
+                    for item in quote_commercial_items
+                ),
+            ),
+            (
+                "quote commercial intelligence covers product dimensions",
+                bool(
+                    {"load", "stability", "noise", "warranty", "test cycle", "certification"} & quote_commercial_dimensions
+                    or {"durability", "school procurement timing", "delivery consistency"} & quote_commercial_dimensions
+                    or {"product family", "quote logic", "delivery requirement"} & quote_commercial_dimensions
+                ),
+            ),
+            (
                 "lifting system dimensions represented",
                 {"load", "stability", "noise", "warranty", "test cycle", "certification"}.issubset(all_product_dimensions),
             ),
@@ -226,6 +261,16 @@ def main() -> int:
         response_data = response.json() if response.status_code == 200 else {}
         checks.append(("route business execution", response.status_code == 200 and response_data.get("executive_decisions")))
         checks.append(("route account lifecycle", response.status_code == 200 and response_data.get("account_lifecycle")))
+        checks.append(
+            (
+                "route quote commercial intelligence",
+                response.status_code == 200
+                and any(
+                    item.get("commercial_intelligence", {}).get("next_best_action")
+                    for item in response_data.get("quotations", [])
+                ),
+            )
+        )
         checks.append(("route safety flags", response_data.get("safety", {}).get("staging_validated") is False))
         checks.append(("route no external send", response_data.get("safety", {}).get("external_message_sent") is False))
         checks.append(("route opportunity list", opp_list_before.status_code == 200 and "opportunities" in opp_list_before.json().get("data", {})))

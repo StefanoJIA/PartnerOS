@@ -134,6 +134,7 @@ const canCreateOrder = computed(
 )
 const latestLearning = computed(() => quote.value?.latest_learning || learningRecords.value[0] || null)
 const quoteCompanyId = computed(() => quote.value?.company_id ?? null)
+const quoteCommercial = computed(() => quote.value?.commercial_intelligence ?? null)
 
 async function loadActiveOrder() {
   if (!quote.value) return
@@ -445,6 +446,59 @@ onMounted(load)
         <el-descriptions-item label="Subtotal">{{ quote.currency }} {{ quote.subtotal }}</el-descriptions-item>
         <el-descriptions-item label="Grand Total">{{ quote.currency }} {{ quote.grand_total }}</el-descriptions-item>
       </el-descriptions>
+
+      <section v-if="quoteCommercial" class="section mb quote-commercial">
+        <div class="quote-commercial__head">
+          <div>
+            <h3>报价商业判断</h3>
+            <p>把报价版本、客户反馈、产品维度和 Market Response 影响合并为下一步人工动作。</p>
+          </div>
+          <div class="quote-commercial__tags">
+            <el-tag :type="quoteCommercial.priority === 'P1' ? 'warning' : 'info'" effect="plain">
+              {{ quoteCommercial.priority }}
+            </el-tag>
+            <el-tag type="primary" effect="plain">{{ quoteCommercial.business_focus }}</el-tag>
+            <el-tag effect="plain">{{ quoteCommercial.score }}/100</el-tag>
+            <el-tag type="info" effect="plain">{{ quoteCommercial.partner_focus }}</el-tag>
+          </div>
+        </div>
+        <p class="quote-commercial__action">{{ quoteCommercial.next_best_action }}</p>
+        <div class="quote-commercial__grid">
+          <div>
+            <div class="quote-commercial__label">缺失输入</div>
+            <div class="quote-commercial__chips">
+              <el-tag v-for="item in quoteCommercial.missing_inputs" :key="item" size="small" type="warning" effect="plain">
+                {{ item }}
+              </el-tag>
+              <span v-if="!quoteCommercial.missing_inputs.length" class="quote-commercial__empty">暂无关键缺口</span>
+            </div>
+          </div>
+          <div>
+            <div class="quote-commercial__label">待复核产品维度</div>
+            <div class="quote-commercial__chips">
+              <el-tag v-for="item in quoteCommercial.dimension_review_needs.slice(0, 8)" :key="item" size="small" effect="plain">
+                {{ item }}
+              </el-tag>
+              <span v-if="!quoteCommercial.dimension_review_needs.length" class="quote-commercial__empty">已覆盖核心维度</span>
+            </div>
+          </div>
+          <div>
+            <div class="quote-commercial__label">Readiness / Market Response 影响</div>
+            <div class="quote-commercial__chips">
+              <el-tag v-for="item in quoteCommercial.readiness_impact" :key="item" size="small" type="danger" effect="plain">
+                {{ item }}
+              </el-tag>
+              <el-tag v-if="quoteCommercial.market_response_review_needed" size="small" type="success" effect="plain">
+                需要 Market Response 复核
+              </el-tag>
+              <span v-if="!quoteCommercial.readiness_impact.length && !quoteCommercial.market_response_review_needed" class="quote-commercial__empty">
+                暂无 readiness 风险
+              </span>
+            </div>
+          </div>
+        </div>
+        <el-alert class="mt" type="warning" :closable="false" show-icon :title="quoteCommercial.customer_safe_boundary" />
+      </section>
 
       <AccountExecutionCard
         :company-id="quoteCompanyId"
@@ -791,11 +845,23 @@ onMounted(load)
 .mr { margin-right: 6px; }
 .score { font-weight: 600; }
 .next-action { margin: 12px 0; color: var(--el-text-color-secondary); }
+.quote-commercial { border: 1px solid var(--el-border-color); border-radius: 8px; padding: 14px; background: var(--el-fill-color-lighter); }
+.quote-commercial__head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.quote-commercial__head h3 { margin: 0 0 4px; }
+.quote-commercial__head p { margin: 0; color: var(--el-text-color-secondary); font-size: 13px; }
+.quote-commercial__tags,
+.quote-commercial__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.quote-commercial__action { margin: 12px 0; color: var(--el-text-color-primary); font-weight: 600; }
+.quote-commercial__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.quote-commercial__label { margin-bottom: 6px; color: var(--el-text-color-secondary); font-size: 12px; }
+.quote-commercial__empty { color: var(--el-text-color-placeholder); font-size: 12px; }
 .learning-summary { border: 1px solid var(--el-border-color); border-radius: 8px; background: var(--el-fill-color-light); padding: 12px; }
 .learning-summary__head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 8px; color: var(--el-text-color-secondary); font-size: 13px; }
 .learning-form { max-width: 960px; background: var(--el-fill-color-lighter); padding: 16px; border-radius: 8px; }
 .grid-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: 100%; }
 @media (max-width: 760px) {
   .grid-two { grid-template-columns: 1fr; }
+  .quote-commercial__head { flex-direction: column; }
+  .quote-commercial__grid { grid-template-columns: 1fr; }
 }
 </style>
