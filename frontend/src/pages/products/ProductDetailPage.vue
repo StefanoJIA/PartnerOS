@@ -28,6 +28,14 @@
         <p class="text-sm">{{ product.application_scenarios || '—' }}</p>
       </el-card>
 
+      <ObjectExecutionImpactCard
+        title="产品经营影响"
+        subtitle="市场验证 / 项目机会 / 报价学习 / 交付关联"
+        :partner-focus="primaryPartnerFocus"
+        :product-keywords="productExecutionKeywords"
+        :related-order-count="relatedOrders.length"
+      />
+
       <el-card shadow="never">
         <template #header>
           <div class="flex items-center justify-between">
@@ -155,6 +163,7 @@ import {
   ObjectTasksPanel,
 } from '@/components/object-panels'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import ObjectExecutionImpactCard from '@/components/business/ObjectExecutionImpactCard.vue'
 
 const route = useRoute()
 const productId = computed(() => route.params.productId as string)
@@ -169,6 +178,26 @@ const partnerRows = computed(
   () => (ws.value?.partner_rows as { link: Record<string, unknown>; partner: Record<string, unknown> }[]) ?? []
 )
 const comparison = computed(() => (ws.value?.partner_comparison as Record<string, string | null> | undefined) ?? null)
+const relatedOrders = computed(() => (ws.value?.related_orders as Record<string, unknown>[]) ?? [])
+const primaryPartnerFocus = computed(() => {
+  const preferred = partnerRows.value.find((row) => row.link.is_preferred)
+  const row = preferred ?? partnerRows.value[0]
+  return row ? String(row.partner.partner_name || row.partner.brand_name || '') : null
+})
+const productExecutionKeywords = computed(() => {
+  const p = product.value
+  if (!p) return []
+  return executionKeywords(
+    p.product_name,
+    p.product_category,
+    p.product_subcategory,
+    p.key_features,
+    p.application_scenarios,
+    p.target_customer_types,
+    p.load_capacity,
+    p.packaging_dimensions,
+  )
+})
 
 const nameByPartnerId = computed(() => {
   const m: Record<string, string> = {}
@@ -181,6 +210,14 @@ const nameByPartnerId = computed(() => {
 function nameFor(id: string | null | undefined) {
   if (!id) return '—'
   return nameByPartnerId.value[id] || id.slice(0, 8)
+}
+
+function executionKeywords(...values: unknown[]) {
+  const tokens = values
+    .flatMap((value) => String(value ?? '').split(/[;,/|，、\s]+/))
+    .map((value) => value.trim())
+    .filter((value) => value.length >= 3)
+  return [...new Set(tokens)].slice(0, 12)
 }
 
 const aiContext = computed(() => ({ ...(product.value ?? {}) }))

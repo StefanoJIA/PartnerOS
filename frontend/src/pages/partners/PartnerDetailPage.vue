@@ -54,6 +54,14 @@
         </div>
       </el-card>
 
+      <ObjectExecutionImpactCard
+        title="Partner 经营影响"
+        subtitle="能力准备 / 产品覆盖 / 项目机会 / 交付关联"
+        :partner-focus="partnerFocus"
+        :product-keywords="partnerExecutionKeywords"
+        :related-order-count="relatedOrders.length"
+      />
+
       <el-card shadow="never">
         <template #header>评分（1–5 整数，可空）</template>
         <el-form :inline="true" class="flex flex-wrap gap-2" @submit.prevent="saveScores">
@@ -199,6 +207,7 @@ import {
   ObjectTasksPanel,
 } from '@/components/object-panels'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import ObjectExecutionImpactCard from '@/components/business/ObjectExecutionImpactCard.vue'
 
 const route = useRoute()
 const partnerId = computed(() => route.params.partnerId as string)
@@ -213,8 +222,41 @@ const linkRows = computed(() => (ws.value?.partner_rows as { link: Record<string
 const qualityDocs = computed(() => (ws.value?.quality_documents as Record<string, unknown>[]) ?? [])
 const relatedRfqs = computed(() => (ws.value?.related_rfqs as Record<string, unknown>[]) ?? [])
 const relatedQuotes = computed(() => (ws.value?.related_quotations as Record<string, unknown>[]) ?? [])
+const relatedOrders = computed(() => (ws.value?.related_orders as Record<string, unknown>[]) ?? [])
+const partnerFocus = computed(() => {
+  const p = partner.value
+  return p ? String(p.brand_name || p.partner_name || '') : null
+})
+const partnerExecutionKeywords = computed(() => {
+  const p = partner.value
+  const linkedProducts = linkRows.value.flatMap((row) => [
+    row.product?.product_name,
+    row.product?.product_category,
+    row.product?.product_subcategory,
+  ])
+  if (!p) return executionKeywords(...linkedProducts)
+  return executionKeywords(
+    p.partner_name,
+    p.brand_name,
+    p.main_product_categories,
+    p.manufacturing_capabilities,
+    p.oem_odm_capability,
+    p.customization_capability,
+    p.lead_time,
+    p.us_market_experience,
+    ...linkedProducts,
+  )
+})
 
 const aiContext = computed(() => ({ ...(partner.value ?? {}) }))
+
+function executionKeywords(...values: unknown[]) {
+  const tokens = values
+    .flatMap((value) => String(value ?? '').split(/[;,/|，、\s]+/))
+    .map((value) => value.trim())
+    .filter((value) => value.length >= 3)
+  return [...new Set(tokens)].slice(0, 16)
+}
 
 const scores = reactive({
   quality_rating: undefined as number | undefined,
