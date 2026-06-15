@@ -70,6 +70,12 @@ def main() -> int:
         lifecycle_impacts = {impact for item in payload.lifecycle for impact in item.readiness_impact}
         account_sources = {source for item in payload.account_lifecycle for source in item.source_counts}
         account_impacts = {impact for item in payload.account_lifecycle for impact in item.readiness_impact}
+        stage_gate_items = [item.stage_gate for item in payload.opportunities if item.stage_gate]
+        all_stage_gate_dimensions = {
+            dimension
+            for gate in stage_gate_items
+            for dimension in gate.get("dimension_review_needs", [])
+        }
         checks = [
             ("status boundary", payload.summary.status == "READY_FOR_STAGING_HANDOFF"),
             ("external staging boundary", payload.summary.external_staging_state == "WAITING_FOR_REAL_STAGING_EVIDENCE"),
@@ -113,6 +119,20 @@ def main() -> int:
             (
                 "opportunities rank probability",
                 all(0 <= item.probability <= 100 for item in payload.opportunities),
+            ),
+            (
+                "opportunities expose stage gates",
+                bool(stage_gate_items)
+                and all(gate.get("health") and gate.get("next_best_action") for gate in stage_gate_items)
+                and any(gate.get("missing_inputs") or gate.get("health") == "ready_to_advance" for gate in stage_gate_items),
+            ),
+            (
+                "opportunity stage gates cover product dimensions",
+                bool(
+                    {"load", "stability", "noise", "warranty", "test cycle", "certification"} & all_stage_gate_dimensions
+                    or {"durability", "school procurement timing", "delivery consistency"} & all_stage_gate_dimensions
+                    or {"product family", "quote logic", "delivery requirement"} & all_stage_gate_dimensions
+                ),
             ),
             (
                 "quote learning captures feedback gap",
@@ -189,6 +209,14 @@ def main() -> int:
         checks.append(("route no external send", response_data.get("safety", {}).get("external_message_sent") is False))
         checks.append(("route opportunity list", opp_list_before.status_code == 200 and "opportunities" in opp_list_before.json().get("data", {})))
         checks.append(("route opportunity create", created.status_code in {200, 201} and created_data.get("probability") == 67))
+        checks.append(
+            (
+                "route opportunity stage gate",
+                created.status_code in {200, 201}
+                and created_data.get("stage_gate", {}).get("health") in {"needs_input", "ready_to_advance", "blocked"}
+                and "load" in created_data.get("stage_gate", {}).get("dimension_review_needs", []),
+            )
+        )
         checks.append(("route opportunity patch", patched is not None and patched.status_code == 200 and patched.json().get("data", {}).get("probability") == 72))
         checks.append(("route opportunity safety", opp_list_after.json().get("data", {}).get("safety", {}).get("email_sent") is False))
         checks.append(

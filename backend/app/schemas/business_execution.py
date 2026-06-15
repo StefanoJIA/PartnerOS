@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -71,6 +72,7 @@ class OpportunityPipelineItem(BaseModel):
     risk: str
     next_action: str
     path: str
+    stage_gate: dict[str, Any] = Field(default_factory=dict)
 
 
 class QuotationIntelligenceItem(BaseModel):

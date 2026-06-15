@@ -658,6 +658,208 @@ def _quote_learning_recommendation(row: SalesOpportunity, learning: QuoteLearnin
     }
 
 
+STAGE_EXIT_CRITERIA: dict[str, list[str]] = {
+    "discovery": [
+        "明确客户分群或目标客户",
+        "明确产品方向",
+        "指定 owner 和下一步人工动作",
+    ],
+    "qualified": [
+        "确认项目规模或预计金额",
+        "记录决策阶段和预计关闭时间",
+        "记录主要风险",
+    ],
+    "solution_fit": [
+        "确认 partner/product fit",
+        "记录竞争情况或替代方案",
+        "识别需要验证的产品/交付维度",
+    ],
+    "quotation": [
+        "关联报价或明确报价输入缺口",
+        "记录客户异议、交期、认证或技术表述风险",
+        "设定报价跟进动作",
+    ],
+    "negotiation": [
+        "记录竞争情况和成交/丢单风险",
+        "确认下一步商务动作",
+        "明确是否需要 business sign-off 或 Market Response 复盘",
+    ],
+    "won": [
+        "关联订单",
+        "记录成交原因",
+        "移交生产、物流和复购跟进",
+    ],
+    "lost": [
+        "记录丢单原因",
+        "沉淀报价学习",
+        "判断是否需要回流 Market Response",
+    ],
+    "on_hold": [
+        "记录暂停原因",
+        "明确恢复条件",
+        "指定下一次复核动作",
+    ],
+}
+
+
+NEXT_STAGE_BY_STAGE = {
+    "discovery": "qualified",
+    "qualified": "solution_fit",
+    "solution_fit": "quotation",
+    "quotation": "negotiation",
+    "negotiation": "won",
+    "on_hold": "discovery",
+}
+
+
+def _has_lifting_focus(row: SalesOpportunity) -> bool:
+    text = _text(row.partner_focus, row.opportunity_name, row.customer_segment, " ".join(row.product_focus or []), row.risk, row.next_action)
+    return any(
+        term in text
+        for term in [
+            "hosun",
+            "lifting",
+            "desk frame",
+            "desk leg",
+            "lifting column",
+            "heavy-duty",
+        ]
+    )
+
+
+def _has_education_focus(row: SalesOpportunity) -> bool:
+    text = _text(row.partner_focus, row.opportunity_name, row.customer_segment, " ".join(row.product_focus or []), row.risk, row.next_action)
+    return any(term in text for term in ["jooboo", "education", "school", "classroom", "project furniture"])
+
+
+def _missing_stage_inputs(row: SalesOpportunity) -> list[str]:
+    missing: list[str] = []
+    stage = row.decision_stage
+    if not row.owner:
+        missing.append("owner")
+    if not row.next_action:
+        missing.append("next_action")
+    if not row.customer_segment and not row.company_id:
+        missing.append("customer_or_segment")
+    if not row.product_focus:
+        missing.append("product_focus")
+
+    if stage in {"qualified", "solution_fit", "quotation", "negotiation"}:
+        if not row.project_size and row.estimated_value is None:
+            missing.append("project_size_or_value")
+        if not row.risk:
+            missing.append("risk")
+    if stage in {"solution_fit", "quotation", "negotiation"} and not row.competition:
+        missing.append("competition_or_alternative")
+    if stage in {"quotation", "negotiation"} and not row.quote_id:
+        missing.append("linked_quote")
+    if stage == "negotiation" and not row.expected_close_date:
+        missing.append("expected_close_date")
+    if stage == "won" and not row.order_id:
+        missing.append("linked_order")
+    if stage == "won" and not row.won_reason:
+        missing.append("won_reason")
+    if stage == "lost" and not row.lost_reason:
+        missing.append("lost_reason")
+    if stage == "on_hold" and not (row.blocker or row.risk or row.notes):
+        missing.append("hold_reason")
+    return missing
+
+
+def _dimension_review_needs(row: SalesOpportunity) -> list[str]:
+    if _has_lifting_focus(row):
+        return [
+            "load",
+            "stability",
+            "noise",
+            "delivery",
+            "installation",
+            "after-sales",
+            "packaging",
+            "warranty",
+            "test cycle",
+            "certification",
+            "project demand",
+        ]
+    if _has_education_focus(row):
+        return [
+            "durability",
+            "school procurement timing",
+            "classroom deployment",
+            "delivery consistency",
+            "resource needs",
+            "feedback after use",
+            "project acceptance criteria",
+        ]
+    return ["product family", "quote logic", "delivery requirement", "customer-visible fields", "market response metrics"]
+
+
+def derive_opportunity_stage_gate(row: SalesOpportunity, recommendations: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    recommendations = recommendations or []
+    missing_inputs = _missing_stage_inputs(row)
+    p0_recommendations = [item for item in recommendations if item.get("priority") == "P0"]
+    quote_learning_impacts = [item.get("risk_signal") for item in recommendations if item.get("source_type") == "quote_learning"]
+    market_response_impacts = [item.get("risk_signal") for item in recommendations if item.get("source_type") == "market_response"]
+    stage = row.decision_stage
+    blocker = row.blocker or None
+
+    if stage in {"won", "lost"} or row.status in {"won", "lost", "archived"}:
+        health = "closed"
+    elif blocker or p0_recommendations:
+        health = "blocked"
+    elif missing_inputs:
+        health = "needs_input"
+    else:
+        health = "ready_to_advance"
+
+    if health == "blocked":
+        next_best_action = blocker or p0_recommendations[0].get("recommended_next_action") or "先解除机会阻塞，再推进下一阶段。"
+    elif health == "needs_input":
+        next_best_action = f"补齐 {', '.join(missing_inputs[:3])}，再判断是否进入 {OPPORTUNITY_STAGE_LABELS.get(NEXT_STAGE_BY_STAGE.get(stage, stage), stage)}。"
+    elif health == "ready_to_advance":
+        next_stage = NEXT_STAGE_BY_STAGE.get(stage)
+        next_best_action = (
+            f"当前阶段输入完整，可人工评审是否进入 {OPPORTUNITY_STAGE_LABELS.get(next_stage, next_stage or '下一阶段')}。"
+            if next_stage
+            else "当前机会可进入人工复盘或关闭处理。"
+        )
+    else:
+        next_best_action = "沉淀成交/丢单原因，并回流报价学习与 Market Response。"
+
+    business_questions = [
+        "客户是否已确认采购阶段、项目规模和决策人？",
+        "报价输入、交期、认证、安装和售后表述是否足够进入客户沟通？",
+        "该机会是否需要 business sign-off、Market Response 复盘或 partner 能力验证？",
+    ]
+    if _has_lifting_focus(row):
+        business_questions.append("HOSUN 升降系统维度 load/stability/noise/warranty/certification 是否已有可客户使用的表述？")
+    if _has_education_focus(row):
+        business_questions.append("JOOBOO 教育项目家具的采购周期、交付一致性、安装和使用反馈是否已确认？")
+
+    return {
+        "health": health,
+        "current_stage": stage,
+        "current_stage_label": OPPORTUNITY_STAGE_LABELS.get(stage, stage),
+        "suggested_next_stage": NEXT_STAGE_BY_STAGE.get(stage),
+        "suggested_next_stage_label": OPPORTUNITY_STAGE_LABELS.get(NEXT_STAGE_BY_STAGE.get(stage, ""), NEXT_STAGE_BY_STAGE.get(stage)),
+        "blocks_next_stage": health in {"blocked", "needs_input"},
+        "missing_inputs": missing_inputs,
+        "exit_criteria": STAGE_EXIT_CRITERIA.get(stage, []),
+        "dimension_review_needs": _dimension_review_needs(row),
+        "market_response_impacts": [item for item in market_response_impacts if item],
+        "quote_learning_impacts": [item for item in quote_learning_impacts if item],
+        "business_questions": business_questions,
+        "next_best_action": next_best_action,
+        "safety": {
+            "opportunity_auto_updated": False,
+            "quote_status_changed": False,
+            "order_status_changed": False,
+            "external_message_sent": False,
+            "staging_validated": False,
+        },
+    }
+
+
 def _opportunity_recommendations(db: Session | None, row: SalesOpportunity) -> list[dict[str, Any]]:
     if db is None:
         return []
@@ -688,6 +890,7 @@ def _opportunity_recommendations(db: Session | None, row: SalesOpportunity) -> l
 
 
 def _serialize_opportunity(row: SalesOpportunity, db: Session | None = None) -> dict[str, Any]:
+    recommendations = _opportunity_recommendations(db, row)
     return {
         "id": str(row.id),
         "opportunity_name": row.opportunity_name,
@@ -718,7 +921,8 @@ def _serialize_opportunity(row: SalesOpportunity, db: Session | None = None) -> 
         "lost_reason": row.lost_reason,
         "notes": row.notes,
         "path": _opportunity_path(row),
-        "recommendations": _opportunity_recommendations(db, row),
+        "recommendations": recommendations,
+        "stage_gate": derive_opportunity_stage_gate(row, recommendations),
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "updated_at": row.updated_at.isoformat() if row.updated_at else None,
     }

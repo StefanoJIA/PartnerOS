@@ -37,6 +37,7 @@ from app.schemas.business_execution import (
     ProductIntelligenceItem,
     QuotationIntelligenceItem,
 )
+from app.services.growth_operations import derive_opportunity_stage_gate
 from app.services.partner_onboarding import build_partner_onboarding
 
 
@@ -651,6 +652,7 @@ def _build_opportunities(db: Session) -> list[OpportunityPipelineItem]:
                 risk=row.risk or row.blocker or "Risk not recorded yet.",
                 next_action=row.next_action or "Update decision stage, competition, risk, probability, and next action.",
                 path="/growth-operations",
+                stage_gate=derive_opportunity_stage_gate(row),
             )
         )
     if len(items) >= 12:
@@ -677,6 +679,25 @@ def _build_opportunities(db: Session) -> list[OpportunityPipelineItem]:
                 risk="No automatic external send; conversion depends on manual outreach and quote request.",
                 next_action=campaign.next_action or "Create or update manual outreach tasks and record replies.",
                 path=f"/growth-operations?campaign={campaign.id}",
+                stage_gate={
+                    "health": "needs_input",
+                    "current_stage": "outreach",
+                    "current_stage_label": "人工外联",
+                    "suggested_next_stage": "discovery",
+                    "suggested_next_stage_label": "需求发现",
+                    "blocks_next_stage": True,
+                    "missing_inputs": ["manual_reply", "qualified_requirement", "quote_request"],
+                    "exit_criteria": ["人工发送完成", "记录客户回复", "形成明确项目机会或报价请求"],
+                    "dimension_review_needs": campaign.product_focus or ["product family", "quote logic"],
+                    "market_response_impacts": [],
+                    "quote_learning_impacts": [],
+                    "business_questions": [
+                        "该 Campaign 是否已产生真实客户回复？",
+                        "是否应创建 Sales Opportunity 或报价输入？",
+                    ],
+                    "next_best_action": campaign.next_action or "Create or update manual outreach tasks and record replies.",
+                    "safety": _safety_flags(),
+                },
             )
         )
 

@@ -229,6 +229,40 @@
                   <p class="text-xs text-slate-700">竞争：{{ row.competition || '未记录' }}</p>
                   <p class="mt-1 text-xs text-rose-600">风险：{{ row.risk || row.blocker || '未记录' }}</p>
                   <p class="mt-1 text-xs text-slate-500">下一步：{{ row.next_action || '未记录' }}</p>
+                  <div v-if="row.stage_gate" class="mt-3 rounded border border-blue-100 bg-blue-50 p-2">
+                    <div class="flex flex-wrap items-center gap-1">
+                      <el-tag size="small" :type="stageGateType(row.stage_gate.health)" effect="plain">
+                        {{ stageGateLabel(row.stage_gate.health) }}
+                      </el-tag>
+                      <el-tag size="small" effect="plain">{{ row.stage_gate.current_stage_label }}</el-tag>
+                      <el-tag v-if="row.stage_gate.suggested_next_stage_label" size="small" type="info" effect="plain">
+                        下一阶段：{{ row.stage_gate.suggested_next_stage_label }}
+                      </el-tag>
+                    </div>
+                    <p class="mt-1 text-xs font-medium text-slate-800">{{ row.stage_gate.next_best_action }}</p>
+                    <div v-if="row.stage_gate.missing_inputs.length" class="mt-1 flex flex-wrap gap-1">
+                      <el-tag
+                        v-for="item in row.stage_gate.missing_inputs.slice(0, 5)"
+                        :key="item"
+                        size="small"
+                        type="warning"
+                        effect="plain"
+                      >
+                        缺 {{ stageGateInputLabel(item) }}
+                      </el-tag>
+                    </div>
+                    <div v-if="row.stage_gate.dimension_review_needs.length" class="mt-1 flex flex-wrap gap-1">
+                      <el-tag
+                        v-for="item in row.stage_gate.dimension_review_needs.slice(0, 6)"
+                        :key="item"
+                        size="small"
+                        effect="plain"
+                      >
+                        {{ item }}
+                      </el-tag>
+                    </div>
+                    <p class="mt-1 text-[11px] text-blue-700">阶段门只给人工推进建议，不自动修改机会、报价或订单状态。</p>
+                  </div>
                   <div v-if="row.recommendations?.length" class="mt-3 space-y-2">
                     <div
                       v-for="rec in row.recommendations.slice(0, 2)"
@@ -792,6 +826,42 @@ function recommendationSourceLabel(sourceType: string) {
   if (sourceType === 'market_response') return 'Market Response'
   if (sourceType === 'quote_learning') return '报价学习'
   return sourceType
+}
+
+function stageGateLabel(health: string) {
+  const labels: Record<string, string> = {
+    blocked: '阻塞',
+    needs_input: '需补输入',
+    ready_to_advance: '可评审推进',
+    closed: '已关闭',
+  }
+  return labels[health] || health
+}
+
+function stageGateType(health: string) {
+  if (health === 'blocked') return 'danger'
+  if (health === 'needs_input') return 'warning'
+  if (health === 'ready_to_advance') return 'success'
+  return 'info'
+}
+
+function stageGateInputLabel(value: string) {
+  const labels: Record<string, string> = {
+    owner: '负责人',
+    next_action: '下一步',
+    customer_or_segment: '客户/分群',
+    product_focus: '产品方向',
+    project_size_or_value: '项目规模/金额',
+    risk: '风险',
+    competition_or_alternative: '竞争/替代方案',
+    linked_quote: '关联报价',
+    expected_close_date: '预计关闭日期',
+    linked_order: '关联订单',
+    won_reason: '成交原因',
+    lost_reason: '丢单原因',
+    hold_reason: '暂停原因',
+  }
+  return labels[value] || value
 }
 
 function appendRecommendationLine(current: string, line: string) {

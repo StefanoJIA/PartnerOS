@@ -222,6 +222,23 @@ export interface GrowthOpportunityRecommendation {
   safety: Record<string, boolean>
 }
 
+export interface GrowthOpportunityStageGate {
+  health: string
+  current_stage: string
+  current_stage_label: string
+  suggested_next_stage: string | null
+  suggested_next_stage_label: string | null
+  blocks_next_stage: boolean
+  missing_inputs: string[]
+  exit_criteria: string[]
+  dimension_review_needs: string[]
+  market_response_impacts: string[]
+  quote_learning_impacts: string[]
+  business_questions: string[]
+  next_best_action: string
+  safety: Record<string, boolean>
+}
+
 export interface GrowthOpportunityRow {
   id: string
   opportunity_name: string
@@ -253,6 +270,7 @@ export interface GrowthOpportunityRow {
   notes: string | null
   path: string
   recommendations: GrowthOpportunityRecommendation[]
+  stage_gate: GrowthOpportunityStageGate
   created_at: string
   updated_at: string
 }

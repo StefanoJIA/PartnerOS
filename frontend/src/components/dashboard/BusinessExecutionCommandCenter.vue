@@ -142,6 +142,20 @@
               <template #default="{ row }">
                 <el-progress :percentage="row.probability" :stroke-width="8" />
                 <p class="mt-1 text-xs text-slate-600">{{ row.risk }}</p>
+                <div v-if="row.stage_gate" class="mt-2 rounded border border-blue-100 bg-blue-50 p-2">
+                  <div class="flex flex-wrap items-center gap-1">
+                    <el-tag size="small" :type="stageGateType(row.stage_gate.health)" effect="plain">
+                      {{ stageGateLabel(row.stage_gate.health) }}
+                    </el-tag>
+                    <el-tag size="small" effect="plain">{{ row.stage_gate.current_stage_label }}</el-tag>
+                  </div>
+                  <p class="mt-1 text-xs text-slate-700">{{ row.stage_gate.next_best_action }}</p>
+                  <div v-if="row.stage_gate.missing_inputs.length" class="mt-1 flex flex-wrap gap-1">
+                    <el-tag v-for="item in row.stage_gate.missing_inputs.slice(0, 3)" :key="item" size="small" type="warning" effect="plain">
+                      缺 {{ stageGateInputLabel(item) }}
+                    </el-tag>
+                  </div>
+                </div>
               </template>
             </el-table-column>
             <el-table-column label="入口" width="90">
@@ -266,6 +280,42 @@ function riskType(risk: string) {
   if (risk === 'high') return 'danger'
   if (risk === 'medium') return 'warning'
   return 'info'
+}
+
+function stageGateLabel(health: string) {
+  const labels: Record<string, string> = {
+    blocked: '阻塞',
+    needs_input: '需补输入',
+    ready_to_advance: '可评审推进',
+    closed: '已关闭',
+  }
+  return labels[health] || health
+}
+
+function stageGateType(health: string) {
+  if (health === 'blocked') return 'danger'
+  if (health === 'needs_input') return 'warning'
+  if (health === 'ready_to_advance') return 'success'
+  return 'info'
+}
+
+function stageGateInputLabel(value: string) {
+  const labels: Record<string, string> = {
+    owner: '负责人',
+    next_action: '下一步',
+    customer_or_segment: '客户/分群',
+    product_focus: '产品方向',
+    project_size_or_value: '项目规模/金额',
+    risk: '风险',
+    competition_or_alternative: '竞争/替代方案',
+    linked_quote: '关联报价',
+    expected_close_date: '预计关闭日期',
+    linked_order: '关联订单',
+    won_reason: '成交原因',
+    lost_reason: '丢单原因',
+    hold_reason: '暂停原因',
+  }
+  return labels[value] || value
 }
 
 function lifecycleSourceLabel(sourceType: string) {
