@@ -14,6 +14,7 @@ import {
   fetchQuoteVersions,
   markQuoteReady,
   markQuoteSent,
+  promoteQuoteLearningToMarketResponse,
   quotePdfDownloadUrl,
   SENT_CHANNELS,
   type DeliveryLog,
@@ -56,6 +57,7 @@ const createOrderNote = ref('')
 const learningRecords = ref<QuoteLearningRecord[]>([])
 const learningLoading = ref(false)
 const learningSaving = ref(false)
+const learningPromotingId = ref('')
 const learningError = ref('')
 
 const learningForm = reactive({
@@ -343,6 +345,23 @@ async function onSaveLearning() {
   }
 }
 
+async function onPromoteLearning(row: QuoteLearningRecord) {
+  if (!quote.value || learningPromotingId.value) return
+  learningPromotingId.value = row.id
+  learningError.value = ''
+  successMsg.value = ''
+  try {
+    const result = await promoteQuoteLearningToMarketResponse(quote.value.id, row.id)
+    successMsg.value = result.created
+      ? `已生成 Market Response 审查项：${result.review.partner_focus} / ${result.review.review_dimension}`
+      : `Market Response 审查项已存在：${result.review.partner_focus} / ${result.review.review_dimension}`
+  } catch (e: unknown) {
+    learningError.value = e instanceof Error ? e.message : '生成 Market Response 审查项失败'
+  } finally {
+    learningPromotingId.value = ''
+  }
+}
+
 async function onExportPdf() {
   if (!quote.value) return
   pdfExporting.value = true
@@ -548,6 +567,16 @@ onMounted(load)
               {{ dimension }}
             </el-tag>
           </div>
+          <el-button
+            class="mt"
+            size="small"
+            type="warning"
+            plain
+            :loading="learningPromotingId === latestLearning.id"
+            @click="onPromoteLearning(latestLearning)"
+          >
+            生成 Market Response 审查项
+          </el-button>
         </div>
         <el-empty v-else description="暂无报价学习记录；请在客户回复、报价修订、赢单或丢单后记录原因。" class="mt" />
 
@@ -608,6 +637,19 @@ onMounted(load)
           <el-table-column prop="next_action" label="下一步" />
           <el-table-column prop="owner" label="Owner" width="140" />
           <el-table-column prop="follow_up_date" label="跟进" width="120" />
+          <el-table-column label="市场响应" width="160">
+            <template #default="{ row }">
+              <el-button
+                size="small"
+                link
+                type="warning"
+                :loading="learningPromotingId === row.id"
+                @click="onPromoteLearning(row)"
+              >
+                生成审查项
+              </el-button>
+            </template>
+          </el-table-column>
         </el-table>
       </section>
 

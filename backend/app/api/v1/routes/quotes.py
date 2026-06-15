@@ -29,6 +29,7 @@ from app.schemas.quotes import (
 from app.services.quotes.quote_learning import (
     create_quote_learning,
     list_quote_learning,
+    promote_quote_learning_to_market_response,
     quote_learning_to_dict,
     update_quote_learning,
 )
@@ -175,6 +176,19 @@ def update_quote_learning_route(
     row = update_quote_learning(db, quote_id, learning_id, body, user=user)
     rid = get_request_id(request)
     return success_envelope(quote_learning_to_dict(row), request_id=rid)
+
+
+@router.post("/{quote_id}/learning/{learning_id}/market-response-review")
+def promote_quote_learning_to_market_response_route(
+    quote_id: UUID,
+    learning_id: UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    data = promote_quote_learning_to_market_response(db, quote_id, learning_id, user=user)
+    rid = get_request_id(request)
+    return success_envelope(data, request_id=rid, status_code=201 if data.get("created") else 200)
 
 
 @router.patch("/{quote_id}")

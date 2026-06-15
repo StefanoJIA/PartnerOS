@@ -95,10 +95,16 @@ def main() -> int:
             ) if created_data.get("id") else None
             listed = client.get(f"/api/v1/quotes/{quote_id}/learning", headers=headers)
             detail = client.get(f"/api/v1/quotes/{quote_id}", headers=headers)
+            promoted = client.post(
+                f"/api/v1/quotes/{quote_id}/learning/{created_data.get('id')}/market-response-review",
+                headers=headers,
+            ) if created_data.get("id") else None
             dashboard = client.get("/api/dashboard/business-execution", headers=headers)
 
         db.expire_all()
         quote_after = db.get(Quote, quote.id)
+        promoted_data = promoted.json().get("data", {}) if promoted is not None and promoted.status_code in {200, 201} else {}
+        promoted_review = promoted_data.get("review", {})
         checks = [
             ("quote fixture present", bool(quote_id)),
             ("learning create route", created.status_code in {200, 201} and created_data.get("outcome_status") == "revision_requested"),
@@ -109,10 +115,26 @@ def main() -> int:
             ("learning safety no order status change", created_data.get("safety", {}).get("order_status_changed") is False),
             ("quote status unchanged", quote_after is not None and quote_after.status == status_before),
             ("quote detail exposes latest learning", detail.status_code == 200 and detail.json().get("data", {}).get("latest_learning")),
+            ("learning promotion route", promoted is not None and promoted.status_code in {200, 201} and promoted_review),
+            (
+                "learning promotion safety",
+                promoted_data.get("safety", {}).get("external_message_sent") is False
+                and promoted_data.get("safety", {}).get("quote_status_changed") is False
+                and promoted_data.get("safety", {}).get("order_status_changed") is False,
+            ),
             (
                 "business execution quote learning",
                 dashboard.status_code == 200
                 and any("learning" in item.get("learning_signal", "").lower() for item in dashboard.json().get("quotations", [])),
+            ),
+            (
+                "business execution product signal",
+                dashboard.status_code == 200
+                and any(
+                    item.get("partner_focus") == promoted_review.get("partner_focus")
+                    and promoted_review.get("review_dimension") in item.get("dimensions", [])
+                    for item in dashboard.json().get("products", [])
+                ),
             ),
             ("status boundary", dashboard.json().get("summary", {}).get("status") == "READY_FOR_STAGING_HANDOFF"),
             ("no staging validated", dashboard.json().get("safety", {}).get("staging_validated") is False),

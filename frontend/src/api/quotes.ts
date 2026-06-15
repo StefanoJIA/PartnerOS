@@ -73,6 +73,25 @@ export interface QuoteLearningPayload {
   internal_only?: boolean
 }
 
+export interface QuoteLearningMarketResponsePromotion {
+  created: boolean
+  review: {
+    id: string
+    partner_focus: string
+    focus_category: string
+    product_focus: string[]
+    review_dimension: string
+    visibility_class: string
+    priority: string
+    status: string
+    source_type: string
+    source_summary: string
+    next_action: string | null
+    owner: string | null
+  }
+  safety: QuoteLearningSafety
+}
+
 export interface DeliverySafety {
   automatic_sending_enabled: boolean
   email_sent_by_system: boolean
@@ -266,6 +285,16 @@ export async function updateQuoteLearning(
   payload: Partial<QuoteLearningPayload>,
 ): Promise<QuoteLearningRecord> {
   const { data } = await http.patch<V1Envelope<QuoteLearningRecord>>(`/v1/quotes/${quoteId}/learning/${learningId}`, payload)
+  return data.data
+}
+
+export async function promoteQuoteLearningToMarketResponse(
+  quoteId: string,
+  learningId: string,
+): Promise<QuoteLearningMarketResponsePromotion> {
+  const { data } = await http.post<V1Envelope<QuoteLearningMarketResponsePromotion>>(
+    `/v1/quotes/${quoteId}/learning/${learningId}/market-response-review`,
+  )
   return data.data
 }
 
