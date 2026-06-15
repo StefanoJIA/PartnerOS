@@ -65,6 +65,9 @@ def main() -> int:
             for item in payload.products
             if item.partner_focus
         }
+        lifecycle_stages = {item.lifecycle_stage for item in payload.lifecycle}
+        lifecycle_sources = {item.source_type for item in payload.lifecycle}
+        lifecycle_impacts = {impact for item in payload.lifecycle for impact in item.readiness_impact}
         checks = [
             ("status boundary", payload.summary.status == "READY_FOR_STAGING_HANDOFF"),
             ("external staging boundary", payload.summary.external_staging_state == "WAITING_FOR_REAL_STAGING_EVIDENCE"),
@@ -79,6 +82,20 @@ def main() -> int:
                 "lifecycle covers sales-to-delivery stages",
                 any(item.lifecycle_stage in {"Lead", "Qualified", "Opportunity", "Quotation"} for item in payload.lifecycle)
                 and any(item.lifecycle_stage in {"Order", "Production", "Delivery", "After-Sales"} for item in payload.lifecycle),
+            ),
+            (
+                "lifecycle covers opportunity and quotation objects",
+                {"Opportunity", "Quotation"} & lifecycle_stages
+                and {"opportunity", "quote"} & lifecycle_sources,
+            ),
+            (
+                "lifecycle includes feedback or repeat-business signal",
+                bool({"feedback", "order"} & lifecycle_sources)
+                and bool({"after-sales", "repeat business", "market response"} & lifecycle_impacts),
+            ),
+            (
+                "lifecycle has action metadata",
+                all(item.source_type and item.source_id and item.stage_order > 0 and item.priority for item in payload.lifecycle),
             ),
             (
                 "opportunities rank probability",

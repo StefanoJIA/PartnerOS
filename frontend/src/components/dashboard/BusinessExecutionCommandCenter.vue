@@ -56,13 +56,24 @@
             <el-table-column label="客户 / 阶段" min-width="180">
               <template #default="{ row }">
                 <div class="font-medium text-slate-800">{{ row.customer_name }}</div>
-                <el-tag class="mt-1" size="small" effect="plain">{{ row.lifecycle_stage }}</el-tag>
+                <div class="mt-1 flex flex-wrap gap-1">
+                  <el-tag size="small" effect="plain">{{ row.lifecycle_stage }}</el-tag>
+                  <el-tag size="small" :type="priorityType(row.priority)" effect="plain">{{ row.priority }}</el-tag>
+                  <el-tag size="small" type="info" effect="plain">{{ lifecycleSourceLabel(row.source_type) }}</el-tag>
+                </div>
+                <div class="mt-1 text-xs text-slate-500">{{ row.partner_focus || 'future partner' }}</div>
               </template>
             </el-table-column>
             <el-table-column label="下一步 / 阻碍" min-width="260">
               <template #default="{ row }">
+                <p class="text-xs text-slate-500">{{ row.current_signal }}</p>
                 <p class="text-xs text-slate-700">{{ row.next_action }}</p>
                 <p v-if="row.blocker" class="mt-1 text-xs text-rose-600">{{ row.blocker }}</p>
+                <div class="mt-1 flex flex-wrap gap-1">
+                  <el-tag v-for="impact in row.readiness_impact.slice(0, 3)" :key="impact" size="small" effect="plain">
+                    {{ impact }}
+                  </el-tag>
+                </div>
               </template>
             </el-table-column>
             <el-table-column label="入口" width="90">
@@ -213,5 +224,14 @@ function riskType(risk: string) {
   if (risk === 'high') return 'danger'
   if (risk === 'medium') return 'warning'
   return 'info'
+}
+
+function lifecycleSourceLabel(sourceType: string) {
+  if (sourceType === 'lead') return '线索'
+  if (sourceType === 'opportunity') return '机会'
+  if (sourceType === 'quote') return '报价'
+  if (sourceType === 'order') return '订单'
+  if (sourceType === 'feedback') return '反馈'
+  return sourceType
 }
 </script>

@@ -133,6 +133,34 @@ def _stage_from_order(order: CustomerOrder) -> str:
     return "Order"
 
 
+def _stage_from_quote(quote: Quote) -> str:
+    if quote.status == "converted_to_order":
+        return "Order"
+    return "Quotation"
+
+
+def _stage_order(stage: str) -> int:
+    return LIFECYCLE_ORDER.get(stage, 0)
+
+
+def _priority_from_probability(probability: int, blocker: str | None = None) -> str:
+    if blocker:
+        return "P1"
+    if probability >= 80:
+        return "P1"
+    if probability >= 50:
+        return "P2"
+    return "P3"
+
+
+def _priority_from_feedback(ticket: FeedbackTicket) -> str:
+    if ticket.priority in {"urgent", "high", "P0", "P1"}:
+        return "P1"
+    if ticket.status in {"new", "open", "waiting_internal"}:
+        return "P2"
+    return "P3"
+
+
 def _probability(status: str, has_tasks: bool = False) -> int:
     if status in {"converted_to_order", "confirmed", "delivered"}:
         return 95
@@ -153,6 +181,12 @@ def _size_label(amount: Decimal | None, count: int = 0) -> str:
     if count >= 5:
         return "multi-line project"
     return "early-size unknown"
+
+
+def _lifecycle_sort_key(item: CustomerLifecycleItem) -> tuple[int, int, int]:
+    priority_rank = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}.get(item.priority, 3)
+    blocker_rank = 0 if item.blocker else 1
+    return (priority_rank, blocker_rank, -item.stage_order)
 
 
 def _quote_product_focus(quote: Quote) -> list[str]:
@@ -181,15 +215,94 @@ def _build_lifecycle(db: Session, user: User) -> list[CustomerLifecycleItem]:
         items.append(
             CustomerLifecycleItem(
                 id=str(lead.id),
+                source_type="lead",
+                source_id=str(lead.id),
                 customer_name=company.company_name,
                 lifecycle_stage=_stage_from_lead(lead),
+                stage_order=_stage_order(_stage_from_lead(lead)),
+                priority=lead.priority.upper() if lead.priority in {"P0", "P1", "P2", "P3"} else ("P1" if lead.priority == "high" else "P2"),
                 owner=lead.owner.email if lead.owner else user.email,
                 partner_focus=partner_focus,
                 product_focus=product_focus,
                 current_signal=f"Lead stage: {lead.current_stage}; priority: {lead.priority or 'normal'}.",
                 next_action=lead.next_action or lead.ai_next_step_suggestion or "Qualify product fit, decision role, project timing, and quote inputs.",
                 blocker=None if lead.next_action else "Next action is not explicit.",
+                readiness_impact=["customer development", "opportunity qualification"],
                 path=f"/leads/{lead.id}",
+            )
+        )
+
+    opportunities = (
+        db.query(SalesOpportunity)
+        .order_by(SalesOpportunity.probability.desc(), SalesOpportunity.updated_at.desc())
+        .limit(16)
+        .all()
+    )
+    for opportunity in opportunities:
+        company = opportunity.company
+        stage = "Quotation" if opportunity.quote_id or opportunity.decision_stage in {"quotation", "negotiation", "won", "lost"} else "Opportunity"
+        blocker = opportunity.blocker or (None if opportunity.next_action else "Opportunity next action is not explicit.")
+        if opportunity.risk and opportunity.risk.lower() not in {"risk not recorded yet.", "none"}:
+            blocker = blocker or opportunity.risk
+        items.append(
+            CustomerLifecycleItem(
+                id=str(opportunity.id),
+                source_type="opportunity",
+                source_id=str(opportunity.id),
+                customer_name=company.company_name if company else (opportunity.customer_segment or opportunity.opportunity_name),
+                lifecycle_stage=stage,
+                stage_order=_stage_order(stage),
+                priority=opportunity.priority or _priority_from_probability(opportunity.probability, blocker),
+                owner=opportunity.owner or user.email,
+                partner_focus=opportunity.partner_focus,
+                product_focus=opportunity.product_focus or [],
+                current_signal=(
+                    f"Opportunity stage: {opportunity.decision_stage}; probability: {opportunity.probability}%; "
+                    f"project size: {opportunity.project_size or _size_label(opportunity.estimated_value)}."
+                ),
+                next_action=opportunity.next_action or "Confirm decision stage, quote inputs, competition, risk, and owner.",
+                blocker=blocker,
+                readiness_impact=["opportunity pipeline", "quotation readiness", "pilot risk"],
+                path="/growth-operations",
+            )
+        )
+
+    quotes = db.query(Quote).filter(Quote.is_archived.is_(False)).order_by(Quote.updated_at.desc()).limit(16).all()
+    for quote in quotes:
+        company = db.get(Company, quote.company_id) if quote.company_id else None
+        latest_learning = (
+            db.query(QuoteLearningRecord)
+            .filter(QuoteLearningRecord.quote_id == quote.id)
+            .order_by(QuoteLearningRecord.updated_at.desc(), QuoteLearningRecord.created_at.desc())
+            .first()
+        )
+        stage = _stage_from_quote(quote)
+        blocker = None
+        if not latest_learning and quote.status in {"sent", "revised", "expired"}:
+            blocker = "Quote needs customer feedback, revision reason, or won/lost learning."
+        elif quote.follow_up_date and quote.follow_up_date <= date.today() and quote.status not in {"converted_to_order"}:
+            blocker = "Quote follow-up is due."
+        items.append(
+            CustomerLifecycleItem(
+                id=str(quote.id),
+                source_type="quote",
+                source_id=str(quote.id),
+                customer_name=company.company_name if company else (quote.bill_to_company or quote.quote_number),
+                lifecycle_stage=stage,
+                stage_order=_stage_order(stage),
+                priority="P1" if blocker else "P2",
+                owner=user.email,
+                partner_focus=_partner_focus_from_text(*_quote_product_focus(quote)),
+                product_focus=_quote_product_focus(quote),
+                current_signal=f"Quote {quote.quote_number}; status: {quote.status}; versions: {len(quote.versions)}.",
+                next_action=(
+                    latest_learning.next_action
+                    if latest_learning and latest_learning.next_action
+                    else "Record quote learning, customer objection, follow-up date, and outcome reason."
+                ),
+                blocker=blocker,
+                readiness_impact=["quotation intelligence", "opportunity conversion", "market response"],
+                path=f"/quotes/{quote.id}",
             )
         )
 
@@ -197,21 +310,55 @@ def _build_lifecycle(db: Session, user: User) -> list[CustomerLifecycleItem]:
     for order in orders:
         company = db.get(Company, order.company_id) if order.company_id else None
         product_focus = _product_focus_from_text(*(line.product_name for line in order.line_items))
+        stage = _stage_from_order(order)
+        blocker = None if order.shipment_plans else "Shipment visibility is incomplete."
         items.append(
             CustomerLifecycleItem(
                 id=str(order.id),
+                source_type="order",
+                source_id=str(order.id),
                 customer_name=company.company_name if company else (order.bill_to_company or order.order_number),
-                lifecycle_stage=_stage_from_order(order),
+                lifecycle_stage=stage,
+                stage_order=_stage_order(stage),
+                priority="P1" if blocker else "P2",
                 owner=user.email,
                 partner_focus=_partner_focus_from_text(*(line.product_name for line in order.line_items)),
                 product_focus=product_focus or [line.product_category for line in order.line_items if line.product_category][:5],
                 current_signal=f"Order status: {order.status}; production milestones: {len(order.production_milestones)}; shipments: {len(order.shipment_plans)}.",
                 next_action="Review delivery risk, shipment visibility, feedback status, and repeat-business risk.",
-                blocker=None if order.shipment_plans else "Shipment visibility is incomplete.",
+                blocker=blocker,
+                readiness_impact=["project delivery", "customer portal", "repeat business"],
                 path=f"/orders/{order.id}",
             )
         )
-    return sorted(items, key=lambda item: LIFECYCLE_ORDER.get(item.lifecycle_stage, 0), reverse=True)[:16]
+
+    feedback_rows = db.query(FeedbackTicket).order_by(FeedbackTicket.updated_at.desc()).limit(12).all()
+    for ticket in feedback_rows:
+        company = db.get(Company, ticket.company_id) if ticket.company_id else None
+        linked_order = db.get(CustomerOrder, ticket.order_id) if ticket.order_id else None
+        stage = "Repeat Business" if ticket.status in {"resolved", "closed"} else "After-Sales"
+        product_focus = _product_focus_from_text(*(line.product_name for line in linked_order.line_items)) if linked_order else []
+        blocker = None if ticket.status in {"resolved", "closed"} else "Feedback needs owner response before repeat-business outreach."
+        items.append(
+            CustomerLifecycleItem(
+                id=str(ticket.id),
+                source_type="feedback",
+                source_id=str(ticket.id),
+                customer_name=company.company_name if company else (ticket.customer_name or ticket.ticket_number),
+                lifecycle_stage=stage,
+                stage_order=_stage_order(stage),
+                priority=_priority_from_feedback(ticket),
+                owner=ticket.internal_owner or user.email,
+                partner_focus=_partner_focus_from_text(*(line.product_name for line in linked_order.line_items)) if linked_order else None,
+                product_focus=product_focus,
+                current_signal=f"Feedback {ticket.ticket_number}; status: {ticket.status}; priority: {ticket.priority}; type: {ticket.feedback_type}.",
+                next_action="Resolve feedback, summarize customer-safe response, and feed product/delivery signal into Market Response if relevant.",
+                blocker=blocker,
+                readiness_impact=["after-sales", "repeat business", "market response"],
+                path="/feedback-tickets",
+            )
+        )
+    return sorted(items, key=_lifecycle_sort_key)[:24]
 
 
 def _build_opportunities(db: Session) -> list[OpportunityPipelineItem]:

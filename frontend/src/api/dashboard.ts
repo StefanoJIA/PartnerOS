@@ -196,14 +196,19 @@ export type BusinessExecution = {
   }
   lifecycle: Array<{
     id: string
+    source_type: string
+    source_id: string | null
     customer_name: string
     lifecycle_stage: string
+    stage_order: number
+    priority: string
     owner: string | null
     partner_focus: string | null
     product_focus: string[]
     current_signal: string
     next_action: string
     blocker: string | null
+    readiness_impact: string[]
     path: string
   }>
   opportunities: Array<{

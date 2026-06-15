@@ -19,14 +19,19 @@ class BusinessExecutionSummary(BaseModel):
 
 class CustomerLifecycleItem(BaseModel):
     id: str
+    source_type: str = "unknown"
+    source_id: str | None = None
     customer_name: str
     lifecycle_stage: str
+    stage_order: int = 0
+    priority: str = "P2"
     owner: str | None = None
     partner_focus: str | None = None
     product_focus: list[str] = Field(default_factory=list)
     current_signal: str
     next_action: str
     blocker: str | None = None
+    readiness_impact: list[str] = Field(default_factory=list)
     path: str
 
 
