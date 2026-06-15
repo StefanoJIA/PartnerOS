@@ -333,6 +333,31 @@
                   <p v-if="row.fulfillment_intelligence.quote_dimension_gaps.length" class="mt-1 text-xs text-slate-500">
                     报价维度待兑现：{{ row.fulfillment_intelligence.quote_dimension_gaps.slice(0, 4).join(' / ') }}
                   </p>
+                  <div
+                    v-if="row.fulfillment_intelligence.partner_execution_readiness?.partners?.length"
+                    class="mt-2 rounded border border-amber-200 bg-white p-2"
+                  >
+                    <div class="flex flex-wrap items-center gap-1">
+                      <el-tag size="small" type="warning" effect="plain">
+                        {{ row.fulfillment_intelligence.partner_execution_readiness.priority }}
+                      </el-tag>
+                      <el-tag size="small" effect="plain">
+                        {{ row.fulfillment_intelligence.partner_execution_readiness.partners[0].partner_name }}
+                      </el-tag>
+                      <el-tag size="small" effect="plain">
+                        {{ row.fulfillment_intelligence.partner_execution_readiness.partners[0].handoff_stage }}
+                      </el-tag>
+                    </div>
+                    <p class="mt-1 text-xs text-slate-700">
+                      {{ row.fulfillment_intelligence.partner_execution_readiness.next_best_action }}
+                    </p>
+                    <p
+                      v-if="row.fulfillment_intelligence.partner_execution_readiness.missing_inputs.length"
+                      class="mt-1 text-xs text-amber-700"
+                    >
+                      Partner 缺口：{{ row.fulfillment_intelligence.partner_execution_readiness.missing_inputs.slice(0, 3).join(' / ') }}
+                    </p>
+                  </div>
                 </div>
               </template>
             </el-table-column>

@@ -151,6 +151,7 @@ const openFeedbackTickets = computed(() => feedbackTickets.value.filter((ticket)
 const visibleResourceCount = computed(() => orderResources.value.filter((resource) => resource.customer_visible && resource.status === 'published').length)
 const orderCompanyId = computed(() => order.value?.company_id ?? null)
 const fulfillmentIntel = computed(() => order.value?.fulfillment_intelligence ?? null)
+const partnerExecutionReadiness = computed(() => fulfillmentIntel.value?.partner_execution_readiness ?? null)
 const customerVisibleSummary = computed(() => {
   const production = order.value?.production_summary
   const shipment = order.value?.shipment_summary
@@ -184,6 +185,19 @@ function riskTagType(level: string) {
   if (level === 'high') return 'danger'
   if (level === 'medium') return 'warning'
   return 'success'
+}
+
+function executionStageLabel(stage: string) {
+  const labels: Record<string, string> = {
+    quote_to_order: '报价转订单',
+    supplier_confirmation: '供应商确认',
+    production_planning: '生产计划',
+    shipment_planning: '物流计划',
+    risk_review: '风险复核',
+    delivery_follow_up: '交付跟进',
+    order_execution: '订单执行',
+  }
+  return labels[stage] || stage
 }
 
 async function loadPartnerSplits() {
@@ -611,6 +625,68 @@ onMounted(load)
               <span v-if="!fulfillmentIntel.readiness_impact.length" class="fulfillment-intel__empty">暂无明显影响</span>
             </div>
           </div>
+        </div>
+        <div v-if="partnerExecutionReadiness" class="partner-execution">
+          <div class="partner-execution__head">
+            <div>
+              <div class="summary-label">Partner 订单承接判断</div>
+              <p>{{ partnerExecutionReadiness.next_best_action }}</p>
+            </div>
+            <div class="fulfillment-intel__tags">
+              <el-tag type="warning" effect="plain">{{ partnerExecutionReadiness.priority }}</el-tag>
+              <el-tag effect="plain">{{ partnerExecutionReadiness.health }}</el-tag>
+            </div>
+          </div>
+          <div class="partner-execution__cards">
+            <div v-for="partner in partnerExecutionReadiness.partners" :key="partner.partner_id" class="partner-execution__card">
+              <div class="partner-execution__card-head">
+                <div>
+                  <strong>{{ partner.partner_name }}</strong>
+                  <p>{{ executionStageLabel(partner.handoff_stage) }} · {{ partner.next_best_action }}</p>
+                </div>
+                <el-tag size="small" effect="plain">score {{ partner.readiness_score }}</el-tag>
+              </div>
+              <div class="partner-execution__metrics">
+                <span>分单：{{ partner.split_created ? '已创建' : '待创建' }}</span>
+                <span>确认：{{ partner.supplier_confirmation_count }}</span>
+                <span>生产：{{ partner.production_milestone_count }}</span>
+                <span>物流：{{ partner.shipment_plan_count }}</span>
+              </div>
+              <div class="fulfillment-intel__chips">
+                <el-tag
+                  v-for="item in partner.missing_execution_inputs.slice(0, 5)"
+                  :key="`missing-${partner.partner_id}-${item}`"
+                  size="small"
+                  type="warning"
+                  effect="plain"
+                >
+                  {{ item }}
+                </el-tag>
+                <el-tag
+                  v-for="item in partner.risk_signals.slice(0, 4)"
+                  :key="`risk-${partner.partner_id}-${item}`"
+                  size="small"
+                  type="danger"
+                  effect="plain"
+                >
+                  {{ item }}
+                </el-tag>
+                <span
+                  v-if="!partner.missing_execution_inputs.length && !partner.risk_signals.length"
+                  class="fulfillment-intel__empty"
+                >
+                  暂无 Partner 执行缺口
+                </span>
+              </div>
+            </div>
+          </div>
+          <el-alert
+            class="mt"
+            type="info"
+            :closable="false"
+            show-icon
+            :title="partnerExecutionReadiness.customer_safe_boundary"
+          />
         </div>
         <el-alert class="mt" type="warning" :closable="false" show-icon :title="fulfillmentIntel.customer_safe_boundary" />
       </section>
@@ -1133,6 +1209,14 @@ onMounted(load)
 .fulfillment-intel__action { margin: 12px 0; color: var(--el-text-color-primary); font-weight: 600; }
 .fulfillment-intel__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .fulfillment-intel__empty { color: var(--el-text-color-placeholder); font-size: 12px; }
+.partner-execution { margin-top: 14px; border: 1px solid #fed7aa; border-radius: 6px; background: #fff7ed; padding: 12px; }
+.partner-execution__head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.partner-execution__head p,
+.partner-execution__card p { margin: 4px 0 0; color: #475569; font-size: 12px; line-height: 1.5; }
+.partner-execution__cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin-top: 10px; }
+.partner-execution__card { border: 1px solid #ffedd5; border-radius: 6px; background: #fff; padding: 10px; }
+.partner-execution__card-head { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.partner-execution__metrics { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 8px 0; color: #64748b; font-size: 12px; }
 .customer-stage {
   display: flex;
   align-items: flex-start;
@@ -1148,6 +1232,8 @@ onMounted(load)
 @media (max-width: 900px) {
   .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .fulfillment-intel__grid { grid-template-columns: 1fr; }
+  .partner-execution__head,
+  .partner-execution__card-head { flex-direction: column; }
 }
 @media (max-width: 560px) {
   .summary-grid { grid-template-columns: 1fr; }

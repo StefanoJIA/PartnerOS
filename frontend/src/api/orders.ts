@@ -49,6 +49,35 @@ export interface OrderLineItem {
   status: string
 }
 
+export interface PartnerExecutionReadiness {
+  health: string
+  priority: string
+  partners: Array<{
+    partner_id: string
+    partner_name: string
+    quote_readiness_health: string | null
+    handoff_stage: string
+    readiness_score: number
+    split_created: boolean
+    split_id: string | null
+    split_status: string | null
+    supplier_confirmation_count: number
+    production_milestone_count: number
+    shipment_plan_count: number
+    missing_execution_inputs: string[]
+    risk_signals: string[]
+    readiness_impact: string[]
+    next_best_action: string
+    customer_safe_boundary: string
+  }>
+  missing_inputs: string[]
+  risk_signals: string[]
+  readiness_impact: string[]
+  next_best_action: string
+  customer_safe_boundary: string
+  safety: Record<string, boolean>
+}
+
 export interface OrderSummary {
   id: string
   order_number: string
@@ -119,9 +148,11 @@ export interface OrderDetail extends OrderSummary {
     source_quote: { quote_id: string; quote_number?: string; status?: string }
     quote_commercial_health: string | null
     quote_business_focus: string | null
+    quote_partner_readiness_health?: string | null
     quote_dimension_gaps: string[]
     quote_missing_inputs: string[]
     missing_operating_inputs: string[]
+    partner_execution_readiness?: PartnerExecutionReadiness
     production: {
       total_milestones: number
       completed_milestones: number

@@ -79,6 +79,11 @@ def main() -> int:
             for dimension in item.get("dimension_review_needs", [])
         }
         fulfillment_items = [item.fulfillment_intelligence for item in payload.delivery if item.fulfillment_intelligence]
+        partner_execution_items = [
+            item.get("partner_execution_readiness")
+            for item in fulfillment_items
+            if item.get("partner_execution_readiness")
+        ]
         fulfillment_impacts = {
             impact
             for item in fulfillment_items
@@ -270,6 +275,42 @@ def main() -> int:
                 or any(item.get("quote_dimension_gaps") or item.get("quote_missing_inputs") for item in fulfillment_items),
             ),
             (
+                "delivery partner execution readiness present",
+                bool(partner_execution_items)
+                and all(
+                    item.get("health")
+                    and item.get("priority")
+                    and item.get("next_best_action")
+                    and item.get("partners")
+                    for item in partner_execution_items
+                ),
+            ),
+            (
+                "delivery partner execution readiness links order handoff",
+                any(
+                    partner.get("handoff_stage")
+                    and (
+                        partner.get("missing_execution_inputs")
+                        or partner.get("risk_signals")
+                        or partner.get("split_created") is True
+                    )
+                    for item in partner_execution_items
+                    for partner in item.get("partners", [])
+                ),
+            ),
+            (
+                "delivery partner execution readiness safe boundaries",
+                all(
+                    item.get("safety", {}).get("external_message_sent") is False
+                    and item.get("safety", {}).get("supplier_notified") is False
+                    and item.get("safety", {}).get("customer_notified") is False
+                    and item.get("safety", {}).get("order_status_changed") is False
+                    and item.get("safety", {}).get("shipment_created") is False
+                    and item.get("customer_safe_boundary")
+                    for item in partner_execution_items
+                ),
+            ),
+            (
                 "delivery fulfillment intelligence safe boundaries",
                 all(
                     item.get("safety", {}).get("external_message_sent") is False
@@ -388,6 +429,18 @@ def main() -> int:
                 response.status_code == 200
                 and any(
                     item.get("fulfillment_intelligence", {}).get("next_best_action")
+                    for item in response_data.get("delivery", [])
+                ),
+            )
+        )
+        checks.append(
+            (
+                "route delivery partner execution readiness",
+                response.status_code == 200
+                and any(
+                    item.get("fulfillment_intelligence", {})
+                    .get("partner_execution_readiness", {})
+                    .get("partners")
                     for item in response_data.get("delivery", [])
                 ),
             )
