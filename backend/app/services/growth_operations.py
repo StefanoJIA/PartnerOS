@@ -26,8 +26,10 @@ from app.models import (
     GrowthCampaignTask,
     Lead,
     MarketIntelligenceItem,
+    MarketResponseReview,
     OrderLineItem,
     Quote,
+    QuoteLearningRecord,
     QuoteLineItem,
     SalesOpportunity,
     ShipmentPlan,
@@ -464,6 +466,11 @@ def _matches_keywords(text: str, keywords: list[str]) -> bool:
     return any(keyword in lower for keyword in keywords)
 
 
+def _value_keywords(value: str | None) -> list[str]:
+    chunks = str(value or "").replace("/", " ").replace(",", " ").replace(";", " ").split()
+    return [chunk.strip().lower() for chunk in chunks if len(chunk.strip()) >= 3]
+
+
 def _serialize_campaign(campaign: GrowthCampaign) -> dict[str, Any]:
     return {
         "id": str(campaign.id),
@@ -514,7 +521,173 @@ def _opportunity_path(row: SalesOpportunity) -> str:
     return "/growth-operations"
 
 
-def _serialize_opportunity(row: SalesOpportunity) -> dict[str, Any]:
+def _priority_rank(value: str | None) -> int:
+    return {"P0": 0, "P1": 1, "P2": 2, "P3": 3}.get(value or "P3", 3)
+
+
+def _opportunity_match_terms(row: SalesOpportunity) -> set[str]:
+    terms: set[str] = set()
+    for value in [
+        row.opportunity_name,
+        row.partner_focus,
+        row.customer_segment,
+        row.project_size,
+        row.decision_stage,
+        row.competition,
+        row.risk,
+        row.next_action,
+        row.blocker,
+    ]:
+        for token in _value_keywords(value):
+            terms.add(token)
+    for value in row.product_focus or []:
+        for token in _value_keywords(value):
+            terms.add(token)
+    return {term for term in terms if len(term) >= 3}
+
+
+def _review_matches_opportunity(review: MarketResponseReview, row: SalesOpportunity, terms: set[str]) -> bool:
+    partner = (row.partner_focus or "").lower()
+    if partner and partner not in (review.partner_focus or "").lower():
+        return False
+    review_text = _text(
+        review.partner_focus,
+        review.focus_category,
+        " ".join(review.product_focus or []),
+        review.review_dimension,
+        review.visibility_class,
+        review.source_summary,
+        review.customer_safe_summary,
+        review.next_action,
+    )
+    return bool(terms and _matches_keywords(review_text, list(terms)))
+
+
+def _market_response_recommendation(row: SalesOpportunity, review: MarketResponseReview) -> dict[str, Any]:
+    visibility = (review.visibility_class or "").lower()
+    status = (review.status or "").lower()
+    priority = review.priority or "P2"
+    suggested_probability = row.probability
+    suggested_stage = row.decision_stage
+    if "pilot blocker" in visibility or status == "blocked" or priority == "P0":
+        suggested_probability = min(row.probability, 25)
+        suggested_stage = "on_hold"
+        priority = "P0"
+    elif "needs validation" in visibility or "needs review" in status:
+        suggested_probability = min(row.probability, 55)
+        priority = "P1" if priority not in {"P0", "P1"} else priority
+    elif "customer-safe candidate" in visibility:
+        suggested_probability = max(row.probability, 60)
+
+    dimension = review.review_dimension or "market response"
+    action = review.next_action or f"Review {dimension} before advancing this opportunity."
+    reason = review.customer_safe_summary or review.source_summary
+    return {
+        "id": f"market_response:{review.id}",
+        "source_type": "market_response",
+        "source_id": str(review.id),
+        "priority": priority,
+        "suggested_probability": suggested_probability,
+        "suggested_decision_stage": suggested_stage,
+        "risk_signal": f"{review.visibility_class}: {dimension}",
+        "recommended_next_action": action,
+        "reason": reason[:500] if reason else f"Market Response review flags {dimension}.",
+        "path": "/market-response",
+        "manual_apply_required": True,
+        "safety": {
+            "opportunity_auto_updated": False,
+            "quote_status_changed": False,
+            "order_status_changed": False,
+            "external_message_sent": False,
+            "staging_validated": False,
+        },
+    }
+
+
+def _quote_learning_recommendation(row: SalesOpportunity, learning: QuoteLearningRecord) -> dict[str, Any]:
+    outcome = learning.outcome_status or "open"
+    suggested_probability = row.probability
+    suggested_stage = row.decision_stage
+    priority = "P2"
+    if outcome == "won":
+        suggested_probability = max(row.probability, 90)
+        suggested_stage = "won"
+        priority = "P1"
+    elif outcome == "lost":
+        suggested_probability = min(row.probability, 10)
+        suggested_stage = "lost"
+        priority = "P1"
+    elif outcome == "revision_requested":
+        suggested_probability = min(row.probability, 60)
+        suggested_stage = "negotiation"
+        priority = "P1"
+    elif outcome == "on_hold":
+        suggested_probability = min(row.probability, 35)
+        suggested_stage = "on_hold"
+        priority = "P1"
+
+    dimensions = ", ".join(learning.product_dimensions or []) or "quote feedback"
+    reason = (
+        learning.customer_objection
+        or learning.customer_feedback
+        or learning.price_feedback
+        or learning.delivery_feedback
+        or learning.won_reason
+        or learning.lost_reason
+        or f"Quote learning outcome is {outcome}."
+    )
+    return {
+        "id": f"quote_learning:{learning.id}",
+        "source_type": "quote_learning",
+        "source_id": str(learning.id),
+        "priority": priority,
+        "suggested_probability": suggested_probability,
+        "suggested_decision_stage": suggested_stage,
+        "risk_signal": f"{outcome}: {dimensions}",
+        "recommended_next_action": learning.next_action or "Review quote learning before advancing the opportunity.",
+        "reason": reason[:500],
+        "path": f"/quotes/{learning.quote_id}",
+        "manual_apply_required": True,
+        "safety": {
+            "opportunity_auto_updated": False,
+            "quote_status_changed": False,
+            "order_status_changed": False,
+            "external_message_sent": False,
+            "staging_validated": False,
+        },
+    }
+
+
+def _opportunity_recommendations(db: Session | None, row: SalesOpportunity) -> list[dict[str, Any]]:
+    if db is None:
+        return []
+
+    recommendations: list[dict[str, Any]] = []
+    if row.quote_id:
+        quote_learning = (
+            db.query(QuoteLearningRecord)
+            .filter(
+                QuoteLearningRecord.quote_id == row.quote_id,
+                QuoteLearningRecord.affects_opportunity.is_(True),
+            )
+            .order_by(QuoteLearningRecord.updated_at.desc(), QuoteLearningRecord.created_at.desc())
+            .limit(3)
+            .all()
+        )
+        recommendations.extend(_quote_learning_recommendation(row, item) for item in quote_learning)
+
+    terms = _opportunity_match_terms(row)
+    reviews = db.query(MarketResponseReview).order_by(MarketResponseReview.updated_at.desc()).limit(80).all()
+    matched_reviews = [review for review in reviews if _review_matches_opportunity(review, row, terms)]
+    recommendations.extend(_market_response_recommendation(row, review) for review in matched_reviews[:4])
+
+    return sorted(
+        recommendations,
+        key=lambda item: (_priority_rank(item.get("priority")), item.get("source_type") != "market_response"),
+    )[:5]
+
+
+def _serialize_opportunity(row: SalesOpportunity, db: Session | None = None) -> dict[str, Any]:
     return {
         "id": str(row.id),
         "opportunity_name": row.opportunity_name,
@@ -545,6 +718,7 @@ def _serialize_opportunity(row: SalesOpportunity) -> dict[str, Any]:
         "lost_reason": row.lost_reason,
         "notes": row.notes,
         "path": _opportunity_path(row),
+        "recommendations": _opportunity_recommendations(db, row),
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "updated_at": row.updated_at.isoformat() if row.updated_at else None,
     }
@@ -694,7 +868,7 @@ def get_growth_campaign_detail(db: Session, campaign_id: UUID) -> dict[str, Any]
     return {
         "campaign": _serialize_campaign(campaign),
         "tasks": [_serialize_task(task) for task in campaign.tasks],
-        "opportunities": [_serialize_opportunity(row) for row in opportunities],
+        "opportunities": [_serialize_opportunity(row, db=db) for row in opportunities],
         "summary": _campaign_summary(db, campaign),
         "manual_status_options": [
             {"value": value, "label": label} for value, label in CAMPAIGN_TASK_STATUS_LABELS.items()
@@ -786,7 +960,7 @@ def list_sales_opportunities(db: Session) -> dict[str, Any]:
         .all()
     )
     return {
-        "opportunities": [_serialize_opportunity(row) for row in rows],
+        "opportunities": [_serialize_opportunity(row, db=db) for row in rows],
         "stage_options": [{"value": value, "label": label} for value, label in OPPORTUNITY_STAGE_LABELS.items()],
         "status_options": [{"value": value, "label": label} for value, label in OPPORTUNITY_STATUS_LABELS.items()],
         "safety": {
@@ -814,7 +988,7 @@ def create_sales_opportunity(db: Session, payload: Any, actor: Any | None) -> di
     db.add(row)
     db.commit()
     db.refresh(row)
-    return _serialize_opportunity(row)
+    return _serialize_opportunity(row, db=db)
 
 
 def update_sales_opportunity(db: Session, opportunity_id: UUID, payload: Any, actor: Any | None) -> dict[str, Any] | None:
@@ -827,4 +1001,4 @@ def update_sales_opportunity(db: Session, opportunity_id: UUID, payload: Any, ac
         row.updated_by_id = actor.id
     db.commit()
     db.refresh(row)
-    return _serialize_opportunity(row)
+    return _serialize_opportunity(row, db=db)

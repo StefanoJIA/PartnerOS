@@ -267,6 +267,21 @@ class SalesOpportunityUpdate(BaseModel):
         return value
 
 
+class OpportunityRecommendationRead(BaseModel):
+    id: str
+    source_type: str
+    source_id: str
+    priority: str
+    suggested_probability: int
+    suggested_decision_stage: str
+    risk_signal: str
+    recommended_next_action: str
+    reason: str
+    path: str
+    manual_apply_required: bool
+    safety: dict[str, bool]
+
+
 class SalesOpportunityRead(BaseModel):
     id: UUID
     opportunity_name: str
@@ -297,5 +312,6 @@ class SalesOpportunityRead(BaseModel):
     lost_reason: str | None
     notes: str | None
     path: str
+    recommendations: list[OpportunityRecommendationRead] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime

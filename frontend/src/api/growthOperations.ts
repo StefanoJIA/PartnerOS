@@ -207,6 +207,21 @@ export interface GrowthCampaignTaskCreatePayload {
 
 export type GrowthCampaignTaskUpdatePayload = Partial<GrowthCampaignTaskCreatePayload>
 
+export interface GrowthOpportunityRecommendation {
+  id: string
+  source_type: 'market_response' | 'quote_learning' | string
+  source_id: string
+  priority: string
+  suggested_probability: number
+  suggested_decision_stage: string
+  risk_signal: string
+  recommended_next_action: string
+  reason: string
+  path: string
+  manual_apply_required: boolean
+  safety: Record<string, boolean>
+}
+
 export interface GrowthOpportunityRow {
   id: string
   opportunity_name: string
@@ -237,6 +252,7 @@ export interface GrowthOpportunityRow {
   lost_reason: string | null
   notes: string | null
   path: string
+  recommendations: GrowthOpportunityRecommendation[]
   created_at: string
   updated_at: string
 }

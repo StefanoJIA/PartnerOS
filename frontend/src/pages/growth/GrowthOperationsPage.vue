@@ -229,6 +229,28 @@
                   <p class="text-xs text-slate-700">竞争：{{ row.competition || '未记录' }}</p>
                   <p class="mt-1 text-xs text-rose-600">风险：{{ row.risk || row.blocker || '未记录' }}</p>
                   <p class="mt-1 text-xs text-slate-500">下一步：{{ row.next_action || '未记录' }}</p>
+                  <div v-if="row.recommendations?.length" class="mt-3 space-y-2">
+                    <div
+                      v-for="rec in row.recommendations.slice(0, 2)"
+                      :key="rec.id"
+                      class="rounded border border-amber-200 bg-amber-50 p-2"
+                    >
+                      <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex flex-wrap items-center gap-1">
+                          <el-tag size="small" type="warning" effect="plain">{{ rec.priority }}</el-tag>
+                          <el-tag size="small" effect="plain">{{ recommendationSourceLabel(rec.source_type) }}</el-tag>
+                          <span class="text-xs text-slate-600">建议概率 {{ rec.suggested_probability }}%</span>
+                        </div>
+                        <el-button size="small" link type="primary" @click="applyOpportunityRecommendation(row, rec)">
+                          套用到表单
+                        </el-button>
+                      </div>
+                      <p class="mt-1 text-xs font-medium text-slate-800">{{ rec.risk_signal }}</p>
+                      <p class="mt-1 text-xs text-slate-600">{{ rec.recommended_next_action }}</p>
+                      <p class="mt-1 line-clamp-2 text-xs text-slate-500">{{ rec.reason }}</p>
+                      <p class="mt-1 text-[11px] text-amber-700">仅生成建议，不自动改机会、报价或订单状态。</p>
+                    </div>
+                  </div>
                 </template>
               </el-table-column>
               <el-table-column label="动作" width="150" fixed="right">
@@ -432,6 +454,7 @@ import {
   type GrowthOperationsConsole,
   type GrowthCampaignWorkspaceDetail,
   type GrowthCampaignWorkspaceRow,
+  type GrowthOpportunityRecommendation,
   type GrowthOpportunityRow,
   type GrowthOutreachSequence,
 } from '@/api/growthOperations'
@@ -763,6 +786,34 @@ function loadOpportunityIntoForm(row: GrowthOpportunityRow) {
     lost_reason: row.lost_reason || '',
     notes: row.notes || '',
   }
+}
+
+function recommendationSourceLabel(sourceType: string) {
+  if (sourceType === 'market_response') return 'Market Response'
+  if (sourceType === 'quote_learning') return '报价学习'
+  return sourceType
+}
+
+function appendRecommendationLine(current: string, line: string) {
+  if (!current) return line
+  if (current.includes(line)) return current
+  return `${current}\n${line}`
+}
+
+function applyOpportunityRecommendation(row: GrowthOpportunityRow, rec: GrowthOpportunityRecommendation) {
+  loadOpportunityIntoForm(row)
+  opportunityForm.value.probability = rec.suggested_probability
+  opportunityForm.value.decision_stage = rec.suggested_decision_stage
+  opportunityForm.value.priority = rec.priority
+  opportunityForm.value.risk = appendRecommendationLine(
+    opportunityForm.value.risk,
+    `建议来源 ${recommendationSourceLabel(rec.source_type)}：${rec.risk_signal}`,
+  )
+  opportunityForm.value.next_action = appendRecommendationLine(
+    opportunityForm.value.next_action,
+    `建议下一步：${rec.recommended_next_action}`,
+  )
+  ElMessage.info('已把建议套入表单，请人工确认后再保存。系统不会自动改机会、报价或订单状态。')
 }
 
 async function updateOpportunityStage(id: string, value: unknown) {
