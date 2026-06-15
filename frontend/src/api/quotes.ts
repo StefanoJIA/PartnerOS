@@ -94,6 +94,39 @@ export interface QuoteCommercialIntelligence {
   safety: QuoteLearningSafety
 }
 
+export interface QuotePartnerReadiness {
+  health: string
+  priority: string
+  partners: Array<{
+    partner_id: string
+    partner_name: string
+    health: string
+    priority: string
+    readiness_score: number
+    business_focus: string
+    line_summary: {
+      line_count: number
+      requires_review_count: number
+      product_categories: string[]
+      sample_products: string[]
+    }
+    dimension_baseline: string[]
+    missing_inputs: string[]
+    risk_signals: string[]
+    readiness_impact: string[]
+    next_best_action: string
+    capability_score: number
+    customer_safe_boundary: string
+    safety: QuoteLearningSafety
+  }>
+  readiness_impact: string[]
+  missing_inputs: string[]
+  risk_signals: string[]
+  next_best_action: string
+  customer_safe_boundary: string
+  safety: QuoteLearningSafety
+}
+
 export interface QuoteLearningMarketResponsePromotion {
   created: boolean
   review: {
@@ -256,6 +289,7 @@ export interface QuoteDetail extends QuoteSummary {
   follow_up_date: string | null
   latest_learning?: QuoteLearningRecord | null
   commercial_intelligence?: QuoteCommercialIntelligence
+  partner_readiness?: QuotePartnerReadiness
 }
 
 export interface QuoteListData {

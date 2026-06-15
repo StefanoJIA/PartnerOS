@@ -214,6 +214,7 @@ def quote_list_item(quote: Quote) -> dict[str, Any]:
 
 def quote_to_dict(quote: Quote, *, include_internal: bool = True) -> dict[str, Any]:
     from app.services.quotes.quote_learning import build_quote_commercial_intelligence, latest_quote_learning
+    from app.services.quotes.quote_partner_readiness import build_quote_partner_readiness
 
     expired = derived_expired(quote)
     warnings: list[str] = []
@@ -257,6 +258,7 @@ def quote_to_dict(quote: Quote, *, include_internal: bool = True) -> dict[str, A
         "versions_count": len(quote.versions),
         "latest_learning": latest_quote_learning(quote),
         "commercial_intelligence": build_quote_commercial_intelligence(quote),
+        "partner_readiness": build_quote_partner_readiness(quote),
         "warnings": warnings,
         "safety": dict(QUOTE_SAFETY),
     }

@@ -72,6 +72,7 @@ def main() -> int:
         account_impacts = {impact for item in payload.account_lifecycle for impact in item.readiness_impact}
         account_health_items = [item.commercial_health for item in payload.account_lifecycle if item.commercial_health]
         quote_commercial_items = [item.commercial_intelligence for item in payload.quotations if item.commercial_intelligence]
+        quote_partner_readiness_items = [item.partner_readiness for item in payload.quotations if item.partner_readiness]
         quote_commercial_dimensions = {
             dimension
             for item in quote_commercial_items
@@ -218,6 +219,26 @@ def main() -> int:
                 ),
             ),
             (
+                "quote partner readiness present",
+                bool(quote_partner_readiness_items)
+                and all(
+                    item.get("health")
+                    and item.get("next_best_action")
+                    and item.get("partners")
+                    for item in quote_partner_readiness_items
+                ),
+            ),
+            (
+                "quote partner readiness safe boundaries",
+                all(
+                    item.get("safety", {}).get("external_message_sent") is False
+                    and item.get("safety", {}).get("quote_status_changed") is False
+                    and item.get("safety", {}).get("order_status_changed") is False
+                    and item.get("customer_safe_boundary")
+                    for item in quote_partner_readiness_items
+                ),
+            ),
+            (
                 "lifting system dimensions represented",
                 {"load", "stability", "noise", "warranty", "test cycle", "certification"}.issubset(all_product_dimensions),
             ),
@@ -346,6 +367,17 @@ def main() -> int:
                 response.status_code == 200
                 and any(
                     item.get("commercial_intelligence", {}).get("next_best_action")
+                    for item in response_data.get("quotations", [])
+                ),
+            )
+        )
+        checks.append(
+            (
+                "route quote partner readiness",
+                response.status_code == 200
+                and any(
+                    item.get("partner_readiness", {}).get("next_best_action")
+                    and item.get("partner_readiness", {}).get("partners")
                     for item in response_data.get("quotations", [])
                 ),
             )

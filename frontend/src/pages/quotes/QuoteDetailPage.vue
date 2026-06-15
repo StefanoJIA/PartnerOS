@@ -135,6 +135,7 @@ const canCreateOrder = computed(
 const latestLearning = computed(() => quote.value?.latest_learning || learningRecords.value[0] || null)
 const quoteCompanyId = computed(() => quote.value?.company_id ?? null)
 const quoteCommercial = computed(() => quote.value?.commercial_intelligence ?? null)
+const quotePartnerReadiness = computed(() => quote.value?.partner_readiness ?? null)
 
 async function loadActiveOrder() {
   if (!quote.value) return
@@ -712,6 +713,59 @@ onMounted(load)
             </template>
           </el-table-column>
         </el-table>
+      </section>
+
+      <section v-if="quotePartnerReadiness" class="section mb quote-commercial">
+        <div class="quote-commercial__head">
+          <div>
+            <h3>Partner 承接判断</h3>
+            <p>把报价行、Partner 能力、交付风险和客户可见表述缺口合并为发送/转订单前的人工判断。</p>
+          </div>
+          <div class="quote-commercial__tags">
+            <el-tag :type="quotePartnerReadiness.priority === 'P1' ? 'warning' : 'info'" effect="plain">
+              {{ quotePartnerReadiness.priority }}
+            </el-tag>
+            <el-tag effect="plain">{{ quotePartnerReadiness.health }}</el-tag>
+          </div>
+        </div>
+        <p class="quote-commercial__action">{{ quotePartnerReadiness.next_best_action }}</p>
+        <div class="quote-commercial__grid">
+          <div
+            v-for="partner in quotePartnerReadiness.partners"
+            :key="partner.partner_id"
+            class="quote-commercial__block"
+          >
+            <h4>{{ partner.partner_name }}</h4>
+            <div class="quote-commercial__tags">
+              <el-tag size="small" :type="partner.priority === 'P1' ? 'warning' : 'info'" effect="plain">{{ partner.priority }}</el-tag>
+              <el-tag size="small" type="info" effect="plain">{{ partner.readiness_score }}/100</el-tag>
+              <el-tag size="small" effect="plain">{{ partner.business_focus }}</el-tag>
+            </div>
+            <p class="quote-commercial__action">{{ partner.next_best_action }}</p>
+            <div class="quote-commercial__chips">
+              <el-tag
+                v-for="item in partner.missing_inputs.slice(0, 5)"
+                :key="item"
+                size="small"
+                type="warning"
+                effect="plain"
+              >
+                {{ item }}
+              </el-tag>
+              <el-tag
+                v-for="item in partner.risk_signals.slice(0, 3)"
+                :key="item"
+                size="small"
+                type="danger"
+                effect="plain"
+              >
+                {{ item }}
+              </el-tag>
+              <span v-if="!partner.missing_inputs.length && !partner.risk_signals.length" class="quote-commercial__empty">暂无关键承接缺口</span>
+            </div>
+          </div>
+        </div>
+        <el-alert class="mt" type="warning" :closable="false" show-icon :title="quotePartnerReadiness.customer_safe_boundary" />
       </section>
 
       <section class="section mb">

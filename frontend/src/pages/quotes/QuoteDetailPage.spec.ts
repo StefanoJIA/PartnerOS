@@ -33,6 +33,35 @@ vi.mock('@/api/quotes', () => ({
     warnings: [],
     follow_up_date: null,
     sent_at: null,
+    partner_readiness: {
+      health: 'partner_quote_gap',
+      priority: 'P1',
+      partners: [
+        {
+          partner_id: 'p1',
+          partner_name: 'HOSUN',
+          health: 'partner_quote_gap',
+          priority: 'P1',
+          readiness_score: 72,
+          business_focus: '能力补齐',
+          line_summary: { line_count: 1, requires_review_count: 1, product_categories: ['lifting systems'], sample_products: ['desk frame'] },
+          dimension_baseline: ['load', 'noise', 'warranty'],
+          missing_inputs: ['customer-safe delivery wording'],
+          risk_signals: [],
+          readiness_impact: ['quote send readiness'],
+          next_best_action: '补齐 HOSUN 的客户可见交付表述。',
+          capability_score: 78,
+          customer_safe_boundary: 'internal only',
+          safety: { external_message_sent: false, quote_status_changed: false, order_status_changed: false },
+        },
+      ],
+      readiness_impact: ['quote send readiness'],
+      missing_inputs: ['customer-safe delivery wording'],
+      risk_signals: [],
+      next_best_action: '补齐 partner 报价承接缺口。',
+      customer_safe_boundary: '内部报价承接判断',
+      safety: { external_message_sent: false, quote_status_changed: false, order_status_changed: false },
+    },
   }),
   fetchQuotePdfExports: vi.fn().mockResolvedValue({ items: [], total: 0 }),
   fetchDeliveryLogs: vi.fn().mockResolvedValue({ items: [], total: 0 }),
@@ -61,6 +90,8 @@ describe('QuoteDetailPage', () => {
     const wrapper = mount(QuoteDetailPage, { global: { plugins: [ElementPlus] } })
     await flushPromises()
     expect(wrapper.text()).toContain('Quote Delivery')
+    expect(wrapper.text()).toContain('Partner 承接判断')
+    expect(wrapper.text()).toContain('HOSUN')
     expect(wrapper.text()).toContain('Order Readiness')
     expect(wrapper.text()).toContain('Refresh Readiness')
     expect(wrapper.text()).toContain('does not create an order')

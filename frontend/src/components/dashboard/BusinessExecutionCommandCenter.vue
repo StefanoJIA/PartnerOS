@@ -221,6 +221,23 @@
                     维度缺口：{{ row.commercial_intelligence.dimension_review_needs.slice(0, 4).join(' / ') }}
                   </p>
                 </div>
+                <div v-if="row.partner_readiness?.partners?.length" class="mt-2 rounded border border-emerald-100 bg-emerald-50 p-2">
+                  <div class="flex flex-wrap items-center gap-1">
+                    <el-tag size="small" :type="priorityType(row.partner_readiness.priority)" effect="plain">
+                      {{ row.partner_readiness.priority }}
+                    </el-tag>
+                    <el-tag size="small" type="success" effect="plain">
+                      {{ row.partner_readiness.partners[0].partner_name }}
+                    </el-tag>
+                    <el-tag size="small" type="info" effect="plain">
+                      {{ row.partner_readiness.partners[0].readiness_score }}/100
+                    </el-tag>
+                  </div>
+                  <p class="mt-1 text-xs text-slate-700">{{ row.partner_readiness.next_best_action }}</p>
+                  <p v-if="row.partner_readiness.missing_inputs.length" class="mt-1 text-xs text-slate-500">
+                    Partner 缺口：{{ row.partner_readiness.missing_inputs.slice(0, 3).join(' / ') }}
+                  </p>
+                </div>
               </template>
             </el-table-column>
             <el-table-column label="入口" width="90">

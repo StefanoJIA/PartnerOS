@@ -318,6 +318,24 @@ export type BusinessExecution = {
       customer_safe_boundary: string
       safety: Record<string, boolean>
     }
+    partner_readiness?: {
+      health: string
+      priority: string
+      readiness_impact: string[]
+      missing_inputs: string[]
+      risk_signals: string[]
+      next_best_action: string
+      partners: Array<{
+        partner_id: string
+        partner_name: string
+        readiness_score: number
+        business_focus: string
+        missing_inputs: string[]
+        risk_signals: string[]
+        next_best_action: string
+      }>
+      safety: Record<string, boolean>
+    }
   }>
   products: Array<{
     partner_focus: string

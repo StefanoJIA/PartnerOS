@@ -91,6 +91,7 @@ class QuotationIntelligenceItem(BaseModel):
     next_action: str
     path: str
     commercial_intelligence: dict[str, Any] = Field(default_factory=dict)
+    partner_readiness: dict[str, Any] = Field(default_factory=dict)
 
 
 class ProductIntelligenceItem(BaseModel):

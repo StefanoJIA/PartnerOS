@@ -42,6 +42,7 @@ from app.services.orders.order_fulfillment_intelligence import build_order_fulfi
 from app.services.partner_capability_intelligence import build_partner_capability_intelligence
 from app.services.partner_onboarding import build_partner_onboarding
 from app.services.quotes.quote_learning import build_quote_commercial_intelligence
+from app.services.quotes.quote_partner_readiness import build_quote_partner_readiness
 
 
 LIFECYCLE_ORDER = {
@@ -813,6 +814,7 @@ def _build_quotation_intelligence(db: Session) -> list[QuotationIntelligenceItem
         company = db.get(Company, quote.company_id) if quote.company_id else None
         version_count = len(quote.versions)
         commercial_intelligence = build_quote_commercial_intelligence(quote)
+        partner_readiness = build_quote_partner_readiness(quote, db)
         latest_learning = (
             db.query(QuoteLearningRecord)
             .filter(QuoteLearningRecord.quote_id == quote.id)
@@ -860,6 +862,7 @@ def _build_quotation_intelligence(db: Session) -> list[QuotationIntelligenceItem
                 next_action=next_action,
                 path=f"/quotes/{quote.id}",
                 commercial_intelligence=commercial_intelligence,
+                partner_readiness=partner_readiness,
             )
         )
     return items
