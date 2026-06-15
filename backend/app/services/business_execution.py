@@ -39,6 +39,7 @@ from app.schemas.business_execution import (
 )
 from app.services.growth_operations import derive_opportunity_stage_gate
 from app.services.orders.order_fulfillment_intelligence import build_order_fulfillment_intelligence
+from app.services.partner_capability_intelligence import build_partner_capability_intelligence
 from app.services.partner_onboarding import build_partner_onboarding
 from app.services.quotes.quote_learning import build_quote_commercial_intelligence
 
@@ -954,20 +955,26 @@ def _build_partner_intelligence(db: Session) -> list[PartnerIntelligenceItem]:
     items: list[PartnerIntelligenceItem] = []
     for partner in partners:
         readiness = readiness_by_name.get(partner.partner_name)
+        capability = build_partner_capability_intelligence(db, partner)
         missing = readiness.missing_items if readiness else []
         coverage = _split_tags(partner.main_product_categories or partner.preferred_product_categories)[:6]
         if not coverage:
-            coverage = [cap.capability_key for cap in partner.capabilities[:6]]
+            coverage = capability.get("product_coverage") or [cap.capability_key for cap in partner.capabilities[:6]]
         items.append(
             PartnerIntelligenceItem(
                 partner_id=str(partner.id),
                 partner_name=partner.partner_name,
                 product_coverage=coverage,
                 readiness_level="ready" if not missing else f"{len(missing)} onboarding gaps",
-                delivery_ability=partner.lead_time or f"delivery rating {partner.delivery_rating or 'unknown'}",
-                risk_assessment=partner.risk_level or partner.ai_risk_summary or "risk not assessed",
-                next_action="Update profile, product coverage, delivery ability, readiness gaps, and customer-visible resources.",
+                delivery_ability=capability.get("delivery_reliability") or partner.lead_time or f"delivery rating {partner.delivery_rating or 'unknown'}",
+                risk_assessment=", ".join(capability.get("risk_signals") or [])
+                or partner.risk_level
+                or partner.ai_risk_summary
+                or "risk not assessed",
+                next_action=capability.get("next_best_action")
+                or "Update profile, product coverage, delivery ability, readiness gaps, and customer-visible resources.",
                 path="/partner-onboarding",
+                capability_intelligence=capability,
             )
         )
     return items
@@ -1082,16 +1089,29 @@ def _build_executive_decisions(
                 path=product_risk.source_path,
             )
         )
-    partner_gap = next((row for row in partners if "gaps" in row.readiness_level), None)
+    partner_gap = next(
+        (
+            row
+            for row in partners
+            if "gaps" in row.readiness_level
+            or row.capability_intelligence.get("investment_priority") == "P1"
+            or row.capability_intelligence.get("risk_signals")
+        ),
+        None,
+    )
     if partner_gap:
         items.append(
             ExecutiveDecisionItem(
                 decision_id="partner-investment-gap",
                 question="Which partner needs resource before commercial pilot?",
-                answer=f"{partner_gap.partner_name}: {partner_gap.readiness_level}.",
-                priority="P1",
+                answer=(
+                    f"{partner_gap.partner_name}: "
+                    f"{partner_gap.capability_intelligence.get('business_focus') or partner_gap.readiness_level}; "
+                    f"score {partner_gap.capability_intelligence.get('score', 'n/a')}."
+                ),
+                priority=partner_gap.capability_intelligence.get("investment_priority") or "P1",
                 owner="partner owner",
-                next_action=partner_gap.next_action,
+                next_action=partner_gap.capability_intelligence.get("next_best_action") or partner_gap.next_action,
                 path=partner_gap.path,
             )
         )
@@ -1128,7 +1148,16 @@ def build_business_execution_center(db: Session, user: User) -> BusinessExecutio
             quote_learning_items=len([row for row in quotations if "missing" in row.learning_signal or row.version_count > 1]),
             delivery_risks=len([row for row in delivery if row.risk_level in {"high", "medium"}]),
             product_validation_items=len(products),
-            partner_investment_items=len([row for row in partners if "gaps" in row.readiness_level or "unknown" in row.risk_assessment]),
+            partner_investment_items=len(
+                [
+                    row
+                    for row in partners
+                    if "gaps" in row.readiness_level
+                    or "unknown" in row.risk_assessment
+                    or row.capability_intelligence.get("investment_priority") == "P1"
+                    or row.capability_intelligence.get("risk_signals")
+                ]
+            ),
             executive_decisions=len(decisions),
         ),
         account_lifecycle=account_lifecycle,

@@ -252,6 +252,19 @@
               <div class="font-medium text-slate-800">{{ item.partner_name }}</div>
               <p class="mt-1 text-xs text-slate-600">{{ item.readiness_level }} / {{ item.delivery_ability }}</p>
               <p class="mt-1 text-xs text-rose-600">{{ item.risk_assessment }}</p>
+              <div v-if="item.capability_intelligence" class="mt-2 rounded border border-indigo-100 bg-indigo-50 p-2">
+                <div class="flex flex-wrap items-center gap-1">
+                  <el-tag size="small" :type="priorityType(item.capability_intelligence.investment_priority)" effect="plain">
+                    {{ item.capability_intelligence.investment_priority }}
+                  </el-tag>
+                  <el-tag size="small" effect="plain">{{ item.capability_intelligence.business_focus }}</el-tag>
+                  <el-tag size="small" type="info" effect="plain">{{ item.capability_intelligence.score }}/100</el-tag>
+                </div>
+                <p class="mt-1 text-xs text-slate-700">{{ item.capability_intelligence.next_best_action }}</p>
+                <p v-if="item.capability_intelligence.missing_inputs.length" class="mt-1 text-xs text-slate-500">
+                  缺口：{{ item.capability_intelligence.missing_inputs.slice(0, 3).join(' / ') }}
+                </p>
+              </div>
             </div>
           </div>
         </section>

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from typing import Any
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 PartnerOnboardingStage = Literal[
@@ -47,6 +48,7 @@ class PartnerOnboardingRecord(BaseModel):
     checklist: list[PartnerOnboardingChecklistItem]
     links: PartnerOnboardingLinks
     is_reference_partner: bool
+    capability_intelligence: dict[str, Any] = Field(default_factory=dict)
     safety: dict[str, bool]
 
 
@@ -69,4 +71,3 @@ class PartnerOnboardingResponse(BaseModel):
     items: list[PartnerOnboardingRecord]
     future_partner_placeholder: PartnerOnboardingRecord | None
     safety: dict[str, bool]
-

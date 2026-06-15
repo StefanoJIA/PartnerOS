@@ -111,6 +111,7 @@ class PartnerIntelligenceItem(BaseModel):
     risk_assessment: str
     next_action: str
     path: str
+    capability_intelligence: dict[str, Any] = Field(default_factory=dict)
 
 
 class DeliveryVisibilityItem(BaseModel):

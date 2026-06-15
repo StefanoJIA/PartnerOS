@@ -83,6 +83,12 @@ def main() -> int:
             for item in fulfillment_items
             for impact in item.get("readiness_impact", [])
         }
+        partner_capability_items = [item.capability_intelligence for item in payload.partners if item.capability_intelligence]
+        partner_capability_impacts = {
+            impact
+            for item in partner_capability_items
+            for impact in item.get("readiness_impact", [])
+        }
         stage_gate_items = [item.stage_gate for item in payload.opportunities if item.stage_gate]
         all_stage_gate_dimensions = {
             dimension
@@ -242,6 +248,36 @@ def main() -> int:
                 ),
             ),
             (
+                "partner capability intelligence present",
+                bool(partner_capability_items)
+                and all(
+                    item.get("health")
+                    and item.get("business_focus")
+                    and item.get("next_best_action")
+                    and isinstance(item.get("score"), int)
+                    for item in partner_capability_items
+                ),
+            ),
+            (
+                "partner capability intelligence drives investment decision",
+                any(item.get("investment_priority") in {"P1", "P2", "P3"} for item in partner_capability_items)
+                and bool(
+                    {"quote readiness", "customer-visible resources", "delivery visibility", "pilot partner selection", "Market Response metrics"}
+                    & partner_capability_impacts
+                    or any(item.get("missing_inputs") or item.get("risk_signals") for item in partner_capability_items)
+                ),
+            ),
+            (
+                "partner capability intelligence safe boundaries",
+                all(
+                    item.get("safety", {}).get("external_message_sent") is False
+                    and item.get("safety", {}).get("partner_notified") is False
+                    and item.get("safety", {}).get("raw_token_recorded") is False
+                    and item.get("customer_safe_boundary")
+                    for item in partner_capability_items
+                ),
+            ),
+            (
                 "manual-only safety",
                 payload.safety.get("external_message_sent") is False
                 and payload.safety.get("quote_status_changed") is False
@@ -310,6 +346,16 @@ def main() -> int:
                 and any(
                     item.get("fulfillment_intelligence", {}).get("next_best_action")
                     for item in response_data.get("delivery", [])
+                ),
+            )
+        )
+        checks.append(
+            (
+                "route partner capability intelligence",
+                response.status_code == 200
+                and any(
+                    item.get("capability_intelligence", {}).get("next_best_action")
+                    for item in response_data.get("partners", [])
                 ),
             )
         )

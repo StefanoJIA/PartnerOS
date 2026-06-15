@@ -89,6 +89,40 @@
               <el-progress :percentage="row.readiness_score" :stroke-width="8" />
             </template>
           </el-table-column>
+          <el-table-column label="能力判断" min-width="300">
+            <template #default="{ row }">
+              <div v-if="row.capability_intelligence" class="rounded border border-indigo-100 bg-indigo-50 p-2">
+                <div class="flex flex-wrap items-center gap-1">
+                  <el-tag size="small" :type="priorityType(row.capability_intelligence.investment_priority)" effect="plain">
+                    {{ row.capability_intelligence.investment_priority }}
+                  </el-tag>
+                  <el-tag size="small" effect="plain">{{ row.capability_intelligence.business_focus }}</el-tag>
+                  <el-tag size="small" type="info" effect="plain">{{ row.capability_intelligence.score }}/100</el-tag>
+                </div>
+                <p class="mt-1 text-xs text-slate-700">{{ row.capability_intelligence.next_best_action }}</p>
+                <div class="mt-1 flex flex-wrap gap-1">
+                  <el-tag
+                    v-for="item in row.capability_intelligence.missing_inputs.slice(0, 3)"
+                    :key="item"
+                    size="small"
+                    type="warning"
+                    effect="plain"
+                  >
+                    {{ item }}
+                  </el-tag>
+                  <el-tag
+                    v-for="item in row.capability_intelligence.risk_signals.slice(0, 2)"
+                    :key="item"
+                    size="small"
+                    type="danger"
+                    effect="plain"
+                  >
+                    {{ item }}
+                  </el-tag>
+                </div>
+              </div>
+            </template>
+          </el-table-column>
           <el-table-column label="产品方向" min-width="240">
             <template #default="{ row }">
               <div class="flex flex-wrap gap-1">
@@ -230,6 +264,12 @@ function stageType(stage: PartnerOnboardingStage) {
   if (stage === 'portal_ready' || stage === 'quote_ready') return 'primary'
   if (stage === 'paused') return 'danger'
   return 'warning'
+}
+
+function priorityType(priority: string) {
+  if (priority === 'P0') return 'danger'
+  if (priority === 'P1') return 'warning'
+  return 'info'
 }
 
 function go(path: string) {

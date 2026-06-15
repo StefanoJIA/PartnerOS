@@ -322,6 +322,23 @@ export type BusinessExecution = {
     risk_assessment: string
     next_action: string
     path: string
+    capability_intelligence: {
+      health: string
+      score: number
+      investment_priority: string
+      business_focus: string
+      product_coverage: string[]
+      capability_keys: string[]
+      delivery_reliability: string
+      rating_average: number | null
+      historical_cooperation: Record<string, number>
+      missing_inputs: string[]
+      risk_signals: string[]
+      readiness_impact: string[]
+      next_best_action: string
+      customer_safe_boundary: string
+      safety: Record<string, boolean>
+    }
   }>
   delivery: Array<{
     order_id: string

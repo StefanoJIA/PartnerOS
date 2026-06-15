@@ -28,6 +28,7 @@ from app.schemas.partner_onboarding import (
     PartnerOnboardingResponse,
     PartnerOnboardingSummary,
 )
+from app.services.partner_capability_intelligence import build_partner_capability_intelligence
 
 
 STAGE_ORDER = [
@@ -307,6 +308,7 @@ def build_partner_onboarding(db: Session) -> PartnerOnboardingResponse:
                 checklist=checklist,
                 links=_links(partner.id),
                 is_reference_partner=_is_reference_partner(partner),
+                capability_intelligence=build_partner_capability_intelligence(db, partner),
                 safety=_safety(),
             )
         )
