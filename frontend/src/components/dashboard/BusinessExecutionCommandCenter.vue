@@ -82,6 +82,30 @@
                 </div>
                 <p class="mt-1 text-xs text-slate-700">{{ row.commercial_health.next_best_action }}</p>
               </div>
+              <div v-if="row.stage_progression" class="mt-2 rounded border border-emerald-100 bg-emerald-50 p-2">
+                <div class="flex flex-wrap items-center gap-1">
+                  <el-tag size="small" :type="stageGateType(row.stage_progression.health)" effect="plain">
+                    {{ stageGateLabel(row.stage_progression.health) }}
+                  </el-tag>
+                  <el-tag size="small" effect="plain">
+                    {{ row.stage_progression.current_stage }} → {{ row.stage_progression.next_stage || '复购维护' }}
+                  </el-tag>
+                  <el-tag size="small" type="info" effect="plain">{{ row.stage_progression.handoff_object }}</el-tag>
+                </div>
+                <p class="mt-1 text-xs text-slate-700">{{ row.stage_progression.recommended_action }}</p>
+                <p class="mt-1 text-xs text-slate-500">{{ row.stage_progression.why_now }}</p>
+                <div v-if="row.stage_progression.missing_inputs.length" class="mt-1 flex flex-wrap gap-1">
+                  <el-tag
+                    v-for="item in row.stage_progression.missing_inputs.slice(0, 3)"
+                    :key="item"
+                    size="small"
+                    type="warning"
+                    effect="plain"
+                  >
+                    {{ item }}
+                  </el-tag>
+                </div>
+              </div>
               <p v-if="row.open_blockers.length" class="mt-1 text-xs text-rose-600">{{ row.open_blockers[0] }}</p>
               <div class="mt-1 flex flex-wrap gap-1">
                 <el-tag v-for="impact in row.readiness_impact.slice(0, 3)" :key="impact" size="small" effect="plain">
@@ -92,7 +116,7 @@
           </el-table-column>
           <el-table-column label="入口" width="90">
             <template #default="{ row }">
-              <el-button size="small" link type="primary" @click="go(row.active_paths[0] || '/')">打开</el-button>
+              <el-button size="small" link type="primary" @click="go(row.stage_progression?.recommended_entry_path || row.active_paths[0] || '/')">打开</el-button>
             </template>
           </el-table-column>
         </el-table>

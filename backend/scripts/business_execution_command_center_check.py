@@ -71,6 +71,9 @@ def main() -> int:
         account_sources = {source for item in payload.account_lifecycle for source in item.source_counts}
         account_impacts = {impact for item in payload.account_lifecycle for impact in item.readiness_impact}
         account_health_items = [item.commercial_health for item in payload.account_lifecycle if item.commercial_health]
+        account_stage_progression_items = [
+            item.stage_progression for item in payload.account_lifecycle if item.stage_progression
+        ]
         quote_commercial_items = [item.commercial_intelligence for item in payload.quotations if item.commercial_intelligence]
         quote_partner_readiness_items = [item.partner_readiness for item in payload.quotations if item.partner_readiness]
         quote_commercial_dimensions = {
@@ -160,6 +163,41 @@ def main() -> int:
                     and health.get("delivery_signal")
                     and health.get("repeat_business_signal")
                     for health in account_health_items
+                ),
+            ),
+            (
+                "account stage progression present",
+                bool(account_stage_progression_items)
+                and all(
+                    item.get("health")
+                    and item.get("current_stage")
+                    and item.get("recommended_action")
+                    and item.get("handoff_object")
+                    and item.get("recommended_entry_path")
+                    for item in account_stage_progression_items
+                ),
+            ),
+            (
+                "account stage progression drives next lifecycle move",
+                any(
+                    item.get("next_stage")
+                    or item.get("handoff_object") in {"repeat_business", "feedback_to_market_response"}
+                    for item in account_stage_progression_items
+                )
+                and any(
+                    item.get("missing_inputs") or item.get("health") in {"ready_to_advance", "repeat_business_ready"}
+                    for item in account_stage_progression_items
+                ),
+            ),
+            (
+                "account stage progression safe boundaries",
+                all(
+                    item.get("safety", {}).get("external_message_sent") is False
+                    and item.get("safety", {}).get("quote_status_changed") is False
+                    and item.get("safety", {}).get("order_status_changed") is False
+                    and item.get("safety", {}).get("raw_token_recorded") is False
+                    and item.get("safety", {}).get("staging_validated") is False
+                    for item in account_stage_progression_items
                 ),
             ),
             (
@@ -402,6 +440,16 @@ def main() -> int:
         response_data = response.json() if response.status_code == 200 else {}
         checks.append(("route business execution", response.status_code == 200 and response_data.get("executive_decisions")))
         checks.append(("route account lifecycle", response.status_code == 200 and response_data.get("account_lifecycle")))
+        checks.append(
+            (
+                "route account stage progression",
+                response.status_code == 200
+                and any(
+                    item.get("stage_progression", {}).get("recommended_action")
+                    for item in response_data.get("account_lifecycle", [])
+                ),
+            )
+        )
         checks.append(
             (
                 "route quote commercial intelligence",

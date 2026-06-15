@@ -52,6 +52,7 @@ class CustomerAccountExecutionItem(BaseModel):
     decision_reason: str
     readiness_impact: list[str] = Field(default_factory=list)
     commercial_health: dict[str, Any] = Field(default_factory=dict)
+    stage_progression: dict[str, Any] = Field(default_factory=dict)
 
 
 class CompanyExecutionContext(BaseModel):

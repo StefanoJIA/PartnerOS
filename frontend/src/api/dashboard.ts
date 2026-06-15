@@ -225,6 +225,19 @@ export type BusinessExecution = {
       business_questions: string[]
       safety: Record<string, boolean>
     }
+    stage_progression?: {
+      health: string
+      current_stage: string
+      next_stage: string | null
+      blocks_next_stage: boolean
+      missing_inputs: string[]
+      recommended_action: string
+      handoff_object: string
+      recommended_entry_path: string
+      readiness_impact: string[]
+      why_now: string
+      safety: Record<string, boolean>
+    }
   }>
   lifecycle: Array<{
     id: string

@@ -165,6 +165,14 @@ def _stage_order(stage: str) -> int:
     return LIFECYCLE_ORDER.get(stage, 0)
 
 
+def _next_lifecycle_stage(stage: str) -> str | None:
+    stages = list(LIFECYCLE_ORDER)
+    if stage not in LIFECYCLE_ORDER:
+        return "Lead"
+    index = stages.index(stage)
+    return stages[index + 1] if index + 1 < len(stages) else None
+
+
 def _priority_from_probability(probability: int, blocker: str | None = None) -> str:
     if blocker:
         return "P1"
@@ -297,6 +305,99 @@ def _account_commercial_health(
         "delivery_signal": "存在订单/反馈，需要交付和复购视角" if has_delivery else "暂无交付对象",
         "repeat_business_signal": "已有售后反馈，需判断复购/市场回流" if has_feedback else "暂无售后反馈",
         "business_questions": business_questions,
+        "safety": _safety_flags(),
+    }
+
+
+def _account_stage_progression(
+    rows: list[CustomerLifecycleItem],
+    highest_stage: CustomerLifecycleItem,
+    action_source: CustomerLifecycleItem,
+    blockers: list[str],
+) -> dict[str, object]:
+    source_types = {row.source_type for row in rows}
+    current_stage = highest_stage.lifecycle_stage
+    next_stage = _next_lifecycle_stage(current_stage)
+    missing_inputs: list[str] = []
+    readiness_impact: list[str] = []
+
+    if current_stage in {"Lead", "Qualified"} and "opportunity" not in source_types:
+        missing_inputs.append("opportunity record")
+        readiness_impact.append("opportunity pipeline")
+    if current_stage in {"Opportunity"} and "quote" not in source_types:
+        missing_inputs.append("linked quotation")
+        readiness_impact.append("quotation readiness")
+    if current_stage in {"Quotation"} and "order" not in source_types:
+        missing_inputs.append("customer decision / order conversion")
+        readiness_impact.append("order conversion")
+    if current_stage in {"Order"}:
+        if not any("production" in impact.lower() for row in rows for impact in row.readiness_impact):
+            missing_inputs.append("production plan")
+        if not any("customer portal" in impact.lower() for row in rows for impact in row.readiness_impact):
+            missing_inputs.append("customer-visible delivery summary")
+        readiness_impact.append("project delivery")
+    if current_stage in {"Production", "Delivery"} and "feedback" not in source_types:
+        missing_inputs.append("after-sales feedback capture")
+        readiness_impact.append("repeat business")
+    if current_stage == "After-Sales" and blockers:
+        missing_inputs.append("customer-safe feedback response")
+        readiness_impact.append("repeat business")
+        readiness_impact.append("Market Response review")
+    if current_stage == "Repeat Business" and not ({"opportunity", "quote"} & source_types):
+        missing_inputs.append("repeat opportunity or quote")
+        readiness_impact.append("repeat business pipeline")
+
+    missing_inputs.extend(blockers[:3])
+    missing_inputs = _merge_unique(missing_inputs, limit=8)
+    readiness_impact = _merge_unique(readiness_impact + [impact for row in rows for impact in row.readiness_impact], limit=8)
+
+    if blockers:
+        health = "blocked"
+        blocks_next_stage = True
+        recommended_action = action_source.next_action
+    elif missing_inputs:
+        health = "needs_input"
+        blocks_next_stage = True
+        recommended_action = f"补齐 {missing_inputs[0]}，再推进到 {next_stage or '下一轮复购'}。"
+    elif next_stage:
+        health = "ready_to_advance"
+        blocks_next_stage = False
+        recommended_action = f"当前账户可准备推进到 {next_stage}，确认 owner、客户输入和下一步入口。"
+    else:
+        health = "repeat_business_ready"
+        blocks_next_stage = False
+        recommended_action = "账户已进入复购维护；从反馈、产品验证和新项目机会中选择下一轮商业动作。"
+
+    if current_stage in {"Lead", "Qualified", "Opportunity"}:
+        handoff_object = "opportunity"
+        recommended_entry_path = "/growth-operations"
+    elif current_stage == "Quotation":
+        handoff_object = "order"
+        recommended_entry_path = action_source.path if action_source.source_type == "quote" else "/quotes"
+    elif current_stage in {"Order", "Production", "Delivery"}:
+        handoff_object = "delivery"
+        recommended_entry_path = action_source.path if action_source.source_type == "order" else "/orders"
+    elif current_stage == "After-Sales":
+        handoff_object = "feedback_to_market_response"
+        recommended_entry_path = "/feedback-tickets"
+    else:
+        handoff_object = "repeat_business"
+        recommended_entry_path = "/growth-operations"
+
+    return {
+        "health": health,
+        "current_stage": current_stage,
+        "next_stage": next_stage,
+        "blocks_next_stage": blocks_next_stage,
+        "missing_inputs": missing_inputs,
+        "recommended_action": recommended_action,
+        "handoff_object": handoff_object,
+        "recommended_entry_path": recommended_entry_path,
+        "readiness_impact": readiness_impact,
+        "why_now": (
+            f"账户当前最高阶段是 {current_stage}；优先处理 {action_source.source_type}，"
+            f"再推进 {next_stage or '复购维护'}。"
+        ),
         "safety": _safety_flags(),
     }
 
@@ -512,6 +613,7 @@ def _build_account_lifecycle(lifecycle: list[CustomerLifecycleItem]) -> list[Cus
                 ),
                 readiness_impact=impacts,
                 commercial_health=_account_commercial_health(rows, highest_stage, action_source, blockers),
+                stage_progression=_account_stage_progression(rows, highest_stage, action_source, blockers),
             )
         )
     return sorted(accounts, key=lambda item: (_priority_rank(item.priority), bool(not item.open_blockers), -item.stage_order))[:16]
