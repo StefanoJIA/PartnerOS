@@ -194,6 +194,22 @@ export type BusinessExecution = {
     status: string
     external_staging_state: string
   }
+  account_lifecycle: Array<{
+    account_key: string
+    customer_name: string
+    current_stage: string
+    stage_order: number
+    priority: string
+    owner: string | null
+    partner_focus: string | null
+    product_focus: string[]
+    source_counts: Record<string, number>
+    active_paths: string[]
+    open_blockers: string[]
+    next_action: string
+    decision_reason: string
+    readiness_impact: string[]
+  }>
   lifecycle: Array<{
     id: string
     source_type: string

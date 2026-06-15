@@ -68,10 +68,13 @@ def main() -> int:
         lifecycle_stages = {item.lifecycle_stage for item in payload.lifecycle}
         lifecycle_sources = {item.source_type for item in payload.lifecycle}
         lifecycle_impacts = {impact for item in payload.lifecycle for impact in item.readiness_impact}
+        account_sources = {source for item in payload.account_lifecycle for source in item.source_counts}
+        account_impacts = {impact for item in payload.account_lifecycle for impact in item.readiness_impact}
         checks = [
             ("status boundary", payload.summary.status == "READY_FOR_STAGING_HANDOFF"),
             ("external staging boundary", payload.summary.external_staging_state == "WAITING_FOR_REAL_STAGING_EVIDENCE"),
             ("customer lifecycle present", bool(payload.lifecycle)),
+            ("account lifecycle present", bool(payload.account_lifecycle)),
             ("opportunity pipeline present", bool(payload.opportunities)),
             ("quotation intelligence present", bool(payload.quotations)),
             ("product intelligence present", bool(payload.products)),
@@ -96,6 +99,16 @@ def main() -> int:
             (
                 "lifecycle has action metadata",
                 all(item.source_type and item.source_id and item.stage_order > 0 and item.priority for item in payload.lifecycle),
+            ),
+            (
+                "account lifecycle aggregates source objects",
+                bool({"lead", "opportunity", "quote", "order", "feedback"} & account_sources)
+                and all(item.current_stage and item.next_action and item.active_paths for item in payload.account_lifecycle),
+            ),
+            (
+                "account lifecycle carries business impact",
+                bool(account_impacts)
+                and all(item.decision_reason and item.priority for item in payload.account_lifecycle),
             ),
             (
                 "opportunities rank probability",
@@ -163,6 +176,7 @@ def main() -> int:
             response = client.get("/api/dashboard/business-execution", headers={"Authorization": f"Bearer {token}"})
         response_data = response.json() if response.status_code == 200 else {}
         checks.append(("route business execution", response.status_code == 200 and response_data.get("executive_decisions")))
+        checks.append(("route account lifecycle", response.status_code == 200 and response_data.get("account_lifecycle")))
         checks.append(("route safety flags", response_data.get("safety", {}).get("staging_validated") is False))
         checks.append(("route no external send", response_data.get("safety", {}).get("external_message_sent") is False))
         checks.append(("route opportunity list", opp_list_before.status_code == 200 and "opportunities" in opp_list_before.json().get("data", {})))

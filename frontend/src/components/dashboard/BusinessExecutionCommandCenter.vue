@@ -46,6 +46,48 @@
         </div>
       </div>
 
+      <section class="mt-4 rounded border border-slate-100 p-3">
+        <div class="mb-2 flex items-center justify-between">
+          <div>
+            <h4 class="font-semibold text-slate-900">客户账户主线</h4>
+            <p class="mt-1 text-xs text-slate-500">
+              按客户聚合线索、机会、报价、订单和反馈，显示最高阶段、当前阻碍和下一步协同动作。
+            </p>
+          </div>
+          <el-button size="small" link type="primary" @click="go('/growth-operations')">推进机会</el-button>
+        </div>
+        <el-table :data="data.account_lifecycle.slice(0, 6)" size="small" border empty-text="暂无客户账户主线数据">
+          <el-table-column label="客户 / 当前阶段" min-width="210">
+            <template #default="{ row }">
+              <div class="font-medium text-slate-800">{{ row.customer_name }}</div>
+              <div class="mt-1 flex flex-wrap gap-1">
+                <el-tag size="small" effect="plain">{{ row.current_stage }}</el-tag>
+                <el-tag size="small" :type="priorityType(row.priority)" effect="plain">{{ row.priority }}</el-tag>
+                <el-tag size="small" type="info" effect="plain">{{ row.partner_focus || 'future partner' }}</el-tag>
+              </div>
+              <div class="mt-1 text-xs text-slate-500">{{ sourceCountsLabel(row.source_counts) }}</div>
+            </template>
+          </el-table-column>
+          <el-table-column label="判断依据 / 下一步" min-width="330">
+            <template #default="{ row }">
+              <p class="text-xs text-slate-500">{{ row.decision_reason }}</p>
+              <p class="mt-1 text-xs text-slate-700">{{ row.next_action }}</p>
+              <p v-if="row.open_blockers.length" class="mt-1 text-xs text-rose-600">{{ row.open_blockers[0] }}</p>
+              <div class="mt-1 flex flex-wrap gap-1">
+                <el-tag v-for="impact in row.readiness_impact.slice(0, 3)" :key="impact" size="small" effect="plain">
+                  {{ impact }}
+                </el-tag>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="入口" width="90">
+            <template #default="{ row }">
+              <el-button size="small" link type="primary" @click="go(row.active_paths[0] || '/')">打开</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </section>
+
       <div class="mt-4 grid gap-4 xl:grid-cols-2">
         <section class="rounded border border-slate-100 p-3">
           <div class="mb-2 flex items-center justify-between">
@@ -233,5 +275,17 @@ function lifecycleSourceLabel(sourceType: string) {
   if (sourceType === 'order') return '订单'
   if (sourceType === 'feedback') return '反馈'
   return sourceType
+}
+function sourceCountsLabel(counts: Record<string, number>) {
+  const labels: Record<string, string> = {
+    lead: '线索',
+    opportunity: '机会',
+    quote: '报价',
+    order: '订单',
+    feedback: '反馈',
+  }
+  return Object.entries(counts)
+    .map(([key, value]) => `${labels[key] || key} ${value}`)
+    .join(' / ')
 }
 </script>

@@ -27,6 +27,7 @@ from app.models import (
 from app.schemas.business_execution import (
     BusinessExecutionOut,
     BusinessExecutionSummary,
+    CustomerAccountExecutionItem,
     CustomerLifecycleItem,
     DeliveryVisibilityItem,
     ExecutiveDecisionItem,
@@ -187,6 +188,20 @@ def _lifecycle_sort_key(item: CustomerLifecycleItem) -> tuple[int, int, int]:
     priority_rank = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}.get(item.priority, 3)
     blocker_rank = 0 if item.blocker else 1
     return (priority_rank, blocker_rank, -item.stage_order)
+
+
+def _priority_rank(value: str | None) -> int:
+    return {"P0": 0, "P1": 1, "P2": 2, "P3": 3}.get(value or "P3", 3)
+
+
+def _merge_unique(values: list[str], limit: int = 8) -> list[str]:
+    merged: list[str] = []
+    for value in values:
+        if value and value not in merged:
+            merged.append(value)
+        if len(merged) >= limit:
+            break
+    return merged
 
 
 def _quote_product_focus(quote: Quote) -> list[str]:
@@ -359,6 +374,49 @@ def _build_lifecycle(db: Session, user: User) -> list[CustomerLifecycleItem]:
             )
         )
     return sorted(items, key=_lifecycle_sort_key)[:24]
+
+
+def _build_account_lifecycle(lifecycle: list[CustomerLifecycleItem]) -> list[CustomerAccountExecutionItem]:
+    grouped: dict[str, list[CustomerLifecycleItem]] = {}
+    for item in lifecycle:
+        key = item.customer_name.strip().lower() or item.id
+        grouped.setdefault(key, []).append(item)
+
+    accounts: list[CustomerAccountExecutionItem] = []
+    for key, rows in grouped.items():
+        highest_stage = max(rows, key=lambda row: row.stage_order)
+        highest_priority = min((row.priority for row in rows), key=_priority_rank)
+        action_source = sorted(rows, key=_lifecycle_sort_key)[0]
+        source_counts: dict[str, int] = {}
+        for row in rows:
+            source_counts[row.source_type] = source_counts.get(row.source_type, 0) + 1
+        blockers = _merge_unique([row.blocker or "" for row in rows if row.blocker], limit=5)
+        impacts = _merge_unique([impact for row in rows for impact in row.readiness_impact], limit=6)
+        product_focus = _merge_unique([focus for row in rows for focus in row.product_focus], limit=6)
+        active_paths = _merge_unique([row.path for row in rows], limit=5)
+        accounts.append(
+            CustomerAccountExecutionItem(
+                account_key=key,
+                customer_name=highest_stage.customer_name,
+                current_stage=highest_stage.lifecycle_stage,
+                stage_order=highest_stage.stage_order,
+                priority=highest_priority,
+                owner=action_source.owner,
+                partner_focus=highest_stage.partner_focus or action_source.partner_focus,
+                product_focus=product_focus,
+                source_counts=source_counts,
+                active_paths=active_paths,
+                open_blockers=blockers,
+                next_action=action_source.next_action,
+                decision_reason=(
+                    f"Highest lifecycle stage is {highest_stage.lifecycle_stage}; "
+                    f"priority source is {action_source.source_type}; "
+                    f"{len(blockers)} blocker(s) currently visible."
+                ),
+                readiness_impact=impacts,
+            )
+        )
+    return sorted(accounts, key=lambda item: (_priority_rank(item.priority), bool(not item.open_blockers), -item.stage_order))[:16]
 
 
 def _build_opportunities(db: Session) -> list[OpportunityPipelineItem]:
@@ -627,6 +685,7 @@ def _build_delivery_visibility(db: Session) -> list[DeliveryVisibilityItem]:
 
 
 def _build_executive_decisions(
+    account_lifecycle: list[CustomerAccountExecutionItem],
     lifecycle: list[CustomerLifecycleItem],
     opportunities: list[OpportunityPipelineItem],
     quotations: list[QuotationIntelligenceItem],
@@ -635,6 +694,19 @@ def _build_executive_decisions(
     delivery: list[DeliveryVisibilityItem],
 ) -> list[ExecutiveDecisionItem]:
     items: list[ExecutiveDecisionItem] = []
+    account_gap = next((row for row in account_lifecycle if row.open_blockers), None)
+    if account_gap:
+        items.append(
+            ExecutiveDecisionItem(
+                decision_id="account-lifecycle-next-action",
+                question="Which customer account needs the next coordinated action?",
+                answer=f"{account_gap.customer_name}: {account_gap.current_stage}; {account_gap.open_blockers[0]}.",
+                priority=account_gap.priority,
+                owner=account_gap.owner or "account owner",
+                next_action=account_gap.next_action,
+                path=account_gap.active_paths[0] if account_gap.active_paths else "/",
+            )
+        )
     best_opportunity = max(opportunities, key=lambda row: row.probability, default=None)
     if best_opportunity:
         items.append(
@@ -718,16 +790,17 @@ def _build_executive_decisions(
 
 def build_business_execution_center(db: Session, user: User) -> BusinessExecutionOut:
     lifecycle = _build_lifecycle(db, user)
+    account_lifecycle = _build_account_lifecycle(lifecycle)
     opportunities = _build_opportunities(db)
     quotations = _build_quotation_intelligence(db)
     products = _build_product_intelligence(db)
     partners = _build_partner_intelligence(db)
     delivery = _build_delivery_visibility(db)
-    decisions = _build_executive_decisions(lifecycle, opportunities, quotations, products, partners, delivery)
+    decisions = _build_executive_decisions(account_lifecycle, lifecycle, opportunities, quotations, products, partners, delivery)
 
     return BusinessExecutionOut(
         summary=BusinessExecutionSummary(
-            lifecycle_accounts=len(lifecycle),
+            lifecycle_accounts=len(account_lifecycle),
             active_opportunities=len(opportunities),
             quote_learning_items=len([row for row in quotations if "missing" in row.learning_signal or row.version_count > 1]),
             delivery_risks=len([row for row in delivery if row.risk_level in {"high", "medium"}]),
@@ -735,6 +808,7 @@ def build_business_execution_center(db: Session, user: User) -> BusinessExecutio
             partner_investment_items=len([row for row in partners if "gaps" in row.readiness_level or "unknown" in row.risk_assessment]),
             executive_decisions=len(decisions),
         ),
+        account_lifecycle=account_lifecycle,
         lifecycle=lifecycle,
         opportunities=opportunities,
         quotations=quotations,

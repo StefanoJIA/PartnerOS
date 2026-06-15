@@ -35,6 +35,23 @@ class CustomerLifecycleItem(BaseModel):
     path: str
 
 
+class CustomerAccountExecutionItem(BaseModel):
+    account_key: str
+    customer_name: str
+    current_stage: str
+    stage_order: int = 0
+    priority: str = "P2"
+    owner: str | None = None
+    partner_focus: str | None = None
+    product_focus: list[str] = Field(default_factory=list)
+    source_counts: dict[str, int] = Field(default_factory=dict)
+    active_paths: list[str] = Field(default_factory=list)
+    open_blockers: list[str] = Field(default_factory=list)
+    next_action: str
+    decision_reason: str
+    readiness_impact: list[str] = Field(default_factory=list)
+
+
 class OpportunityPipelineItem(BaseModel):
     id: str
     opportunity_name: str
@@ -112,6 +129,7 @@ class ExecutiveDecisionItem(BaseModel):
 
 class BusinessExecutionOut(BaseModel):
     summary: BusinessExecutionSummary
+    account_lifecycle: list[CustomerAccountExecutionItem]
     lifecycle: list[CustomerLifecycleItem]
     opportunities: list[OpportunityPipelineItem]
     quotations: list[QuotationIntelligenceItem]
