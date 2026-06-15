@@ -12,6 +12,8 @@
       今日应联系谁、处理哪些 RFQ、跟进哪些样品与订单——集中在一页。规则生成的建议可点击跳转。
     </p>
 
+    <BusinessExecutionCommandCenter :data="businessExecution" />
+
     <section class="rounded border border-slate-200 bg-white p-4">
       <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -350,8 +352,10 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
   fetchDailyDecisionQueue,
+  fetchBusinessExecution,
   fetchDashboardActions,
   updateDailyQueueHandling,
+  type BusinessExecution,
   type DailyDecisionQueue,
   type DailyDecisionQueueItem,
   type DashboardActions,
@@ -374,10 +378,12 @@ import SampleMini from './dashboard/SampleMini.vue'
 import DailyOperationsPanel from '@/components/dashboard/DailyOperationsPanel.vue'
 import ProductOpportunitySummary from '@/components/dashboard/ProductOpportunitySummary.vue'
 import EndOfDaySummaryPanel from '@/components/dashboard/EndOfDaySummaryPanel.vue'
+import BusinessExecutionCommandCenter from '@/components/dashboard/BusinessExecutionCommandCenter.vue'
 
 const router = useRouter()
 const loading = ref(false)
 const data = ref<DashboardActions | null>(null)
+const businessExecution = ref<BusinessExecution | null>(null)
 const decisionQueue = ref<DailyDecisionQueue | null>(null)
 const growth = ref<GrowthOperationsConsole | null>(null)
 const feedback = ref<FeedbackTicketList | null>(null)
@@ -644,6 +650,7 @@ async function load() {
   try {
     data.value = await fetchDashboardActions()
     const supportResults = await Promise.allSettled([
+      fetchBusinessExecution(),
       fetchDailyDecisionQueue(),
       fetchGrowthOperationsConsole(),
       fetchFeedbackTickets({ operation_filter: 'needs_internal_review', limit: 1 }),
@@ -652,13 +659,14 @@ async function load() {
       fetchPartnerOnboarding(),
       fetchExternalExecutionConsole(),
     ])
-    if (supportResults[0].status === 'fulfilled') decisionQueue.value = supportResults[0].value
-    if (supportResults[1].status === 'fulfilled') growth.value = supportResults[1].value
-    if (supportResults[2].status === 'fulfilled') feedback.value = supportResults[2].value
-    if (supportResults[3].status === 'fulfilled') market.value = supportResults[3].value
-    if (supportResults[4].status === 'fulfilled') marketReviews.value = supportResults[4].value
-    if (supportResults[5].status === 'fulfilled') partner.value = supportResults[5].value
-    if (supportResults[6].status === 'fulfilled') externalExecution.value = supportResults[6].value
+    if (supportResults[0].status === 'fulfilled') businessExecution.value = supportResults[0].value
+    if (supportResults[1].status === 'fulfilled') decisionQueue.value = supportResults[1].value
+    if (supportResults[2].status === 'fulfilled') growth.value = supportResults[2].value
+    if (supportResults[3].status === 'fulfilled') feedback.value = supportResults[3].value
+    if (supportResults[4].status === 'fulfilled') market.value = supportResults[4].value
+    if (supportResults[5].status === 'fulfilled') marketReviews.value = supportResults[5].value
+    if (supportResults[6].status === 'fulfilled') partner.value = supportResults[6].value
+    if (supportResults[7].status === 'fulfilled') externalExecution.value = supportResults[7].value
     const failed = supportResults.filter((result) => result.status === 'rejected').length
     if (failed) supportWarning.value = `${failed} 个只读聚合接口暂不可用，核心行动看板仍可继续使用。`
   } finally {

@@ -181,3 +181,104 @@ export async function fetchDailyQueueHandling(params?: {
   const { data } = await http.get<DailyQueueHandlingRecord[]>('/dashboard/daily-decision-queue/handling', { params })
   return data
 }
+
+export type BusinessExecution = {
+  summary: {
+    lifecycle_accounts: number
+    active_opportunities: number
+    quote_learning_items: number
+    delivery_risks: number
+    product_validation_items: number
+    partner_investment_items: number
+    executive_decisions: number
+    status: string
+    external_staging_state: string
+  }
+  lifecycle: Array<{
+    id: string
+    customer_name: string
+    lifecycle_stage: string
+    owner: string | null
+    partner_focus: string | null
+    product_focus: string[]
+    current_signal: string
+    next_action: string
+    blocker: string | null
+    path: string
+  }>
+  opportunities: Array<{
+    id: string
+    opportunity_name: string
+    customer_or_segment: string | null
+    partner_focus: string | null
+    product_focus: string[]
+    project_size: string
+    decision_stage: string
+    competitive_signal: string
+    probability: number
+    risk: string
+    next_action: string
+    path: string
+  }>
+  quotations: Array<{
+    quote_id: string
+    quote_number: string
+    customer_name: string | null
+    status: string
+    version_count: number
+    manual_sent: boolean
+    follow_up_date: string | null
+    product_focus: string[]
+    outcome_signal: string
+    learning_signal: string
+    next_action: string
+    path: string
+  }>
+  products: Array<{
+    partner_focus: string
+    product_focus: string[]
+    dimensions: string[]
+    validation_signal: string
+    risk: string
+    next_action: string
+    source_path: string
+  }>
+  partners: Array<{
+    partner_id: string
+    partner_name: string
+    product_coverage: string[]
+    readiness_level: string
+    delivery_ability: string
+    risk_assessment: string
+    next_action: string
+    path: string
+  }>
+  delivery: Array<{
+    order_id: string
+    order_number: string
+    customer_name: string | null
+    lifecycle_stage: string
+    risk_level: string
+    production_signal: string
+    shipment_signal: string
+    feedback_signal: string
+    repeat_business_risk: string
+    next_action: string
+    path: string
+  }>
+  executive_decisions: Array<{
+    decision_id: string
+    question: string
+    answer: string
+    priority: string
+    owner: string
+    next_action: string
+    path: string
+  }>
+  safety: Record<string, boolean>
+}
+
+export async function fetchBusinessExecution() {
+  const { data } = await http.get<BusinessExecution>('/dashboard/business-execution')
+  return data
+}

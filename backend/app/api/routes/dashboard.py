@@ -17,6 +17,7 @@ from app.models import (
     User,
 )
 from app.schemas.dashboard import DashboardSummary
+from app.schemas.business_execution import BusinessExecutionOut
 from app.schemas.dashboard_actions import (
     DailyDecisionQueueOut,
     DailyQueueHandlingRecordOut,
@@ -24,6 +25,7 @@ from app.schemas.dashboard_actions import (
     DashboardActionsOut,
 )
 from app.services.dashboard_actions import build_dashboard_actions
+from app.services.business_execution import build_business_execution_center
 from app.services.daily_decision_queue import (
     build_daily_decision_queue,
     list_daily_queue_handling,
@@ -47,6 +49,14 @@ def dashboard_daily_decision_queue(
     user: User = Depends(get_current_user),
 ) -> DailyDecisionQueueOut:
     return build_daily_decision_queue(db, user)
+
+
+@router.get("/business-execution", response_model=BusinessExecutionOut)
+def dashboard_business_execution(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> BusinessExecutionOut:
+    return build_business_execution_center(db, user)
 
 
 @router.get("/daily-decision-queue/handling", response_model=list[DailyQueueHandlingRecordOut])
