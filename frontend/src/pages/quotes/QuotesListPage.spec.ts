@@ -19,6 +19,7 @@ vi.mock('@/api/quotes', () => ({
       {
         id: 'q1',
         quote_number: 'Q-2026-0001',
+        company_id: 'company-1',
         status: 'internal_review',
         quote_date: '2026-05-23',
         valid_until: '2026-06-13',
@@ -79,6 +80,7 @@ describe('QuotesListPage', () => {
         {
           id: 'q-sent',
           quote_number: 'Q-2026-0002',
+          company_id: 'company-2',
           status: 'sent',
           quote_date: '2026-05-23',
           valid_until: '2026-06-13',

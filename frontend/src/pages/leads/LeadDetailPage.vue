@@ -26,6 +26,11 @@
         </div>
       </el-card>
 
+      <AccountExecutionCard
+        :company-id="ws.company.id"
+        context-label="当前线索会影响该账户的客户生命周期"
+      />
+
       <el-card shadow="never">
         <template #header>销售阶段（Pipeline）</template>
         <div class="flex flex-wrap gap-2">
@@ -192,6 +197,7 @@ import {
   ObjectTasksPanel,
 } from '@/components/object-panels'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import AccountExecutionCard from '@/components/business/AccountExecutionCard.vue'
 
 const route = useRoute()
 const router = useRouter()

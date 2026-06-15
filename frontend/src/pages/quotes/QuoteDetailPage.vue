@@ -25,6 +25,7 @@ import {
   type QuoteVersionSummary,
   type TimelineItem,
 } from '@/api/quotes'
+import AccountExecutionCard from '@/components/business/AccountExecutionCard.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -132,6 +133,7 @@ const canCreateOrder = computed(
     readiness.value.blocking_items.length === 0,
 )
 const latestLearning = computed(() => quote.value?.latest_learning || learningRecords.value[0] || null)
+const quoteCompanyId = computed(() => quote.value?.company_id ?? null)
 
 async function loadActiveOrder() {
   if (!quote.value) return
@@ -443,6 +445,11 @@ onMounted(load)
         <el-descriptions-item label="Subtotal">{{ quote.currency }} {{ quote.subtotal }}</el-descriptions-item>
         <el-descriptions-item label="Grand Total">{{ quote.currency }} {{ quote.grand_total }}</el-descriptions-item>
       </el-descriptions>
+
+      <AccountExecutionCard
+        :company-id="quoteCompanyId"
+        context-label="当前报价会影响账户成交、报价学习和 Market Response"
+      />
 
       <h3>Line Items</h3>
       <el-table :data="quote.line_items" stripe class="mb">

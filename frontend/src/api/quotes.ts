@@ -208,6 +208,7 @@ export interface QuoteLineItem {
 export interface QuoteSummary {
   id: string
   quote_number: string
+  company_id: string | null
   status: string
   quote_date: string
   valid_until: string

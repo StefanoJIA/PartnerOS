@@ -45,6 +45,7 @@ import {
   type ProductionMilestone,
   type ShipmentPlan,
 } from '@/api/orders'
+import AccountExecutionCard from '@/components/business/AccountExecutionCard.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -148,6 +149,7 @@ const typeWarning = computed(() => confirmationTypeWarning(confirmForm.confirmat
 const orderWarnings = computed(() => order.value?.warnings || order.value?.confirmation_summary?.warnings || [])
 const openFeedbackTickets = computed(() => feedbackTickets.value.filter((ticket) => ticket.operation?.open))
 const visibleResourceCount = computed(() => orderResources.value.filter((resource) => resource.customer_visible && resource.status === 'published').length)
+const orderCompanyId = computed(() => order.value?.company_id ?? null)
 const customerVisibleSummary = computed(() => {
   const production = order.value?.production_summary
   const shipment = order.value?.shipment_summary
@@ -543,6 +545,11 @@ onMounted(load)
           <span v-else>—</span>
         </el-descriptions-item>
       </el-descriptions>
+
+      <AccountExecutionCard
+        :company-id="orderCompanyId"
+        context-label="当前订单会影响交付风险、售后反馈和复购判断"
+      />
 
       <section class="section mb">
         <div class="section-head">
