@@ -273,6 +273,29 @@
                 <p class="text-xs text-slate-700">{{ row.production_signal }}</p>
                 <p class="mt-1 text-xs text-slate-600">{{ row.shipment_signal }}</p>
                 <p class="mt-1 text-xs text-amber-700">{{ row.repeat_business_risk }}</p>
+                <div v-if="row.fulfillment_intelligence" class="mt-2 rounded border border-orange-100 bg-orange-50 p-2">
+                  <div class="flex flex-wrap items-center gap-1">
+                    <el-tag size="small" :type="riskType(row.fulfillment_intelligence.risk_level)" effect="plain">
+                      {{ row.fulfillment_intelligence.business_focus }}
+                    </el-tag>
+                    <el-tag v-if="row.fulfillment_intelligence.quote_business_focus" size="small" effect="plain">
+                      {{ row.fulfillment_intelligence.quote_business_focus }}
+                    </el-tag>
+                    <el-tag
+                      v-for="impact in row.fulfillment_intelligence.readiness_impact.slice(0, 2)"
+                      :key="impact"
+                      size="small"
+                      type="warning"
+                      effect="plain"
+                    >
+                      {{ impact }}
+                    </el-tag>
+                  </div>
+                  <p class="mt-1 text-xs text-slate-700">{{ row.fulfillment_intelligence.next_best_action }}</p>
+                  <p v-if="row.fulfillment_intelligence.quote_dimension_gaps.length" class="mt-1 text-xs text-slate-500">
+                    报价维度待兑现：{{ row.fulfillment_intelligence.quote_dimension_gaps.slice(0, 4).join(' / ') }}
+                  </p>
+                </div>
               </template>
             </el-table-column>
             <el-table-column label="入口" width="90">

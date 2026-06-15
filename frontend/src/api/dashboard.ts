@@ -335,6 +335,20 @@ export type BusinessExecution = {
     repeat_business_risk: string
     next_action: string
     path: string
+    fulfillment_intelligence: {
+      health: string
+      risk_level: string
+      business_focus: string
+      quote_commercial_health: string | null
+      quote_business_focus: string | null
+      quote_dimension_gaps: string[]
+      quote_missing_inputs: string[]
+      missing_operating_inputs: string[]
+      readiness_impact: string[]
+      next_best_action: string
+      customer_safe_boundary: string
+      safety: Record<string, boolean>
+    }
   }>
   executive_decisions: Array<{
     decision_id: string

@@ -150,6 +150,7 @@ const orderWarnings = computed(() => order.value?.warnings || order.value?.confi
 const openFeedbackTickets = computed(() => feedbackTickets.value.filter((ticket) => ticket.operation?.open))
 const visibleResourceCount = computed(() => orderResources.value.filter((resource) => resource.customer_visible && resource.status === 'published').length)
 const orderCompanyId = computed(() => order.value?.company_id ?? null)
+const fulfillmentIntel = computed(() => order.value?.fulfillment_intelligence ?? null)
 const customerVisibleSummary = computed(() => {
   const production = order.value?.production_summary
   const shipment = order.value?.shipment_summary
@@ -178,6 +179,12 @@ const customerVisibleSummary = computed(() => {
     feedback: `${openFeedbackTickets.value.length} 个未结反馈`,
   }
 })
+
+function riskTagType(level: string) {
+  if (level === 'high') return 'danger'
+  if (level === 'medium') return 'warning'
+  return 'success'
+}
 
 async function loadPartnerSplits() {
   if (!order.value) return
@@ -550,6 +557,63 @@ onMounted(load)
         :company-id="orderCompanyId"
         context-label="当前订单会影响交付风险、售后反馈和复购判断"
       />
+
+      <section v-if="fulfillmentIntel" class="section mb fulfillment-intel">
+        <div class="fulfillment-intel__head">
+          <div>
+            <h3>商业履约判断</h3>
+            <p>把源报价学习、生产、物流和反馈合并为订单交付后的下一步经营动作。</p>
+          </div>
+          <div class="fulfillment-intel__tags">
+            <el-tag :type="riskTagType(fulfillmentIntel.risk_level)" effect="plain">{{ fulfillmentIntel.risk_level }}</el-tag>
+            <el-tag type="primary" effect="plain">{{ fulfillmentIntel.business_focus }}</el-tag>
+            <el-tag effect="plain">{{ fulfillmentIntel.quote_business_focus || '报价承接' }}</el-tag>
+          </div>
+        </div>
+        <p class="fulfillment-intel__action">{{ fulfillmentIntel.next_best_action }}</p>
+        <div class="fulfillment-intel__grid">
+          <div>
+            <div class="summary-label">报价维度缺口</div>
+            <div class="fulfillment-intel__chips">
+              <el-tag v-for="item in fulfillmentIntel.quote_dimension_gaps.slice(0, 8)" :key="item" size="small" effect="plain">
+                {{ item }}
+              </el-tag>
+              <span v-if="!fulfillmentIntel.quote_dimension_gaps.length" class="fulfillment-intel__empty">暂无报价维度缺口</span>
+            </div>
+          </div>
+          <div>
+            <div class="summary-label">运营缺口</div>
+            <div class="fulfillment-intel__chips">
+              <el-tag
+                v-for="item in fulfillmentIntel.missing_operating_inputs.slice(0, 6)"
+                :key="item"
+                size="small"
+                type="warning"
+                effect="plain"
+              >
+                {{ item }}
+              </el-tag>
+              <span v-if="!fulfillmentIntel.missing_operating_inputs.length" class="fulfillment-intel__empty">暂无关键运营缺口</span>
+            </div>
+          </div>
+          <div>
+            <div class="summary-label">Readiness / 复购影响</div>
+            <div class="fulfillment-intel__chips">
+              <el-tag
+                v-for="item in fulfillmentIntel.readiness_impact"
+                :key="item"
+                size="small"
+                type="danger"
+                effect="plain"
+              >
+                {{ item }}
+              </el-tag>
+              <span v-if="!fulfillmentIntel.readiness_impact.length" class="fulfillment-intel__empty">暂无明显影响</span>
+            </div>
+          </div>
+        </div>
+        <el-alert class="mt" type="warning" :closable="false" show-icon :title="fulfillmentIntel.customer_safe_boundary" />
+      </section>
 
       <section class="section mb">
         <div class="section-head">
@@ -1060,6 +1124,15 @@ onMounted(load)
 .summary-tile { border: 1px solid var(--el-border-color); border-radius: 4px; padding: 12px; background: #f8fafc; }
 .summary-label { font-size: 12px; color: #64748b; text-transform: uppercase; }
 .summary-value { margin-top: 6px; font-weight: 600; color: #0f172a; }
+.fulfillment-intel { border: 1px solid var(--el-border-color); border-radius: 8px; padding: 14px; background: var(--el-fill-color-lighter); }
+.fulfillment-intel__head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.fulfillment-intel__head h3 { margin: 0 0 4px; }
+.fulfillment-intel__head p { margin: 0; color: var(--el-text-color-secondary); font-size: 13px; }
+.fulfillment-intel__tags,
+.fulfillment-intel__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.fulfillment-intel__action { margin: 12px 0; color: var(--el-text-color-primary); font-weight: 600; }
+.fulfillment-intel__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.fulfillment-intel__empty { color: var(--el-text-color-placeholder); font-size: 12px; }
 .customer-stage {
   display: flex;
   align-items: flex-start;
@@ -1074,8 +1147,10 @@ onMounted(load)
 .customer-stage-copy { margin: 6px 0 0; color: #475569; }
 @media (max-width: 900px) {
   .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fulfillment-intel__grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
   .summary-grid { grid-template-columns: 1fr; }
+  .fulfillment-intel__head { flex-direction: column; }
 }
 </style>

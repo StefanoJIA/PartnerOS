@@ -454,6 +454,7 @@ def update_order(
 
 def order_detail_payload(db: Session, order: CustomerOrder) -> dict[str, Any]:
     from app.services.orders.order_confirmation_service import confirmation_summary, confirmation_safety
+    from app.services.orders.order_fulfillment_intelligence import build_order_fulfillment_intelligence
     from app.services.orders.partner_split_service import partner_splits_summary, split_safety
     from app.services.orders.production_milestone_service import milestone_safety, production_summary
     from app.services.orders.shipment_plan_service import shipment_safety, shipment_summary
@@ -470,6 +471,7 @@ def order_detail_payload(db: Session, order: CustomerOrder) -> dict[str, Any]:
     payload["supplier_confirmation_summary"] = supplier_confirmation_summary(db, order.id)
     payload["production_summary"] = production_summary(db, order.id)
     payload["shipment_summary"] = shipment_summary(db, order.id)
+    payload["fulfillment_intelligence"] = build_order_fulfillment_intelligence(db, order)
     payload["warnings"] = list(summary.get("warnings") or [])
     has_active = summary.get("active_count", 0) > 0
     sc_summary = payload["supplier_confirmation_summary"]

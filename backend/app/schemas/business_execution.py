@@ -125,6 +125,7 @@ class DeliveryVisibilityItem(BaseModel):
     repeat_business_risk: str
     next_action: str
     path: str
+    fulfillment_intelligence: dict[str, Any] = Field(default_factory=dict)
 
 
 class ExecutiveDecisionItem(BaseModel):

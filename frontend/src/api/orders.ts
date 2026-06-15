@@ -112,6 +112,37 @@ export interface OrderDetail extends OrderSummary {
     delivered_plans: number
     shipment_created: boolean
   }
+  fulfillment_intelligence?: {
+    health: string
+    risk_level: string
+    business_focus: string
+    source_quote: { quote_id: string; quote_number?: string; status?: string }
+    quote_commercial_health: string | null
+    quote_business_focus: string | null
+    quote_dimension_gaps: string[]
+    quote_missing_inputs: string[]
+    missing_operating_inputs: string[]
+    production: {
+      total_milestones: number
+      completed_milestones: number
+      delayed_or_blocked: number
+    }
+    shipment: {
+      total_plans: number
+      shipped_or_delivered: number
+      delivered: number
+    }
+    feedback: {
+      total: number
+      open: number
+      high_priority: number
+      latest_status: string | null
+    }
+    readiness_impact: string[]
+    next_best_action: string
+    customer_safe_boundary: string
+    safety: Record<string, boolean>
+  }
   confirmation?: OrderConfirmationRecord
   warnings?: string[]
   timeline?: OrderTimelineItem[]

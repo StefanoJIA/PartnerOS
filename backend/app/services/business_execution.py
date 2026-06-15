@@ -38,6 +38,7 @@ from app.schemas.business_execution import (
     QuotationIntelligenceItem,
 )
 from app.services.growth_operations import derive_opportunity_stage_gate
+from app.services.orders.order_fulfillment_intelligence import build_order_fulfillment_intelligence
 from app.services.partner_onboarding import build_partner_onboarding
 from app.services.quotes.quote_learning import build_quote_commercial_intelligence
 
@@ -980,7 +981,8 @@ def _build_delivery_visibility(db: Session) -> list[DeliveryVisibilityItem]:
         delayed = [m for m in order.production_milestones if m.status in {"delayed", "blocked"}]
         shipments = order.shipment_plans
         feedback_count = db.query(func.count(FeedbackTicket.id)).filter(FeedbackTicket.order_id == order.id).scalar() or 0
-        risk_level = "high" if delayed or not shipments else "medium" if feedback_count else "normal"
+        fulfillment = build_order_fulfillment_intelligence(db, order)
+        risk_level = fulfillment.get("risk_level") or ("high" if delayed or not shipments else "medium" if feedback_count else "normal")
         items.append(
             DeliveryVisibilityItem(
                 order_id=str(order.id),
@@ -991,9 +993,15 @@ def _build_delivery_visibility(db: Session) -> list[DeliveryVisibilityItem]:
                 production_signal=f"{len(delayed)} delayed/blocked milestones; {len(order.production_milestones)} total milestones.",
                 shipment_signal=f"{len(shipments)} shipment plans; statuses: {', '.join(sorted({s.status for s in shipments})) or 'missing'}.",
                 feedback_signal=f"{feedback_count} feedback tickets linked.",
-                repeat_business_risk="delivery/feedback risk may affect repeat business" if risk_level != "normal" else "no immediate repeat-business risk signal",
-                next_action="Review production, shipment, and feedback before customer-visible update or repeat-business outreach.",
+                repeat_business_risk=(
+                    "delivery/feedback risk may affect repeat business"
+                    if risk_level != "normal"
+                    else "no immediate repeat-business risk signal"
+                ),
+                next_action=fulfillment.get("next_best_action")
+                or "Review production, shipment, and feedback before customer-visible update or repeat-business outreach.",
                 path=f"/orders/{order.id}",
+                fulfillment_intelligence=fulfillment,
             )
         )
     return items

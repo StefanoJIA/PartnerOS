@@ -77,6 +77,12 @@ def main() -> int:
             for item in quote_commercial_items
             for dimension in item.get("dimension_review_needs", [])
         }
+        fulfillment_items = [item.fulfillment_intelligence for item in payload.delivery if item.fulfillment_intelligence]
+        fulfillment_impacts = {
+            impact
+            for item in fulfillment_items
+            for impact in item.get("readiness_impact", [])
+        }
         stage_gate_items = [item.stage_gate for item in payload.opportunities if item.stage_gate]
         all_stage_gate_dimensions = {
             dimension
@@ -210,6 +216,32 @@ def main() -> int:
                 or bool(payload.partners),
             ),
             (
+                "delivery fulfillment intelligence present",
+                bool(fulfillment_items)
+                and all(
+                    item.get("health")
+                    and item.get("business_focus")
+                    and item.get("next_best_action")
+                    and item.get("source_quote")
+                    for item in fulfillment_items
+                ),
+            ),
+            (
+                "delivery fulfillment intelligence links quote and feedback loop",
+                bool({"delivery visibility risk", "repeat business risk", "commercial learning loop", "Market Response review"} & fulfillment_impacts)
+                or any(item.get("quote_dimension_gaps") or item.get("quote_missing_inputs") for item in fulfillment_items),
+            ),
+            (
+                "delivery fulfillment intelligence safe boundaries",
+                all(
+                    item.get("safety", {}).get("external_message_sent") is False
+                    and item.get("safety", {}).get("order_status_changed") is False
+                    and item.get("safety", {}).get("shipment_created") is False
+                    and item.get("customer_safe_boundary")
+                    for item in fulfillment_items
+                ),
+            ),
+            (
                 "manual-only safety",
                 payload.safety.get("external_message_sent") is False
                 and payload.safety.get("quote_status_changed") is False
@@ -268,6 +300,16 @@ def main() -> int:
                 and any(
                     item.get("commercial_intelligence", {}).get("next_best_action")
                     for item in response_data.get("quotations", [])
+                ),
+            )
+        )
+        checks.append(
+            (
+                "route delivery fulfillment intelligence",
+                response.status_code == 200
+                and any(
+                    item.get("fulfillment_intelligence", {}).get("next_best_action")
+                    for item in response_data.get("delivery", [])
                 ),
             )
         )
