@@ -38,7 +38,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 from app.core.database import SessionLocal  # noqa: E402
 from app.main import create_app  # noqa: E402
-from app.models import User  # noqa: E402
+from app.models import Company, Lead, User  # noqa: E402
 from app.services.business_execution import build_business_execution_center  # noqa: E402
 
 
@@ -148,6 +148,9 @@ def main() -> int:
         with TestClient(app) as client:
             login = client.post("/api/auth/login", json={"email": "admin@example.com", "password": "admin123"})
             token = login.json()["access_token"]
+            lead_company = db.query(Lead.company_id).filter(Lead.company_id.isnot(None), Lead.is_active.is_(True)).first()
+            fallback_company = db.query(Company.id).first()
+            company_id = str(lead_company[0] if lead_company else fallback_company[0]) if (lead_company or fallback_company) else None
             opp_list_before = client.get("/api/v1/growth/opportunities", headers={"Authorization": f"Bearer {token}"})
             opp_payload = {
                 "opportunity_name": "Runtime pipeline check - lifting systems project",
@@ -174,6 +177,11 @@ def main() -> int:
             ) if created_data.get("id") else None
             opp_list_after = client.get("/api/v1/growth/opportunities", headers={"Authorization": f"Bearer {token}"})
             response = client.get("/api/dashboard/business-execution", headers={"Authorization": f"Bearer {token}"})
+            company_workspace = (
+                client.get(f"/api/companies/{company_id}/workspace", headers={"Authorization": f"Bearer {token}"})
+                if company_id
+                else None
+            )
         response_data = response.json() if response.status_code == 200 else {}
         checks.append(("route business execution", response.status_code == 200 and response_data.get("executive_decisions")))
         checks.append(("route account lifecycle", response.status_code == 200 and response_data.get("account_lifecycle")))
@@ -187,6 +195,24 @@ def main() -> int:
             (
                 "business execution uses opportunity records",
                 any(item.get("id") == created_data.get("id") for item in response_data.get("opportunities", [])),
+            )
+        )
+        company_workspace_data = company_workspace.json() if company_workspace is not None and company_workspace.status_code == 200 else {}
+        company_execution = company_workspace_data.get("business_execution", {})
+        checks.append(
+            (
+                "company workspace execution context",
+                company_workspace is not None
+                and company_workspace.status_code == 200
+                and bool(company_execution.get("account"))
+                and bool(company_execution.get("lifecycle")),
+            )
+        )
+        checks.append(
+            (
+                "company workspace safety flags",
+                company_execution.get("safety", {}).get("external_message_sent") is False
+                and company_execution.get("safety", {}).get("staging_validated") is False,
             )
         )
 

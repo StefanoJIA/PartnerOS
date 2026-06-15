@@ -6,6 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+from app.schemas.business_execution import CompanyExecutionContext
 from app.schemas.crm import CompanyDetailOut, ContactDetailOut, LeadOut
 from app.schemas.lead_workspace import (
     AIOutputWorkspaceBrief,
@@ -45,6 +46,7 @@ class CompanyWorkspaceOut(BaseModel):
     recent_ai_outputs: list[AIOutputWorkspaceBrief]
     product_interest_summary: ProductInterestSummaryOut
     activity_summary: ActivitySummaryOut
+    business_execution: CompanyExecutionContext | None = None
 
 
 class CompanySummaryCard(BaseModel):

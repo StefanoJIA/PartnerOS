@@ -56,6 +56,7 @@ from app.schemas.object_workspaces import (
 )
 from app.schemas.partners import PartnerDetailOut
 from app.schemas.products import ProductDetailOut, ProductPartnerLinkDetailOut
+from app.services.business_execution import build_company_execution_context
 
 
 def _assignee_email(db: Session, uid: UUID | None) -> str | None:
@@ -213,6 +214,7 @@ def build_company_workspace(db: Session, company_id: UUID) -> CompanyWorkspaceOu
         recent_ai_outputs=_recent_ai(db, "company", company_id),
         product_interest_summary=_product_interest_company(db, company_id),
         activity_summary=_activity_summary_for(db, "company", company_id),
+        business_execution=build_company_execution_context(db, company_id),
     )
 
 

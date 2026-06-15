@@ -52,6 +52,12 @@ class CustomerAccountExecutionItem(BaseModel):
     readiness_impact: list[str] = Field(default_factory=list)
 
 
+class CompanyExecutionContext(BaseModel):
+    account: CustomerAccountExecutionItem | None = None
+    lifecycle: list[CustomerLifecycleItem] = Field(default_factory=list)
+    safety: dict[str, bool] = Field(default_factory=dict)
+
+
 class OpportunityPipelineItem(BaseModel):
     id: str
     opportunity_name: str

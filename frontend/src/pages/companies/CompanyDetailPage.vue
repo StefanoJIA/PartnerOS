@@ -39,6 +39,72 @@
       />
 
       <el-card shadow="never">
+        <template #header>
+          <div class="flex items-center justify-between gap-3">
+            <span>账户经营主线</span>
+            <el-tag v-if="accountExecution" :type="priorityTag(accountExecution.priority)" size="small">
+              {{ accountExecution.priority || 'P2' }}
+            </el-tag>
+          </div>
+        </template>
+        <div v-if="accountExecution" class="space-y-3 text-sm">
+          <div class="grid gap-3 md:grid-cols-4">
+            <div>
+              <p class="text-xs text-slate-500">当前生命周期</p>
+              <p class="font-semibold text-slate-900">{{ accountExecution.current_stage || '待判断' }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500">负责人</p>
+              <p class="font-semibold text-slate-900">{{ accountExecution.owner || 'operator' }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500">Partner / 产品线</p>
+              <p class="font-semibold text-slate-900">
+                {{ accountExecution.partner_focus || '待识别' }} · {{ listText(accountExecution.product_focus) }}
+              </p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500">关联对象</p>
+              <p class="font-semibold text-slate-900">{{ sourceCountsText(accountExecution.source_counts) }}</p>
+            </div>
+          </div>
+
+          <el-alert
+            :title="String(accountExecution.next_action || '补齐下一步动作')"
+            type="info"
+            show-icon
+            :closable="false"
+          />
+          <div v-if="accountExecution.open_blockers?.length" class="rounded border border-amber-200 bg-amber-50 p-3">
+            <p class="font-medium text-amber-900">当前阻塞</p>
+            <ul class="mt-1 list-disc pl-5 text-amber-900">
+              <li v-for="blocker in accountExecution.open_blockers" :key="blocker">{{ blocker }}</li>
+            </ul>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <el-tag v-for="impact in accountExecution.readiness_impact" :key="impact" effect="plain">{{ impact }}</el-tag>
+          </div>
+
+          <el-table v-if="accountLifecycle.length" :data="accountLifecycle" size="small" stripe>
+            <el-table-column label="来源" width="110">
+              <template #default="{ row }">{{ sourceLabel(row.source_type) }}</template>
+            </el-table-column>
+            <el-table-column prop="lifecycle_stage" label="阶段" width="120" />
+            <el-table-column prop="current_signal" label="当前信号" min-width="220" show-overflow-tooltip />
+            <el-table-column prop="next_action" label="下一步" min-width="220" show-overflow-tooltip />
+            <el-table-column label="打开" width="90">
+              <template #default="{ row }">
+                <el-button v-if="row.path" link type="primary" @click="$router.push(row.path)">进入</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+        <p v-else class="text-sm text-slate-500">
+          暂无可聚合的线索、机会、报价、订单或反馈。先创建线索/机会，或把报价、订单、反馈关联到该公司。
+        </p>
+      </el-card>
+
+      <el-card shadow="never">
         <template #header>快捷动作</template>
         <div class="flex flex-wrap gap-2">
           <el-button size="small" @click="contactDialog = true">添加联系人</el-button>
@@ -221,6 +287,26 @@ import {
 import CompanyEnrichmentPanel from '@/components/enrichment/CompanyEnrichmentPanel.vue'
 import { ElMessage } from 'element-plus'
 
+interface AccountExecution {
+  priority?: string
+  current_stage?: string
+  owner?: string
+  partner_focus?: string
+  product_focus?: string[]
+  source_counts?: Record<string, number>
+  open_blockers?: string[]
+  next_action?: string
+  readiness_impact?: string[]
+}
+
+interface AccountLifecycleRow {
+  source_type?: string
+  lifecycle_stage?: string
+  current_signal?: string
+  next_action?: string
+  path?: string
+}
+
 const route = useRoute()
 const companyId = computed(() => route.params.companyId as string)
 
@@ -239,6 +325,9 @@ const relatedFv = computed(() => (ws.value?.related_field_visits as Record<strin
 const openTasks = computed(() => (ws.value?.open_tasks as { id: string; title: string }[]) ?? [])
 const recentAi = computed(() => (ws.value?.recent_ai_outputs as { id: string; task_type: string }[]) ?? [])
 const interest = computed(() => ws.value?.product_interest_summary as Record<string, unknown> | undefined)
+const businessExecution = computed(() => ws.value?.business_execution as Record<string, unknown> | undefined)
+const accountExecution = computed(() => (businessExecution.value?.account as AccountExecution | undefined) ?? null)
+const accountLifecycle = computed(() => (businessExecution.value?.lifecycle as AccountLifecycleRow[]) ?? [])
 const tagLine = computed(() => {
   const raw = interest.value?.tags_from_company
   const arr = Array.isArray(raw) ? (raw as unknown[]).map(String) : []
@@ -272,6 +361,36 @@ function scrollTo(id: string) {
 
 function onContactRow() {
   /* row-click placeholder — navigation via link */
+}
+
+function listText(value: unknown) {
+  return Array.isArray(value) && value.length ? value.map(String).join(' / ') : '待识别'
+}
+
+function sourceLabel(value: unknown) {
+  const labels: Record<string, string> = {
+    lead: '线索',
+    opportunity: '机会',
+    quote: '报价',
+    order: '订单',
+    feedback: '反馈',
+  }
+  const key = String(value ?? '')
+  return labels[key] ?? key
+}
+
+function priorityTag(value: unknown) {
+  const key = String(value ?? 'P2')
+  if (key === 'P0') return 'danger'
+  if (key === 'P1') return 'warning'
+  if (key === 'P2') return 'primary'
+  return 'info'
+}
+
+function sourceCountsText(value: unknown) {
+  if (!value || typeof value !== 'object') return '暂无'
+  const entries = Object.entries(value as Record<string, number>).filter(([, count]) => Number(count) > 0)
+  return entries.length ? entries.map(([source, count]) => `${sourceLabel(source)} ${count}`).join(' · ') : '暂无'
 }
 
 async function reload() {
