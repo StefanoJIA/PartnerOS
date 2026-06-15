@@ -56,6 +56,40 @@
         </p>
       </div>
 
+      <div v-if="accountExecution.stage_progression" class="rounded border border-emerald-100 bg-emerald-50 p-3">
+        <div class="mb-2 flex flex-wrap items-center gap-2">
+          <el-tag :type="stageProgressionType(accountExecution.stage_progression.health)" effect="plain">
+            {{ stageProgressionLabel(accountExecution.stage_progression.health) }}
+          </el-tag>
+          <el-tag effect="plain">
+            {{ accountExecution.stage_progression.current_stage }} → {{ accountExecution.stage_progression.next_stage || '复购维护' }}
+          </el-tag>
+          <el-tag type="info" effect="plain">{{ accountExecution.stage_progression.handoff_object }}</el-tag>
+        </div>
+        <p class="text-sm font-medium text-slate-800">{{ accountExecution.stage_progression.recommended_action }}</p>
+        <p class="mt-1 text-xs text-slate-600">{{ accountExecution.stage_progression.why_now }}</p>
+        <div v-if="accountExecution.stage_progression.missing_inputs?.length" class="mt-2 flex flex-wrap gap-2">
+          <el-tag
+            v-for="item in accountExecution.stage_progression.missing_inputs.slice(0, 5)"
+            :key="item"
+            size="small"
+            type="warning"
+            effect="plain"
+          >
+            {{ item }}
+          </el-tag>
+        </div>
+        <el-button
+          class="mt-2"
+          size="small"
+          type="success"
+          plain
+          @click="router.push(accountExecution.stage_progression.recommended_entry_path || accountExecution.active_paths?.[0] || '/')"
+        >
+          进入下一步
+        </el-button>
+      </div>
+
       <el-alert
         :title="String(accountExecution.next_action || '补齐下一步动作')"
         type="info"
@@ -105,6 +139,7 @@ interface AccountExecution {
   partner_focus?: string
   product_focus?: string[]
   source_counts?: Record<string, number>
+  active_paths?: string[]
   open_blockers?: string[]
   next_action?: string
   readiness_impact?: string[]
@@ -122,6 +157,19 @@ interface AccountExecution {
     delivery_signal: string
     repeat_business_signal: string
     business_questions: string[]
+    safety: Record<string, boolean>
+  }
+  stage_progression?: {
+    health: string
+    current_stage: string
+    next_stage: string | null
+    blocks_next_stage: boolean
+    missing_inputs: string[]
+    recommended_action: string
+    handoff_object: string
+    recommended_entry_path: string
+    readiness_impact: string[]
+    why_now: string
     safety: Record<string, boolean>
   }
 }
@@ -215,6 +263,25 @@ function commercialHealthType(value: unknown) {
   if (key === 'after_sales_attention') return 'warning'
   if (key === 'conversion_ready') return 'success'
   if (key === 'pipeline_active') return 'primary'
+  return 'info'
+}
+
+function stageProgressionLabel(value: unknown) {
+  const labels: Record<string, string> = {
+    blocked: '阶段阻塞',
+    needs_input: '需要补齐输入',
+    ready_to_advance: '可推进下一阶段',
+    repeat_business_ready: '复购维护',
+  }
+  const key = String(value ?? '')
+  return labels[key] || key || '待判断'
+}
+
+function stageProgressionType(value: unknown) {
+  const key = String(value ?? '')
+  if (key === 'blocked') return 'danger'
+  if (key === 'needs_input') return 'warning'
+  if (key === 'ready_to_advance' || key === 'repeat_business_ready') return 'success'
   return 'info'
 }
 
