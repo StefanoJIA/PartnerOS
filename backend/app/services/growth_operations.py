@@ -41,6 +41,7 @@ from app.schemas.growth import (
     OPPORTUNITY_STAGE_LABELS,
     OPPORTUNITY_STATUS_LABELS,
 )
+from app.services.orders.order_fulfillment_intelligence import build_order_fulfillment_intelligence
 from app.services.partner_capability_intelligence import build_partner_capability_intelligence
 
 
@@ -164,6 +165,16 @@ def _match_campaigns(text: str) -> list[GrowthCampaignConfig]:
 
 def _safe_uuid(value: UUID | None) -> str | None:
     return str(value) if value else None
+
+
+def _unique(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        if value and value not in seen:
+            seen.add(value)
+            result.append(value)
+    return result
 
 
 def _contact_name(contact: Contact | None) -> str | None:
@@ -1022,6 +1033,251 @@ def derive_opportunity_stage_gate(row: SalesOpportunity, recommendations: list[d
     }
 
 
+OPPORTUNITY_EXECUTION_SAFETY: dict[str, bool] = {
+    "external_message_sent": False,
+    "customer_notified": False,
+    "supplier_notified": False,
+    "quote_status_changed": False,
+    "order_status_changed": False,
+    "shipment_created": False,
+    "raw_token_recorded": False,
+    "staging_validated": False,
+    "customer_forbidden_fields_exposed": False,
+}
+
+
+def _quote_matches_opportunity(quote: Quote, row: SalesOpportunity, terms: set[str]) -> bool:
+    if row.company_id and quote.company_id == row.company_id:
+        return True
+    text = _text(
+        quote.quote_number,
+        quote.status,
+        quote.bill_to_company,
+        quote.customer_notes,
+        " ".join(_product_text(line) for line in quote.line_items),
+    )
+    return bool(terms and _matches_keywords(text, sorted(terms)))
+
+
+def _order_matches_opportunity(order: CustomerOrder, row: SalesOpportunity, terms: set[str]) -> bool:
+    if row.order_id and order.id == row.order_id:
+        return True
+    if row.quote_id and order.source_quote_id == row.quote_id:
+        return True
+    if row.company_id and order.company_id == row.company_id:
+        return True
+    text = _text(
+        order.order_number,
+        order.status,
+        order.bill_to_company,
+        order.customer_notes,
+        " ".join(_product_text(line) for line in order.line_items),
+    )
+    return bool(terms and _matches_keywords(text, sorted(terms)))
+
+
+def _quote_execution_summary(quote: Quote) -> dict[str, Any]:
+    return {
+        "quote_id": str(quote.id),
+        "quote_number": quote.quote_number,
+        "status": quote.status,
+        "manual_sent": bool(quote.manual_sent),
+        "follow_up_date": quote.follow_up_date.isoformat() if quote.follow_up_date else None,
+        "version_count": len(quote.versions),
+        "line_count": len(quote.line_items),
+        "path": f"/quotes/{quote.id}",
+    }
+
+
+def _order_execution_summary(order: CustomerOrder) -> dict[str, Any]:
+    return {
+        "order_id": str(order.id),
+        "order_number": order.order_number,
+        "status": order.status,
+        "customer_name": order.bill_to_company or order.ship_to_company,
+        "production_milestone_count": len(order.production_milestones),
+        "shipment_plan_count": len([plan for plan in order.shipment_plans if plan.status != "cancelled"]),
+        "path": f"/orders/{order.id}",
+    }
+
+
+def _feedback_execution_summary(rows: list[FeedbackTicket]) -> dict[str, Any]:
+    open_rows = [row for row in rows if row.status not in {"closed", "resolved", "archived"}]
+    high_priority = [row for row in rows if row.priority in {"high", "urgent", "P0", "P1"}]
+    latest = rows[0] if rows else None
+    return {
+        "total": len(rows),
+        "open": len(open_rows),
+        "high_priority": len(high_priority),
+        "latest_ticket_number": latest.ticket_number if latest else None,
+        "latest_status": latest.status if latest else None,
+        "latest_priority": latest.priority if latest else None,
+        "path": "/feedback-tickets",
+    }
+
+
+def _related_quotes_for_opportunity(db: Session, row: SalesOpportunity) -> list[Quote]:
+    quotes: list[Quote] = []
+    if row.quote_id:
+        quote = db.get(Quote, row.quote_id)
+        if quote:
+            quotes.append(quote)
+    terms = _opportunity_match_terms(row)
+    candidates = db.query(Quote).filter(Quote.is_archived.is_(False)).order_by(Quote.updated_at.desc()).limit(120).all()
+    for quote in candidates:
+        if quote.id in {item.id for item in quotes}:
+            continue
+        if _quote_matches_opportunity(quote, row, terms):
+            quotes.append(quote)
+        if len(quotes) >= 3:
+            break
+    return quotes
+
+
+def _related_orders_for_opportunity(db: Session, row: SalesOpportunity, quotes: list[Quote]) -> list[CustomerOrder]:
+    orders: list[CustomerOrder] = []
+    if row.order_id:
+        order = db.get(CustomerOrder, row.order_id)
+        if order:
+            orders.append(order)
+    quote_ids = {quote.id for quote in quotes}
+    terms = _opportunity_match_terms(row)
+    candidates = db.query(CustomerOrder).order_by(CustomerOrder.updated_at.desc()).limit(120).all()
+    for order in candidates:
+        if order.id in {item.id for item in orders}:
+            continue
+        if order.source_quote_id in quote_ids or _order_matches_opportunity(order, row, terms):
+            orders.append(order)
+        if len(orders) >= 3:
+            break
+    return orders
+
+
+def _related_feedback_for_opportunity(db: Session, row: SalesOpportunity, orders: list[CustomerOrder]) -> list[FeedbackTicket]:
+    order_ids = {order.id for order in orders}
+    rows = db.query(FeedbackTicket).order_by(FeedbackTicket.updated_at.desc(), FeedbackTicket.created_at.desc()).limit(200).all()
+    related: list[FeedbackTicket] = []
+    terms = _opportunity_match_terms(row)
+    for ticket in rows:
+        text = _text(ticket.feedback_type, ticket.subject, ticket.message, ticket.response_summary)
+        if (ticket.order_id and ticket.order_id in order_ids) or (row.company_id and ticket.company_id == row.company_id) or (
+            terms and _matches_keywords(text, sorted(terms))
+        ):
+            related.append(ticket)
+        if len(related) >= 5:
+            break
+    return related
+
+
+def build_opportunity_execution_context(
+    db: Session | None,
+    row: SalesOpportunity,
+    recommendations: list[dict[str, Any]] | None = None,
+    stage_gate: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    if db is None:
+        return {
+            "health": "not_evaluated",
+            "next_best_action": "Open the growth opportunity with backend context to derive execution evidence.",
+            "safety": dict(OPPORTUNITY_EXECUTION_SAFETY),
+        }
+
+    recommendations = recommendations or []
+    stage_gate = stage_gate or derive_opportunity_stage_gate(row, recommendations)
+    quotes = _related_quotes_for_opportunity(db, row)
+    orders = _related_orders_for_opportunity(db, row, quotes)
+    feedback_rows = _related_feedback_for_opportunity(db, row, orders)
+    latest_order = orders[0] if orders else None
+    fulfillment = build_order_fulfillment_intelligence(db, latest_order) if latest_order else {}
+    feedback_summary = _feedback_execution_summary(feedback_rows)
+    market_review_count = len([item for item in recommendations if item.get("source_type") == "market_response"])
+    quote_learning_count = len([item for item in recommendations if item.get("source_type") == "quote_learning"])
+    partner_fit = next((item.get("partner_fit") for item in recommendations if item.get("source_type") == "partner_fit"), {})
+
+    missing_inputs = list(stage_gate.get("missing_inputs") or [])
+    readiness_impact: list[str] = list(stage_gate.get("market_response_impacts") or [])
+    readiness_impact.extend(stage_gate.get("quote_learning_impacts") or [])
+    readiness_impact.extend(stage_gate.get("partner_fit_impacts") or [])
+    readiness_impact.extend(fulfillment.get("readiness_impact") or [])
+
+    if not quotes:
+        health = "needs_quote"
+        priority = "P1" if row.decision_stage in {"quotation", "negotiation", "won"} else "P2"
+        next_best_action = "Create or link the quote before treating this opportunity as an executable project."
+        readiness_impact.append("quotation readiness")
+    elif quotes and not orders and row.status not in {"won", "lost", "archived"}:
+        health = "quote_follow_up"
+        priority = "P1" if row.decision_stage in {"quotation", "negotiation"} else "P2"
+        next_best_action = "Follow up manually on the linked quote and record customer feedback, objection, or quote request outcome."
+        readiness_impact.append("quote conversion")
+    elif latest_order and fulfillment.get("risk_level") in {"high", "medium"}:
+        health = "delivery_or_feedback_risk"
+        priority = "P1"
+        next_best_action = fulfillment.get("next_best_action") or "Review production, shipment, and feedback risk before pushing repeat business."
+        readiness_impact.append("delivery visibility")
+    elif feedback_summary["open"] or feedback_summary["high_priority"]:
+        health = "feedback_review"
+        priority = "P1"
+        next_best_action = "Resolve open feedback and decide whether the signal should feed Market Response or product intelligence."
+        readiness_impact.append("repeat business risk")
+    elif orders:
+        health = "order_converted"
+        priority = "P2"
+        next_best_action = "Keep production, shipment, feedback, and repeat-business follow-up connected to this opportunity."
+        readiness_impact.append("repeat business")
+    else:
+        health = "stage_inputs_needed"
+        priority = "P2"
+        next_best_action = stage_gate.get("next_best_action") or "Complete opportunity stage inputs and decide the next manual handoff."
+
+    if missing_inputs:
+        readiness_impact.append("opportunity stage readiness")
+    if partner_fit and partner_fit.get("missing_inputs"):
+        readiness_impact.append("partner readiness")
+    if market_review_count:
+        readiness_impact.append("Market Response review")
+    if quote_learning_count:
+        readiness_impact.append("quote learning loop")
+
+    return {
+        "health": health,
+        "priority": priority,
+        "linked_quote_count": len(quotes),
+        "linked_order_count": len(orders),
+        "quote": _quote_execution_summary(quotes[0]) if quotes else None,
+        "orders": [_order_execution_summary(order) for order in orders[:3]],
+        "feedback": feedback_summary,
+        "delivery": {
+            "order_id": str(latest_order.id) if latest_order else None,
+            "health": fulfillment.get("health"),
+            "risk_level": fulfillment.get("risk_level"),
+            "business_focus": fulfillment.get("business_focus"),
+            "missing_operating_inputs": list(fulfillment.get("missing_operating_inputs") or [])[:5],
+            "readiness_impact": list(fulfillment.get("readiness_impact") or [])[:6],
+            "partner_execution_health": (fulfillment.get("partner_execution_readiness") or {}).get("health"),
+            "next_best_action": fulfillment.get("next_best_action"),
+        },
+        "market_response": {
+            "recommendation_count": market_review_count,
+            "quote_learning_count": quote_learning_count,
+        },
+        "conversion_signal": {
+            "stage": row.decision_stage,
+            "status": row.status,
+            "manual_handoff_required": True,
+            "next_best_action": next_best_action,
+        },
+        "missing_inputs": _unique(missing_inputs),
+        "readiness_impact": _unique(readiness_impact),
+        "next_best_action": next_best_action,
+        "customer_safe_boundary": (
+            "Opportunity execution context is internal-only and customer-safe by derivation: it never exposes cost, margin, "
+            "pricing breakdown, supplier private notes, raw tokens, storage paths, or internal scoring."
+        ),
+        "safety": dict(OPPORTUNITY_EXECUTION_SAFETY),
+    }
+
+
 def _opportunity_recommendations(db: Session | None, row: SalesOpportunity) -> list[dict[str, Any]]:
     if db is None:
         return []
@@ -1054,6 +1310,8 @@ def _opportunity_recommendations(db: Session | None, row: SalesOpportunity) -> l
 
 def _serialize_opportunity(row: SalesOpportunity, db: Session | None = None) -> dict[str, Any]:
     recommendations = _opportunity_recommendations(db, row)
+    stage_gate = derive_opportunity_stage_gate(row, recommendations)
+    execution_context = build_opportunity_execution_context(db, row, recommendations, stage_gate)
     return {
         "id": str(row.id),
         "opportunity_name": row.opportunity_name,
@@ -1086,7 +1344,8 @@ def _serialize_opportunity(row: SalesOpportunity, db: Session | None = None) -> 
         "path": _opportunity_path(row),
         "recommendations": recommendations,
         "partner_fit": next((item.get("partner_fit") for item in recommendations if item.get("source_type") == "partner_fit"), {}),
-        "stage_gate": derive_opportunity_stage_gate(row, recommendations),
+        "stage_gate": stage_gate,
+        "execution_context": execution_context,
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "updated_at": row.updated_at.isoformat() if row.updated_at else None,
     }

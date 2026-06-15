@@ -100,6 +100,9 @@ def main() -> int:
         }
         opportunity_partner_fit_items = [item.partner_fit for item in payload.opportunities if item.partner_fit]
         stage_gate_items = [item.stage_gate for item in payload.opportunities if item.stage_gate]
+        opportunity_execution_items = [
+            item.execution_context for item in payload.opportunities if item.execution_context
+        ]
         all_stage_gate_dimensions = {
             dimension
             for gate in stage_gate_items
@@ -226,6 +229,45 @@ def main() -> int:
                     {"load", "stability", "noise", "warranty", "test cycle", "certification"} & all_stage_gate_dimensions
                     or {"durability", "school procurement timing", "delivery consistency"} & all_stage_gate_dimensions
                     or {"product family", "quote logic", "delivery requirement"} & all_stage_gate_dimensions
+                ),
+            ),
+            (
+                "opportunities expose execution context",
+                bool(opportunity_execution_items)
+                and all(
+                    item.get("health")
+                    and item.get("next_best_action")
+                    and item.get("conversion_signal", {}).get("manual_handoff_required") is True
+                    for item in opportunity_execution_items
+                ),
+            ),
+            (
+                "opportunity execution links quote order or stage handoff",
+                any(
+                    item.get("linked_quote_count", 0) >= 0
+                    and item.get("linked_order_count", 0) >= 0
+                    and (
+                        item.get("quote")
+                        or item.get("orders")
+                        or item.get("missing_inputs")
+                        or item.get("health") in {"needs_quote", "quote_follow_up", "stage_inputs_needed"}
+                    )
+                    for item in opportunity_execution_items
+                ),
+            ),
+            (
+                "opportunity execution safe boundaries",
+                all(
+                    item.get("safety", {}).get("external_message_sent") is False
+                    and item.get("safety", {}).get("customer_notified") is False
+                    and item.get("safety", {}).get("supplier_notified") is False
+                    and item.get("safety", {}).get("quote_status_changed") is False
+                    and item.get("safety", {}).get("order_status_changed") is False
+                    and item.get("safety", {}).get("shipment_created") is False
+                    and item.get("safety", {}).get("raw_token_recorded") is False
+                    and item.get("safety", {}).get("staging_validated") is False
+                    and item.get("customer_safe_boundary")
+                    for item in opportunity_execution_items
                 ),
             ),
             (
@@ -529,6 +571,16 @@ def main() -> int:
                 ),
             )
         )
+        checks.append(
+            (
+                "route opportunity execution context",
+                created.status_code in {200, 201}
+                and created_data.get("execution_context", {}).get("health")
+                and created_data.get("execution_context", {}).get("conversion_signal", {}).get("manual_handoff_required") is True
+                and created_data.get("execution_context", {}).get("safety", {}).get("external_message_sent") is False
+                and created_data.get("execution_context", {}).get("safety", {}).get("order_status_changed") is False,
+            )
+        )
         checks.append(("route opportunity patch", patched is not None and patched.status_code == 200 and patched.json().get("data", {}).get("probability") == 72))
         checks.append(("route opportunity safety", opp_list_after.json().get("data", {}).get("safety", {}).get("email_sent") is False))
         checks.append(
@@ -543,6 +595,17 @@ def main() -> int:
                 any(
                     item.get("id") == created_data.get("id")
                     and item.get("partner_fit", {}).get("partner_name")
+                    for item in response_data.get("opportunities", [])
+                ),
+            )
+        )
+        checks.append(
+            (
+                "route opportunity execution reaches dashboard",
+                any(
+                    item.get("id") == created_data.get("id")
+                    and item.get("execution_context", {}).get("next_best_action")
+                    and item.get("execution_context", {}).get("safety", {}).get("external_message_sent") is False
                     for item in response_data.get("opportunities", [])
                 ),
             )

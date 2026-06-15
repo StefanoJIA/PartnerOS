@@ -316,5 +316,6 @@ class SalesOpportunityRead(BaseModel):
     path: str
     recommendations: list[OpportunityRecommendationRead] = Field(default_factory=list)
     partner_fit: dict[str, Any] = Field(default_factory=dict)
+    execution_context: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
     updated_at: datetime

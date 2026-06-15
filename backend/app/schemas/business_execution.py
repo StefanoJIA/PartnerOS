@@ -76,6 +76,7 @@ class OpportunityPipelineItem(BaseModel):
     path: str
     stage_gate: dict[str, Any] = Field(default_factory=dict)
     partner_fit: dict[str, Any] = Field(default_factory=dict)
+    execution_context: dict[str, Any] = Field(default_factory=dict)
 
 
 class QuotationIntelligenceItem(BaseModel):

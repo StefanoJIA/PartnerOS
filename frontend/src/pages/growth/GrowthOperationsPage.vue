@@ -263,6 +263,44 @@
                     </div>
                     <p class="mt-1 text-[11px] text-blue-700">阶段门只给人工推进建议，不自动修改机会、报价或订单状态。</p>
                   </div>
+                  <div v-if="row.execution_context" class="mt-3 rounded border border-emerald-100 bg-emerald-50 p-2">
+                    <div class="flex flex-wrap items-center gap-1">
+                      <el-tag size="small" :type="executionHealthType(row.execution_context.health)" effect="plain">
+                        {{ executionHealthLabel(row.execution_context.health) }}
+                      </el-tag>
+                      <el-tag v-if="row.execution_context.priority" size="small" effect="plain">
+                        {{ row.execution_context.priority }}
+                      </el-tag>
+                      <el-tag size="small" type="info" effect="plain">
+                        报价 {{ row.execution_context.linked_quote_count || 0 }}
+                      </el-tag>
+                      <el-tag size="small" type="info" effect="plain">
+                        订单 {{ row.execution_context.linked_order_count || 0 }}
+                      </el-tag>
+                      <el-tag v-if="row.execution_context.feedback?.open" size="small" type="warning" effect="plain">
+                        反馈 {{ row.execution_context.feedback.open }}
+                      </el-tag>
+                      <el-tag v-if="row.execution_context.delivery?.risk_level" size="small" type="warning" effect="plain">
+                        交付 {{ row.execution_context.delivery.risk_level }}
+                      </el-tag>
+                    </div>
+                    <p class="mt-1 text-xs font-medium text-slate-800">
+                      {{ row.execution_context.next_best_action || row.execution_context.conversion_signal?.next_best_action }}
+                    </p>
+                    <div v-if="row.execution_context.readiness_impact?.length" class="mt-1 flex flex-wrap gap-1">
+                      <el-tag
+                        v-for="item in row.execution_context.readiness_impact.slice(0, 4)"
+                        :key="item"
+                        size="small"
+                        effect="plain"
+                      >
+                        {{ item }}
+                      </el-tag>
+                    </div>
+                    <p class="mt-1 text-[11px] text-emerald-700">
+                      只读聚合报价、订单、反馈和交付证据；不自动发送、不改报价/订单状态、不暴露成本或供应商私密信息。
+                    </p>
+                  </div>
                   <div v-if="row.recommendations?.length" class="mt-3 space-y-2">
                     <div
                       v-for="rec in row.recommendations.slice(0, 2)"
@@ -876,6 +914,26 @@ function stageGateInputLabel(value: string) {
     hold_reason: '暂停原因',
   }
   return labels[value] || value
+}
+
+function executionHealthLabel(health: string) {
+  const labels: Record<string, string> = {
+    needs_quote: '需要报价',
+    quote_follow_up: '报价跟进',
+    order_converted: '已转订单',
+    delivery_or_feedback_risk: '交付/反馈风险',
+    feedback_review: '反馈复盘',
+    stage_inputs_needed: '阶段输入不足',
+    not_evaluated: '待评估',
+  }
+  return labels[health] || health
+}
+
+function executionHealthType(health: string) {
+  if (health === 'delivery_or_feedback_risk' || health === 'feedback_review') return 'danger'
+  if (health === 'needs_quote' || health === 'quote_follow_up' || health === 'stage_inputs_needed') return 'warning'
+  if (health === 'order_converted') return 'success'
+  return 'info'
 }
 
 function appendRecommendationLine(current: string, line: string) {

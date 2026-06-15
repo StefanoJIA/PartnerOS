@@ -300,6 +300,65 @@ export type BusinessExecution = {
       next_best_action: string
       customer_safe_boundary: string
     }
+    execution_context?: {
+      health: string
+      priority?: string
+      linked_quote_count?: number
+      linked_order_count?: number
+      quote?: {
+        quote_id: string
+        quote_number: string
+        status: string
+        manual_sent: boolean
+        follow_up_date: string | null
+        version_count: number
+        line_count: number
+        path: string
+      } | null
+      orders?: Array<{
+        order_id: string
+        order_number: string
+        status: string
+        customer_name: string | null
+        production_milestone_count: number
+        shipment_plan_count: number
+        path: string
+      }>
+      feedback?: {
+        total: number
+        open: number
+        high_priority: number
+        latest_ticket_number: string | null
+        latest_status: string | null
+        latest_priority: string | null
+        path: string
+      }
+      delivery?: {
+        order_id: string | null
+        health: string | null
+        risk_level: string | null
+        business_focus: string | null
+        missing_operating_inputs: string[]
+        readiness_impact: string[]
+        partner_execution_health: string | null
+        next_best_action: string | null
+      }
+      market_response?: {
+        recommendation_count: number
+        quote_learning_count: number
+      }
+      conversion_signal?: {
+        stage: string
+        status: string
+        manual_handoff_required: boolean
+        next_best_action: string
+      }
+      missing_inputs?: string[]
+      readiness_impact?: string[]
+      next_best_action?: string
+      customer_safe_boundary?: string
+      safety?: Record<string, boolean>
+    }
   }>
   quotations: Array<{
     quote_id: string
