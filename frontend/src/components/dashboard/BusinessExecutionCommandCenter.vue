@@ -302,6 +302,34 @@
               </div>
               <p class="mt-1 text-xs text-slate-700">{{ item.validation_signal }}</p>
               <p class="mt-1 text-xs text-rose-600">{{ item.risk }}</p>
+              <div v-if="item.validation_context" class="mt-2 rounded border border-cyan-100 bg-cyan-50 p-2">
+                <div class="flex flex-wrap items-center gap-1">
+                  <el-tag size="small" :type="productValidationType(item.validation_context.health)" effect="plain">
+                    {{ productValidationLabel(item.validation_context.health) }}
+                  </el-tag>
+                  <el-tag size="small" effect="plain">{{ item.validation_context.priority }}</el-tag>
+                  <el-tag size="small" type="info" effect="plain">机会 {{ item.validation_context.evidence_counts.opportunities }}</el-tag>
+                  <el-tag size="small" type="info" effect="plain">报价 {{ item.validation_context.evidence_counts.quotes }}</el-tag>
+                  <el-tag size="small" type="info" effect="plain">订单 {{ item.validation_context.evidence_counts.orders }}</el-tag>
+                  <el-tag v-if="item.validation_context.evidence_counts.feedback" size="small" type="warning" effect="plain">
+                    反馈 {{ item.validation_context.evidence_counts.feedback }}
+                  </el-tag>
+                  <el-tag v-if="item.validation_context.evidence_counts.delivery_risks" size="small" type="danger" effect="plain">
+                    交付风险 {{ item.validation_context.evidence_counts.delivery_risks }}
+                  </el-tag>
+                </div>
+                <p class="mt-1 text-xs text-slate-700">{{ item.validation_context.next_best_action }}</p>
+                <div v-if="item.validation_context.readiness_impact.length" class="mt-1 flex flex-wrap gap-1">
+                  <el-tag
+                    v-for="impact in item.validation_context.readiness_impact.slice(0, 4)"
+                    :key="impact"
+                    size="small"
+                    effect="plain"
+                  >
+                    {{ impact }}
+                  </el-tag>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -492,6 +520,23 @@ function executionHealthType(health: string) {
   if (health === 'delivery_or_feedback_risk' || health === 'feedback_review') return 'danger'
   if (health === 'needs_quote' || health === 'quote_follow_up' || health === 'stage_inputs_needed') return 'warning'
   if (health === 'order_converted') return 'success'
+  return 'info'
+}
+
+function productValidationLabel(health: string) {
+  const labels: Record<string, string> = {
+    needs_product_review: '需要产品复盘',
+    customer_safe_evidence_ready: '客户可见证据就绪',
+    market_validation_in_progress: '市场验证中',
+    baseline_only: '仅基线维度',
+  }
+  return labels[health] || health
+}
+
+function productValidationType(health: string) {
+  if (health === 'needs_product_review') return 'danger'
+  if (health === 'market_validation_in_progress') return 'warning'
+  if (health === 'customer_safe_evidence_ready') return 'success'
   return 'info'
 }
 

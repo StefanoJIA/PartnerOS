@@ -55,6 +55,19 @@ def main() -> int:
             for item in payload.products
             for dimension in item.dimensions
         }
+        product_validation_context_items = [
+            item.validation_context for item in payload.products if item.validation_context
+        ]
+        product_validation_impacts = {
+            impact
+            for item in product_validation_context_items
+            for impact in item.get("readiness_impact", [])
+        }
+        product_validation_dimensions = {
+            dimension
+            for item in product_validation_context_items
+            for dimension in item.get("dimensions_requiring_evidence", [])
+        }
         all_partner_names = {item.partner_name for item in payload.partners}
         all_partner_focus = {
             item.partner_focus
@@ -116,6 +129,59 @@ def main() -> int:
             ("opportunity pipeline present", bool(payload.opportunities)),
             ("quotation intelligence present", bool(payload.quotations)),
             ("product intelligence present", bool(payload.products)),
+            (
+                "product validation context present",
+                bool(product_validation_context_items)
+                and all(
+                    item.get("health")
+                    and item.get("priority")
+                    and item.get("next_best_action")
+                    and item.get("evidence_counts")
+                    for item in product_validation_context_items
+                ),
+            ),
+            (
+                "product validation links execution evidence",
+                any(
+                    counts.get("opportunities", 0) >= 0
+                    and counts.get("quotes", 0) >= 0
+                    and counts.get("orders", 0) >= 0
+                    and counts.get("feedback", 0) >= 0
+                    and counts.get("market_reviews", 0) >= 0
+                    for counts in [item.get("evidence_counts", {}) for item in product_validation_context_items]
+                )
+                and bool(
+                    {"quote wording", "delivery visibility", "after-sales learning", "Market Response", "pilot delivery risk", "customer-safe wording"}
+                    & product_validation_impacts
+                ),
+            ),
+            (
+                "product validation covers partner dimensions",
+                bool(
+                    {"load", "stability", "noise", "warranty", "test cycle", "certification", "project demand"}
+                    & product_validation_dimensions
+                    or {"durability", "procurement cycle", "classroom deployment", "delivery consistency", "feedback after use"}
+                    & product_validation_dimensions
+                    or {"product family", "quote logic", "delivery requirement", "customer-visible fields", "Market Response metrics"}
+                    & product_validation_dimensions
+                ),
+            ),
+            (
+                "product validation safe boundaries",
+                all(
+                    item.get("safety", {}).get("external_message_sent") is False
+                    and item.get("safety", {}).get("quote_status_changed") is False
+                    and item.get("safety", {}).get("order_status_changed") is False
+                    and item.get("safety", {}).get("raw_token_recorded") is False
+                    and item.get("safety", {}).get("customer_forbidden_fields_exposed") is False
+                    and item.get("safety", {}).get("cost_exposed") is False
+                    and item.get("safety", {}).get("margin_exposed") is False
+                    and item.get("safety", {}).get("supplier_private_notes_exposed") is False
+                    and item.get("safety", {}).get("staging_validated") is False
+                    and item.get("customer_safe_boundary")
+                    for item in product_validation_context_items
+                ),
+            ),
             ("partner intelligence present", bool(payload.partners)),
             ("delivery visibility present", bool(payload.delivery)),
             ("executive decisions present", bool(payload.executive_decisions)),
@@ -481,6 +547,18 @@ def main() -> int:
             )
         response_data = response.json() if response.status_code == 200 else {}
         checks.append(("route business execution", response.status_code == 200 and response_data.get("executive_decisions")))
+        checks.append(
+            (
+                "route product validation context",
+                response.status_code == 200
+                and any(
+                    item.get("validation_context", {}).get("next_best_action")
+                    and item.get("validation_context", {}).get("evidence_counts")
+                    and item.get("validation_context", {}).get("safety", {}).get("customer_forbidden_fields_exposed") is False
+                    for item in response_data.get("products", [])
+                ),
+            )
+        )
         checks.append(("route account lifecycle", response.status_code == 200 and response_data.get("account_lifecycle")))
         checks.append(
             (

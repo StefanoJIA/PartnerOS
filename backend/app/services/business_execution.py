@@ -14,6 +14,7 @@ from app.models import (
     GrowthCampaignTask,
     Lead,
     ManufacturingPartner,
+    MarketIntelligenceItem,
     MarketResponseReview,
     OrderProductionMilestone,
     ProductCatalog,
@@ -986,6 +987,271 @@ def _dimensions_for_focus(product_focus: list[str], partner_focus: str | None) -
     return ["product family", "quote logic", "delivery requirement", "resource taxonomy", "customer-visible fields", "Market Response metrics"]
 
 
+PRODUCT_CONTEXT_SAFETY: dict[str, bool] = {
+    "external_message_sent": False,
+    "quote_status_changed": False,
+    "order_status_changed": False,
+    "raw_token_recorded": False,
+    "customer_forbidden_fields_exposed": False,
+    "cost_exposed": False,
+    "margin_exposed": False,
+    "supplier_private_notes_exposed": False,
+    "staging_validated": False,
+}
+
+
+def _product_terms(partner_focus: str | None, product_focus: list[str], dimensions: list[str]) -> set[str]:
+    text = " ".join([partner_focus or "", *product_focus, *dimensions]).lower()
+    terms = {item.lower() for item in product_focus if item}
+    lifting_brand = _brand("ho", "sun")
+    if lifting_brand in text or any(term in text for term in ["lifting", "desk frame", "desk leg", "column", "heavy-duty"]):
+        terms.update(
+            {
+                lifting_brand,
+                "lifting",
+                "lifting systems",
+                "desk frame",
+                "desk frames",
+                "desk leg",
+                "desk legs",
+                "lifting column",
+                "lifting columns",
+                "heavy-duty",
+                "load",
+                "stability",
+                "noise",
+                "warranty",
+                "certification",
+                "test cycle",
+            }
+        )
+    if "jooboo" in text or any(term in text for term in ["education", "school", "classroom", "project furniture"]):
+        terms.update(
+            {
+                "jooboo",
+                "education",
+                "education furniture",
+                "school",
+                "school desks",
+                "school chairs",
+                "classroom",
+                "project furniture",
+                "durability",
+                "procurement",
+                "delivery consistency",
+            }
+        )
+    if not terms:
+        terms.update(item.lower() for item in dimensions if item and item.lower() not in {"delivery", "resource taxonomy"})
+    return {term for term in terms if term}
+
+
+def _contains_any(text: str, terms: set[str]) -> bool:
+    lower = text.lower()
+    return any(term in lower for term in terms)
+
+
+def _line_text(line: object) -> str:
+    return " ".join(
+        str(getattr(line, attr, "") or "")
+        for attr in [
+            "product_name",
+            "manual_product_name",
+            "product_category",
+            "description_customer",
+            "description_internal",
+            "internal_sku",
+            "partner_product_code",
+        ]
+    )
+
+
+def _product_validation_context(
+    db: Session,
+    partner_focus: str | None,
+    product_focus: list[str],
+    dimensions: list[str],
+) -> dict[str, object]:
+    terms = _product_terms(partner_focus, product_focus, dimensions)
+    partner_lower = (partner_focus or "").lower()
+
+    opportunities: list[SalesOpportunity] = []
+    for row in db.query(SalesOpportunity).order_by(SalesOpportunity.updated_at.desc()).limit(200).all():
+        text = " ".join(
+            [
+                row.opportunity_name or "",
+                row.partner_focus or "",
+                " ".join(row.product_focus or []),
+                row.customer_segment or "",
+                row.risk or "",
+                row.next_action or "",
+            ]
+        )
+        if (partner_lower and partner_lower in (row.partner_focus or "").lower()) or _contains_any(text, terms):
+            opportunities.append(row)
+        if len(opportunities) >= 8:
+            break
+
+    quote_ids: dict[str, Quote] = {}
+    for line in db.query(QuoteLineItem).order_by(QuoteLineItem.updated_at.desc()).limit(500).all():
+        if not _contains_any(_line_text(line), terms):
+            continue
+        quote = line.quote
+        if quote and not quote.is_archived:
+            quote_ids[str(quote.id)] = quote
+        if len(quote_ids) >= 8:
+            break
+
+    order_ids: dict[str, CustomerOrder] = {}
+    for order in db.query(CustomerOrder).order_by(CustomerOrder.updated_at.desc()).limit(160).all():
+        line_text = " ".join(_line_text(line) for line in order.line_items)
+        if _contains_any(line_text + " " + (order.customer_notes or ""), terms) or str(order.source_quote_id) in quote_ids:
+            order_ids[str(order.id)] = order
+        if len(order_ids) >= 8:
+            break
+
+    order_rows = list(order_ids.values())
+    order_id_set = {order.id for order in order_rows}
+    feedback_rows: list[FeedbackTicket] = []
+    for ticket in db.query(FeedbackTicket).order_by(FeedbackTicket.updated_at.desc(), FeedbackTicket.created_at.desc()).limit(200).all():
+        text = " ".join([ticket.feedback_type or "", ticket.subject or "", ticket.message or "", ticket.response_summary or ""])
+        if (ticket.order_id and ticket.order_id in order_id_set) or _contains_any(text, terms):
+            feedback_rows.append(ticket)
+        if len(feedback_rows) >= 8:
+            break
+
+    market_reviews: list[MarketResponseReview] = []
+    for review in db.query(MarketResponseReview).order_by(MarketResponseReview.updated_at.desc()).limit(160).all():
+        text = " ".join(
+            [
+                review.partner_focus,
+                review.focus_category,
+                " ".join(review.product_focus or []),
+                review.review_dimension,
+                review.visibility_class,
+                review.source_summary,
+                review.evidence_summary or "",
+                review.customer_safe_summary or "",
+            ]
+        )
+        if (partner_lower and partner_lower in review.partner_focus.lower()) or _contains_any(text, terms):
+            market_reviews.append(review)
+        if len(market_reviews) >= 8:
+            break
+
+    market_items: list[MarketIntelligenceItem] = []
+    for item in db.query(MarketIntelligenceItem).order_by(MarketIntelligenceItem.updated_at.desc()).limit(160).all():
+        text = " ".join(
+            [
+                item.title,
+                item.related_product_category or "",
+                item.market_segment or "",
+                item.content or "",
+                item.tags or "",
+                item.ai_summary or "",
+                item.ai_opportunity_analysis or "",
+            ]
+        )
+        if _contains_any(text, terms):
+            market_items.append(item)
+        if len(market_items) >= 8:
+            break
+
+    fulfillment_contexts = [build_order_fulfillment_intelligence(db, order) for order in order_rows[:5]]
+    delivery_risks = [
+        item
+        for item in fulfillment_contexts
+        if item.get("risk_level") in {"high", "medium"} or item.get("health") in {"delivery_blocked", "shipment_gap", "after_sales_attention"}
+    ]
+    high_feedback = [row for row in feedback_rows if row.priority in {"urgent", "high", "P0", "P1"}]
+    open_feedback = [row for row in feedback_rows if row.status not in {"closed", "resolved", "archived"}]
+    customer_safe_reviews = [row for row in market_reviews if row.visibility_class == "customer-safe"]
+    blocked_reviews = [row for row in market_reviews if row.priority in {"P0", "P1"} or row.status in {"blocked", "needs validation"}]
+
+    evidence_count = len(opportunities) + len(quote_ids) + len(order_ids) + len(feedback_rows) + len(market_reviews) + len(market_items)
+    if delivery_risks or high_feedback or blocked_reviews:
+        health = "needs_product_review"
+        priority = "P1"
+        next_action = "Review delivery, feedback, and Market Response evidence before using this product line in pilot or customer-safe wording."
+    elif customer_safe_reviews and order_ids:
+        health = "customer_safe_evidence_ready"
+        priority = "P2"
+        next_action = "Use approved customer-safe wording in quote/Portal materials and keep collecting order and after-sales evidence."
+    elif evidence_count:
+        health = "market_validation_in_progress"
+        priority = "P2"
+        next_action = "Connect opportunity, quote, order, and feedback evidence into Market Response before making product positioning decisions."
+    else:
+        health = "baseline_only"
+        priority = "P3"
+        next_action = "Capture real opportunities, quote objections, order delivery notes, and feedback against this product line."
+
+    if partner_focus and partner_focus.upper().startswith("HO"):
+        dimensions_requiring_evidence = [
+            item
+            for item in ["load", "stability", "noise", "warranty", "test cycle", "certification", "project demand"]
+            if item in dimensions
+        ]
+    elif partner_focus and partner_focus.upper().startswith("JOO"):
+        dimensions_requiring_evidence = [
+            item
+            for item in ["durability", "procurement cycle", "classroom deployment", "delivery consistency", "feedback after use"]
+            if item in dimensions
+        ]
+    else:
+        dimensions_requiring_evidence = [
+            item
+            for item in ["product family", "quote logic", "delivery requirement", "resource taxonomy", "customer-visible fields", "Market Response metrics"]
+            if item in dimensions
+        ]
+
+    readiness_impact: list[str] = []
+    if quote_ids:
+        readiness_impact.append("quote wording")
+    if order_ids:
+        readiness_impact.append("delivery visibility")
+    if feedback_rows:
+        readiness_impact.append("after-sales learning")
+    if market_reviews or market_items:
+        readiness_impact.append("Market Response")
+    if delivery_risks:
+        readiness_impact.append("pilot delivery risk")
+    if not customer_safe_reviews:
+        readiness_impact.append("customer-safe wording")
+
+    return {
+        "health": health,
+        "priority": priority,
+        "evidence_counts": {
+            "opportunities": len(opportunities),
+            "quotes": len(quote_ids),
+            "orders": len(order_ids),
+            "feedback": len(feedback_rows),
+            "open_feedback": len(open_feedback),
+            "high_priority_feedback": len(high_feedback),
+            "delivery_risks": len(delivery_risks),
+            "market_reviews": len(market_reviews),
+            "market_items": len(market_items),
+            "customer_safe_reviews": len(customer_safe_reviews),
+        },
+        "source_paths": {
+            "opportunity": "/growth-operations" if opportunities else None,
+            "quote": f"/quotes/{next(iter(quote_ids))}" if quote_ids else None,
+            "order": f"/orders/{next(iter(order_ids))}" if order_ids else None,
+            "feedback": "/feedback-tickets" if feedback_rows else None,
+            "market_response": f"/market-response?partner_focus={partner_focus}" if market_reviews or market_items else None,
+        },
+        "dimensions_requiring_evidence": dimensions_requiring_evidence,
+        "readiness_impact": _merge_unique(readiness_impact),
+        "next_best_action": next_action,
+        "customer_safe_boundary": (
+            "Product validation context is internal-only. Customer-visible product claims still require business approval, "
+            "security review, and customer-safe wording; no cost, margin, supplier private notes, raw token, or internal scoring is exposed."
+        ),
+        "safety": dict(PRODUCT_CONTEXT_SAFETY),
+    }
+
+
 def _build_product_intelligence(db: Session) -> list[ProductIntelligenceItem]:
     items: list[ProductIntelligenceItem] = []
     reviews = db.query(MarketResponseReview).order_by(MarketResponseReview.updated_at.desc()).limit(14).all()
@@ -1000,6 +1266,12 @@ def _build_product_intelligence(db: Session) -> list[ProductIntelligenceItem]:
                 risk="Customer-safe wording still requires business/security review." if review.visibility_class != "customer-safe" else "Customer-safe preview available.",
                 next_action=review.next_action or "Decide whether this signal changes product positioning, quote wording, or pilot risk.",
                 source_path=f"/market-response?partner_focus={review.partner_focus}",
+                validation_context=_product_validation_context(
+                    db,
+                    review.partner_focus,
+                    review.product_focus,
+                    [review.review_dimension, *[d for d in dimensions if d != review.review_dimension]][:8],
+                ),
             )
         )
 
@@ -1018,6 +1290,7 @@ def _build_product_intelligence(db: Session) -> list[ProductIntelligenceItem]:
                     risk="No market response review attached yet.",
                     next_action="Link customer feedback, quote objections, and delivery notes into Market Response.",
                     source_path="/quote-catalog",
+                    validation_context=_product_validation_context(db, partner_focus, focus, _dimensions_for_focus(focus, partner_focus)[:8]),
             )
         )
     existing_dimensions = {dimension for item in items for dimension in item.dimensions}
@@ -1033,6 +1306,12 @@ def _build_product_intelligence(db: Session) -> list[ProductIntelligenceItem]:
                 risk="Customer-visible claims for load, noise, test cycle, certification, and warranty still require business sign-off.",
                 next_action="Capture quote objections, project requirements, delivery issues, and feedback against each lifting-system dimension.",
                 source_path=f"/market-response?partner_focus={lifting_partner}",
+                validation_context=_product_validation_context(
+                    db,
+                    lifting_partner,
+                    ["lifting systems", "desk frames", "desk legs", "lifting columns", "heavy-duty solutions"],
+                    LIFTING_DIMENSIONS,
+                ),
             )
         )
     education_partner = _brand("JOO", "BOO")
@@ -1046,6 +1325,12 @@ def _build_product_intelligence(db: Session) -> list[ProductIntelligenceItem]:
                 risk="Project timing, durability, resources, and after-use feedback still require project evidence.",
                 next_action="Capture school procurement timing, classroom deployment needs, delivery consistency, and after-use feedback.",
                 source_path="/market-response?partner_focus=JOOBOO",
+                validation_context=_product_validation_context(
+                    db,
+                    education_partner,
+                    ["education furniture", "school desks", "school chairs", "project furniture"],
+                    EDUCATION_DIMENSIONS,
+                ),
             )
         )
     if "future partner" not in {partner.lower() for partner in existing_partners if partner}:
@@ -1058,6 +1343,12 @@ def _build_product_intelligence(db: Session) -> list[ProductIntelligenceItem]:
                 risk="Partner-specific fields and customer-visible wording require onboarding and sign-off.",
                 next_action="Map product family, quote logic, delivery requirement, resources, and Market Response metrics before pilot.",
                 source_path="/partner-onboarding",
+                validation_context=_product_validation_context(
+                    db,
+                    "future partner",
+                    ["onboarding data", "product family", "quote logic", "delivery requirement", "resource taxonomy"],
+                    ["customer-visible fields", "Market Response metrics", "quote logic", "delivery requirement", "resource taxonomy"],
+                ),
             )
         )
     return items[:16]

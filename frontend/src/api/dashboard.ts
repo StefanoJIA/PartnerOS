@@ -417,6 +417,34 @@ export type BusinessExecution = {
     risk: string
     next_action: string
     source_path: string
+    validation_context?: {
+      health: string
+      priority: string
+      evidence_counts: {
+        opportunities: number
+        quotes: number
+        orders: number
+        feedback: number
+        open_feedback: number
+        high_priority_feedback: number
+        delivery_risks: number
+        market_reviews: number
+        market_items: number
+        customer_safe_reviews: number
+      }
+      source_paths: {
+        opportunity: string | null
+        quote: string | null
+        order: string | null
+        feedback: string | null
+        market_response: string | null
+      }
+      dimensions_requiring_evidence: string[]
+      readiness_impact: string[]
+      next_best_action: string
+      customer_safe_boundary: string
+      safety: Record<string, boolean>
+    }
   }>
   partners: Array<{
     partner_id: string

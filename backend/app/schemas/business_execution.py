@@ -104,6 +104,7 @@ class ProductIntelligenceItem(BaseModel):
     risk: str
     next_action: str
     source_path: str
+    validation_context: dict[str, Any] = Field(default_factory=dict)
 
 
 class PartnerIntelligenceItem(BaseModel):
