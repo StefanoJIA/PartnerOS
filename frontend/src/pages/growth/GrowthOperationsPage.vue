@@ -155,6 +155,95 @@
         </div>
       </section>
 
+      <section class="rounded border border-slate-200 bg-white p-4">
+        <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 class="font-semibold text-slate-900">项目机会管线</h2>
+            <p class="mt-1 text-sm text-slate-600">
+              把 Campaign、客户兴趣、报价和订单前的项目机会集中维护：项目规模、决策阶段、竞争情况、风险、成交概率和下一步动作。
+            </p>
+          </div>
+          <el-tag type="success" effect="plain">HOSUN / JOOBOO / Future Partner 平级</el-tag>
+        </div>
+
+        <div class="grid gap-4 xl:grid-cols-[360px_1fr]">
+          <div class="space-y-3 rounded border border-slate-100 bg-slate-50 p-3">
+            <el-input v-model="opportunityForm.opportunity_name" placeholder="机会名称 / 项目名称" />
+            <div class="grid gap-2 sm:grid-cols-2">
+              <el-input v-model="opportunityForm.partner_focus" placeholder="Partner 方向" />
+              <el-select v-model="opportunityForm.status" placeholder="状态">
+                <el-option v-for="item in opportunityStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
+              </el-select>
+            </div>
+            <el-input v-model="opportunityForm.product_focus_text" placeholder="产品方向，英文逗号分隔" />
+            <div class="grid gap-2 sm:grid-cols-2">
+              <el-input v-model="opportunityForm.customer_segment" placeholder="客户分群 / 项目类型" />
+              <el-input v-model="opportunityForm.project_size" placeholder="项目规模" />
+            </div>
+            <div class="grid gap-2 sm:grid-cols-2">
+              <el-input v-model="opportunityForm.estimated_value" placeholder="预计金额" />
+              <el-input-number v-model="opportunityForm.probability" :min="0" :max="100" class="w-full" />
+            </div>
+            <div class="grid gap-2 sm:grid-cols-2">
+              <el-select v-model="opportunityForm.decision_stage" placeholder="决策阶段">
+                <el-option v-for="item in opportunityStageOptions" :key="item.value" :label="item.label" :value="item.value" />
+              </el-select>
+              <el-select v-model="opportunityForm.priority" placeholder="优先级">
+                <el-option label="P0" value="P0" />
+                <el-option label="P1" value="P1" />
+                <el-option label="P2" value="P2" />
+                <el-option label="P3" value="P3" />
+              </el-select>
+            </div>
+            <el-input v-model="opportunityForm.competition" type="textarea" :rows="2" placeholder="竞争情况 / 替代方案" />
+            <el-input v-model="opportunityForm.risk" type="textarea" :rows="2" placeholder="风险：价格、交期、认证、安装、售后、采购周期等" />
+            <el-input v-model="opportunityForm.next_action" type="textarea" :rows="2" placeholder="下一步动作" />
+            <div class="grid gap-2 sm:grid-cols-2">
+              <el-input v-model="opportunityForm.owner" placeholder="Owner" />
+              <el-input v-model="opportunityForm.expected_close_date" placeholder="预计关闭日期 YYYY-MM-DD" />
+            </div>
+            <el-button type="primary" :loading="savingOpportunity" @click="saveOpportunity">保存项目机会</el-button>
+          </div>
+
+          <div class="min-w-0">
+            <el-table :data="opportunities" border empty-text="暂无项目机会">
+              <el-table-column label="机会 / Partner" min-width="230">
+                <template #default="{ row }">
+                  <div class="font-medium text-slate-900">{{ row.opportunity_name }}</div>
+                  <div class="mt-1 text-xs text-slate-500">{{ row.partner_focus || 'future partner' }} / {{ row.status_label }}</div>
+                  <div class="mt-1 flex flex-wrap gap-1">
+                    <el-tag v-for="item in row.product_focus.slice(0, 4)" :key="item" size="small" effect="plain">{{ item }}</el-tag>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="阶段 / 概率" min-width="190">
+                <template #default="{ row }">
+                  <el-select :model-value="row.decision_stage" size="small" @change="updateOpportunityStage(row.id, $event)">
+                    <el-option v-for="item in opportunityStageOptions" :key="item.value" :label="item.label" :value="item.value" />
+                  </el-select>
+                  <el-progress class="mt-2" :percentage="row.probability" :stroke-width="8" />
+                </template>
+              </el-table-column>
+              <el-table-column label="竞争 / 风险 / 下一步" min-width="360">
+                <template #default="{ row }">
+                  <p class="text-xs text-slate-700">竞争：{{ row.competition || '未记录' }}</p>
+                  <p class="mt-1 text-xs text-rose-600">风险：{{ row.risk || row.blocker || '未记录' }}</p>
+                  <p class="mt-1 text-xs text-slate-500">下一步：{{ row.next_action || '未记录' }}</p>
+                </template>
+              </el-table-column>
+              <el-table-column label="动作" width="150" fixed="right">
+                <template #default="{ row }">
+                  <div class="flex flex-col gap-1">
+                    <el-button size="small" link type="primary" @click="loadOpportunityIntoForm(row)">编辑</el-button>
+                    <el-button size="small" link type="primary" @click="go(row.path)">源对象</el-button>
+                  </div>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </div>
+      </section>
+
       <section class="grid gap-3 lg:grid-cols-3">
         <div class="rounded border border-slate-200 bg-white p-4">
           <h2 class="font-semibold text-slate-900">销售易能力适配</h2>
@@ -332,14 +421,18 @@ import { formatApiError } from '@/api/errors'
 import {
   createGrowthCampaign,
   createGrowthCampaignTask,
+  createGrowthOpportunity,
   fetchGrowthCampaignDetail,
   fetchGrowthCampaigns,
+  fetchGrowthOpportunities,
   fetchGrowthOperationsConsole,
   updateGrowthCampaign,
   updateGrowthCampaignTask,
+  updateGrowthOpportunity,
   type GrowthOperationsConsole,
   type GrowthCampaignWorkspaceDetail,
   type GrowthCampaignWorkspaceRow,
+  type GrowthOpportunityRow,
   type GrowthOutreachSequence,
 } from '@/api/growthOperations'
 
@@ -347,6 +440,24 @@ const router = useRouter()
 const data = ref<GrowthOperationsConsole | null>(null)
 const workspaceCampaigns = ref<GrowthCampaignWorkspaceRow[]>([])
 const workspaceDetail = ref<GrowthCampaignWorkspaceDetail | null>(null)
+const opportunities = ref<GrowthOpportunityRow[]>([])
+const opportunityStageOptions = ref<Array<{ value: string; label: string }>>([
+  { value: 'discovery', label: '需求发现' },
+  { value: 'qualified', label: '已确认机会' },
+  { value: 'solution_fit', label: '方案匹配' },
+  { value: 'quotation', label: '报价推进' },
+  { value: 'negotiation', label: '商务谈判' },
+  { value: 'won', label: '已成交' },
+  { value: 'lost', label: '已丢单' },
+  { value: 'on_hold', label: '暂停' },
+])
+const opportunityStatusOptions = ref<Array<{ value: string; label: string }>>([
+  { value: 'open', label: '推进中' },
+  { value: 'won', label: '已成交' },
+  { value: 'lost', label: '已丢单' },
+  { value: 'on_hold', label: '暂停' },
+  { value: 'archived', label: '归档' },
+])
 const loading = ref(false)
 const error = ref('')
 const selectedCampaignId = ref('')
@@ -355,6 +466,8 @@ const manualEvent = ref('manual_sent')
 const recording = ref(false)
 const savingCampaign = ref(false)
 const savingTask = ref(false)
+const savingOpportunity = ref(false)
+const editingOpportunityId = ref('')
 
 const campaignForm = ref({
   name: '',
@@ -374,6 +487,28 @@ const taskForm = ref({
   due_date: '',
   draft_subject: '',
   draft_body: '',
+  notes: '',
+})
+
+const opportunityForm = ref({
+  opportunity_name: '',
+  partner_focus: 'HOSUN',
+  product_focus_text: 'lifting systems, desk frames, desk legs, lifting columns, heavy-duty solutions',
+  customer_segment: '项目制采购客户',
+  project_size: 'mid-size project',
+  estimated_value: '',
+  decision_stage: 'discovery',
+  competition: '',
+  risk: '',
+  probability: 35,
+  priority: 'P1',
+  owner: '业务负责人',
+  next_action: '确认项目规模、采购阶段、关键技术要求和报价输入。',
+  blocker: '',
+  status: 'open',
+  expected_close_date: '',
+  won_reason: '',
+  lost_reason: '',
   notes: '',
 })
 
@@ -407,9 +542,16 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    const [consoleData, workspaceData] = await Promise.all([fetchGrowthOperationsConsole(), fetchGrowthCampaigns()])
+    const [consoleData, workspaceData, opportunityData] = await Promise.all([
+      fetchGrowthOperationsConsole(),
+      fetchGrowthCampaigns(),
+      fetchGrowthOpportunities(),
+    ])
     data.value = consoleData
     workspaceCampaigns.value = workspaceData.campaigns
+    opportunities.value = opportunityData.opportunities
+    opportunityStageOptions.value = opportunityData.stage_options
+    opportunityStatusOptions.value = opportunityData.status_options
     if (!selectedCampaignId.value) selectedCampaignId.value = data.value.campaigns[0]?.id || ''
     if (!selectedWorkspaceCampaignId.value) {
       selectedWorkspaceCampaignId.value = workspaceCampaigns.value[0]?.id || ''
@@ -424,6 +566,13 @@ async function load() {
   } finally {
     loading.value = false
   }
+}
+
+async function reloadOpportunities() {
+  const data = await fetchGrowthOpportunities()
+  opportunities.value = data.opportunities
+  opportunityStageOptions.value = data.stage_options
+  opportunityStatusOptions.value = data.status_options
 }
 
 async function loadWorkspaceDetail(id?: string) {
@@ -535,6 +684,94 @@ async function saveTask() {
     ElMessage.error(formatApiError(err, '任务创建失败。'))
   } finally {
     savingTask.value = false
+  }
+}
+
+function opportunityPayload() {
+  return {
+    opportunity_name: opportunityForm.value.opportunity_name,
+    partner_focus: opportunityForm.value.partner_focus || null,
+    product_focus: opportunityForm.value.product_focus_text
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean),
+    customer_segment: opportunityForm.value.customer_segment || null,
+    project_size: opportunityForm.value.project_size || null,
+    estimated_value: opportunityForm.value.estimated_value || null,
+    decision_stage: opportunityForm.value.decision_stage,
+    competition: opportunityForm.value.competition || null,
+    risk: opportunityForm.value.risk || null,
+    probability: opportunityForm.value.probability,
+    priority: opportunityForm.value.priority,
+    owner: opportunityForm.value.owner || null,
+    next_action: opportunityForm.value.next_action || null,
+    blocker: opportunityForm.value.blocker || null,
+    status: opportunityForm.value.status,
+    expected_close_date: opportunityForm.value.expected_close_date || null,
+    won_reason: opportunityForm.value.won_reason || null,
+    lost_reason: opportunityForm.value.lost_reason || null,
+    notes: opportunityForm.value.notes || null,
+    campaign_id: selectedWorkspaceCampaign.value?.id || null,
+  }
+}
+
+async function saveOpportunity() {
+  if (!opportunityForm.value.opportunity_name.trim()) {
+    ElMessage.warning('请先填写机会名称。')
+    return
+  }
+  savingOpportunity.value = true
+  try {
+    if (editingOpportunityId.value) {
+      await updateGrowthOpportunity(editingOpportunityId.value, opportunityPayload())
+      ElMessage.success('项目机会已更新。')
+    } else {
+      await createGrowthOpportunity(opportunityPayload())
+      ElMessage.success('项目机会已创建。')
+    }
+    editingOpportunityId.value = ''
+    opportunityForm.value.opportunity_name = ''
+    await reloadOpportunities()
+    if (selectedWorkspaceCampaignId.value) await loadWorkspaceDetail(selectedWorkspaceCampaignId.value)
+  } catch (err) {
+    ElMessage.error(formatApiError(err, '项目机会保存失败。'))
+  } finally {
+    savingOpportunity.value = false
+  }
+}
+
+function loadOpportunityIntoForm(row: GrowthOpportunityRow) {
+  editingOpportunityId.value = row.id
+  opportunityForm.value = {
+    opportunity_name: row.opportunity_name,
+    partner_focus: row.partner_focus || '',
+    product_focus_text: row.product_focus.join(', '),
+    customer_segment: row.customer_segment || '',
+    project_size: row.project_size || '',
+    estimated_value: row.estimated_value || '',
+    decision_stage: row.decision_stage,
+    competition: row.competition || '',
+    risk: row.risk || '',
+    probability: row.probability,
+    priority: row.priority,
+    owner: row.owner || '',
+    next_action: row.next_action || '',
+    blocker: row.blocker || '',
+    status: row.status,
+    expected_close_date: row.expected_close_date || '',
+    won_reason: row.won_reason || '',
+    lost_reason: row.lost_reason || '',
+    notes: row.notes || '',
+  }
+}
+
+async function updateOpportunityStage(id: string, value: unknown) {
+  try {
+    await updateGrowthOpportunity(id, { decision_stage: String(value) })
+    await reloadOpportunities()
+    ElMessage.success('机会阶段已更新。')
+  } catch (err) {
+    ElMessage.error(formatApiError(err, '机会阶段更新失败。'))
   }
 }
 

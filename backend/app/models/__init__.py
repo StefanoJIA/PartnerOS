@@ -10,7 +10,7 @@ from app.models.enrichment import (
 from app.models.field_visits import FieldVisitPlan, FieldVisitTarget
 from app.models.feedback import FeedbackTicket
 from app.models.external_execution import ExternalExecutionAction
-from app.models.growth import GrowthCampaign, GrowthCampaignTask
+from app.models.growth import GrowthCampaign, GrowthCampaignTask, SalesOpportunity
 from app.models.market import MarketIntelligenceItem
 from app.models.market_response import MarketResponseReview
 from app.models.orders import Order, OrderItem, ProductionMilestone, ShippingRecord
@@ -111,6 +111,7 @@ __all__ = [
     "Role",
     "Sample",
     "SampleShipment",
+    "SalesOpportunity",
     "ShippingRecord",
     "ShipmentPlan",
     "ShipmentTrackingEvent",

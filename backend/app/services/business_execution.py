@@ -19,6 +19,7 @@ from app.models import (
     ProductCatalog,
     Quote,
     QuoteLineItem,
+    SalesOpportunity,
     ShipmentPlan,
     User,
 )
@@ -214,6 +215,28 @@ def _build_lifecycle(db: Session, user: User) -> list[CustomerLifecycleItem]:
 
 def _build_opportunities(db: Session) -> list[OpportunityPipelineItem]:
     items: list[OpportunityPipelineItem] = []
+    opportunity_rows = db.query(SalesOpportunity).order_by(SalesOpportunity.probability.desc(), SalesOpportunity.updated_at.desc()).limit(20).all()
+    for row in opportunity_rows:
+        company = row.company
+        items.append(
+            OpportunityPipelineItem(
+                id=str(row.id),
+                opportunity_name=row.opportunity_name,
+                customer_or_segment=company.company_name if company else row.customer_segment,
+                partner_focus=row.partner_focus,
+                product_focus=row.product_focus or [],
+                project_size=row.project_size or _size_label(row.estimated_value),
+                decision_stage=row.decision_stage,
+                competitive_signal=row.competition or "Competition not recorded yet.",
+                probability=row.probability,
+                risk=row.risk or row.blocker or "Risk not recorded yet.",
+                next_action=row.next_action or "Update decision stage, competition, risk, probability, and next action.",
+                path="/growth-operations",
+            )
+        )
+    if len(items) >= 12:
+        return items[:16]
+
     campaigns = db.query(GrowthCampaign).order_by(GrowthCampaign.updated_at.desc()).limit(12).all()
     task_counts = {
         str(campaign_id): count

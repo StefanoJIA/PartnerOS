@@ -12,13 +12,23 @@ from app.core.permissions import PERM_MARKET_READ, require_permission
 from app.core.request_id import get_request_id
 from app.core.responses import success_envelope
 from app.models import User
-from app.schemas.growth import GrowthCampaignCreate, GrowthCampaignTaskCreate, GrowthCampaignTaskUpdate, GrowthCampaignUpdate
+from app.schemas.growth import (
+    GrowthCampaignCreate,
+    GrowthCampaignTaskCreate,
+    GrowthCampaignTaskUpdate,
+    GrowthCampaignUpdate,
+    SalesOpportunityCreate,
+    SalesOpportunityUpdate,
+)
 from app.services.growth_operations import (
     build_growth_operations_console,
     create_growth_campaign,
     create_growth_campaign_task,
+    create_sales_opportunity,
     get_growth_campaign_detail,
+    list_sales_opportunities,
     list_growth_campaigns,
+    update_sales_opportunity,
     update_growth_campaign,
     update_growth_campaign_task,
 )
@@ -54,6 +64,41 @@ def post_growth_campaign(
     actor: User = Depends(require_permission(PERM_MARKET_READ)),
 ):
     data = create_growth_campaign(db, payload, actor)
+    return success_envelope(data, request_id=get_request_id(request))
+
+
+@router.get("/opportunities")
+def get_growth_opportunities(
+    request: Request,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_permission(PERM_MARKET_READ)),
+):
+    data = list_sales_opportunities(db)
+    return success_envelope(data, request_id=get_request_id(request))
+
+
+@router.post("/opportunities", status_code=status.HTTP_201_CREATED)
+def post_growth_opportunity(
+    payload: SalesOpportunityCreate,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_permission(PERM_MARKET_READ)),
+):
+    data = create_sales_opportunity(db, payload, actor)
+    return success_envelope(data, request_id=get_request_id(request))
+
+
+@router.patch("/opportunities/{opportunity_id}")
+def patch_growth_opportunity(
+    opportunity_id: UUID,
+    payload: SalesOpportunityUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_permission(PERM_MARKET_READ)),
+):
+    data = update_sales_opportunity(db, opportunity_id, payload, actor)
+    if data is None:
+        raise HTTPException(status_code=404, detail="sales opportunity not found")
     return success_envelope(data, request_id=get_request_id(request))
 
 

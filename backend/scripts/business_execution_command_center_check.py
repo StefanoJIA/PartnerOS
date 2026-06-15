@@ -118,11 +118,46 @@ def main() -> int:
         with TestClient(app) as client:
             login = client.post("/api/auth/login", json={"email": "admin@example.com", "password": "admin123"})
             token = login.json()["access_token"]
+            opp_list_before = client.get("/api/v1/growth/opportunities", headers={"Authorization": f"Bearer {token}"})
+            opp_payload = {
+                "opportunity_name": "Runtime pipeline check - lifting systems project",
+                "partner_focus": "HOSUN",
+                "product_focus": ["lifting systems", "desk frames", "desk legs", "lifting columns", "heavy-duty solutions"],
+                "customer_segment": "project buyer",
+                "project_size": "mid-size project",
+                "estimated_value": "25000.00",
+                "decision_stage": "quotation",
+                "competition": "Alternative supplier under review; record real competitor only after business input.",
+                "risk": "Needs validation for load, noise, warranty, certification, delivery, and installation wording.",
+                "probability": 67,
+                "priority": "P1",
+                "owner": "runtime-check",
+                "next_action": "Confirm quote inputs and customer-safe technical wording.",
+                "status": "open",
+            }
+            created = client.post("/api/v1/growth/opportunities", headers={"Authorization": f"Bearer {token}"}, json=opp_payload)
+            created_data = created.json().get("data", {}) if created.status_code in {200, 201} else {}
+            patched = client.patch(
+                f"/api/v1/growth/opportunities/{created_data.get('id')}",
+                headers={"Authorization": f"Bearer {token}"},
+                json={"decision_stage": "negotiation", "probability": 72},
+            ) if created_data.get("id") else None
+            opp_list_after = client.get("/api/v1/growth/opportunities", headers={"Authorization": f"Bearer {token}"})
             response = client.get("/api/dashboard/business-execution", headers={"Authorization": f"Bearer {token}"})
         response_data = response.json() if response.status_code == 200 else {}
         checks.append(("route business execution", response.status_code == 200 and response_data.get("executive_decisions")))
         checks.append(("route safety flags", response_data.get("safety", {}).get("staging_validated") is False))
         checks.append(("route no external send", response_data.get("safety", {}).get("external_message_sent") is False))
+        checks.append(("route opportunity list", opp_list_before.status_code == 200 and "opportunities" in opp_list_before.json().get("data", {})))
+        checks.append(("route opportunity create", created.status_code in {200, 201} and created_data.get("probability") == 67))
+        checks.append(("route opportunity patch", patched is not None and patched.status_code == 200 and patched.json().get("data", {}).get("probability") == 72))
+        checks.append(("route opportunity safety", opp_list_after.json().get("data", {}).get("safety", {}).get("email_sent") is False))
+        checks.append(
+            (
+                "business execution uses opportunity records",
+                any(item.get("id") == created_data.get("id") for item in response_data.get("opportunities", [])),
+            )
+        )
 
         for label, ok in checks:
             print(f"[{'PASS' if ok else 'FAIL'}] {label}")

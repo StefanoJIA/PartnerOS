@@ -29,9 +29,15 @@ from app.models import (
     OrderLineItem,
     Quote,
     QuoteLineItem,
+    SalesOpportunity,
     ShipmentPlan,
 )
-from app.schemas.growth import CAMPAIGN_STATUS_LABELS, CAMPAIGN_TASK_STATUS_LABELS
+from app.schemas.growth import (
+    CAMPAIGN_STATUS_LABELS,
+    CAMPAIGN_TASK_STATUS_LABELS,
+    OPPORTUNITY_STAGE_LABELS,
+    OPPORTUNITY_STATUS_LABELS,
+)
 
 
 @dataclass(frozen=True)
@@ -498,6 +504,52 @@ def _serialize_task(task: GrowthCampaignTask) -> dict[str, Any]:
     }
 
 
+def _opportunity_path(row: SalesOpportunity) -> str:
+    if row.quote_id:
+        return f"/quotes/{row.quote_id}"
+    if row.order_id:
+        return f"/orders/{row.order_id}"
+    if row.lead_id:
+        return f"/leads/{row.lead_id}"
+    return "/growth-operations"
+
+
+def _serialize_opportunity(row: SalesOpportunity) -> dict[str, Any]:
+    return {
+        "id": str(row.id),
+        "opportunity_name": row.opportunity_name,
+        "company_id": str(row.company_id) if row.company_id else None,
+        "company_name": row.company.company_name if row.company else None,
+        "lead_id": str(row.lead_id) if row.lead_id else None,
+        "campaign_id": str(row.campaign_id) if row.campaign_id else None,
+        "quote_id": str(row.quote_id) if row.quote_id else None,
+        "order_id": str(row.order_id) if row.order_id else None,
+        "partner_focus": row.partner_focus,
+        "product_focus": row.product_focus or [],
+        "customer_segment": row.customer_segment,
+        "project_size": row.project_size,
+        "estimated_value": str(row.estimated_value) if row.estimated_value is not None else None,
+        "decision_stage": row.decision_stage,
+        "decision_stage_label": OPPORTUNITY_STAGE_LABELS.get(row.decision_stage, row.decision_stage),
+        "competition": row.competition,
+        "risk": row.risk,
+        "probability": row.probability,
+        "priority": row.priority,
+        "owner": row.owner,
+        "next_action": row.next_action,
+        "blocker": row.blocker,
+        "status": row.status,
+        "status_label": OPPORTUNITY_STATUS_LABELS.get(row.status, row.status),
+        "expected_close_date": row.expected_close_date.isoformat() if row.expected_close_date else None,
+        "won_reason": row.won_reason,
+        "lost_reason": row.lost_reason,
+        "notes": row.notes,
+        "path": _opportunity_path(row),
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+        "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+    }
+
+
 def _campaign_summary(db: Session, campaign: GrowthCampaign) -> dict[str, Any]:
     keywords = _campaign_keywords(campaign)
     quote_ids: list[str] = []
@@ -633,12 +685,25 @@ def get_growth_campaign_detail(db: Session, campaign_id: UUID) -> dict[str, Any]
     campaign = get_growth_campaign(db, campaign_id)
     if campaign is None:
         return None
+    opportunities = (
+        db.query(SalesOpportunity)
+        .filter(SalesOpportunity.campaign_id == campaign_id)
+        .order_by(SalesOpportunity.probability.desc(), SalesOpportunity.updated_at.desc())
+        .all()
+    )
     return {
         "campaign": _serialize_campaign(campaign),
         "tasks": [_serialize_task(task) for task in campaign.tasks],
+        "opportunities": [_serialize_opportunity(row) for row in opportunities],
         "summary": _campaign_summary(db, campaign),
         "manual_status_options": [
             {"value": value, "label": label} for value, label in CAMPAIGN_TASK_STATUS_LABELS.items()
+        ],
+        "opportunity_stage_options": [
+            {"value": value, "label": label} for value, label in OPPORTUNITY_STAGE_LABELS.items()
+        ],
+        "opportunity_status_options": [
+            {"value": value, "label": label} for value, label in OPPORTUNITY_STATUS_LABELS.items()
         ],
         "safety": {
             "email_sent": False,
@@ -711,3 +776,55 @@ def update_growth_campaign_task(db: Session, task_id: UUID, payload: Any, actor:
     db.commit()
     db.refresh(task)
     return get_growth_campaign_detail(db, task.campaign_id)
+
+
+def list_sales_opportunities(db: Session) -> dict[str, Any]:
+    rows = (
+        db.query(SalesOpportunity)
+        .order_by(SalesOpportunity.probability.desc(), SalesOpportunity.updated_at.desc())
+        .limit(200)
+        .all()
+    )
+    return {
+        "opportunities": [_serialize_opportunity(row) for row in rows],
+        "stage_options": [{"value": value, "label": label} for value, label in OPPORTUNITY_STAGE_LABELS.items()],
+        "status_options": [{"value": value, "label": label} for value, label in OPPORTUNITY_STATUS_LABELS.items()],
+        "safety": {
+            "email_sent": False,
+            "sms_sent": False,
+            "linkedin_sent": False,
+            "customer_notified": False,
+            "supplier_notified": False,
+            "quote_status_changed": False,
+            "order_status_changed": False,
+            "external_crm_connected": False,
+        },
+    }
+
+
+def get_sales_opportunity(db: Session, opportunity_id: UUID) -> SalesOpportunity | None:
+    return db.get(SalesOpportunity, opportunity_id)
+
+
+def create_sales_opportunity(db: Session, payload: Any, actor: Any | None) -> dict[str, Any]:
+    row = SalesOpportunity(**payload.model_dump())
+    if actor:
+        row.created_by_id = actor.id
+        row.updated_by_id = actor.id
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return _serialize_opportunity(row)
+
+
+def update_sales_opportunity(db: Session, opportunity_id: UUID, payload: Any, actor: Any | None) -> dict[str, Any] | None:
+    row = get_sales_opportunity(db, opportunity_id)
+    if row is None:
+        return None
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(row, key, value)
+    if actor:
+        row.updated_by_id = actor.id
+    db.commit()
+    db.refresh(row)
+    return _serialize_opportunity(row)

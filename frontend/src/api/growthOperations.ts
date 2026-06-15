@@ -171,8 +171,11 @@ export interface GrowthCampaignWorkspaceList {
 export interface GrowthCampaignWorkspaceDetail {
   campaign: GrowthCampaignWorkspaceRow
   tasks: GrowthCampaignTaskRow[]
+  opportunities: GrowthOpportunityRow[]
   summary: GrowthCampaignWorkspaceSummary
   manual_status_options: Array<{ value: string; label: string }>
+  opportunity_stage_options: Array<{ value: string; label: string }>
+  opportunity_status_options: Array<{ value: string; label: string }>
   safety: Record<string, boolean>
 }
 
@@ -203,6 +206,76 @@ export interface GrowthCampaignTaskCreatePayload {
 }
 
 export type GrowthCampaignTaskUpdatePayload = Partial<GrowthCampaignTaskCreatePayload>
+
+export interface GrowthOpportunityRow {
+  id: string
+  opportunity_name: string
+  company_id: string | null
+  company_name: string | null
+  lead_id: string | null
+  campaign_id: string | null
+  quote_id: string | null
+  order_id: string | null
+  partner_focus: string | null
+  product_focus: string[]
+  customer_segment: string | null
+  project_size: string | null
+  estimated_value: string | null
+  decision_stage: string
+  decision_stage_label: string
+  competition: string | null
+  risk: string | null
+  probability: number
+  priority: string
+  owner: string | null
+  next_action: string | null
+  blocker: string | null
+  status: string
+  status_label: string
+  expected_close_date: string | null
+  won_reason: string | null
+  lost_reason: string | null
+  notes: string | null
+  path: string
+  created_at: string
+  updated_at: string
+}
+
+export interface GrowthOpportunityList {
+  opportunities: GrowthOpportunityRow[]
+  stage_options: Array<{ value: string; label: string }>
+  status_options: Array<{ value: string; label: string }>
+  safety: Record<string, boolean>
+}
+
+export interface GrowthOpportunityPayload {
+  opportunity_name: string
+  company_id?: string | null
+  lead_id?: string | null
+  campaign_id?: string | null
+  quote_id?: string | null
+  order_id?: string | null
+  partner_focus?: string | null
+  product_focus?: string[]
+  customer_segment?: string | null
+  project_size?: string | null
+  estimated_value?: string | null
+  decision_stage?: string
+  competition?: string | null
+  risk?: string | null
+  probability?: number
+  priority?: string
+  owner?: string | null
+  next_action?: string | null
+  blocker?: string | null
+  status?: string
+  expected_close_date?: string | null
+  won_reason?: string | null
+  lost_reason?: string | null
+  notes?: string | null
+}
+
+export type GrowthOpportunityUpdatePayload = Partial<GrowthOpportunityPayload>
 
 export async function fetchGrowthCampaigns(): Promise<GrowthCampaignWorkspaceList> {
   const { data } = await http.get<V1Envelope<GrowthCampaignWorkspaceList>>('/v1/growth/campaigns')
@@ -240,5 +313,23 @@ export async function updateGrowthCampaignTask(
   payload: GrowthCampaignTaskUpdatePayload,
 ): Promise<GrowthCampaignWorkspaceDetail> {
   const { data } = await http.patch<V1Envelope<GrowthCampaignWorkspaceDetail>>(`/v1/growth/tasks/${id}`, payload)
+  return data.data
+}
+
+export async function fetchGrowthOpportunities(): Promise<GrowthOpportunityList> {
+  const { data } = await http.get<V1Envelope<GrowthOpportunityList>>('/v1/growth/opportunities')
+  return data.data
+}
+
+export async function createGrowthOpportunity(payload: GrowthOpportunityPayload): Promise<GrowthOpportunityRow> {
+  const { data } = await http.post<V1Envelope<GrowthOpportunityRow>>('/v1/growth/opportunities', payload)
+  return data.data
+}
+
+export async function updateGrowthOpportunity(
+  id: string,
+  payload: GrowthOpportunityUpdatePayload,
+): Promise<GrowthOpportunityRow> {
+  const { data } = await http.patch<V1Envelope<GrowthOpportunityRow>>(`/v1/growth/opportunities/${id}`, payload)
   return data.data
 }
