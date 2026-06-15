@@ -213,6 +213,8 @@ def quote_list_item(quote: Quote) -> dict[str, Any]:
 
 
 def quote_to_dict(quote: Quote, *, include_internal: bool = True) -> dict[str, Any]:
+    from app.services.quotes.quote_learning import latest_quote_learning
+
     expired = derived_expired(quote)
     warnings: list[str] = []
     if expired:
@@ -253,6 +255,7 @@ def quote_to_dict(quote: Quote, *, include_internal: bool = True) -> dict[str, A
         "line_items": [_serialize_line(li, include_internal=include_internal) for li in sorted(quote.line_items, key=lambda x: x.line_number)],
         "adjustments": [_serialize_adjustment(a) for a in quote.adjustments],
         "versions_count": len(quote.versions),
+        "latest_learning": latest_quote_learning(quote),
         "warnings": warnings,
         "safety": dict(QUOTE_SAFETY),
     }
@@ -266,6 +269,7 @@ def get_quote(db: Session, quote_id: UUID) -> Quote:
             joinedload(Quote.adjustments),
             joinedload(Quote.versions),
             joinedload(Quote.terms),
+            joinedload(Quote.learning_records),
         )
         .filter(Quote.id == quote_id, Quote.is_archived.is_(False))
         .first()

@@ -18,6 +18,7 @@ from app.models import (
     OrderProductionMilestone,
     ProductCatalog,
     Quote,
+    QuoteLearningRecord,
     QuoteLineItem,
     SalesOpportunity,
     ShipmentPlan,
@@ -289,8 +290,20 @@ def _build_quotation_intelligence(db: Session) -> list[QuotationIntelligenceItem
     for quote in rows:
         company = db.get(Company, quote.company_id) if quote.company_id else None
         version_count = len(quote.versions)
-        has_feedback = bool(quote.internal_notes or quote.customer_notes or quote.delivery_logs)
-        if quote.status == "converted_to_order":
+        latest_learning = (
+            db.query(QuoteLearningRecord)
+            .filter(QuoteLearningRecord.quote_id == quote.id)
+            .order_by(QuoteLearningRecord.updated_at.desc(), QuoteLearningRecord.created_at.desc())
+            .first()
+        )
+        has_feedback = bool(latest_learning or quote.internal_notes or quote.customer_notes or quote.delivery_logs)
+        if latest_learning and latest_learning.outcome_status == "won":
+            outcome = f"won signal: {latest_learning.won_reason or 'won reason needs detail'}"
+        elif latest_learning and latest_learning.outcome_status == "lost":
+            outcome = f"lost signal: {latest_learning.lost_reason or 'lost reason needs detail'}"
+        elif latest_learning and latest_learning.outcome_status in {"revision_requested", "customer_reviewing"}:
+            outcome = f"active customer signal: {latest_learning.customer_objection or latest_learning.customer_feedback or latest_learning.outcome_status}"
+        elif quote.status == "converted_to_order":
             outcome = "won signal: converted to order"
         elif quote.status in {"expired"}:
             outcome = "lost or stale signal: needs lost reason"
@@ -309,8 +322,18 @@ def _build_quotation_intelligence(db: Session) -> list[QuotationIntelligenceItem
                 follow_up_date=quote.follow_up_date,
                 product_focus=_quote_product_focus(quote),
                 outcome_signal=outcome,
-                learning_signal="feedback captured" if has_feedback else "missing customer feedback / won-lost reason",
-                next_action="Record revision reason, customer objection, won/lost reason, and follow-up date.",
+                learning_signal=(
+                    f"learning captured: {', '.join(latest_learning.product_dimensions or []) or latest_learning.outcome_status}"
+                    if latest_learning
+                    else "feedback captured"
+                    if has_feedback
+                    else "missing customer feedback / won-lost reason"
+                ),
+                next_action=(
+                    latest_learning.next_action
+                    if latest_learning and latest_learning.next_action
+                    else "Record revision reason, customer objection, won/lost reason, and follow-up date."
+                ),
                 path=f"/quotes/{quote.id}",
             )
         )

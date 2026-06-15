@@ -142,6 +142,67 @@ def test_quote_safety_no_forbidden_words(quote_client):
         assert phrase not in text
 
 
+def test_quote_learning_records_manual_outcome_without_status_change(quote_client, monkeypatch):
+    client, quote_id, _, _ = quote_client
+    row = object()
+
+    monkeypatch.setattr("app.api.v1.routes.quotes.create_quote_learning", lambda db, qid, body, user: row)
+    monkeypatch.setattr(
+        "app.api.v1.routes.quotes.quote_learning_to_dict",
+        lambda _: {
+            "id": str(uuid4()),
+            "quote_id": str(quote_id),
+            "quote_version_id": None,
+            "outcome_status": "revision_requested",
+            "customer_feedback": "Customer asked for clearer load and warranty wording.",
+            "customer_objection": "Needs validation before customer-visible use.",
+            "competitor_signal": None,
+            "won_reason": None,
+            "lost_reason": None,
+            "price_feedback": None,
+            "delivery_feedback": None,
+            "product_feedback": {},
+            "product_dimensions": ["load", "noise", "warranty", "certification"],
+            "next_action": "Update quote wording manually.",
+            "owner": "sales",
+            "follow_up_date": None,
+            "affects_product_intelligence": True,
+            "affects_market_response": True,
+            "affects_opportunity": True,
+            "internal_only": True,
+            "created_at": None,
+            "updated_at": None,
+            "safety": {
+                "external_message_sent": False,
+                "quote_status_changed": False,
+                "order_status_changed": False,
+                "customer_notified": False,
+                "supplier_notified": False,
+                "raw_token_recorded": False,
+                "customer_forbidden_fields_exposed": False,
+            },
+        },
+    )
+
+    r = client.post(
+        f"/api/v1/quotes/{quote_id}/learning",
+        json={
+            "outcome_status": "revision_requested",
+            "customer_feedback": "Customer asked for clearer load and warranty wording.",
+            "product_dimensions": ["load", "noise", "warranty", "certification"],
+            "affects_product_intelligence": True,
+            "affects_market_response": True,
+        },
+    )
+
+    assert r.status_code == 201
+    body = r.json()["data"]
+    assert body["outcome_status"] == "revision_requested"
+    assert body["safety"]["external_message_sent"] is False
+    assert body["safety"]["quote_status_changed"] is False
+    assert body["safety"]["order_status_changed"] is False
+
+
 def test_archive_ready_to_send_quote(quote_client):
     client, quote_id, _, _ = quote_client
     r = client.delete(f"/api/v1/quotes/{quote_id}")

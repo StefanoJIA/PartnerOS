@@ -26,6 +26,7 @@ def build_quote_timeline(db: Session, quote_id: UUID) -> dict[str, Any]:
             joinedload(Quote.versions),
             joinedload(Quote.pdf_exports),
             joinedload(Quote.delivery_logs),
+            joinedload(Quote.learning_records),
         )
         .filter(Quote.id == quote_id, Quote.is_archived.is_(False))
         .first()
@@ -119,6 +120,28 @@ def build_quote_timeline(db: Session, quote_id: UUID) -> dict[str, Any]:
                 "timestamp": quote.sent_at.isoformat() if quote.sent_at else quote.updated_at.isoformat(),
                 "actor": "",
                 "meta": {"follow_up_date": str(quote.follow_up_date)},
+            }
+        )
+
+    for record in sorted(getattr(quote, "learning_records", None) or [], key=lambda r: r.created_at or r.updated_at):
+        actor = ""
+        if record.created_by_id:
+            user = db.query(User).filter(User.id == record.created_by_id).first()
+            actor = _actor_name(user)
+        items.append(
+            {
+                "type": "quote_learning_recorded",
+                "title": f"Quote learning recorded: {record.outcome_status}",
+                "timestamp": record.created_at.isoformat() if record.created_at else None,
+                "actor": actor,
+                "meta": {
+                    "learning_record_id": str(record.id),
+                    "outcome_status": record.outcome_status,
+                    "product_dimensions": record.product_dimensions or [],
+                    "affects_product_intelligence": record.affects_product_intelligence,
+                    "affects_market_response": record.affects_market_response,
+                    "internal_only": record.internal_only,
+                },
             }
         )
 

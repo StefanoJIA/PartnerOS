@@ -3,10 +3,12 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { createOrderFromQuote, fetchOrders, type OrderSummary } from '@/api/orders'
 import {
+  createQuoteLearning,
   exportQuotePdf,
   fetchDeliveryLogs,
   fetchOrderReadiness,
   fetchQuote,
+  fetchQuoteLearning,
   fetchQuotePdfExports,
   fetchQuoteTimeline,
   fetchQuoteVersions,
@@ -18,6 +20,7 @@ import {
   type OrderReadiness,
   type PdfExportRecord,
   type QuoteDetail,
+  type QuoteLearningRecord,
   type QuoteVersionSummary,
   type TimelineItem,
 } from '@/api/quotes'
@@ -50,6 +53,29 @@ const createOrderLoading = ref(false)
 const showCreateOrderModal = ref(false)
 const createWithConfirmation = ref(false)
 const createOrderNote = ref('')
+const learningRecords = ref<QuoteLearningRecord[]>([])
+const learningLoading = ref(false)
+const learningSaving = ref(false)
+const learningError = ref('')
+
+const learningForm = reactive({
+  outcome_status: 'customer_reviewing',
+  customer_feedback: '',
+  customer_objection: '',
+  competitor_signal: '',
+  won_reason: '',
+  lost_reason: '',
+  price_feedback: '',
+  delivery_feedback: '',
+  product_dimensions_text: 'load, stability, noise, delivery, installation, warranty, certification, project demand',
+  next_action: '',
+  owner: '',
+  follow_up_date: '',
+  affects_product_intelligence: true,
+  affects_market_response: true,
+  affects_opportunity: true,
+  internal_only: true,
+})
 
 const CREATE_ORDER_SAFETY =
   'Creating an order does not start production, notify suppliers, create shipments, or confirm inventory, certifications, or lead times.'
@@ -78,6 +104,19 @@ const PDF_SAFETY =
 const DELIVERY_SAFETY =
   'Recording a sent quote only documents a manual external action. intelliOffice does not send emails, LinkedIn messages, or attachments automatically.'
 
+const LEARNING_SAFETY =
+  '报价学习只记录人工复盘：不自动发送消息、不改变报价/订单状态、不把客户不可见信息写入 Portal。'
+
+const outcomeOptions = [
+  { value: 'open', label: '仍在推进' },
+  { value: 'customer_reviewing', label: '客户评估中' },
+  { value: 'revision_requested', label: '需要修订报价' },
+  { value: 'won', label: '赢单信号' },
+  { value: 'lost', label: '丢单信号' },
+  { value: 'no_decision', label: '客户暂无决策' },
+  { value: 'on_hold', label: '暂停等待' },
+]
+
 const warnings = computed(() => quote.value?.warnings ?? [])
 const canMarkSent = computed(
   () => quote.value && (quote.value.status === 'ready_to_send' || quote.value.status === 'sent') && !quote.value.derived_expired,
@@ -90,6 +129,7 @@ const canCreateOrder = computed(
     readiness.value &&
     readiness.value.blocking_items.length === 0,
 )
+const latestLearning = computed(() => quote.value?.latest_learning || learningRecords.value[0] || null)
 
 async function loadActiveOrder() {
   if (!quote.value) return
@@ -151,6 +191,20 @@ async function loadDeliveryLogs() {
     deliveryError.value = e instanceof Error ? e.message : 'Failed to load delivery logs'
   } finally {
     deliveryLoading.value = false
+  }
+}
+
+async function loadLearning() {
+  if (!quote.value) return
+  learningLoading.value = true
+  learningError.value = ''
+  try {
+    const data = await fetchQuoteLearning(quote.value.id)
+    learningRecords.value = data.items
+  } catch (e: unknown) {
+    learningError.value = e instanceof Error ? e.message : '报价学习记录加载失败'
+  } finally {
+    learningLoading.value = false
   }
 }
 
@@ -227,11 +281,65 @@ async function load() {
   try {
     quote.value = await fetchQuote(String(route.params.id))
     prefillDeliveryForm()
-    await Promise.all([loadPdfExports(), loadDeliveryLogs(), loadTimeline(), loadVersions(), loadReadiness(), loadActiveOrder()])
+    await Promise.all([loadPdfExports(), loadDeliveryLogs(), loadLearning(), loadTimeline(), loadVersions(), loadReadiness(), loadActiveOrder()])
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : 'Failed to load quote'
   } finally {
     loading.value = false
+  }
+}
+
+function learningPayload() {
+  const productDimensions = learningForm.product_dimensions_text
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+  return {
+    outcome_status: learningForm.outcome_status,
+    customer_feedback: learningForm.customer_feedback || null,
+    customer_objection: learningForm.customer_objection || null,
+    competitor_signal: learningForm.competitor_signal || null,
+    won_reason: learningForm.won_reason || null,
+    lost_reason: learningForm.lost_reason || null,
+    price_feedback: learningForm.price_feedback || null,
+    delivery_feedback: learningForm.delivery_feedback || null,
+    product_dimensions: productDimensions,
+    next_action: learningForm.next_action || null,
+    owner: learningForm.owner || null,
+    follow_up_date: learningForm.follow_up_date || null,
+    affects_product_intelligence: learningForm.affects_product_intelligence,
+    affects_market_response: learningForm.affects_market_response,
+    affects_opportunity: learningForm.affects_opportunity,
+    internal_only: learningForm.internal_only,
+  }
+}
+
+function resetLearningForm() {
+  learningForm.customer_feedback = ''
+  learningForm.customer_objection = ''
+  learningForm.competitor_signal = ''
+  learningForm.won_reason = ''
+  learningForm.lost_reason = ''
+  learningForm.price_feedback = ''
+  learningForm.delivery_feedback = ''
+  learningForm.next_action = ''
+}
+
+async function onSaveLearning() {
+  if (!quote.value || learningSaving.value) return
+  learningSaving.value = true
+  learningError.value = ''
+  successMsg.value = ''
+  try {
+    await createQuoteLearning(quote.value.id, learningPayload())
+    quote.value = await fetchQuote(quote.value.id)
+    await Promise.all([loadLearning(), loadTimeline(), loadReadiness()])
+    resetLearningForm()
+    successMsg.value = '报价学习记录已保存；报价状态和订单状态未自动改变。'
+  } catch (e: unknown) {
+    learningError.value = e instanceof Error ? e.message : '保存报价学习记录失败'
+  } finally {
+    learningSaving.value = false
   }
 }
 
@@ -414,6 +522,96 @@ onMounted(load)
       </section>
 
       <section class="section mb">
+        <h3>报价学习 / 客户反馈</h3>
+        <el-alert type="info" :closable="false" show-icon title="安全边界" :description="LEARNING_SAFETY" class="mb" />
+        <el-alert v-if="learningError" type="error" :title="learningError" show-icon class="mb" />
+
+        <div v-if="latestLearning" class="learning-summary mb">
+          <div class="learning-summary__head">
+            <el-tag type="primary" effect="plain">{{ latestLearning.outcome_status }}</el-tag>
+            <span>{{ latestLearning.owner || '未指定 owner' }}</span>
+            <span>{{ latestLearning.follow_up_date || '未设跟进日期' }}</span>
+          </div>
+          <p v-if="latestLearning.customer_feedback">客户反馈：{{ latestLearning.customer_feedback }}</p>
+          <p v-if="latestLearning.customer_objection">客户异议：{{ latestLearning.customer_objection }}</p>
+          <p v-if="latestLearning.won_reason">赢单原因：{{ latestLearning.won_reason }}</p>
+          <p v-if="latestLearning.lost_reason">丢单原因：{{ latestLearning.lost_reason }}</p>
+          <p v-if="latestLearning.next_action">下一步：{{ latestLearning.next_action }}</p>
+          <div class="mt">
+            <el-tag
+              v-for="dimension in latestLearning.product_dimensions"
+              :key="dimension"
+              size="small"
+              effect="plain"
+              class="mr"
+            >
+              {{ dimension }}
+            </el-tag>
+          </div>
+        </div>
+        <el-empty v-else description="暂无报价学习记录；请在客户回复、报价修订、赢单或丢单后记录原因。" class="mt" />
+
+        <el-form label-width="150px" class="learning-form mt">
+          <el-form-item label="结果状态">
+            <el-select v-model="learningForm.outcome_status" style="width: 260px">
+              <el-option v-for="option in outcomeOptions" :key="option.value" :label="option.label" :value="option.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="客户反馈">
+            <el-input v-model="learningForm.customer_feedback" type="textarea" :rows="2" placeholder="记录客户原始反馈摘要，不写成本/利润/供应商私密信息。" />
+          </el-form-item>
+          <el-form-item label="客户异议">
+            <el-input v-model="learningForm.customer_objection" type="textarea" :rows="2" placeholder="例如价格解释、交期、认证、安装、质保、噪音、承重等问题。" />
+          </el-form-item>
+          <el-form-item label="竞争情况">
+            <el-input v-model="learningForm.competitor_signal" type="textarea" :rows="2" placeholder="只记录人工确认过的竞争信号；未知则留空。" />
+          </el-form-item>
+          <el-form-item label="赢单 / 丢单原因">
+            <div class="grid-two">
+              <el-input v-model="learningForm.won_reason" type="textarea" :rows="2" placeholder="赢单原因" />
+              <el-input v-model="learningForm.lost_reason" type="textarea" :rows="2" placeholder="丢单原因" />
+            </div>
+          </el-form-item>
+          <el-form-item label="价格 / 交付反馈">
+            <div class="grid-two">
+              <el-input v-model="learningForm.price_feedback" type="textarea" :rows="2" placeholder="客户对价格、价值解释、报价结构的反馈" />
+              <el-input v-model="learningForm.delivery_feedback" type="textarea" :rows="2" placeholder="客户对交期、物流、安装、交付风险的反馈" />
+            </div>
+          </el-form-item>
+          <el-form-item label="产品维度">
+            <el-input v-model="learningForm.product_dimensions_text" placeholder="load, stability, noise, warranty, certification, delivery..." />
+          </el-form-item>
+          <el-form-item label="下一步 / Owner">
+            <div class="grid-two">
+              <el-input v-model="learningForm.next_action" placeholder="下一步人工动作" />
+              <el-input v-model="learningForm.owner" placeholder="owner" />
+            </div>
+          </el-form-item>
+          <el-form-item label="跟进日期">
+            <el-date-picker v-model="learningForm.follow_up_date" type="date" value-format="YYYY-MM-DD" />
+          </el-form-item>
+          <el-form-item label="影响范围">
+            <el-checkbox v-model="learningForm.affects_opportunity">影响项目机会</el-checkbox>
+            <el-checkbox v-model="learningForm.affects_product_intelligence">影响产品洞察</el-checkbox>
+            <el-checkbox v-model="learningForm.affects_market_response">影响 Market Response</el-checkbox>
+            <el-checkbox v-model="learningForm.internal_only">内部可见</el-checkbox>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :loading="learningSaving" @click="onSaveLearning">保存报价学习记录</el-button>
+          </el-form-item>
+        </el-form>
+
+        <div v-if="learningLoading" v-loading="true" style="min-height: 80px" />
+        <el-table v-else-if="learningRecords.length" :data="learningRecords" stripe class="mt">
+          <el-table-column prop="outcome_status" label="结果" width="130" />
+          <el-table-column prop="customer_objection" label="异议 / 反馈" />
+          <el-table-column prop="next_action" label="下一步" />
+          <el-table-column prop="owner" label="Owner" width="140" />
+          <el-table-column prop="follow_up_date" label="跟进" width="120" />
+        </el-table>
+      </section>
+
+      <section class="section mb">
         <h3>Order Readiness</h3>
         <el-alert type="warning" :closable="false" show-icon title="Readiness Safety" :description="READINESS_SAFETY" class="mb" />
         <el-alert v-if="readinessError" type="error" :title="readinessError" show-icon class="mb" />
@@ -541,6 +739,14 @@ onMounted(load)
 .readiness-header { display: flex; align-items: center; gap: 16px; }
 .hint { font-size: 13px; color: #666; margin-top: 8px; }
 .mt { margin-top: 12px; }
+.mr { margin-right: 6px; }
 .score { font-weight: 600; }
 .next-action { margin: 12px 0; color: var(--el-text-color-secondary); }
+.learning-summary { border: 1px solid var(--el-border-color); border-radius: 8px; background: var(--el-fill-color-light); padding: 12px; }
+.learning-summary__head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 8px; color: var(--el-text-color-secondary); font-size: 13px; }
+.learning-form { max-width: 960px; background: var(--el-fill-color-lighter); padding: 16px; border-radius: 8px; }
+.grid-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: 100%; }
+@media (max-width: 760px) {
+  .grid-two { grid-template-columns: 1fr; }
+}
 </style>

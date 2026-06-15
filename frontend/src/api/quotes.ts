@@ -16,6 +16,63 @@ export interface QuoteSafety {
   lead_time_promised: boolean
 }
 
+export interface QuoteLearningSafety {
+  external_message_sent: boolean
+  quote_status_changed: boolean
+  order_status_changed: boolean
+  customer_notified: boolean
+  supplier_notified: boolean
+  raw_token_recorded: boolean
+  customer_forbidden_fields_exposed: boolean
+}
+
+export interface QuoteLearningRecord {
+  id: string
+  quote_id: string
+  quote_version_id: string | null
+  outcome_status: string
+  customer_feedback: string | null
+  customer_objection: string | null
+  competitor_signal: string | null
+  won_reason: string | null
+  lost_reason: string | null
+  price_feedback: string | null
+  delivery_feedback: string | null
+  product_feedback: Record<string, unknown>
+  product_dimensions: string[]
+  next_action: string | null
+  owner: string | null
+  follow_up_date: string | null
+  affects_product_intelligence: boolean
+  affects_market_response: boolean
+  affects_opportunity: boolean
+  internal_only: boolean
+  created_at: string | null
+  updated_at: string | null
+  safety: QuoteLearningSafety
+}
+
+export interface QuoteLearningPayload {
+  quote_version_id?: string | null
+  outcome_status: string
+  customer_feedback?: string | null
+  customer_objection?: string | null
+  competitor_signal?: string | null
+  won_reason?: string | null
+  lost_reason?: string | null
+  price_feedback?: string | null
+  delivery_feedback?: string | null
+  product_feedback?: Record<string, unknown> | null
+  product_dimensions?: string[]
+  next_action?: string | null
+  owner?: string | null
+  follow_up_date?: string | null
+  affects_product_intelligence?: boolean
+  affects_market_response?: boolean
+  affects_opportunity?: boolean
+  internal_only?: boolean
+}
+
 export interface DeliverySafety {
   automatic_sending_enabled: boolean
   email_sent_by_system: boolean
@@ -156,6 +213,7 @@ export interface QuoteDetail extends QuoteSummary {
   sent_at: string | null
   send_channel: string | null
   follow_up_date: string | null
+  latest_learning?: QuoteLearningRecord | null
 }
 
 export interface QuoteListData {
@@ -187,6 +245,27 @@ export async function fetchQuotes(params?: { status?: string; search?: string })
 
 export async function fetchQuote(id: string): Promise<QuoteDetail> {
   const { data } = await http.get<V1Envelope<QuoteDetail>>(`/v1/quotes/${id}`)
+  return data.data
+}
+
+export async function fetchQuoteLearning(quoteId: string): Promise<{ items: QuoteLearningRecord[]; total: number; safety: QuoteLearningSafety }> {
+  const { data } = await http.get<V1Envelope<{ items: QuoteLearningRecord[]; total: number; safety: QuoteLearningSafety }>>(
+    `/v1/quotes/${quoteId}/learning`,
+  )
+  return data.data
+}
+
+export async function createQuoteLearning(quoteId: string, payload: QuoteLearningPayload): Promise<QuoteLearningRecord> {
+  const { data } = await http.post<V1Envelope<QuoteLearningRecord>>(`/v1/quotes/${quoteId}/learning`, payload)
+  return data.data
+}
+
+export async function updateQuoteLearning(
+  quoteId: string,
+  learningId: string,
+  payload: Partial<QuoteLearningPayload>,
+): Promise<QuoteLearningRecord> {
+  const { data } = await http.patch<V1Envelope<QuoteLearningRecord>>(`/v1/quotes/${quoteId}/learning/${learningId}`, payload)
   return data.data
 }
 

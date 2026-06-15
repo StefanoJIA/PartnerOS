@@ -119,3 +119,83 @@ class MarkSentIn(BaseModel):
 class ExportPdfIn(BaseModel):
     quote_version_id: UUID | None = None
     export_type: str = "customer_pdf"
+
+
+QUOTE_LEARNING_OUTCOMES = {
+    "open",
+    "customer_reviewing",
+    "revision_requested",
+    "won",
+    "lost",
+    "no_decision",
+    "on_hold",
+}
+
+
+class QuoteLearningRecordIn(BaseModel):
+    quote_version_id: UUID | None = None
+    outcome_status: str = "open"
+    customer_feedback: str | None = None
+    customer_objection: str | None = None
+    competitor_signal: str | None = None
+    won_reason: str | None = None
+    lost_reason: str | None = None
+    price_feedback: str | None = None
+    delivery_feedback: str | None = None
+    product_feedback: dict[str, Any] | None = None
+    product_dimensions: list[str] = Field(default_factory=list)
+    next_action: str | None = None
+    owner: str | None = None
+    follow_up_date: date | None = None
+    affects_product_intelligence: bool = False
+    affects_market_response: bool = False
+    affects_opportunity: bool = True
+    internal_only: bool = True
+
+    @field_validator("outcome_status")
+    @classmethod
+    def valid_outcome_status(cls, value: str) -> str:
+        if value not in QUOTE_LEARNING_OUTCOMES:
+            raise ValueError(f"outcome_status must be one of {sorted(QUOTE_LEARNING_OUTCOMES)}")
+        return value
+
+    @field_validator("product_dimensions")
+    @classmethod
+    def normalize_dimensions(cls, value: list[str]) -> list[str]:
+        seen: set[str] = set()
+        result: list[str] = []
+        for item in value:
+            label = item.strip()
+            key = label.lower()
+            if label and key not in seen:
+                seen.add(key)
+                result.append(label)
+        return result[:20]
+
+
+class QuoteLearningRecordUpdate(BaseModel):
+    quote_version_id: UUID | None = None
+    outcome_status: str | None = None
+    customer_feedback: str | None = None
+    customer_objection: str | None = None
+    competitor_signal: str | None = None
+    won_reason: str | None = None
+    lost_reason: str | None = None
+    price_feedback: str | None = None
+    delivery_feedback: str | None = None
+    product_feedback: dict[str, Any] | None = None
+    product_dimensions: list[str] | None = None
+    next_action: str | None = None
+    owner: str | None = None
+    follow_up_date: date | None = None
+    affects_product_intelligence: bool | None = None
+    affects_market_response: bool | None = None
+    affects_opportunity: bool | None = None
+    internal_only: bool | None = None
+
+    @field_validator("outcome_status")
+    @classmethod
+    def valid_update_outcome_status(cls, value: str | None) -> str | None:
+        if value is not None and value not in QUOTE_LEARNING_OUTCOMES:
+            raise ValueError(f"outcome_status must be one of {sorted(QUOTE_LEARNING_OUTCOMES)}")
+        return value

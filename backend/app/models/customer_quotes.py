@@ -84,6 +84,11 @@ class Quote(Base, TimestampMixin, UserAuditMixin):
         cascade="all, delete-orphan",
         foreign_keys="QuoteDeliveryLog.quote_id",
     )
+    learning_records: Mapped[list["QuoteLearningRecord"]] = relationship(
+        "QuoteLearningRecord",
+        back_populates="quote",
+        cascade="all, delete-orphan",
+    )
 
 
 class QuoteVersion(Base):
@@ -215,3 +220,39 @@ class QuoteDeliveryLog(Base, TimestampMixin):
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="recorded")
 
     quote: Mapped["Quote"] = relationship("Quote", back_populates="delivery_logs", foreign_keys=[quote_id])
+
+
+class QuoteLearningRecord(Base, TimestampMixin, UserAuditMixin):
+    __tablename__ = "quote_learning_records"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    quote_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("quotes.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    quote_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("quote_versions.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    outcome_status: Mapped[str] = mapped_column(String(32), nullable=False, default="open", index=True)
+    customer_feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
+    customer_objection: Mapped[str | None] = mapped_column(Text, nullable=True)
+    competitor_signal: Mapped[str | None] = mapped_column(Text, nullable=True)
+    won_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    lost_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    price_feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
+    delivery_feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
+    product_feedback: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    product_dimensions: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
+    next_action: Mapped[str | None] = mapped_column(Text, nullable=True)
+    owner: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    follow_up_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    affects_product_intelligence: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    affects_market_response: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    affects_opportunity: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    internal_only: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+    quote: Mapped["Quote"] = relationship("Quote", back_populates="learning_records")

@@ -20,9 +20,17 @@ from app.schemas.quotes import (
     QuoteAdjustmentUpdateIn,
     QuoteCreateIn,
     QuoteFromContractIn,
+    QuoteLearningRecordIn,
+    QuoteLearningRecordUpdate,
     QuoteLineItemIn,
     QuoteUpdateIn,
     QuoteVersionCreateIn,
+)
+from app.services.quotes.quote_learning import (
+    create_quote_learning,
+    list_quote_learning,
+    quote_learning_to_dict,
+    update_quote_learning,
 )
 from app.services.quotes.quote_delivery_service import mark_sent_with_delivery
 from app.services.quotes.quote_service import (
@@ -129,6 +137,44 @@ def get_quote_route(
     quote = get_quote(db, quote_id)
     rid = get_request_id(request)
     return success_envelope(quote_to_dict(quote), request_id=rid)
+
+
+@router.get("/{quote_id}/learning")
+def list_quote_learning_route(
+    quote_id: UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    rid = get_request_id(request)
+    return success_envelope(list_quote_learning(db, quote_id), request_id=rid)
+
+
+@router.post("/{quote_id}/learning")
+def create_quote_learning_route(
+    quote_id: UUID,
+    body: QuoteLearningRecordIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    row = create_quote_learning(db, quote_id, body, user=user)
+    rid = get_request_id(request)
+    return success_envelope(quote_learning_to_dict(row), request_id=rid, status_code=201)
+
+
+@router.patch("/{quote_id}/learning/{learning_id}")
+def update_quote_learning_route(
+    quote_id: UUID,
+    learning_id: UUID,
+    body: QuoteLearningRecordUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    row = update_quote_learning(db, quote_id, learning_id, body, user=user)
+    rid = get_request_id(request)
+    return success_envelope(quote_learning_to_dict(row), request_id=rid)
 
 
 @router.patch("/{quote_id}")
