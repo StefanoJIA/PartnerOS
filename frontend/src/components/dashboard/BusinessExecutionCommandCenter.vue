@@ -160,6 +160,14 @@
                     <el-tag size="small" effect="plain">{{ row.stage_gate.current_stage_label }}</el-tag>
                   </div>
                   <p class="mt-1 text-xs text-slate-700">{{ row.stage_gate.next_best_action }}</p>
+                  <div v-if="row.partner_fit?.partner_id" class="mt-2 rounded border border-emerald-100 bg-emerald-50 p-2">
+                    <div class="flex flex-wrap items-center gap-1">
+                      <el-tag size="small" type="success" effect="plain">{{ row.partner_fit.partner_name }}</el-tag>
+                      <el-tag size="small" type="info" effect="plain">匹配 {{ row.partner_fit.fit_score }}/100</el-tag>
+                      <el-tag size="small" effect="plain">{{ row.partner_fit.business_focus }}</el-tag>
+                    </div>
+                    <p class="mt-1 text-xs text-slate-700">{{ row.partner_fit.next_best_action }}</p>
+                  </div>
                   <div v-if="row.stage_gate.missing_inputs.length" class="mt-1 flex flex-wrap gap-1">
                     <el-tag v-for="item in row.stage_gate.missing_inputs.slice(0, 3)" :key="item" size="small" type="warning" effect="plain">
                       缺 {{ stageGateInputLabel(item) }}

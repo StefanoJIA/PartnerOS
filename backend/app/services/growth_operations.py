@@ -27,6 +27,7 @@ from app.models import (
     Lead,
     MarketIntelligenceItem,
     MarketResponseReview,
+    ManufacturingPartner,
     OrderLineItem,
     Quote,
     QuoteLearningRecord,
@@ -40,6 +41,7 @@ from app.schemas.growth import (
     OPPORTUNITY_STAGE_LABELS,
     OPPORTUNITY_STATUS_LABELS,
 )
+from app.services.partner_capability_intelligence import build_partner_capability_intelligence
 
 
 @dataclass(frozen=True)
@@ -658,6 +660,164 @@ def _quote_learning_recommendation(row: SalesOpportunity, learning: QuoteLearnin
     }
 
 
+def _partner_fit_terms(row: SalesOpportunity) -> set[str]:
+    terms: set[str] = set()
+    for value in [
+        row.opportunity_name,
+        row.partner_focus,
+        row.customer_segment,
+        row.project_size,
+        row.competition,
+        row.risk,
+        row.next_action,
+        row.blocker,
+        row.notes,
+    ]:
+        terms.update(_value_keywords(value))
+    for value in row.product_focus or []:
+        terms.update(_value_keywords(value))
+    return {term for term in terms if len(term) >= 3}
+
+
+def _partner_profile_text(partner: ManufacturingPartner, capability: dict[str, Any]) -> str:
+    return _text(
+        partner.partner_name,
+        partner.brand_name,
+        partner.partner_code,
+        partner.main_product_categories,
+        partner.preferred_product_categories,
+        partner.manufacturing_capabilities,
+        partner.oem_odm_capability,
+        partner.customization_capability,
+        partner.certifications,
+        partner.testing_capability,
+        partner.ai_partner_summary,
+        " ".join(capability.get("product_coverage") or []),
+        " ".join(capability.get("capability_keys") or []),
+    )
+
+
+def _partner_fit_recommendation(row: SalesOpportunity, partner: ManufacturingPartner, capability: dict[str, Any], matched_terms: list[str]) -> dict[str, Any]:
+    exact_partner = (row.partner_focus or "").strip().lower() in {
+        (partner.partner_name or "").strip().lower(),
+        (partner.brand_name or "").strip().lower(),
+        (partner.partner_code or "").strip().lower(),
+    }
+    capability_score = int(capability.get("score") or 0)
+    fit_score = capability_score + min(len(matched_terms) * 4, 20) + (20 if exact_partner else 0)
+    if capability.get("risk_signals"):
+        fit_score -= 10
+    fit_score = max(0, min(100, fit_score))
+
+    priority = "P1" if fit_score >= 70 or exact_partner else "P2"
+    if capability.get("risk_signals") or capability.get("missing_inputs"):
+        priority = "P1" if priority != "P0" else priority
+    suggested_probability = row.probability
+    suggested_stage = row.decision_stage
+    if capability.get("risk_signals"):
+        suggested_probability = min(row.probability, 55)
+    elif fit_score >= 75 and row.decision_stage in {"discovery", "qualified"}:
+        suggested_probability = max(row.probability, 60)
+        suggested_stage = "solution_fit"
+    elif fit_score >= 65:
+        suggested_probability = max(row.probability, 50)
+
+    missing = capability.get("missing_inputs") or []
+    risks = capability.get("risk_signals") or []
+    if risks:
+        next_action = f"复核 {partner.partner_name} 的交付/反馈风险，再决定是否作为该机会候选 partner。"
+    elif missing:
+        next_action = f"补齐 {partner.partner_name} 的 {', '.join(missing[:3])}，再进入报价或 pilot 判断。"
+    else:
+        next_action = f"将 {partner.partner_name} 作为该机会优先候选 partner，人工确认报价输入和客户可见交付表述。"
+
+    reason_parts = [
+        f"匹配项：{', '.join(matched_terms[:6]) or 'partner profile'}",
+        f"能力评分：{fit_score}/100",
+        f"业务焦点：{capability.get('business_focus') or capability.get('health')}",
+    ]
+    if capability.get("readiness_impact"):
+        reason_parts.append(f"影响：{', '.join(capability.get('readiness_impact')[:4])}")
+
+    return {
+        "id": f"partner_fit:{partner.id}",
+        "source_type": "partner_fit",
+        "source_id": str(partner.id),
+        "priority": priority,
+        "suggested_probability": suggested_probability,
+        "suggested_decision_stage": suggested_stage,
+        "risk_signal": f"{partner.partner_name} fit {fit_score}/100; {', '.join(risks[:2]) or capability.get('health')}",
+        "recommended_next_action": next_action,
+        "reason": "；".join(reason_parts)[:500],
+        "path": "/partner-onboarding",
+        "manual_apply_required": True,
+        "partner_fit": {
+            "partner_id": str(partner.id),
+            "partner_name": partner.partner_name,
+            "fit_score": fit_score,
+            "capability_score": capability_score,
+            "investment_priority": capability.get("investment_priority"),
+            "business_focus": capability.get("business_focus"),
+            "matched_terms": matched_terms[:8],
+            "missing_inputs": missing,
+            "risk_signals": risks,
+            "readiness_impact": capability.get("readiness_impact") or [],
+            "next_best_action": next_action,
+            "customer_safe_boundary": capability.get("customer_safe_boundary"),
+        },
+        "safety": {
+            "opportunity_auto_updated": False,
+            "quote_status_changed": False,
+            "order_status_changed": False,
+            "external_message_sent": False,
+            "partner_notified": False,
+            "customer_notified": False,
+            "raw_token_recorded": False,
+            "staging_validated": False,
+        },
+    }
+
+
+def build_opportunity_partner_fit_recommendations(db: Session, row: SalesOpportunity, limit: int = 3) -> list[dict[str, Any]]:
+    terms = _partner_fit_terms(row)
+    if not terms and not row.partner_focus:
+        return []
+
+    scored: list[tuple[int, dict[str, Any]]] = []
+    partners = (
+        db.query(ManufacturingPartner)
+        .filter(ManufacturingPartner.is_active.is_(True))
+        .order_by(ManufacturingPartner.updated_at.desc())
+        .limit(40)
+        .all()
+    )
+    for partner in partners:
+        capability = build_partner_capability_intelligence(db, partner)
+        profile_text = _partner_profile_text(partner, capability)
+        matched_terms = sorted({term for term in terms if term in profile_text})
+        exact_partner = (row.partner_focus or "").strip().lower() in {
+            (partner.partner_name or "").strip().lower(),
+            (partner.brand_name or "").strip().lower(),
+            (partner.partner_code or "").strip().lower(),
+        }
+        if not matched_terms and not exact_partner:
+            continue
+        recommendation = _partner_fit_recommendation(row, partner, capability, matched_terms)
+        scored.append((int(recommendation["partner_fit"]["fit_score"]), recommendation))
+
+    return [
+        item
+        for _, item in sorted(
+            scored,
+            key=lambda pair: (
+                _priority_rank(pair[1].get("priority")),
+                -pair[0],
+                pair[1]["partner_fit"]["partner_name"],
+            ),
+        )[:limit]
+    ]
+
+
 STAGE_EXIT_CRITERIA: dict[str, list[str]] = {
     "discovery": [
         "明确客户分群或目标客户",
@@ -800,6 +960,7 @@ def derive_opportunity_stage_gate(row: SalesOpportunity, recommendations: list[d
     p0_recommendations = [item for item in recommendations if item.get("priority") == "P0"]
     quote_learning_impacts = [item.get("risk_signal") for item in recommendations if item.get("source_type") == "quote_learning"]
     market_response_impacts = [item.get("risk_signal") for item in recommendations if item.get("source_type") == "market_response"]
+    partner_fit_impacts = [item.get("risk_signal") for item in recommendations if item.get("source_type") == "partner_fit"]
     stage = row.decision_stage
     blocker = row.blocker or None
 
@@ -848,6 +1009,7 @@ def derive_opportunity_stage_gate(row: SalesOpportunity, recommendations: list[d
         "dimension_review_needs": _dimension_review_needs(row),
         "market_response_impacts": [item for item in market_response_impacts if item],
         "quote_learning_impacts": [item for item in quote_learning_impacts if item],
+        "partner_fit_impacts": [item for item in partner_fit_impacts if item],
         "business_questions": business_questions,
         "next_best_action": next_best_action,
         "safety": {
@@ -865,6 +1027,7 @@ def _opportunity_recommendations(db: Session | None, row: SalesOpportunity) -> l
         return []
 
     recommendations: list[dict[str, Any]] = []
+    recommendations.extend(build_opportunity_partner_fit_recommendations(db, row, limit=2))
     if row.quote_id:
         quote_learning = (
             db.query(QuoteLearningRecord)
@@ -922,6 +1085,7 @@ def _serialize_opportunity(row: SalesOpportunity, db: Session | None = None) -> 
         "notes": row.notes,
         "path": _opportunity_path(row),
         "recommendations": recommendations,
+        "partner_fit": next((item.get("partner_fit") for item in recommendations if item.get("source_type") == "partner_fit"), {}),
         "stage_gate": derive_opportunity_stage_gate(row, recommendations),
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "updated_at": row.updated_at.isoformat() if row.updated_at else None,

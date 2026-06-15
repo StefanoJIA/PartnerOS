@@ -89,6 +89,7 @@ def main() -> int:
             for item in partner_capability_items
             for impact in item.get("readiness_impact", [])
         }
+        opportunity_partner_fit_items = [item.partner_fit for item in payload.opportunities if item.partner_fit]
         stage_gate_items = [item.stage_gate for item in payload.opportunities if item.stage_gate]
         all_stage_gate_dimensions = {
             dimension
@@ -164,6 +165,16 @@ def main() -> int:
                 bool(stage_gate_items)
                 and all(gate.get("health") and gate.get("next_best_action") for gate in stage_gate_items)
                 and any(gate.get("missing_inputs") or gate.get("health") == "ready_to_advance" for gate in stage_gate_items),
+            ),
+            (
+                "opportunities expose partner-fit routing",
+                bool(opportunity_partner_fit_items)
+                and all(
+                    item.get("partner_name")
+                    and isinstance(item.get("fit_score"), int)
+                    and item.get("next_best_action")
+                    for item in opportunity_partner_fit_items
+                ),
             ),
             (
                 "opportunity stage gates cover product dimensions",
@@ -371,12 +382,36 @@ def main() -> int:
                 and "load" in created_data.get("stage_gate", {}).get("dimension_review_needs", []),
             )
         )
+        checks.append(
+            (
+                "route opportunity partner-fit recommendation",
+                created.status_code in {200, 201}
+                and created_data.get("partner_fit", {}).get("partner_name")
+                and any(
+                    item.get("source_type") == "partner_fit"
+                    and item.get("partner_fit", {}).get("fit_score") is not None
+                    and item.get("safety", {}).get("external_message_sent") is False
+                    and item.get("safety", {}).get("opportunity_auto_updated") is False
+                    for item in created_data.get("recommendations", [])
+                ),
+            )
+        )
         checks.append(("route opportunity patch", patched is not None and patched.status_code == 200 and patched.json().get("data", {}).get("probability") == 72))
         checks.append(("route opportunity safety", opp_list_after.json().get("data", {}).get("safety", {}).get("email_sent") is False))
         checks.append(
             (
                 "business execution uses opportunity records",
                 any(item.get("id") == created_data.get("id") for item in response_data.get("opportunities", [])),
+            )
+        )
+        checks.append(
+            (
+                "route opportunity partner-fit reaches dashboard",
+                any(
+                    item.get("id") == created_data.get("id")
+                    and item.get("partner_fit", {}).get("partner_name")
+                    for item in response_data.get("opportunities", [])
+                ),
             )
         )
         company_workspace_data = company_workspace.json() if company_workspace is not None and company_workspace.status_code == 200 else {}

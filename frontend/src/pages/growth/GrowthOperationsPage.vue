@@ -281,6 +281,19 @@
                       </div>
                       <p class="mt-1 text-xs font-medium text-slate-800">{{ rec.risk_signal }}</p>
                       <p class="mt-1 text-xs text-slate-600">{{ rec.recommended_next_action }}</p>
+                      <div v-if="rec.partner_fit" class="mt-1 flex flex-wrap gap-1">
+                        <el-tag size="small" type="success" effect="plain">{{ rec.partner_fit.partner_name }}</el-tag>
+                        <el-tag size="small" type="info" effect="plain">匹配 {{ rec.partner_fit.fit_score }}/100</el-tag>
+                        <el-tag
+                          v-for="item in rec.partner_fit.readiness_impact.slice(0, 3)"
+                          :key="item"
+                          size="small"
+                          type="warning"
+                          effect="plain"
+                        >
+                          {{ item }}
+                        </el-tag>
+                      </div>
                       <p class="mt-1 line-clamp-2 text-xs text-slate-500">{{ rec.reason }}</p>
                       <p class="mt-1 text-[11px] text-amber-700">仅生成建议，不自动改机会、报价或订单状态。</p>
                     </div>
@@ -825,6 +838,7 @@ function loadOpportunityIntoForm(row: GrowthOpportunityRow) {
 function recommendationSourceLabel(sourceType: string) {
   if (sourceType === 'market_response') return 'Market Response'
   if (sourceType === 'quote_learning') return '报价学习'
+  if (sourceType === 'partner_fit') return 'Partner 匹配'
   return sourceType
 }
 

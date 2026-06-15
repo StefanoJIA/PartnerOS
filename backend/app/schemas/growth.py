@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
@@ -279,6 +280,7 @@ class OpportunityRecommendationRead(BaseModel):
     reason: str
     path: str
     manual_apply_required: bool
+    partner_fit: dict[str, Any] = Field(default_factory=dict)
     safety: dict[str, bool]
 
 
@@ -313,5 +315,6 @@ class SalesOpportunityRead(BaseModel):
     notes: str | None
     path: str
     recommendations: list[OpportunityRecommendationRead] = Field(default_factory=list)
+    partner_fit: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
     updated_at: datetime

@@ -37,7 +37,7 @@ from app.schemas.business_execution import (
     ProductIntelligenceItem,
     QuotationIntelligenceItem,
 )
-from app.services.growth_operations import derive_opportunity_stage_gate
+from app.services.growth_operations import build_opportunity_partner_fit_recommendations, derive_opportunity_stage_gate
 from app.services.orders.order_fulfillment_intelligence import build_order_fulfillment_intelligence
 from app.services.partner_capability_intelligence import build_partner_capability_intelligence
 from app.services.partner_onboarding import build_partner_onboarding
@@ -718,6 +718,8 @@ def _build_opportunities(db: Session) -> list[OpportunityPipelineItem]:
     opportunity_rows = db.query(SalesOpportunity).order_by(SalesOpportunity.probability.desc(), SalesOpportunity.updated_at.desc()).limit(20).all()
     for row in opportunity_rows:
         company = row.company
+        partner_fit_recommendations = build_opportunity_partner_fit_recommendations(db, row, limit=1)
+        partner_fit = partner_fit_recommendations[0].get("partner_fit", {}) if partner_fit_recommendations else {}
         items.append(
             OpportunityPipelineItem(
                 id=str(row.id),
@@ -732,7 +734,8 @@ def _build_opportunities(db: Session) -> list[OpportunityPipelineItem]:
                 risk=row.risk or row.blocker or "Risk not recorded yet.",
                 next_action=row.next_action or "Update decision stage, competition, risk, probability, and next action.",
                 path="/growth-operations",
-                stage_gate=derive_opportunity_stage_gate(row),
+                stage_gate=derive_opportunity_stage_gate(row, partner_fit_recommendations),
+                partner_fit=partner_fit,
             )
         )
     if len(items) >= 12:

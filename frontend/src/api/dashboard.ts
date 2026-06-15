@@ -268,9 +268,24 @@ export type BusinessExecution = {
       dimension_review_needs: string[]
       market_response_impacts: string[]
       quote_learning_impacts: string[]
+      partner_fit_impacts?: string[]
       business_questions: string[]
       next_best_action: string
       safety: Record<string, boolean>
+    }
+    partner_fit?: {
+      partner_id: string
+      partner_name: string
+      fit_score: number
+      capability_score: number
+      investment_priority: string
+      business_focus: string
+      matched_terms: string[]
+      missing_inputs: string[]
+      risk_signals: string[]
+      readiness_impact: string[]
+      next_best_action: string
+      customer_safe_boundary: string
     }
   }>
   quotations: Array<{
