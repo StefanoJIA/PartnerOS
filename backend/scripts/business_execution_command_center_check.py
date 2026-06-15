@@ -70,6 +70,7 @@ def main() -> int:
         lifecycle_impacts = {impact for item in payload.lifecycle for impact in item.readiness_impact}
         account_sources = {source for item in payload.account_lifecycle for source in item.source_counts}
         account_impacts = {impact for item in payload.account_lifecycle for impact in item.readiness_impact}
+        account_health_items = [item.commercial_health for item in payload.account_lifecycle if item.commercial_health]
         stage_gate_items = [item.stage_gate for item in payload.opportunities if item.stage_gate]
         all_stage_gate_dimensions = {
             dimension
@@ -115,6 +116,26 @@ def main() -> int:
                 "account lifecycle carries business impact",
                 bool(account_impacts)
                 and all(item.decision_reason and item.priority for item in payload.account_lifecycle),
+            ),
+            (
+                "account lifecycle exposes commercial health",
+                bool(account_health_items)
+                and all(
+                    health.get("health")
+                    and health.get("business_focus")
+                    and health.get("next_best_action")
+                    and isinstance(health.get("score"), int)
+                    for health in account_health_items
+                ),
+            ),
+            (
+                "account commercial health links conversion delivery or repeat signals",
+                any(
+                    health.get("conversion_signal")
+                    and health.get("delivery_signal")
+                    and health.get("repeat_business_signal")
+                    for health in account_health_items
+                ),
             ),
             (
                 "opportunities rank probability",
@@ -234,6 +255,12 @@ def main() -> int:
                 and company_workspace.status_code == 200
                 and bool(company_execution.get("account"))
                 and bool(company_execution.get("lifecycle")),
+            )
+        )
+        checks.append(
+            (
+                "company workspace commercial health",
+                bool(company_execution.get("account", {}).get("commercial_health", {}).get("next_best_action")),
             )
         )
         checks.append(

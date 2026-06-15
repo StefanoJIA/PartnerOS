@@ -51,6 +51,7 @@ class CustomerAccountExecutionItem(BaseModel):
     next_action: str
     decision_reason: str
     readiness_impact: list[str] = Field(default_factory=list)
+    commercial_health: dict[str, Any] = Field(default_factory=dict)
 
 
 class CompanyExecutionContext(BaseModel):

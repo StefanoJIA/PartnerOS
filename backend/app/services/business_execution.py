@@ -221,6 +221,82 @@ def _merge_unique(values: list[str], limit: int = 8) -> list[str]:
     return merged
 
 
+def _account_commercial_health(
+    rows: list[CustomerLifecycleItem],
+    highest_stage: CustomerLifecycleItem,
+    action_source: CustomerLifecycleItem,
+    blockers: list[str],
+) -> dict[str, object]:
+    source_types = {row.source_type for row in rows}
+    has_delivery = bool({"order", "feedback"} & source_types)
+    has_quote = "quote" in source_types
+    has_opportunity = "opportunity" in source_types
+    has_feedback = "feedback" in source_types
+    stage_order = highest_stage.stage_order
+    priority_rank = _priority_rank(action_source.priority)
+
+    score = 45 + min(stage_order * 6, 42) - (len(blockers) * 8) - (priority_rank * 3)
+    if has_quote:
+        score += 6
+    if has_opportunity:
+        score += 5
+    if has_delivery:
+        score += -4 if blockers else 4
+    score = max(0, min(100, score))
+
+    if blockers and any("feedback" in blocker.lower() or "repeat" in blocker.lower() for blocker in blockers):
+        health = "after_sales_attention"
+        business_focus = "客户维护 / 复购"
+        next_best_action = "先处理反馈和客户安全回复，再判断是否进入复购或 Market Response 复盘。"
+    elif blockers and any("shipment" in blocker.lower() or "delivery" in blocker.lower() or "production" in blocker.lower() for blocker in blockers):
+        health = "delivery_risk"
+        business_focus = "交付风险"
+        next_best_action = "先检查生产、物流和客户可见状态，避免交付风险影响复购。"
+    elif blockers:
+        health = "blocked"
+        business_focus = "推进阻塞"
+        next_best_action = action_source.next_action
+    elif stage_order >= _stage_order("Quotation") and has_quote:
+        health = "conversion_ready"
+        business_focus = "报价成交"
+        next_best_action = "围绕报价反馈、客户异议、交期和成交条件推进下一次商务动作。"
+    elif has_opportunity or stage_order >= _stage_order("Opportunity"):
+        health = "pipeline_active"
+        business_focus = "项目机会"
+        next_best_action = "确认项目规模、决策阶段、竞争情况和报价输入，把机会推进到 quotation。"
+    else:
+        health = "nurture"
+        business_focus = "客户开发"
+        next_best_action = "继续确认产品 fit、采购阶段、决策人和下一次人工触达。"
+
+    business_questions = [
+        "这个客户当前最接近成交、交付、售后还是复购？",
+        "下一步动作是否有明确 owner 和对象入口？",
+        "当前阻塞是否需要回流报价学习、Market Response 或 Partner 能力判断？",
+    ]
+    if has_quote:
+        business_questions.append("报价是否已有客户反馈、修订原因、成交/丢单原因？")
+    if has_delivery:
+        business_questions.append("生产、物流和反馈是否会影响客户复购？")
+
+    return {
+        "health": health,
+        "score": score,
+        "business_focus": business_focus,
+        "primary_stage": highest_stage.lifecycle_stage,
+        "primary_source_type": action_source.source_type,
+        "primary_source_id": action_source.source_id,
+        "primary_path": action_source.path,
+        "primary_risk": blockers[0] if blockers else None,
+        "next_best_action": next_best_action,
+        "conversion_signal": "有报价或机会可推进" if (has_quote or has_opportunity) else "仍在客户开发",
+        "delivery_signal": "存在订单/反馈，需要交付和复购视角" if has_delivery else "暂无交付对象",
+        "repeat_business_signal": "已有售后反馈，需判断复购/市场回流" if has_feedback else "暂无售后反馈",
+        "business_questions": business_questions,
+        "safety": _safety_flags(),
+    }
+
+
 def _quote_product_focus(quote: Quote) -> list[str]:
     values = [line.product_name for line in quote.line_items]
     focus = _product_focus_from_text(*values)
@@ -431,6 +507,7 @@ def _build_account_lifecycle(lifecycle: list[CustomerLifecycleItem]) -> list[Cus
                     f"{len(blockers)} blocker(s) currently visible."
                 ),
                 readiness_impact=impacts,
+                commercial_health=_account_commercial_health(rows, highest_stage, action_source, blockers),
             )
         )
     return sorted(accounts, key=lambda item: (_priority_rank(item.priority), bool(not item.open_blockers), -item.stage_order))[:16]

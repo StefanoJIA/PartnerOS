@@ -72,6 +72,16 @@
             <template #default="{ row }">
               <p class="text-xs text-slate-500">{{ row.decision_reason }}</p>
               <p class="mt-1 text-xs text-slate-700">{{ row.next_action }}</p>
+              <div v-if="row.commercial_health" class="mt-2 rounded border border-blue-100 bg-blue-50 p-2">
+                <div class="flex flex-wrap items-center gap-1">
+                  <el-tag size="small" :type="commercialHealthType(row.commercial_health.health)" effect="plain">
+                    {{ commercialHealthLabel(row.commercial_health.health) }}
+                  </el-tag>
+                  <el-tag size="small" effect="plain">{{ row.commercial_health.business_focus }}</el-tag>
+                  <el-tag size="small" type="info" effect="plain">{{ row.commercial_health.score }}/100</el-tag>
+                </div>
+                <p class="mt-1 text-xs text-slate-700">{{ row.commercial_health.next_best_action }}</p>
+              </div>
               <p v-if="row.open_blockers.length" class="mt-1 text-xs text-rose-600">{{ row.open_blockers[0] }}</p>
               <div class="mt-1 flex flex-wrap gap-1">
                 <el-tag v-for="impact in row.readiness_impact.slice(0, 3)" :key="impact" size="small" effect="plain">
@@ -279,6 +289,26 @@ function priorityType(priority: string) {
 function riskType(risk: string) {
   if (risk === 'high') return 'danger'
   if (risk === 'medium') return 'warning'
+  return 'info'
+}
+
+function commercialHealthLabel(value: string) {
+  const labels: Record<string, string> = {
+    conversion_ready: '成交推进',
+    pipeline_active: '项目推进',
+    delivery_risk: '交付风险',
+    after_sales_attention: '售后维护',
+    blocked: '推进阻塞',
+    nurture: '继续培育',
+  }
+  return labels[value] || value || '待判断'
+}
+
+function commercialHealthType(value: string) {
+  if (value === 'delivery_risk' || value === 'blocked') return 'danger'
+  if (value === 'after_sales_attention') return 'warning'
+  if (value === 'conversion_ready') return 'success'
+  if (value === 'pipeline_active') return 'primary'
   return 'info'
 }
 

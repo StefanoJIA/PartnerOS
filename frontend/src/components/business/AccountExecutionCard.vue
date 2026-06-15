@@ -37,6 +37,25 @@
         </div>
       </div>
 
+      <div v-if="accountExecution.commercial_health" class="rounded border border-blue-100 bg-blue-50 p-3">
+        <div class="mb-2 flex flex-wrap items-center gap-2">
+          <el-tag :type="commercialHealthType(accountExecution.commercial_health.health)" effect="plain">
+            {{ commercialHealthLabel(accountExecution.commercial_health.health) }}
+          </el-tag>
+          <el-tag effect="plain">{{ accountExecution.commercial_health.business_focus }}</el-tag>
+          <el-tag type="info" effect="plain">商业健康 {{ accountExecution.commercial_health.score }}/100</el-tag>
+        </div>
+        <p class="text-sm font-medium text-slate-800">{{ accountExecution.commercial_health.next_best_action }}</p>
+        <div class="mt-2 grid gap-2 text-xs text-slate-600 md:grid-cols-3">
+          <p>{{ accountExecution.commercial_health.conversion_signal }}</p>
+          <p>{{ accountExecution.commercial_health.delivery_signal }}</p>
+          <p>{{ accountExecution.commercial_health.repeat_business_signal }}</p>
+        </div>
+        <p v-if="accountExecution.commercial_health.primary_risk" class="mt-2 text-xs text-rose-600">
+          主要风险：{{ accountExecution.commercial_health.primary_risk }}
+        </p>
+      </div>
+
       <el-alert
         :title="String(accountExecution.next_action || '补齐下一步动作')"
         type="info"
@@ -89,6 +108,22 @@ interface AccountExecution {
   open_blockers?: string[]
   next_action?: string
   readiness_impact?: string[]
+  commercial_health?: {
+    health: string
+    score: number
+    business_focus: string
+    primary_stage: string
+    primary_source_type: string
+    primary_source_id: string | null
+    primary_path: string
+    primary_risk: string | null
+    next_best_action: string
+    conversion_signal: string
+    delivery_signal: string
+    repeat_business_signal: string
+    business_questions: string[]
+    safety: Record<string, boolean>
+  }
 }
 
 interface AccountLifecycleRow {
@@ -158,6 +193,28 @@ function priorityTag(value: unknown) {
   if (key === 'P0') return 'danger'
   if (key === 'P1') return 'warning'
   if (key === 'P2') return 'primary'
+  return 'info'
+}
+
+function commercialHealthLabel(value: unknown) {
+  const labels: Record<string, string> = {
+    conversion_ready: '成交推进',
+    pipeline_active: '项目推进',
+    delivery_risk: '交付风险',
+    after_sales_attention: '售后维护',
+    blocked: '推进阻塞',
+    nurture: '继续培育',
+  }
+  const key = String(value ?? '')
+  return labels[key] || key || '待判断'
+}
+
+function commercialHealthType(value: unknown) {
+  const key = String(value ?? '')
+  if (key === 'delivery_risk' || key === 'blocked') return 'danger'
+  if (key === 'after_sales_attention') return 'warning'
+  if (key === 'conversion_ready') return 'success'
+  if (key === 'pipeline_active') return 'primary'
   return 'info'
 }
 

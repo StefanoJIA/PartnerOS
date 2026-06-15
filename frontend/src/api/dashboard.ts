@@ -209,6 +209,22 @@ export type BusinessExecution = {
     next_action: string
     decision_reason: string
     readiness_impact: string[]
+    commercial_health: {
+      health: string
+      score: number
+      business_focus: string
+      primary_stage: string
+      primary_source_type: string
+      primary_source_id: string | null
+      primary_path: string
+      primary_risk: string | null
+      next_best_action: string
+      conversion_signal: string
+      delivery_signal: string
+      repeat_business_signal: string
+      business_questions: string[]
+      safety: Record<string, boolean>
+    }
   }>
   lifecycle: Array<{
     id: string
