@@ -72,6 +72,7 @@ def main() -> int:
         revenue_forecast = commercial.revenue_forecast or {}
         executive_summary = commercial.executive_summary or {}
         executive_questions = executive_summary.get("management_questions", {})
+        executive_brief = executive_summary.get("management_brief", [])
         executive_actions = executive_summary.get("executive_actions", [])
         executive_snapshot = executive_summary.get("commercial_snapshot", {})
         customer_value_payload = build_customer_value_intelligence(db, limit=20)
@@ -200,6 +201,29 @@ def main() -> int:
                 and isinstance(executive_snapshot, dict)
                 and "total_weighted_revenue" in executive_snapshot
                 and "forecast_quality_score" in executive_snapshot,
+            ),
+            (
+                "commercial intelligence management brief is actionable",
+                isinstance(executive_brief, list)
+                and len(executive_brief) >= 6
+                and {"who_to_follow", "what_converts", "commercial_value", "why_we_win", "why_we_lose", "future_revenue"}.issubset(
+                    {item.get("key") for item in executive_brief if isinstance(item, dict)}
+                )
+                and all(
+                    isinstance(item, dict)
+                    and item.get("question")
+                    and item.get("answer")
+                    and item.get("evidence")
+                    and item.get("recommended_action")
+                    and isinstance(item.get("source_assets"), list)
+                    and item.get("path")
+                    and item.get("safety", {}).get("external_message_sent") is False
+                    and item.get("safety", {}).get("quote_status_changed") is False
+                    and item.get("safety", {}).get("order_status_changed") is False
+                    and item.get("safety", {}).get("customer_forbidden_fields_exposed") is False
+                    for item in executive_brief
+                    if isinstance(item, dict)
+                ),
             ),
             (
                 "commercial intelligence executive summary safe boundaries",

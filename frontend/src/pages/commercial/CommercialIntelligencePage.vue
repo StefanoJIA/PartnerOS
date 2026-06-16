@@ -25,6 +25,66 @@
       <section class="rounded border border-slate-200 bg-white p-4">
         <div class="mb-3 flex flex-wrap items-start justify-between gap-3">
           <div>
+            <h3 class="font-semibold text-slate-900">Management Commercial Brief</h3>
+            <p class="mt-1 text-sm text-slate-600">
+              Standardized answers for the six commercial questions: answer, evidence, next action, source assets, and safety boundary.
+            </p>
+          </div>
+          <el-tag type="primary" effect="plain">{{ managementBrief.length }} answers</el-tag>
+        </div>
+
+        <div class="grid gap-3 lg:grid-cols-2">
+          <div
+            v-for="item in managementBrief"
+            :key="String(item.key || item.question)"
+            class="rounded border border-slate-100 bg-slate-50 p-3"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ item.question }}</p>
+                <h4 class="mt-1 text-sm font-semibold text-slate-900">{{ item.answer }}</h4>
+              </div>
+              <el-tag size="small" effect="plain">{{ item.owner || 'business owner' }}</el-tag>
+            </div>
+            <p class="mt-2 text-sm text-slate-700">{{ item.evidence }}</p>
+            <p class="mt-2 text-xs text-slate-600">Next action: {{ item.recommended_action }}</p>
+            <div class="mt-2 flex flex-wrap gap-1">
+              <el-tag
+                v-for="asset in textList(item.source_assets).slice(0, 4)"
+                :key="asset"
+                size="small"
+                type="info"
+                effect="plain"
+              >
+                {{ asset }}
+              </el-tag>
+              <el-tag
+                v-for="focus in textList(item.product_focus).slice(0, 3)"
+                :key="focus"
+                size="small"
+                effect="plain"
+              >
+                {{ focus }}
+              </el-tag>
+            </div>
+            <el-button class="mt-2" size="small" link type="primary" @click="go(String(item.path || '/'))">
+              Open source object
+            </el-button>
+          </div>
+        </div>
+
+        <el-alert
+          class="mt-3"
+          type="warning"
+          :closable="false"
+          show-icon
+          title="Brief is internal only: no external sending, no automatic quote/order status changes, and no cost, margin, supplier-private notes, raw token, or customer-unsafe fields."
+        />
+      </section>
+
+      <section class="rounded border border-slate-200 bg-white p-4">
+        <div class="mb-3 flex flex-wrap items-start justify-between gap-3">
+          <div>
             <h3 class="font-semibold text-slate-900">管理层今天能回答什么</h3>
             <p class="mt-1 text-sm text-slate-600">
               这些答案来自真实业务对象的只读聚合，可继续跳转到客户、报价、订单、Market Response 或 Partner 接入页面处理。
@@ -264,6 +324,7 @@ const selectedCustomer = ref('')
 
 const commercial = computed(() => data.value?.commercial_intelligence)
 const executiveSummary = computed(() => asRecord(commercial.value?.executive_summary))
+const managementBrief = computed(() => asList(executiveSummary.value.management_brief))
 const questions = computed(() => asRecord(executiveSummary.value.management_questions))
 const snapshot = computed(() => asRecord(executiveSummary.value.commercial_snapshot))
 const assetMap = computed(() => asList(executiveSummary.value.asset_map))

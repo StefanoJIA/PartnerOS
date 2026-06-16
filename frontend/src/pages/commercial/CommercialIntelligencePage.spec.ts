@@ -62,6 +62,44 @@ const payload = {
   safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
   commercial_intelligence: {
     executive_summary: {
+      management_brief: [
+        {
+          key: 'who_to_follow',
+          question: 'Who is most worth following today?',
+          answer: 'HOSUN demo account',
+          evidence: 'Account 360 shows repeat motion.',
+          recommended_action: 'Review feedback before repeat outreach.',
+          source_assets: ['Account 360', 'Customer Value Intelligence'],
+          path: '/companies/demo',
+          owner: 'account owner',
+          product_focus: ['lifting systems'],
+          safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
+        },
+        {
+          key: 'what_converts',
+          question: 'What is most likely to convert?',
+          answer: 'HOSUN / lifting systems',
+          evidence: 'load and stability evidence support conversion.',
+          recommended_action: 'Review PMF evidence.',
+          source_assets: ['Product-Market Fit Intelligence', 'Win/Loss Intelligence'],
+          path: '/market-response',
+          owner: 'product/market owner',
+          product_focus: ['load', 'stability'],
+          safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
+        },
+        {
+          key: 'future_revenue',
+          question: 'Where will future revenue come from?',
+          answer: 'JOOBOO education furniture pilot',
+          evidence: '80% probability and weighted revenue are available.',
+          recommended_action: 'Review open opportunity and quote follow-up.',
+          source_assets: ['Revenue Forecast Intelligence'],
+          path: '/growth-operations',
+          owner: 'sales owner',
+          product_focus: ['education furniture'],
+          safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
+        },
+      ],
       management_questions: {
         who_to_follow_today: [
           {
@@ -333,6 +371,10 @@ describe('CommercialIntelligencePage', () => {
     expect(fetchCustomerValueIntelligence).toHaveBeenCalled()
     expect(fetchPartnerPerformanceIntelligence).toHaveBeenCalled()
     expect(fetchRevenueForecastIntelligence).toHaveBeenCalled()
+    expect(wrapper.text()).toContain('Management Commercial Brief')
+    expect(wrapper.text()).toContain('Who is most worth following today?')
+    expect(wrapper.text()).toContain('Review feedback before repeat outreach.')
+    expect(wrapper.text()).toContain('Brief is internal only')
     expect(wrapper.text()).toContain('商业智能工作台')
     expect(wrapper.text()).toContain('谁最值得跟进')
     expect(wrapper.text()).toContain('什么最容易成交')

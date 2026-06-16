@@ -3975,6 +3975,36 @@ def _commercial_answer_item(
     }
 
 
+def _commercial_brief_item(
+    *,
+    key: str,
+    question: str,
+    items: list[dict[str, object]],
+    source_assets: list[str],
+    fallback_answer: str,
+    fallback_action: str,
+    fallback_path: str,
+) -> dict[str, object]:
+    primary = items[0] if items else {}
+    title = str(primary.get("title") or primary.get("customer_name") or primary.get("name") or fallback_answer)
+    reason = str(primary.get("reason") or primary.get("management_answer") or primary.get("commercial_lesson") or fallback_answer)
+    action = str(primary.get("next_action") or fallback_action)
+    path = str(primary.get("path") or fallback_path)
+    return {
+        "key": key,
+        "question": question,
+        "answer": title,
+        "evidence": reason,
+        "recommended_action": action,
+        "source_assets": source_assets,
+        "path": path,
+        "owner": str(primary.get("owner") or "business owner"),
+        "partner_focus": primary.get("partner_focus"),
+        "product_focus": primary.get("product_focus") if isinstance(primary.get("product_focus"), list) else [],
+        "safety": _safety_flags(),
+    }
+
+
 def _build_commercial_executive_summary(
     *,
     win_loss: list[dict[str, object]],
@@ -4084,9 +4114,9 @@ def _build_commercial_executive_summary(
         _commercial_answer_item(
             title=str(item.get("partner_name") or item.get("partner_focus") or "Partner"),
             reason=(
-                f"allocation score {item.get('allocation_score', item.get('capability_score', 'n/a'))}; "
+                f"allocation evidence {item.get('allocation_fit') or item.get('pilot_fit') or 'available'}; "
                 f"win rate {item.get('win_rate', 'n/a')}; "
-                f"{item.get('allocation_fit') or item.get('pilot_fit') or 'allocation context available'}"
+                f"quote support {item.get('quote_support_count', 0)}, order amount {item.get('order_amount', 0)}"
             ),
             next_action=str(item.get("next_allocation_action") or item.get("next_action") or "Review partner allocation evidence."),
             path=_commercial_path(item, "/partner-onboarding"),
@@ -4110,7 +4140,74 @@ def _build_commercial_executive_summary(
         *why_we_lose[:1],
     ][:8]
 
+    management_brief = [
+        _commercial_brief_item(
+            key="who_to_follow",
+            question="Who is most worth following today?",
+            items=follow_accounts,
+            source_assets=["Account 360", "Customer Value Intelligence", "Revenue Forecast Intelligence"],
+            fallback_answer="No priority account has enough commercial evidence yet.",
+            fallback_action="Review Account 360 and capture the next manual customer motion.",
+            fallback_path="/growth-operations",
+        ),
+        _commercial_brief_item(
+            key="what_converts",
+            question="What is most likely to convert?",
+            items=conversion_lines,
+            source_assets=["Product-Market Fit Intelligence", "Win/Loss Intelligence", "Order Evidence"],
+            fallback_answer="No product line has enough conversion evidence yet.",
+            fallback_action="Record quote/order learning and validated buying factors before reuse.",
+            fallback_path="/market-response",
+        ),
+        _commercial_brief_item(
+            key="commercial_value",
+            question="Which accounts look commercially healthiest without using cost or margin?",
+            items=healthy_accounts,
+            source_assets=["Customer Value Intelligence", "Account 360", "Revenue Forecast Intelligence"],
+            fallback_answer="No commercial quality leader is ready yet.",
+            fallback_action="Review quote amount, won order amount, repeat motion, and service burden proxies.",
+            fallback_path="/companies",
+        ),
+        _commercial_brief_item(
+            key="why_we_win",
+            question="Why do we win?",
+            items=why_we_win,
+            source_assets=["Win/Loss Intelligence", "Quote Learning", "Product-Market Fit Intelligence"],
+            fallback_answer="No won reason has been captured yet.",
+            fallback_action="Capture won reasons after customer-confirmed outcomes, without changing quote/order status automatically.",
+            fallback_path="/quotes",
+        ),
+        _commercial_brief_item(
+            key="why_we_lose",
+            question="Why do we lose?",
+            items=why_we_lose,
+            source_assets=["Win/Loss Intelligence", "Quote Learning", "Product-Market Fit Intelligence"],
+            fallback_answer="No lost reason has been captured yet.",
+            fallback_action="Capture lost reasons, competitor signal, and customer decision factors after manual confirmation.",
+            fallback_path="/quotes",
+        ),
+        _commercial_brief_item(
+            key="future_revenue",
+            question="Where will future revenue come from?",
+            items=future_revenue[:8],
+            source_assets=["Revenue Forecast Intelligence", "Opportunity", "Quote", "Order Backlog"],
+            fallback_answer="No forecastable revenue source is ready yet.",
+            fallback_action="Review open opportunities, open quotes, and confirmed backlog manually.",
+            fallback_path="/growth-operations",
+        ),
+        _commercial_brief_item(
+            key="partner_investment",
+            question="Which partner deserves more operating attention?",
+            items=partner_investment,
+            source_assets=["Partner Performance Intelligence", "Quote Support", "Order Delivery", "Feedback"],
+            fallback_answer="No partner investment candidate is ready yet.",
+            fallback_action="Review partner quote support, win rate, delivery history, and feedback issue rate.",
+            fallback_path="/partner-onboarding",
+        ),
+    ]
+
     return {
+        "management_brief": management_brief,
         "management_questions": {
             "who_to_follow_today": follow_accounts,
             "what_converts": conversion_lines,
