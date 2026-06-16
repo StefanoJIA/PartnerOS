@@ -31,6 +31,7 @@ from app.services.business_execution import (
     build_business_execution_center,
     build_customer_value_intelligence,
     build_partner_performance_intelligence,
+    build_product_market_fit_factor_detail,
     build_product_market_fit_intelligence,
     build_revenue_forecast_intelligence,
     build_win_loss_factor_detail,
@@ -125,6 +126,19 @@ def dashboard_product_market_fit_intelligence(
     _: User = Depends(get_current_user),
 ):
     return build_product_market_fit_intelligence(db, limit=limit)
+
+
+@router.get("/product-market-fit-intelligence/factor-detail")
+def dashboard_product_market_fit_factor_detail(
+    factor: str = Query(..., min_length=1),
+    limit: int = Query(50, ge=1, le=100),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    data = build_product_market_fit_factor_detail(db, factor=factor, limit=limit)
+    if data is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product-Market Fit factor detail not found")
+    return data
 
 
 @router.get("/account-360-intelligence")

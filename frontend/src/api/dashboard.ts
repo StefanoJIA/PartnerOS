@@ -769,6 +769,32 @@ export async function fetchProductMarketFitIntelligence(limit = 50) {
   return data
 }
 
+export interface ProductMarketFitFactorDetail extends Record<string, unknown> {
+  factor: string
+  summary: Record<string, number | string | null>
+  items: Array<Record<string, unknown>>
+  buying_factor_evidence: Array<Record<string, unknown>>
+  partner_rollup: Array<Record<string, unknown>>
+  product_rollup: Array<Record<string, unknown>>
+  customer_objections: string[]
+  competitor_signals: string[]
+  project_experience: string[]
+  source_paths: string[]
+  customer_safe_candidates: string[]
+  internal_only_boundaries: string[]
+  management_questions: Record<string, unknown>
+  next_action: string
+  customer_safe_boundary: string
+  safety: Record<string, boolean>
+}
+
+export async function fetchProductMarketFitFactorDetail(factor: string, limit = 50) {
+  const { data } = await http.get<ProductMarketFitFactorDetail>('/dashboard/product-market-fit-intelligence/factor-detail', {
+    params: { factor, limit },
+  })
+  return data
+}
+
 export interface Account360Intelligence {
   summary: {
     account_count: number

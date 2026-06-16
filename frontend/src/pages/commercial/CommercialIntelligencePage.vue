@@ -208,6 +208,7 @@
                 证据 {{ item.evidence_count ?? item.evidence ?? 0 }} / 赢 {{ item.wins ?? 0 }} / 输 {{ item.losses ?? 0 }} / 反馈 {{ item.feedback ?? 0 }}
               </p>
               <p class="mt-1 text-xs text-slate-500">{{ primaryText(item, ['next_action', 'management_answer'], '确认该因素是否应进入报价话术和客户可见材料。') }}</p>
+              <el-button class="mt-1" size="small" link type="primary" @click="openProductMarketFitFactor(item)">Product-Market Fit factor detail</el-button>
             </div>
             <p v-if="!filteredBuyingFactors.length" class="mt-2 text-sm text-slate-500">当前筛选下暂无购买因素证据。</p>
           </div>
@@ -351,6 +352,90 @@
       </div>
     </el-drawer>
 
+    <el-drawer v-model="pmfDetailVisible" title="Product-Market Fit factor detail" size="580px">
+      <div v-loading="pmfDetailLoading" class="space-y-4">
+        <el-alert v-if="pmfDetailError" type="error" :closable="false" :title="pmfDetailError" />
+        <template v-if="pmfDetail">
+          <section>
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h3 class="text-base font-semibold text-slate-900">{{ pmfDetail.factor }}</h3>
+                <p class="mt-1 text-sm text-slate-600">{{ pmfDetail.next_action }}</p>
+              </div>
+              <el-tag type="primary" effect="plain">{{ asRecord(pmfDetail.summary).evidence_count ?? 0 }} evidence</el-tag>
+            </div>
+          </section>
+
+          <section class="grid gap-2 sm:grid-cols-3">
+            <div class="rounded border border-slate-100 bg-slate-50 p-3">
+              <p class="text-xs text-slate-500">Product lines</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ asRecord(pmfDetail.summary).product_line_count ?? 0 }}</p>
+            </div>
+            <div class="rounded border border-slate-100 bg-slate-50 p-3">
+              <p class="text-xs text-slate-500">Orders / feedback</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ asRecord(pmfDetail.summary).orders ?? 0 }} / {{ asRecord(pmfDetail.summary).feedback ?? 0 }}</p>
+            </div>
+            <div class="rounded border border-slate-100 bg-slate-50 p-3">
+              <p class="text-xs text-slate-500">Order amount</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ money(asRecord(pmfDetail.summary).order_amount) }}</p>
+            </div>
+          </section>
+
+          <section class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Partner / product evidence</h4>
+            <div class="mt-2 flex flex-wrap gap-1">
+              <el-tag v-for="item in pmfPartnerTags" :key="item" size="small" effect="plain">{{ item }}</el-tag>
+              <el-tag v-for="item in pmfProductTags" :key="item" size="small" type="success" effect="plain">{{ item }}</el-tag>
+            </div>
+          </section>
+
+          <section class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Buying factor evidence</h4>
+            <div v-for="item in pmfEvidenceRows.slice(0, 6)" :key="rowKey(item)" class="mt-2 rounded bg-slate-50 p-2">
+              <div class="flex flex-wrap items-center gap-1">
+                <el-tag size="small" type="primary" effect="plain">{{ item.factor }}</el-tag>
+                <el-tag size="small" effect="plain">{{ item.fit_status }}</el-tag>
+                <el-tag size="small" type="success" effect="plain">wins {{ item.wins ?? 0 }}</el-tag>
+                <el-tag size="small" type="danger" effect="plain">losses {{ item.losses ?? 0 }}</el-tag>
+              </div>
+              <p class="mt-1 text-xs text-slate-600">{{ item.next_action }}</p>
+              <el-button v-if="item.path" class="mt-1" size="small" link type="primary" @click="go(String(item.path))">Open source object</el-button>
+            </div>
+          </section>
+
+          <section class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Project experience / objections</h4>
+            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+              <li v-for="item in [...pmfProjectExperience, ...pmfCustomerObjections].slice(0, 8)" :key="item">{{ item }}</li>
+            </ul>
+          </section>
+
+          <section class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Customer-safe candidates vs internal-only</h4>
+            <div class="mt-2 grid gap-2 sm:grid-cols-2">
+              <div>
+                <p class="text-xs font-medium text-slate-500">Customer-safe candidates</p>
+                <el-tag v-for="item in pmfCustomerSafeCandidates" :key="item" class="mr-1 mt-1" size="small" type="success" effect="plain">{{ item }}</el-tag>
+              </div>
+              <div>
+                <p class="text-xs font-medium text-slate-500">Internal-only boundaries</p>
+                <el-tag v-for="item in pmfInternalOnlyBoundaries" :key="item" class="mr-1 mt-1" size="small" type="warning" effect="plain">{{ item }}</el-tag>
+              </div>
+            </div>
+          </section>
+
+          <section v-if="pmfCompetitors.length" class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Competitor / alternative signals</h4>
+            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+              <li v-for="item in pmfCompetitors" :key="item">{{ item }}</li>
+            </ul>
+          </section>
+
+          <el-alert type="warning" :closable="false" show-icon :title="pmfDetail.customer_safe_boundary" />
+        </template>
+      </div>
+    </el-drawer>
+
     <el-drawer v-model="factorDetailVisible" title="Win/Loss factor detail" size="560px">
       <div v-loading="factorDetailLoading" class="space-y-4">
         <el-alert v-if="factorDetailError" type="error" :closable="false" :title="factorDetailError" />
@@ -431,6 +516,7 @@ import {
   fetchBusinessExecution,
   fetchCustomerValueIntelligence,
   fetchPartnerPerformanceIntelligence,
+  fetchProductMarketFitFactorDetail,
   fetchProductMarketFitIntelligence,
   fetchRevenueForecastIntelligence,
   fetchWinLossFactorDetail,
@@ -440,6 +526,7 @@ import {
   type BusinessExecution,
   type CustomerValueIntelligence,
   type PartnerPerformanceIntelligence,
+  type ProductMarketFitFactorDetail,
   type ProductMarketFitIntelligence,
   type RevenueForecastIntelligence,
   type WinLossFactorDetail,
@@ -454,6 +541,10 @@ const error = ref('')
 const data = ref<BusinessExecution | null>(null)
 const winLossDashboard = ref<WinLossIntelligenceDashboard | null>(null)
 const productMarketFit = ref<ProductMarketFitIntelligence | null>(null)
+const pmfDetail = ref<ProductMarketFitFactorDetail | null>(null)
+const pmfDetailVisible = ref(false)
+const pmfDetailLoading = ref(false)
+const pmfDetailError = ref('')
 const account360 = ref<Account360Intelligence | null>(null)
 const accountDetail = ref<Account360Detail | null>(null)
 const accountDetailVisible = ref(false)
@@ -485,6 +576,18 @@ const factorPartnerTags = computed(() =>
 const factorProductTags = computed(() =>
   uniqueText(asList(factorDetail.value?.product_rollup).flatMap((item) => [item.name, item.product_focus, item.product_family])),
 )
+const pmfEvidenceRows = computed(() => asList(pmfDetail.value?.buying_factor_evidence))
+const pmfProjectExperience = computed(() => textList(pmfDetail.value?.project_experience))
+const pmfCustomerObjections = computed(() => textList(pmfDetail.value?.customer_objections))
+const pmfCompetitors = computed(() => textList(pmfDetail.value?.competitor_signals))
+const pmfCustomerSafeCandidates = computed(() => textList(pmfDetail.value?.customer_safe_candidates))
+const pmfInternalOnlyBoundaries = computed(() => textList(pmfDetail.value?.internal_only_boundaries))
+const pmfPartnerTags = computed(() =>
+  uniqueText(asList(pmfDetail.value?.partner_rollup).flatMap((item) => [item.name, item.partner_focus, item.partner_name])),
+)
+const pmfProductTags = computed(() =>
+  uniqueText(asList(pmfDetail.value?.product_rollup).flatMap((item) => [item.name, item.product_focus, item.product_family])),
+)
 const coverageTags = computed(() => {
   const coverage = asRecord(accountDetail.value?.commercial_asset_coverage)
   return [
@@ -509,9 +612,9 @@ const winLossReasonClusters = computed(() => [
 ])
 const winLossDecisionFactors = computed(() => asList(winLossDashboard.value?.decision_factor_rows))
 const pmfBuyingFactors = computed(() => [
-  ...asList(productMarketFit.value?.validated_buying_factors),
-  ...asList(productMarketFit.value?.top_product_lines).flatMap((item) => asList(item.buying_factors_ranked)),
-  ...asList(productMarketFit.value?.items).flatMap((item) => asList(item.buying_factors_ranked)),
+  ...asList(productMarketFit.value?.validated_buying_factors).flatMap((item) => expandPmfFactorRows(item)),
+  ...asList(productMarketFit.value?.top_product_lines).flatMap((item) => expandPmfFactorRows(item)),
+  ...asList(productMarketFit.value?.items).flatMap((item) => expandPmfFactorRows(item)),
 ])
 const accountRecommendations = computed(() => [
   ...asList(account360.value?.recommended_accounts),
@@ -763,6 +866,40 @@ async function openWinLossFactor(item: Row) {
   } finally {
     factorDetailLoading.value = false
   }
+}
+
+async function openProductMarketFitFactor(item: Row) {
+  const factor = primaryText(item, ['factor', 'dimension', 'buying_factor', 'product_focus'], '').trim()
+  if (!factor) {
+    pmfDetailError.value = 'Product-Market Fit factor is missing.'
+    pmfDetail.value = null
+    pmfDetailVisible.value = true
+    return
+  }
+  pmfDetailVisible.value = true
+  pmfDetailLoading.value = true
+  pmfDetailError.value = ''
+  try {
+    pmfDetail.value = await fetchProductMarketFitFactorDetail(factor)
+  } catch (err) {
+    pmfDetail.value = null
+    pmfDetailError.value = err instanceof Error ? err.message : 'Product-Market Fit factor detail failed to load.'
+  } finally {
+    pmfDetailLoading.value = false
+  }
+}
+
+function expandPmfFactorRows(item: Row) {
+  const rows = asList(item.buying_factors_ranked || item.buying_factors)
+  if (!rows.length) return [item]
+  return rows.map((row) => ({
+    ...item,
+    ...row,
+    partner_focus: row.partner_focus || item.partner_focus,
+    product_focus: row.product_focus || item.product_focus,
+    next_action: row.next_action || item.next_action,
+    path: row.path || item.path,
+  }))
 }
 
 function asRecord(value: unknown): Row {

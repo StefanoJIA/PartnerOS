@@ -3327,6 +3327,280 @@ def build_product_market_fit_intelligence(db: Session, limit: int = 50) -> dict[
     }
 
 
+def _pmf_field_candidates(factor: str, partner_focus: str | None, product_focus: list[str]) -> tuple[list[str], list[str]]:
+    normalized = factor.lower()
+    partner_text = (partner_focus or "").lower()
+    product_text = " ".join(product_focus).lower()
+    if _brand("HO", "SUN").lower() in partner_text or any(term in product_text for term in ["lifting", "desk", "column", "heavy-duty"]):
+        safe_candidates = {
+            "load": ["load range after business approval", "validated load summary"],
+            "stability": ["stability summary after business approval"],
+            "noise": ["noise claim after business approval"],
+            "delivery": ["delivery window"],
+            "installation": ["installation summary"],
+            "after-sales": ["after-sales support summary"],
+            "packaging": ["packaging summary"],
+            "warranty": ["warranty summary after business approval"],
+            "test cycle": ["test cycle summary after business approval"],
+            "certification": ["certification summary after business approval"],
+            "project demand": ["project demand category"],
+        }
+        internal_only = [
+            "raw test notes",
+            "complaint details",
+            "delivery risk analysis",
+            "warranty cost exposure",
+            "supplier private notes",
+            "internal Market Response scoring/ranking",
+        ]
+        return safe_candidates.get(normalized, [f"{factor} customer-safe wording after business approval"]), internal_only
+    if "jooboo" in partner_text or any(term in product_text for term in ["education", "school", "classroom", "project furniture"]):
+        safe_candidates = {
+            "delivery consistency": ["delivery consistency summary"],
+            "resource needs": ["customer-safe resource checklist"],
+            "feedback after use": ["post-use feedback summary after review"],
+            "procurement cycle": ["school procurement timing summary"],
+            "classroom deployment": ["installation/deployment summary"],
+            "durability": ["durability summary after business approval"],
+        }
+        internal_only = [
+            "unreviewed school acceptance notes",
+            "internal delivery risk analysis",
+            "supplier private notes",
+            "internal Market Response scoring/ranking",
+        ]
+        return safe_candidates.get(normalized, [f"{factor} customer-safe wording after business approval"]), internal_only
+    return (
+        [
+            "product family customer-safe summary",
+            "delivery requirement summary after business approval",
+            "resource taxonomy approved for customer use",
+        ],
+        [
+            "unreviewed onboarding data",
+            "quote logic assumptions",
+            "internal delivery requirement analysis",
+            "internal Market Response metrics/scoring",
+        ],
+    )
+
+
+def _pmf_detail_rollup(items: list[dict[str, object]], field: str) -> list[dict[str, object]]:
+    buckets: dict[str, dict[str, object]] = {}
+    for item in items:
+        raw_value = item.get(field)
+        values = raw_value if isinstance(raw_value, list) else [raw_value]
+        for value in values:
+            key = str(value or "").strip()
+            if not key:
+                continue
+            bucket = buckets.setdefault(
+                key,
+                {
+                    "name": key,
+                    "product_line_count": 0,
+                    "evidence_count": 0,
+                    "wins": 0,
+                    "losses": 0,
+                    "orders": 0,
+                    "feedback": 0,
+                    "order_amount": 0.0,
+                    "top_next_action": "",
+                },
+            )
+            counts = item.get("evidence_counts", {}) if isinstance(item.get("evidence_counts"), dict) else {}
+            commercial_value = item.get("commercial_value", {}) if isinstance(item.get("commercial_value"), dict) else {}
+            bucket["product_line_count"] = int(bucket.get("product_line_count") or 0) + 1
+            bucket["evidence_count"] = int(bucket.get("evidence_count") or 0) + sum(int(counts.get(name) or 0) for name in ["opportunities", "quotes", "quote_learning", "orders", "feedback", "market_reviews"])
+            bucket["wins"] = int(bucket.get("wins") or 0) + int(counts.get("wins") or 0)
+            bucket["losses"] = int(bucket.get("losses") or 0) + int(counts.get("losses") or 0)
+            bucket["orders"] = int(bucket.get("orders") or 0) + int(counts.get("orders") or 0)
+            bucket["feedback"] = int(bucket.get("feedback") or 0) + int(counts.get("feedback") or 0)
+            bucket["order_amount"] = round(float(bucket.get("order_amount") or 0) + float(commercial_value.get("order_amount") or 0), 2)
+            if not bucket.get("top_next_action") and item.get("next_action"):
+                bucket["top_next_action"] = item.get("next_action")
+    return sorted(
+        buckets.values(),
+        key=lambda row: (
+            int(row.get("evidence_count") or 0),
+            float(row.get("order_amount") or 0),
+            int(row.get("wins") or 0),
+        ),
+        reverse=True,
+    )
+
+
+def build_product_market_fit_factor_detail(db: Session, factor: str, limit: int = 50) -> dict[str, object] | None:
+    normalized = unquote(factor or "").strip()
+    if not normalized:
+        return None
+    needle = normalized.lower()
+    pmf = build_product_market_fit_intelligence(db, limit=200)
+    matched_items: list[dict[str, object]] = []
+    factor_rows: list[dict[str, object]] = []
+    customer_safe_candidates: list[str] = []
+    internal_only_boundaries: list[str] = []
+
+    for item in pmf.get("items", []):
+        if not isinstance(item, dict):
+            continue
+        factors = item.get("buying_factors_ranked", []) if isinstance(item.get("buying_factors_ranked"), list) else []
+        searchable_values = [
+            str(item.get("partner_focus") or ""),
+            " ".join(str(value) for value in item.get("product_focus", []) or []),
+            " ".join(str(value) for value in item.get("dimensions", []) or []),
+            " ".join(str(value) for value in item.get("purchase_factors", []) or []),
+            " ".join(str(row.get("factor") or "") for row in factors if isinstance(row, dict)),
+            " ".join(str(value) for value in item.get("customer_objections", []) or []),
+            " ".join(str(value) for value in item.get("project_experience", []) or []),
+        ]
+        if needle not in " ".join(searchable_values).lower():
+            continue
+        matched_items.append(item)
+        product_focus = [str(value) for value in item.get("product_focus", []) or []]
+        safe, internal = _pmf_field_candidates(normalized, str(item.get("partner_focus") or ""), product_focus)
+        customer_safe_candidates = _merge_unique([*customer_safe_candidates, *safe], limit=12)
+        internal_only_boundaries = _merge_unique([*internal_only_boundaries, *internal], limit=12)
+        for row in factors:
+            if not isinstance(row, dict):
+                continue
+            row_factor = str(row.get("factor") or "")
+            if needle in row_factor.lower() or needle in " ".join(searchable_values).lower():
+                factor_rows.append(
+                    {
+                        "factor": row_factor or normalized,
+                        "partner_focus": item.get("partner_focus"),
+                        "product_focus": item.get("product_focus"),
+                        "evidence_count": int(row.get("evidence_count") or 0),
+                        "wins": int(row.get("wins") or 0),
+                        "losses": int(row.get("losses") or 0),
+                        "feedback": int(row.get("feedback") or 0),
+                        "status": row.get("status"),
+                        "fit_status": item.get("fit_status"),
+                        "next_action": item.get("next_action"),
+                        "path": item.get("path"),
+                    }
+                )
+
+    matched_items = matched_items[:limit]
+    if not matched_items:
+        return None
+
+    evidence_counts = [
+        item.get("evidence_counts", {}) if isinstance(item.get("evidence_counts"), dict) else {}
+        for item in matched_items
+    ]
+    commercial_values = [
+        item.get("commercial_value", {}) if isinstance(item.get("commercial_value"), dict) else {}
+        for item in matched_items
+    ]
+    project_experience = _merge_unique(
+        [
+            str(value)
+            for item in matched_items
+            for value in (item.get("project_experience", []) or [])
+        ],
+        limit=10,
+    )
+    customer_objections = _merge_unique(
+        [
+            str(value)
+            for item in matched_items
+            for value in (item.get("customer_objections", []) or [])
+        ],
+        limit=10,
+    )
+    competitor_signals = _merge_unique(
+        [
+            str(value)
+            for item in matched_items
+            for value in (item.get("competitor_signals", []) or [])
+        ],
+        limit=10,
+    )
+    source_paths = _merge_unique(
+        [
+            str(value)
+            for item in matched_items
+            for value in (item.get("source_paths", []) or [])
+        ],
+        limit=12,
+    )
+    evidence_total = sum(
+        sum(int(counts.get(name) or 0) for name in ["opportunities", "quotes", "quote_learning", "orders", "feedback", "market_reviews"])
+        for counts in evidence_counts
+    )
+    order_amount = round(sum(float(value.get("order_amount") or 0) for value in commercial_values), 2)
+    quote_amount = round(sum(float(value.get("quote_amount") or 0) for value in commercial_values), 2)
+    pipeline_amount = round(sum(float(value.get("pipeline_amount") or 0) for value in commercial_values), 2)
+    wins = sum(int(counts.get("wins") or 0) for counts in evidence_counts)
+    losses = sum(int(counts.get("losses") or 0) for counts in evidence_counts)
+    feedback = sum(int(counts.get("feedback") or 0) for counts in evidence_counts)
+    orders = sum(int(counts.get("orders") or 0) for counts in evidence_counts)
+    pilot_risks = [item for item in matched_items if item.get("fit_status") == "pilot_risk"]
+    conversion_risks = [item for item in matched_items if item.get("fit_status") == "conversion_risk"]
+    order_validated = [item for item in matched_items if item.get("fit_status") == "order_validated"]
+
+    if pilot_risks:
+        next_action = "Resolve delivery, feedback, or after-sales evidence before using this factor for pilot expansion."
+    elif conversion_risks:
+        next_action = "Review lost reasons and customer objections before reusing this factor in Campaign or quote wording."
+    elif order_validated:
+        next_action = "Reuse this factor in manual quote positioning, product proof, and partner allocation after business wording review."
+    else:
+        next_action = "Collect opportunity, quote, order, and feedback evidence before treating this as a repeatable buying factor."
+
+    return {
+        "factor": normalized,
+        "summary": {
+            "product_line_count": len(matched_items),
+            "evidence_count": evidence_total,
+            "wins": wins,
+            "losses": losses,
+            "orders": orders,
+            "feedback": feedback,
+            "quote_amount": quote_amount,
+            "pipeline_amount": pipeline_amount,
+            "order_amount": order_amount,
+            "pilot_risk_product_lines": len(pilot_risks),
+            "conversion_risk_product_lines": len(conversion_risks),
+            "order_validated_product_lines": len(order_validated),
+        },
+        "items": matched_items,
+        "buying_factor_evidence": sorted(
+            factor_rows,
+            key=lambda row: (
+                int(row.get("evidence_count") or 0),
+                int(row.get("wins") or 0),
+                int(row.get("feedback") or 0),
+            ),
+            reverse=True,
+        )[:limit],
+        "partner_rollup": _pmf_detail_rollup(matched_items, "partner_focus")[:10],
+        "product_rollup": _pmf_detail_rollup(matched_items, "product_focus")[:10],
+        "customer_objections": customer_objections,
+        "competitor_signals": competitor_signals,
+        "project_experience": project_experience,
+        "source_paths": source_paths,
+        "customer_safe_candidates": customer_safe_candidates,
+        "internal_only_boundaries": internal_only_boundaries,
+        "management_questions": {
+            "what_product_factor_is_being_validated": normalized,
+            "where_it_converts": order_validated[:8],
+            "where_it_creates_pilot_risk": pilot_risks[:8],
+            "where_customers_object": customer_objections,
+            "how_to_use_in_next_quote_or_campaign": next_action,
+        },
+        "next_action": next_action,
+        "customer_safe_boundary": (
+            "Internal Product-Market Fit factor detail only. Customer-visible claims require business approval; "
+            "do not expose cost, margin, pricing breakdown, supplier private notes, raw IDs, token values, "
+            "internal scoring/ranking, raw test notes, complaint details, or unreviewed risk analysis."
+        ),
+        "safety": _safety_flags(),
+    }
+
+
 def _build_product_market_fit_intelligence(
     db: Session,
     products: list[ProductIntelligenceItem],

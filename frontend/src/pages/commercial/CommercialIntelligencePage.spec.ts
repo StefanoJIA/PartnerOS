@@ -11,6 +11,7 @@ import {
   fetchBusinessExecution,
   fetchCustomerValueIntelligence,
   fetchPartnerPerformanceIntelligence,
+  fetchProductMarketFitFactorDetail,
   fetchProductMarketFitIntelligence,
   fetchRevenueForecastIntelligence,
   fetchWinLossFactorDetail,
@@ -19,6 +20,7 @@ import {
   type BusinessExecution,
   type CustomerValueIntelligence,
   type PartnerPerformanceIntelligence,
+  type ProductMarketFitFactorDetail,
   type ProductMarketFitIntelligence,
   type RevenueForecastIntelligence,
   type WinLossIntelligenceDashboard,
@@ -36,6 +38,7 @@ vi.mock('@/api/dashboard', () => ({
   fetchBusinessExecution: vi.fn(),
   fetchCustomerValueIntelligence: vi.fn(),
   fetchPartnerPerformanceIntelligence: vi.fn(),
+  fetchProductMarketFitFactorDetail: vi.fn(),
   fetchProductMarketFitIntelligence: vi.fn(),
   fetchRevenueForecastIntelligence: vi.fn(),
   fetchWinLossIntelligenceDashboard: vi.fn(),
@@ -292,6 +295,56 @@ const winLossFactorDetailPayload = {
   safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
 }
 
+const pmfFactorDetailPayload = {
+  factor: 'load',
+  summary: {
+    product_line_count: 1,
+    evidence_count: 6,
+    wins: 1,
+    losses: 0,
+    orders: 1,
+    feedback: 1,
+    order_amount: 125000,
+    pilot_risk_product_lines: 0,
+    order_validated_product_lines: 1,
+  },
+  items: [
+    {
+      partner_focus: 'HOSUN',
+      product_focus: ['lifting systems', 'desk frames'],
+      fit_status: 'order_validated',
+      next_action: 'Reuse load proof after business wording review.',
+      path: '/market-response',
+    },
+  ],
+  buying_factor_evidence: [
+    {
+      factor: 'load',
+      partner_focus: 'HOSUN',
+      product_focus: ['lifting systems'],
+      evidence_count: 6,
+      wins: 1,
+      losses: 0,
+      feedback: 1,
+      fit_status: 'order_validated',
+      next_action: 'Reuse load proof after business wording review.',
+      path: '/market-response',
+    },
+  ],
+  partner_rollup: [{ name: 'HOSUN', evidence_count: 6, orders: 1 }],
+  product_rollup: [{ name: 'lifting systems', evidence_count: 6, orders: 1 }],
+  customer_objections: ['customer asked for heavier load proof'],
+  competitor_signals: ['local supplier claimed higher load'],
+  project_experience: ['SO-HOSUN-001: confirmed; shipment present'],
+  source_paths: ['/market-response'],
+  customer_safe_candidates: ['load range after business approval'],
+  internal_only_boundaries: ['raw test notes', 'supplier private notes'],
+  management_questions: {},
+  next_action: 'Reuse this factor in manual quote positioning, product proof, and partner allocation after business wording review.',
+  customer_safe_boundary: 'Internal Product-Market Fit factor detail only. Customer-visible claims require business approval.',
+  safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
+} as unknown as ProductMarketFitFactorDetail
+
 const customerValuePayload = {
   items: [
     {
@@ -428,6 +481,7 @@ describe('CommercialIntelligencePage', () => {
     vi.mocked(fetchBusinessExecution).mockReset()
     vi.mocked(fetchCustomerValueIntelligence).mockReset()
     vi.mocked(fetchPartnerPerformanceIntelligence).mockReset()
+    vi.mocked(fetchProductMarketFitFactorDetail).mockReset()
     vi.mocked(fetchProductMarketFitIntelligence).mockReset()
     vi.mocked(fetchRevenueForecastIntelligence).mockReset()
     vi.mocked(fetchWinLossFactorDetail).mockReset()
@@ -438,6 +492,7 @@ describe('CommercialIntelligencePage', () => {
     vi.mocked(fetchAccount360Intelligence).mockResolvedValue(accountPayload)
     vi.mocked(fetchCustomerValueIntelligence).mockResolvedValue(customerValuePayload)
     vi.mocked(fetchPartnerPerformanceIntelligence).mockResolvedValue(partnerPerformancePayload)
+    vi.mocked(fetchProductMarketFitFactorDetail).mockResolvedValue(pmfFactorDetailPayload)
     vi.mocked(fetchRevenueForecastIntelligence).mockResolvedValue(revenueForecastPayload)
     vi.mocked(fetchAccount360Detail).mockResolvedValue(accountDetailPayload as never)
     vi.mocked(fetchWinLossFactorDetail).mockResolvedValue(winLossFactorDetailPayload as never)
@@ -515,5 +570,22 @@ describe('CommercialIntelligencePage', () => {
     expect(wrapper.text()).toContain('Validated load range helped the customer choose HOSUN.')
     expect(wrapper.text()).toContain('local competitor claims faster delivery')
     expect(wrapper.text()).toContain('Internal Win/Loss factor detail only')
+  })
+
+  it('opens Product-Market Fit factor detail for buying factor evidence', async () => {
+    const wrapper = mount(CommercialIntelligencePage, { global: { plugins: [ElementPlus] } })
+    await flushPromises()
+
+    await wrapper.findAll('button').find((button) => button.text() === 'Product-Market Fit factor detail')?.trigger('click')
+    await flushPromises()
+
+    expect(fetchProductMarketFitFactorDetail).toHaveBeenCalledWith('load')
+    expect(wrapper.text()).toContain('Product-Market Fit factor detail')
+    expect(wrapper.text()).toContain('Reuse this factor in manual quote positioning')
+    expect(wrapper.text()).toContain('Partner / product evidence')
+    expect(wrapper.text()).toContain('SO-HOSUN-001: confirmed; shipment present')
+    expect(wrapper.text()).toContain('load range after business approval')
+    expect(wrapper.text()).toContain('raw test notes')
+    expect(wrapper.text()).toContain('Internal Product-Market Fit factor detail only')
   })
 })

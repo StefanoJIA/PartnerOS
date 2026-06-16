@@ -976,6 +976,24 @@ def main() -> int:
                 "/api/dashboard/product-market-fit-intelligence",
                 headers={"Authorization": f"Bearer {token}"},
             )
+            product_market_fit_preview = product_market_fit_route.json() if product_market_fit_route.status_code == 200 else {}
+            first_pmf_factor = None
+            for pmf_item in product_market_fit_preview.get("items", []):
+                for factor_item in pmf_item.get("buying_factors_ranked", []):
+                    first_pmf_factor = factor_item.get("factor")
+                    if first_pmf_factor:
+                        break
+                if first_pmf_factor:
+                    break
+            product_market_fit_factor_detail_route = (
+                client.get(
+                    "/api/dashboard/product-market-fit-intelligence/factor-detail",
+                    params={"factor": first_pmf_factor},
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+                if first_pmf_factor
+                else None
+            )
             account_360_route = client.get(
                 "/api/dashboard/account-360-intelligence",
                 headers={"Authorization": f"Bearer {token}"},
@@ -1101,6 +1119,12 @@ def main() -> int:
             )
         )
         product_market_fit_route_data = product_market_fit_route.json() if product_market_fit_route.status_code == 200 else {}
+        product_market_fit_factor_detail_data = (
+            product_market_fit_factor_detail_route.json()
+            if product_market_fit_factor_detail_route is not None
+            and product_market_fit_factor_detail_route.status_code == 200
+            else {}
+        )
         checks.append(
             (
                 "route product-market fit intelligence",
@@ -1115,6 +1139,23 @@ def main() -> int:
                     and item.get("safety", {}).get("customer_forbidden_fields_exposed") is False
                     for item in product_market_fit_route_data.get("items", [])
                 ),
+            )
+        )
+        checks.append(
+            (
+                "route product-market fit factor detail",
+                product_market_fit_factor_detail_route is not None
+                and product_market_fit_factor_detail_route.status_code == 200
+                and product_market_fit_factor_detail_data.get("factor")
+                and isinstance(product_market_fit_factor_detail_data.get("summary"), dict)
+                and isinstance(product_market_fit_factor_detail_data.get("items"), list)
+                and isinstance(product_market_fit_factor_detail_data.get("buying_factor_evidence"), list)
+                and isinstance(product_market_fit_factor_detail_data.get("partner_rollup"), list)
+                and isinstance(product_market_fit_factor_detail_data.get("product_rollup"), list)
+                and isinstance(product_market_fit_factor_detail_data.get("customer_safe_candidates"), list)
+                and isinstance(product_market_fit_factor_detail_data.get("internal_only_boundaries"), list)
+                and product_market_fit_factor_detail_data.get("safety", {}).get("external_message_sent") is False
+                and product_market_fit_factor_detail_data.get("safety", {}).get("customer_forbidden_fields_exposed") is False,
             )
         )
         account_360_route_data = account_360_route.json() if account_360_route.status_code == 200 else {}
