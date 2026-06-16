@@ -62,6 +62,15 @@
         :related-order-count="relatedOrders.length"
       />
 
+      <PartnerPerformanceCard
+        :partner-id="partnerId"
+        :partner-name="String(partner.partner_name || '')"
+        :brand-name="String(partner.brand_name || '')"
+        :product-keywords="partnerExecutionKeywords"
+        :quote-count="relatedQuotes.length"
+        :order-count="relatedOrders.length"
+      />
+
       <el-card shadow="never">
         <template #header>评分（1–5 整数，可空）</template>
         <el-form :inline="true" class="flex flex-wrap gap-2" @submit.prevent="saveScores">
@@ -208,6 +217,7 @@ import {
 } from '@/components/object-panels'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ObjectExecutionImpactCard from '@/components/business/ObjectExecutionImpactCard.vue'
+import PartnerPerformanceCard from '@/components/business/PartnerPerformanceCard.vue'
 
 const route = useRoute()
 const partnerId = computed(() => route.params.partnerId as string)
