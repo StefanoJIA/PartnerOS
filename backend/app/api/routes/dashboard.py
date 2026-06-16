@@ -26,6 +26,7 @@ from app.schemas.dashboard_actions import (
 )
 from app.services.dashboard_actions import build_dashboard_actions
 from app.services.business_execution import (
+    build_account_360_detail,
     build_account_360_intelligence,
     build_business_execution_center,
     build_customer_value_intelligence,
@@ -119,6 +120,18 @@ def dashboard_account_360_intelligence(
     _: User = Depends(get_current_user),
 ):
     return build_account_360_intelligence(db, limit=limit)
+
+
+@router.get("/account-360-intelligence/{account_key}")
+def dashboard_account_360_detail(
+    account_key: str,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    data = build_account_360_detail(db, account_key=account_key)
+    if data is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account 360 profile not found")
+    return data
 
 
 @router.get("/daily-decision-queue/handling", response_model=list[DailyQueueHandlingRecordOut])

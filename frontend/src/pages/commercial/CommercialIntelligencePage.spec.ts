@@ -6,6 +6,7 @@ import ElementPlus from 'element-plus'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import CommercialIntelligencePage from './CommercialIntelligencePage.vue'
 import {
+  fetchAccount360Detail,
   fetchAccount360Intelligence,
   fetchBusinessExecution,
   fetchCustomerValueIntelligence,
@@ -29,6 +30,7 @@ vi.mock('vue-router', () => ({
 }))
 
 vi.mock('@/api/dashboard', () => ({
+  fetchAccount360Detail: vi.fn(),
   fetchAccount360Intelligence: vi.fn(),
   fetchBusinessExecution: vi.fn(),
   fetchCustomerValueIntelligence: vi.fn(),
@@ -194,6 +196,7 @@ const accountPayload = {
   items: [{ customer_name: 'HOSUN demo account', partner_focus: ['HOSUN'], product_focus: ['lifting systems'] }],
   recommended_accounts: [
     {
+      account_key: 'company:hosun-demo',
       customer_name: 'HOSUN demo account',
       priority: 'P1',
       current_stage: 'Repeat Business',
@@ -212,6 +215,49 @@ const accountPayload = {
   customer_safe_boundary: 'internal only',
   safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
 } as unknown as Account360Intelligence
+
+const accountDetailPayload = {
+  account_key: 'company:hosun-demo',
+  customer_name: 'HOSUN demo account',
+  current_stage: 'Repeat Business',
+  priority: 'P1',
+  partner_focus: ['HOSUN'],
+  product_focus: ['lifting systems', 'desk frames'],
+  source_counts: { leads: 1, opportunities: 1, quotes: 2, orders: 1, feedback: 1, win_loss_records: 1 },
+  commercial_value: {
+    historical_quote_amount: 120000,
+    won_order_amount: 50000,
+    weighted_pipeline_amount: 25000,
+    conversion_rate: 0.5,
+    repeat_business_count: 1,
+  },
+  detail_summary: {
+    management_answer: 'Create repeat motion from won learning.',
+    why_now: 'Account has quote-to-order learning and no unresolved blocker.',
+  },
+  commercial_questions: {
+    who_should_act: 'account owner',
+    what_to_do_next: 'Review delivery outcome before repeat outreach.',
+    why_this_account: 'Repeat motion is commercially healthy without cost or margin exposure.',
+    what_blocks_repeat: [],
+  },
+  commercial_asset_coverage: {
+    lead: true,
+    opportunity: true,
+    quote: true,
+    order_delivery: true,
+    feedback: true,
+    win_loss: true,
+    repeat_business: true,
+  },
+  object_timeline: [
+    { source_type: 'quote', label: 'Q-HOSUN-001', status: 'won', path: '/quotes/q1' },
+    { source_type: 'order', label: 'SO-HOSUN-001', status: 'delivered', path: '/orders/o1' },
+  ],
+  next_commercial_motion: { next_action: 'Review delivery outcome before repeat outreach.' },
+  customer_safe_boundary: 'Internal Account 360 detail only. Do not expose cost, margin, supplier private notes, raw IDs, or token values.',
+  safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
+}
 
 const customerValuePayload = {
   items: [
@@ -344,6 +390,7 @@ const revenueForecastPayload = {
 describe('CommercialIntelligencePage', () => {
   beforeEach(() => {
     push.mockReset()
+    vi.mocked(fetchAccount360Detail).mockReset()
     vi.mocked(fetchAccount360Intelligence).mockReset()
     vi.mocked(fetchBusinessExecution).mockReset()
     vi.mocked(fetchCustomerValueIntelligence).mockReset()
@@ -358,6 +405,7 @@ describe('CommercialIntelligencePage', () => {
     vi.mocked(fetchCustomerValueIntelligence).mockResolvedValue(customerValuePayload)
     vi.mocked(fetchPartnerPerformanceIntelligence).mockResolvedValue(partnerPerformancePayload)
     vi.mocked(fetchRevenueForecastIntelligence).mockResolvedValue(revenueForecastPayload)
+    vi.mocked(fetchAccount360Detail).mockResolvedValue(accountDetailPayload as never)
   })
 
   it('renders management questions and six commercial assets', async () => {
@@ -400,5 +448,21 @@ describe('CommercialIntelligencePage', () => {
     await wrapper.findAll('button').find((button) => button.text() === '返回行动看板')?.trigger('click')
 
     expect(push).toHaveBeenCalledWith('/')
+  })
+
+  it('opens Account 360 detail as an internal commercial profile', async () => {
+    const wrapper = mount(CommercialIntelligencePage, { global: { plugins: [ElementPlus] } })
+    await flushPromises()
+
+    await wrapper.findAll('button').find((button) => button.text() === 'Account 360 detail')?.trigger('click')
+    await flushPromises()
+
+    expect(fetchAccount360Detail).toHaveBeenCalledWith('company:hosun-demo')
+    expect(wrapper.text()).toContain('Account 360 commercial profile')
+    expect(wrapper.text()).toContain('Create repeat motion from won learning.')
+    expect(wrapper.text()).toContain('Weighted pipeline')
+    expect(wrapper.text()).toContain('Win/Loss ready')
+    expect(wrapper.text()).toContain('Q-HOSUN-001')
+    expect(wrapper.text()).toContain('Do not expose cost, margin, supplier private notes')
   })
 })

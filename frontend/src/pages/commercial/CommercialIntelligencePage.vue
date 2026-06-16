@@ -221,6 +221,7 @@
                 <el-tag size="small" effect="plain">{{ item.current_stage || item.relationship_depth || 'account' }}</el-tag>
               </div>
               <p class="mt-1 text-sm font-medium text-slate-800">{{ item.customer_name || item.account_key }}</p>
+              <el-button class="mt-1" size="small" link type="primary" @click="openAccount360(item)">Account 360 detail</el-button>
               <p class="mt-1 text-xs text-slate-600">{{ nextMotion(item).next_action || item.next_action || '查看 Account 360 后选择下一步。' }}</p>
               <el-button class="mt-1" size="small" link type="primary" @click="go(String(item.path || '/growth-operations'))">打开账户</el-button>
             </div>
@@ -281,6 +282,73 @@
     <div v-else-if="!loading" class="rounded border border-slate-200 bg-white p-4 text-sm text-slate-500">
       暂无商业智能数据。
     </div>
+    <el-drawer v-model="accountDetailVisible" title="Account 360 commercial profile" size="560px">
+      <div v-loading="accountDetailLoading" class="space-y-4">
+        <el-alert v-if="accountDetailError" type="error" :closable="false" :title="accountDetailError" />
+        <template v-if="accountDetail">
+          <section>
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h3 class="text-base font-semibold text-slate-900">{{ accountDetail.customer_name }}</h3>
+                <p class="mt-1 text-sm text-slate-600">{{ detailSummary.management_answer || accountDetail.next_action }}</p>
+              </div>
+              <el-tag :type="priorityType(accountDetail.priority)" effect="plain">{{ accountDetail.priority }}</el-tag>
+            </div>
+            <p class="mt-2 text-xs text-slate-500">{{ detailSummary.why_now || accountDetail.decision_reason }}</p>
+          </section>
+
+          <section class="grid gap-2 sm:grid-cols-2">
+            <div class="rounded border border-slate-100 bg-slate-50 p-3">
+              <p class="text-xs text-slate-500">Weighted pipeline</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ money(asRecord(accountDetail.commercial_value).weighted_pipeline_amount) }}</p>
+            </div>
+            <div class="rounded border border-slate-100 bg-slate-50 p-3">
+              <p class="text-xs text-slate-500">Won order amount</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ money(asRecord(accountDetail.commercial_value).won_order_amount) }}</p>
+            </div>
+          </section>
+
+          <section class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Commercial questions</h4>
+            <div class="mt-2 space-y-2 text-sm text-slate-700">
+              <p><span class="font-medium">Owner:</span> {{ detailQuestions.who_should_act }}</p>
+              <p><span class="font-medium">Next action:</span> {{ detailQuestions.what_to_do_next }}</p>
+              <p><span class="font-medium">Why this account:</span> {{ detailQuestions.why_this_account }}</p>
+              <p><span class="font-medium">Blocks repeat:</span> {{ textList(detailQuestions.what_blocks_repeat).join(' / ') || 'None visible' }}</p>
+            </div>
+          </section>
+
+          <section class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Commercial asset coverage</h4>
+            <div class="mt-2 flex flex-wrap gap-1">
+              <el-tag
+                v-for="asset in coverageTags"
+                :key="asset.key"
+                size="small"
+                :type="asset.covered ? 'success' : 'info'"
+                effect="plain"
+              >
+                {{ asset.label }} {{ asset.covered ? 'ready' : 'empty' }}
+              </el-tag>
+            </div>
+          </section>
+
+          <section class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Lifecycle timeline</h4>
+            <div v-for="item in textTimeline.slice(0, 8)" :key="rowKey(item)" class="mt-2 rounded bg-slate-50 p-2">
+              <div class="flex flex-wrap items-center gap-1">
+                <el-tag size="small" effect="plain">{{ item.source_type }}</el-tag>
+                <el-tag size="small" type="info" effect="plain">{{ item.status }}</el-tag>
+              </div>
+              <p class="mt-1 text-sm text-slate-800">{{ item.label }}</p>
+              <el-button v-if="item.path" class="mt-1" size="small" link type="primary" @click="go(String(item.path))">Open object</el-button>
+            </div>
+          </section>
+
+          <el-alert type="warning" :closable="false" show-icon :title="accountDetail.customer_safe_boundary" />
+        </template>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -288,6 +356,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
+  fetchAccount360Detail,
   fetchAccount360Intelligence,
   fetchBusinessExecution,
   fetchCustomerValueIntelligence,
@@ -295,6 +364,7 @@ import {
   fetchProductMarketFitIntelligence,
   fetchRevenueForecastIntelligence,
   fetchWinLossIntelligenceDashboard,
+  type Account360Detail,
   type Account360Intelligence,
   type BusinessExecution,
   type CustomerValueIntelligence,
@@ -313,6 +383,10 @@ const data = ref<BusinessExecution | null>(null)
 const winLossDashboard = ref<WinLossIntelligenceDashboard | null>(null)
 const productMarketFit = ref<ProductMarketFitIntelligence | null>(null)
 const account360 = ref<Account360Intelligence | null>(null)
+const accountDetail = ref<Account360Detail | null>(null)
+const accountDetailVisible = ref(false)
+const accountDetailLoading = ref(false)
+const accountDetailError = ref('')
 const customerValue = ref<CustomerValueIntelligence | null>(null)
 const partnerPerformance = ref<PartnerPerformanceIntelligence | null>(null)
 const revenueForecast = ref<RevenueForecastIntelligence | null>(null)
@@ -323,6 +397,21 @@ const selectedFactor = ref('')
 const selectedCustomer = ref('')
 
 const commercial = computed(() => data.value?.commercial_intelligence)
+const detailSummary = computed(() => asRecord(accountDetail.value?.detail_summary))
+const detailQuestions = computed(() => asRecord(accountDetail.value?.commercial_questions))
+const textTimeline = computed(() => asList(accountDetail.value?.object_timeline))
+const coverageTags = computed(() => {
+  const coverage = asRecord(accountDetail.value?.commercial_asset_coverage)
+  return [
+    { key: 'lead', label: 'Lead', covered: Boolean(coverage.lead) },
+    { key: 'opportunity', label: 'Opportunity', covered: Boolean(coverage.opportunity) },
+    { key: 'quote', label: 'Quote', covered: Boolean(coverage.quote) },
+    { key: 'order_delivery', label: 'Order/Delivery', covered: Boolean(coverage.order_delivery) },
+    { key: 'feedback', label: 'Feedback', covered: Boolean(coverage.feedback) },
+    { key: 'win_loss', label: 'Win/Loss', covered: Boolean(coverage.win_loss) },
+    { key: 'repeat_business', label: 'Repeat', covered: Boolean(coverage.repeat_business) },
+  ]
+})
 const executiveSummary = computed(() => asRecord(commercial.value?.executive_summary))
 const managementBrief = computed(() => asList(executiveSummary.value.management_brief))
 const questions = computed(() => asRecord(executiveSummary.value.management_questions))
@@ -547,6 +636,27 @@ async function load() {
 
 function go(path: string) {
   router.push(path)
+}
+
+async function openAccount360(item: Row) {
+  const key = String(item.account_key || (item.company_id ? `company:${item.company_id}` : '')).trim()
+  if (!key) {
+    accountDetailError.value = 'Account 360 profile key is missing.'
+    accountDetail.value = null
+    accountDetailVisible.value = true
+    return
+  }
+  accountDetailVisible.value = true
+  accountDetailLoading.value = true
+  accountDetailError.value = ''
+  try {
+    accountDetail.value = await fetchAccount360Detail(key)
+  } catch (err) {
+    accountDetail.value = null
+    accountDetailError.value = err instanceof Error ? err.message : 'Account 360 detail failed to load.'
+  } finally {
+    accountDetailLoading.value = false
+  }
 }
 
 function asRecord(value: unknown): Row {

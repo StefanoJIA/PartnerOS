@@ -965,6 +965,20 @@ def main() -> int:
                 "/api/dashboard/account-360-intelligence",
                 headers={"Authorization": f"Bearer {token}"},
             )
+            account_360_route_data_preview = account_360_route.json() if account_360_route.status_code == 200 else {}
+            first_account_key = (
+                account_360_route_data_preview.get("items", [{}])[0].get("account_key")
+                if account_360_route_data_preview.get("items")
+                else None
+            )
+            account_360_detail_route = (
+                client.get(
+                    f"/api/dashboard/account-360-intelligence/{first_account_key}",
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+                if first_account_key
+                else None
+            )
             company_workspace = (
                 client.get(f"/api/companies/{company_id}/workspace", headers={"Authorization": f"Bearer {token}"})
                 if company_id
@@ -1069,6 +1083,11 @@ def main() -> int:
             )
         )
         account_360_route_data = account_360_route.json() if account_360_route.status_code == 200 else {}
+        account_360_detail_route_data = (
+            account_360_detail_route.json()
+            if account_360_detail_route is not None and account_360_detail_route.status_code == 200
+            else {}
+        )
         checks.append(
             (
                 "route account 360 intelligence",
@@ -1083,6 +1102,20 @@ def main() -> int:
                     and item.get("safety", {}).get("customer_forbidden_fields_exposed") is False
                     for item in account_360_route_data.get("items", [])
                 ),
+            )
+        )
+        checks.append(
+            (
+                "route account 360 detail",
+                account_360_detail_route is not None
+                and account_360_detail_route.status_code == 200
+                and account_360_detail_route_data.get("account_key")
+                and isinstance(account_360_detail_route_data.get("detail_summary"), dict)
+                and isinstance(account_360_detail_route_data.get("commercial_questions"), dict)
+                and isinstance(account_360_detail_route_data.get("commercial_asset_coverage"), dict)
+                and isinstance(account_360_detail_route_data.get("object_timeline"), list)
+                and account_360_detail_route_data.get("safety", {}).get("external_message_sent") is False
+                and account_360_detail_route_data.get("safety", {}).get("customer_forbidden_fields_exposed") is False,
             )
         )
         checks.append(

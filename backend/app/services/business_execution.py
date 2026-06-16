@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
+from urllib.parse import unquote
+from uuid import UUID
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -3898,6 +3900,72 @@ def build_account_360_intelligence(db: Session, limit: int = 50) -> dict[str, ob
         ),
         "safety": _safety_flags(),
     }
+
+
+def build_account_360_detail(db: Session, account_key: str) -> dict[str, object] | None:
+    normalized = unquote(account_key or "").strip()
+    company_id: object | None = None
+    if normalized.startswith("company:"):
+        normalized = normalized.split(":", 1)[1]
+    try:
+        company_id = UUID(normalized)
+    except ValueError:
+        company = (
+            db.query(Company)
+            .filter(Company.is_active.is_(True), func.lower(Company.company_name) == normalized.lower())
+            .first()
+        )
+        company_id = company.id if company else None
+    if company_id is None:
+        return None
+
+    profile = _build_account_360_profile(db, company_id)
+    if profile is None:
+        return None
+
+    commercial_value = profile.get("commercial_value") if isinstance(profile.get("commercial_value"), dict) else {}
+    source_counts = profile.get("source_counts") if isinstance(profile.get("source_counts"), dict) else {}
+    relationship_map = profile.get("relationship_map") if isinstance(profile.get("relationship_map"), dict) else {}
+    motion = profile.get("next_commercial_motion") if isinstance(profile.get("next_commercial_motion"), dict) else {}
+    profile["detail_summary"] = {
+        "primary_commercial_question": "What should we do with this account next?",
+        "management_answer": motion.get("next_action") or profile.get("next_action"),
+        "why_now": motion.get("reason") or profile.get("decision_reason"),
+        "commercial_value_without_cost_or_margin": {
+            "historical_quote_amount": commercial_value.get("historical_quote_amount", 0),
+            "won_order_amount": commercial_value.get("won_order_amount", 0),
+            "weighted_pipeline_amount": commercial_value.get("weighted_pipeline_amount", 0),
+            "conversion_rate": commercial_value.get("conversion_rate", 0),
+            "repeat_business_count": commercial_value.get("repeat_business_count", 0),
+        },
+        "relationship_depth": profile.get("relationship_depth"),
+        "object_counts": source_counts,
+    }
+    profile["commercial_questions"] = {
+        "who_should_act": motion.get("owner") or profile.get("next_motion_owner") or "account owner",
+        "what_to_do_next": motion.get("next_action") or profile.get("next_action"),
+        "why_this_account": profile.get("decision_reason"),
+        "what_to_reuse": profile.get("win_loss_summary", {}).get("lessons", []),
+        "what_blocks_repeat": profile.get("open_blockers", []),
+        "future_revenue_signal": commercial_value.get("weighted_pipeline_amount", 0),
+    }
+    profile["commercial_asset_coverage"] = {
+        "lead": bool(source_counts.get("leads")),
+        "opportunity": bool(source_counts.get("opportunities")),
+        "quote": bool(source_counts.get("quotes")),
+        "order_delivery": bool(source_counts.get("orders")),
+        "feedback": bool(source_counts.get("feedback")),
+        "win_loss": bool(source_counts.get("win_loss_records")),
+        "repeat_business": bool(commercial_value.get("repeat_business_count")),
+    }
+    profile["source_breakdown"] = relationship_map.get("commercial_objects", source_counts)
+    profile["customer_safe_boundary"] = (
+        "Internal Account 360 detail only. Do not expose internal comments, feedback details, cost, margin, "
+        "pricing breakdown, supplier private notes, raw IDs, storage keys, token values, or internal scoring "
+        "to customer-facing Portal."
+    )
+    profile["safety"] = _safety_flags()
+    return profile
 
 
 def _build_account_360_intelligence(

@@ -781,3 +781,28 @@ export async function fetchAccount360Intelligence(limit = 50) {
   })
   return data
 }
+
+export interface Account360Detail extends Record<string, unknown> {
+  account_key: string
+  customer_name: string
+  current_stage: string
+  priority: string
+  partner_focus: string[]
+  product_focus: string[]
+  source_counts: Record<string, number>
+  commercial_value: Record<string, number | string>
+  detail_summary: Record<string, unknown>
+  commercial_questions: Record<string, unknown>
+  commercial_asset_coverage: Record<string, boolean>
+  object_timeline: Array<Record<string, unknown>>
+  next_commercial_motion: Record<string, unknown>
+  customer_safe_boundary: string
+  safety: Record<string, boolean>
+}
+
+export async function fetchAccount360Detail(accountKey: string) {
+  const { data } = await http.get<Account360Detail>(
+    `/dashboard/account-360-intelligence/${encodeURIComponent(accountKey)}`,
+  )
+  return data
+}
