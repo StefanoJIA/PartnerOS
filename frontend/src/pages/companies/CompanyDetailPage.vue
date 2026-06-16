@@ -39,6 +39,10 @@
       />
 
       <AccountExecutionCard :company-id="companyId" context-label="公司详情" />
+      <CustomerValueIntelligenceCard
+        :company-id="companyId"
+        :company-name="String(company.company_name || '')"
+      />
 
       <el-card shadow="never">
         <template #header>快捷动作</template>
@@ -223,6 +227,7 @@ import {
 import CompanyEnrichmentPanel from '@/components/enrichment/CompanyEnrichmentPanel.vue'
 import { ElMessage } from 'element-plus'
 import AccountExecutionCard from '@/components/business/AccountExecutionCard.vue'
+import CustomerValueIntelligenceCard from '@/components/business/CustomerValueIntelligenceCard.vue'
 
 const route = useRoute()
 const companyId = computed(() => route.params.companyId as string)
