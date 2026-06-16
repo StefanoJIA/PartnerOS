@@ -13,6 +13,7 @@ import {
   fetchPartnerPerformanceIntelligence,
   fetchProductMarketFitIntelligence,
   fetchRevenueForecastIntelligence,
+  fetchWinLossFactorDetail,
   fetchWinLossIntelligenceDashboard,
   type Account360Intelligence,
   type BusinessExecution,
@@ -38,6 +39,7 @@ vi.mock('@/api/dashboard', () => ({
   fetchProductMarketFitIntelligence: vi.fn(),
   fetchRevenueForecastIntelligence: vi.fn(),
   fetchWinLossIntelligenceDashboard: vi.fn(),
+  fetchWinLossFactorDetail: vi.fn(),
 }))
 
 const payload = {
@@ -259,6 +261,37 @@ const accountDetailPayload = {
   safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
 }
 
+const winLossFactorDetailPayload = {
+  factor: 'load',
+  summary: {
+    record_count: 2,
+    won: 1,
+    lost: 1,
+    commercial_amount: 140000,
+    opportunity_records: 1,
+    quote_learning_records: 1,
+  },
+  items: [
+    {
+      outcome: 'won',
+      reason_category: 'product_fit',
+      customer: 'HOSUN buyer',
+      commercial_lesson: 'Validated load range helped the customer choose HOSUN.',
+      path: '/quotes/q1',
+    },
+  ],
+  reason_clusters: [{ name: 'product_fit', won: 1, lost: 1 }],
+  partner_rollup: [{ name: 'HOSUN', won: 1, lost: 1 }],
+  product_rollup: [{ name: 'lifting systems', won: 1, lost: 1 }],
+  competitor_signals: ['local competitor claims faster delivery'],
+  reusable_lessons: ['Validated load range helped the customer choose HOSUN.'],
+  next_quote_guidance: ['Reuse the winning product-fit proof for lifting systems, but keep customer-visible claims reviewed.'],
+  management_questions: {},
+  next_action: 'Use this factor before changing quote wording.',
+  customer_safe_boundary: 'Internal Win/Loss factor detail only. Do not expose cost, margin, supplier private notes, raw IDs, or token values.',
+  safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
+}
+
 const customerValuePayload = {
   items: [
     {
@@ -397,6 +430,7 @@ describe('CommercialIntelligencePage', () => {
     vi.mocked(fetchPartnerPerformanceIntelligence).mockReset()
     vi.mocked(fetchProductMarketFitIntelligence).mockReset()
     vi.mocked(fetchRevenueForecastIntelligence).mockReset()
+    vi.mocked(fetchWinLossFactorDetail).mockReset()
     vi.mocked(fetchWinLossIntelligenceDashboard).mockReset()
     vi.mocked(fetchBusinessExecution).mockResolvedValue(payload)
     vi.mocked(fetchWinLossIntelligenceDashboard).mockResolvedValue(winLossPayload)
@@ -406,6 +440,7 @@ describe('CommercialIntelligencePage', () => {
     vi.mocked(fetchPartnerPerformanceIntelligence).mockResolvedValue(partnerPerformancePayload)
     vi.mocked(fetchRevenueForecastIntelligence).mockResolvedValue(revenueForecastPayload)
     vi.mocked(fetchAccount360Detail).mockResolvedValue(accountDetailPayload as never)
+    vi.mocked(fetchWinLossFactorDetail).mockResolvedValue(winLossFactorDetailPayload as never)
   })
 
   it('renders management questions and six commercial assets', async () => {
@@ -464,5 +499,21 @@ describe('CommercialIntelligencePage', () => {
     expect(wrapper.text()).toContain('Win/Loss ready')
     expect(wrapper.text()).toContain('Q-HOSUN-001')
     expect(wrapper.text()).toContain('Do not expose cost, margin, supplier private notes')
+  })
+
+  it('opens Win/Loss factor detail for reusable quote learning', async () => {
+    const wrapper = mount(CommercialIntelligencePage, { global: { plugins: [ElementPlus] } })
+    await flushPromises()
+
+    await wrapper.findAll('button').find((button) => button.text() === 'Win/Loss factor detail')?.trigger('click')
+    await flushPromises()
+
+    expect(fetchWinLossFactorDetail).toHaveBeenCalledWith('load')
+    expect(wrapper.text()).toContain('Win/Loss factor detail')
+    expect(wrapper.text()).toContain('Use this factor before changing quote wording.')
+    expect(wrapper.text()).toContain('Reusable quote guidance')
+    expect(wrapper.text()).toContain('Validated load range helped the customer choose HOSUN.')
+    expect(wrapper.text()).toContain('local competitor claims faster delivery')
+    expect(wrapper.text()).toContain('Internal Win/Loss factor detail only')
   })
 })

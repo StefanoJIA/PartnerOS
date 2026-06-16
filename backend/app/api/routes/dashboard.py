@@ -33,6 +33,7 @@ from app.services.business_execution import (
     build_partner_performance_intelligence,
     build_product_market_fit_intelligence,
     build_revenue_forecast_intelligence,
+    build_win_loss_factor_detail,
     build_win_loss_intelligence,
 )
 from app.services.daily_decision_queue import (
@@ -75,6 +76,19 @@ def dashboard_win_loss_intelligence(
     _: User = Depends(get_current_user),
 ):
     return build_win_loss_intelligence(db, limit=limit)
+
+
+@router.get("/win-loss-intelligence/factor-detail")
+def dashboard_win_loss_factor_detail(
+    factor: str = Query(..., min_length=1),
+    limit: int = Query(50, ge=1, le=100),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    data = build_win_loss_factor_detail(db, factor=factor, limit=limit)
+    if data is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Win/Loss factor detail not found")
+    return data
 
 
 @router.get("/customer-value-intelligence")

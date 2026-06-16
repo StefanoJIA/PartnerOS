@@ -237,6 +237,7 @@
                 <el-tag size="small" effect="plain">{{ primaryText(item, ['product_focus', 'product', 'product_family'], '产品线') }}</el-tag>
               </div>
               <p class="mt-1 text-xs text-slate-600">{{ primaryText(item, ['next_quote_guidance', 'management_answer', 'commercial_lesson'], '复用前先确认客户语境和产品证据。') }}</p>
+              <el-button class="mt-1" size="small" link type="primary" @click="openWinLossFactor(item)">Win/Loss factor detail</el-button>
             </div>
             <p v-if="!filteredDecisionFactors.length" class="mt-2 text-sm text-slate-500">当前筛选下暂无报价经验。</p>
           </div>
@@ -349,6 +350,75 @@
         </template>
       </div>
     </el-drawer>
+
+    <el-drawer v-model="factorDetailVisible" title="Win/Loss factor detail" size="560px">
+      <div v-loading="factorDetailLoading" class="space-y-4">
+        <el-alert v-if="factorDetailError" type="error" :closable="false" :title="factorDetailError" />
+        <template v-if="factorDetail">
+          <section>
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h3 class="text-base font-semibold text-slate-900">{{ factorDetail.factor }}</h3>
+                <p class="mt-1 text-sm text-slate-600">{{ factorDetail.next_action }}</p>
+              </div>
+              <el-tag type="primary" effect="plain">{{ asRecord(factorDetail.summary).record_count ?? 0 }} records</el-tag>
+            </div>
+          </section>
+
+          <section class="grid gap-2 sm:grid-cols-3">
+            <div class="rounded border border-slate-100 bg-slate-50 p-3">
+              <p class="text-xs text-slate-500">Won</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ asRecord(factorDetail.summary).won ?? 0 }}</p>
+            </div>
+            <div class="rounded border border-slate-100 bg-slate-50 p-3">
+              <p class="text-xs text-slate-500">Lost</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ asRecord(factorDetail.summary).lost ?? 0 }}</p>
+            </div>
+            <div class="rounded border border-slate-100 bg-slate-50 p-3">
+              <p class="text-xs text-slate-500">Commercial amount</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ money(asRecord(factorDetail.summary).commercial_amount) }}</p>
+            </div>
+          </section>
+
+          <section class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Reusable quote guidance</h4>
+            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+              <li v-for="item in factorGuidance.slice(0, 6)" :key="item">{{ item }}</li>
+            </ul>
+          </section>
+
+          <section class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Partner / product coverage</h4>
+            <div class="mt-2 flex flex-wrap gap-1">
+              <el-tag v-for="item in factorPartnerTags" :key="item" size="small" effect="plain">{{ item }}</el-tag>
+              <el-tag v-for="item in factorProductTags" :key="item" size="small" type="success" effect="plain">{{ item }}</el-tag>
+            </div>
+          </section>
+
+          <section class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Experience samples</h4>
+            <div v-for="item in factorItems.slice(0, 6)" :key="rowKey(item)" class="mt-2 rounded bg-slate-50 p-2">
+              <div class="flex flex-wrap items-center gap-1">
+                <el-tag size="small" :type="String(item.outcome) === 'won' ? 'success' : String(item.outcome) === 'lost' ? 'danger' : 'info'" effect="plain">{{ item.outcome }}</el-tag>
+                <el-tag size="small" effect="plain">{{ item.reason_category }}</el-tag>
+              </div>
+              <p class="mt-1 text-sm text-slate-800">{{ item.customer || item.quote_number || item.opportunity_name }}</p>
+              <p class="mt-1 text-xs text-slate-600">{{ item.commercial_lesson }}</p>
+              <el-button v-if="item.path" class="mt-1" size="small" link type="primary" @click="go(String(item.path))">Open source object</el-button>
+            </div>
+          </section>
+
+          <section v-if="factorCompetitors.length" class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Competitor / alternative signals</h4>
+            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+              <li v-for="item in factorCompetitors" :key="item">{{ item }}</li>
+            </ul>
+          </section>
+
+          <el-alert type="warning" :closable="false" show-icon :title="factorDetail.customer_safe_boundary" />
+        </template>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -363,6 +433,7 @@ import {
   fetchPartnerPerformanceIntelligence,
   fetchProductMarketFitIntelligence,
   fetchRevenueForecastIntelligence,
+  fetchWinLossFactorDetail,
   fetchWinLossIntelligenceDashboard,
   type Account360Detail,
   type Account360Intelligence,
@@ -371,6 +442,7 @@ import {
   type PartnerPerformanceIntelligence,
   type ProductMarketFitIntelligence,
   type RevenueForecastIntelligence,
+  type WinLossFactorDetail,
   type WinLossIntelligenceDashboard,
 } from '@/api/dashboard'
 
@@ -387,6 +459,10 @@ const accountDetail = ref<Account360Detail | null>(null)
 const accountDetailVisible = ref(false)
 const accountDetailLoading = ref(false)
 const accountDetailError = ref('')
+const factorDetail = ref<WinLossFactorDetail | null>(null)
+const factorDetailVisible = ref(false)
+const factorDetailLoading = ref(false)
+const factorDetailError = ref('')
 const customerValue = ref<CustomerValueIntelligence | null>(null)
 const partnerPerformance = ref<PartnerPerformanceIntelligence | null>(null)
 const revenueForecast = ref<RevenueForecastIntelligence | null>(null)
@@ -400,6 +476,15 @@ const commercial = computed(() => data.value?.commercial_intelligence)
 const detailSummary = computed(() => asRecord(accountDetail.value?.detail_summary))
 const detailQuestions = computed(() => asRecord(accountDetail.value?.commercial_questions))
 const textTimeline = computed(() => asList(accountDetail.value?.object_timeline))
+const factorItems = computed(() => asList(factorDetail.value?.items))
+const factorGuidance = computed(() => textList(factorDetail.value?.next_quote_guidance))
+const factorCompetitors = computed(() => textList(factorDetail.value?.competitor_signals))
+const factorPartnerTags = computed(() =>
+  uniqueText(asList(factorDetail.value?.partner_rollup).flatMap((item) => [item.name, item.partner_focus, item.partner_name])),
+)
+const factorProductTags = computed(() =>
+  uniqueText(asList(factorDetail.value?.product_rollup).flatMap((item) => [item.name, item.product_focus, item.product_family])),
+)
 const coverageTags = computed(() => {
   const coverage = asRecord(accountDetail.value?.commercial_asset_coverage)
   return [
@@ -656,6 +741,27 @@ async function openAccount360(item: Row) {
     accountDetailError.value = err instanceof Error ? err.message : 'Account 360 detail failed to load.'
   } finally {
     accountDetailLoading.value = false
+  }
+}
+
+async function openWinLossFactor(item: Row) {
+  const factor = primaryText(item, ['factor', 'decision_factor', 'reason_category', 'product_focus'], '').trim()
+  if (!factor) {
+    factorDetailError.value = 'Win/Loss factor is missing.'
+    factorDetail.value = null
+    factorDetailVisible.value = true
+    return
+  }
+  factorDetailVisible.value = true
+  factorDetailLoading.value = true
+  factorDetailError.value = ''
+  try {
+    factorDetail.value = await fetchWinLossFactorDetail(factor)
+  } catch (err) {
+    factorDetail.value = null
+    factorDetailError.value = err instanceof Error ? err.message : 'Win/Loss factor detail failed to load.'
+  } finally {
+    factorDetailLoading.value = false
   }
 }
 

@@ -945,6 +945,21 @@ def main() -> int:
                 "/api/dashboard/win-loss-intelligence",
                 headers={"Authorization": f"Bearer {token}"},
             )
+            win_loss_route_data_preview = win_loss_route.json() if win_loss_route.status_code == 200 else {}
+            first_win_loss_factor = (
+                win_loss_route_data_preview.get("decision_factor_rows", [{}])[0].get("factor")
+                if win_loss_route_data_preview.get("decision_factor_rows")
+                else None
+            )
+            win_loss_factor_detail_route = (
+                client.get(
+                    "/api/dashboard/win-loss-intelligence/factor-detail",
+                    params={"factor": first_win_loss_factor},
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+                if first_win_loss_factor
+                else None
+            )
             customer_value_route = client.get(
                 "/api/dashboard/customer-value-intelligence",
                 headers={"Authorization": f"Bearer {token}"},
@@ -999,6 +1014,11 @@ def main() -> int:
             )
         )
         win_loss_route_data = win_loss_route.json() if win_loss_route.status_code == 200 else {}
+        win_loss_factor_detail_data = (
+            win_loss_factor_detail_route.json()
+            if win_loss_factor_detail_route is not None and win_loss_factor_detail_route.status_code == 200
+            else {}
+        )
         checks.append(
             (
                 "route win-loss intelligence dashboard",
@@ -1013,6 +1033,21 @@ def main() -> int:
                     and item.get("safety", {}).get("customer_forbidden_fields_exposed") is False
                     for item in win_loss_route_data.get("items", [])
                 ),
+            )
+        )
+        checks.append(
+            (
+                "route win-loss factor detail",
+                win_loss_factor_detail_route is not None
+                and win_loss_factor_detail_route.status_code == 200
+                and win_loss_factor_detail_data.get("factor")
+                and isinstance(win_loss_factor_detail_data.get("summary"), dict)
+                and isinstance(win_loss_factor_detail_data.get("items"), list)
+                and isinstance(win_loss_factor_detail_data.get("next_quote_guidance"), list)
+                and isinstance(win_loss_factor_detail_data.get("partner_rollup"), list)
+                and isinstance(win_loss_factor_detail_data.get("product_rollup"), list)
+                and win_loss_factor_detail_data.get("safety", {}).get("external_message_sent") is False
+                and win_loss_factor_detail_data.get("safety", {}).get("customer_forbidden_fields_exposed") is False,
             )
         )
         customer_value_route_data = customer_value_route.json() if customer_value_route.status_code == 200 else {}

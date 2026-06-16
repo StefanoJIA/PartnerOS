@@ -1735,6 +1735,88 @@ def build_win_loss_intelligence(db: Session, limit: int = 80) -> dict[str, objec
     }
 
 
+def build_win_loss_factor_detail(db: Session, factor: str, limit: int = 50) -> dict[str, object] | None:
+    normalized = unquote(factor or "").strip()
+    if not normalized:
+        return None
+    needle = normalized.lower()
+    library = build_win_loss_intelligence(db, limit=200)
+    items = [
+        item
+        for item in library.get("items", [])
+        if needle in " ".join(
+            [
+                str(item.get("reason_category") or ""),
+                str(item.get("commercial_lesson") or ""),
+                str(item.get("next_quote_guidance") or ""),
+                str(item.get("competitor_signal") or ""),
+                " ".join(str(value) for value in item.get("decision_factors", []) or []),
+                " ".join(str(value) for value in item.get("product_focus", []) or []),
+                str(item.get("partner_focus") or ""),
+            ]
+        ).lower()
+    ][:limit]
+    if not items:
+        return None
+
+    wins = [item for item in items if item.get("outcome") == "won"]
+    losses = [item for item in items if item.get("outcome") == "lost"]
+    reason_rows = _win_loss_rollup(items, "reason_category")
+    partner_rows = _win_loss_rollup(items, "partner_focus")
+    product_rows = _win_loss_rollup(items, "product_focus")
+    next_quote_guidance = _merge_unique(
+        [str(item.get("next_quote_guidance") or "") for item in items],
+        limit=8,
+    )
+    competitor_signals = _merge_unique(
+        [
+            str(item.get("competitor_signal") or "")
+            for item in items
+            if item.get("competitor_signal") and item.get("competitor_signal") != "competitor not recorded"
+        ],
+        limit=8,
+    )
+    reusable_lessons = _merge_unique(
+        [str(item.get("commercial_lesson") or "") for item in items],
+        limit=8,
+    )
+    return {
+        "factor": normalized,
+        "summary": {
+            "record_count": len(items),
+            "won": len(wins),
+            "lost": len(losses),
+            "open_or_unclear": len([item for item in items if item.get("outcome") not in {"won", "lost"}]),
+            "win_rate": round(len(wins) / (len(wins) + len(losses)), 2) if wins or losses else None,
+            "commercial_amount": round(sum(_win_loss_record_amount(item) for item in items), 2),
+            "opportunity_records": len([item for item in items if item.get("source_type") == "opportunity"]),
+            "quote_learning_records": len([item for item in items if item.get("source_type") == "quote_learning"]),
+        },
+        "items": items,
+        "reason_clusters": reason_rows,
+        "partner_rollup": partner_rows,
+        "product_rollup": product_rows,
+        "competitor_signals": competitor_signals,
+        "reusable_lessons": reusable_lessons,
+        "next_quote_guidance": next_quote_guidance,
+        "management_questions": {
+            "why_this_factor_wins": wins[:8],
+            "why_this_factor_loses": losses[:8],
+            "how_to_reuse_next_quote": next_quote_guidance,
+            "which_partners_products_are_affected": {
+                "partners": partner_rows[:8],
+                "products": product_rows[:8],
+            },
+        },
+        "next_action": "Use this factor detail before changing quote wording, campaign targeting, product proof, or partner positioning.",
+        "customer_safe_boundary": (
+            "Internal Win/Loss factor detail only. Do not expose cost, margin, pricing breakdown, supplier private notes, "
+            "raw IDs, token values, internal scoring, or unreviewed competitor/customer notes to customer Portal."
+        ),
+        "safety": _safety_flags(),
+    }
+
+
 def _build_win_loss_intelligence(db: Session) -> list[dict[str, object]]:
     return list(build_win_loss_intelligence(db, limit=16).get("items", []))
 

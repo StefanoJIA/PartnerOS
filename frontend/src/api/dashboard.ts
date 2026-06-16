@@ -604,6 +604,29 @@ export async function fetchWinLossIntelligenceDashboard(limit = 80) {
   return data
 }
 
+export interface WinLossFactorDetail extends Record<string, unknown> {
+  factor: string
+  summary: Record<string, number | string | null>
+  items: Array<Record<string, unknown>>
+  reason_clusters: Array<Record<string, unknown>>
+  partner_rollup: Array<Record<string, unknown>>
+  product_rollup: Array<Record<string, unknown>>
+  competitor_signals: string[]
+  reusable_lessons: string[]
+  next_quote_guidance: string[]
+  management_questions: Record<string, unknown>
+  next_action: string
+  customer_safe_boundary: string
+  safety: Record<string, boolean>
+}
+
+export async function fetchWinLossFactorDetail(factor: string, limit = 50) {
+  const { data } = await http.get<WinLossFactorDetail>('/dashboard/win-loss-intelligence/factor-detail', {
+    params: { factor, limit },
+  })
+  return data
+}
+
 export interface CustomerValueIntelligence {
   items: Array<Record<string, unknown>>
   summary: {
