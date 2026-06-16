@@ -660,13 +660,21 @@ export interface PartnerPerformanceIntelligence {
     risk_partner_count: number
     p1_partner_count: number
     feedback_issue_count: number
+    quote_allocation_candidate_count: number
+    pilot_candidate_count: number
+    allocation_risk_count: number
   }
   items: Array<Record<string, unknown>>
   top_investment_candidates: Array<Record<string, unknown>>
+  quote_allocation_candidates: Array<Record<string, unknown>>
+  pilot_candidates: Array<Record<string, unknown>>
+  allocation_risks: Array<Record<string, unknown>>
+  product_line_allocation: Array<Record<string, unknown>>
   delivery_or_feedback_risks: Array<Record<string, unknown>>
   partner_scoreboard: Array<Record<string, unknown>>
   management_questions: Record<string, unknown>
   next_action: string
+  customer_safe_boundary: string
   safety: Record<string, boolean>
 }
 

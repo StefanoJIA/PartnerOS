@@ -2454,6 +2454,96 @@ def _partner_performance_health(
     )
 
 
+def _partner_allocation_profile(
+    *,
+    quote_support_amount: Decimal,
+    order_amount: Decimal,
+    quote_support_count: int,
+    order_count: int,
+    win_rate: float,
+    on_time_delivery_rate: float | None,
+    feedback_issue_count: int,
+    delayed_or_blocked_orders: int,
+    missing_inputs: list[str],
+    risk_signals: list[str],
+    product_focus: list[str],
+) -> dict[str, object]:
+    score = 25
+    score += min(order_count * 12, 24)
+    score += min(quote_support_count * 5, 20)
+    score += min(int(win_rate * 24), 24)
+    if on_time_delivery_rate is not None:
+        score += min(int(on_time_delivery_rate * 16), 16)
+    if product_focus:
+        score += min(len(product_focus) * 2, 10)
+    score -= min(feedback_issue_count * 8, 24)
+    score -= min(delayed_or_blocked_orders * 10, 25)
+    score -= min(len(risk_signals) * 8, 24)
+    score -= min(len(missing_inputs) * 3, 15)
+    score = max(0, min(score, 100))
+
+    commercial_amount = order_amount if order_amount > 0 else quote_support_amount
+    if score >= 75 and order_count:
+        allocation_fit = "allocate_next_quotes"
+        pilot_fit = "pilot_candidate"
+        action = "Allocate the next matching quote or pilot opportunity, while keeping delivery and feedback monitoring current."
+    elif score >= 55 and quote_support_count:
+        allocation_fit = "selective_quote_allocation"
+        pilot_fit = "needs_conversion_proof"
+        action = "Use this partner selectively on matching quotes and capture win/loss learning before pilot expansion."
+    elif feedback_issue_count or delayed_or_blocked_orders or risk_signals:
+        allocation_fit = "hold_expansion_until_risk_review"
+        pilot_fit = "pilot_risk"
+        action = "Do not expand high-value allocation until delivery, feedback, or partner risk signals are reviewed."
+    elif missing_inputs:
+        allocation_fit = "complete_inputs_before_allocation"
+        pilot_fit = "needs_partner_inputs"
+        action = "Complete product, delivery, resource, and customer-safe inputs before using this partner for commercial allocation."
+    else:
+        allocation_fit = "exploratory_support_only"
+        pilot_fit = "early_candidate"
+        action = "Use only for exploratory quote support until conversion, delivery, and feedback evidence exists."
+
+    return {
+        "allocation_score": score,
+        "allocation_fit": allocation_fit,
+        "pilot_fit": pilot_fit,
+        "commercial_amount": _decimal_to_float(commercial_amount),
+        "quote_support_amount": _decimal_to_float(quote_support_amount),
+        "order_amount": _decimal_to_float(order_amount),
+        "delivery_confidence": on_time_delivery_rate,
+        "conversion_confidence": win_rate,
+        "service_risk_count": feedback_issue_count + delayed_or_blocked_orders + len(risk_signals),
+        "product_lines_supported": product_focus,
+        "next_allocation_action": action,
+        "uses_cost_or_margin": False,
+    }
+
+
+def _partner_product_contribution(
+    partner_name: str,
+    product_focus: list[str],
+    allocation_profile: dict[str, object],
+    win_rate: float,
+    feedback_issue_count: int,
+) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    for focus in product_focus[:8]:
+        rows.append(
+            {
+                "partner_name": partner_name,
+                "product_focus": focus,
+                "allocation_fit": allocation_profile.get("allocation_fit"),
+                "pilot_fit": allocation_profile.get("pilot_fit"),
+                "allocation_score": allocation_profile.get("allocation_score"),
+                "win_rate": win_rate,
+                "feedback_issue_count": feedback_issue_count,
+                "next_action": allocation_profile.get("next_allocation_action"),
+            }
+        )
+    return rows
+
+
 def build_partner_performance_intelligence(db: Session, limit: int = 50) -> dict[str, object]:
     partners = db.query(ManufacturingPartner).filter(ManufacturingPartner.is_active.is_(True)).order_by(ManufacturingPartner.updated_at.desc()).limit(24).all()
     items: list[dict[str, object]] = []
@@ -2504,6 +2594,19 @@ def build_partner_performance_intelligence(db: Session, limit: int = 50) -> dict
             missing_inputs=missing_inputs,
             risk_signals=risk_signals,
         )
+        allocation_profile = _partner_allocation_profile(
+            quote_support_amount=quote_support_amount,
+            order_amount=order_amount,
+            quote_support_count=len(quotes),
+            order_count=len(orders),
+            win_rate=win_rate,
+            on_time_delivery_rate=on_time_delivery_rate,
+            feedback_issue_count=feedback_issue_count,
+            delayed_or_blocked_orders=delayed_or_blocked_orders,
+            missing_inputs=missing_inputs,
+            risk_signals=risk_signals,
+            product_focus=product_focus,
+        )
         items.append(
             {
                 "partner_id": str(partner.id),
@@ -2533,7 +2636,19 @@ def build_partner_performance_intelligence(db: Session, limit: int = 50) -> dict
                 "risk_assessment": partner.risk_level or partner.ai_risk_summary or "risk not assessed",
                 "commercial_question": "Which partner deserves the next quote or pilot allocation?",
                 "recommended_action": recommended_action,
-                "next_action": recommended_action,
+                "allocation_profile": allocation_profile,
+                "allocation_fit": allocation_profile.get("allocation_fit"),
+                "pilot_fit": allocation_profile.get("pilot_fit"),
+                "allocation_score": allocation_profile.get("allocation_score"),
+                "product_line_contribution": _partner_product_contribution(
+                    partner.partner_name,
+                    product_focus,
+                    allocation_profile,
+                    win_rate,
+                    feedback_issue_count,
+                ),
+                "next_allocation_action": allocation_profile.get("next_allocation_action"),
+                "next_action": allocation_profile.get("next_allocation_action") or recommended_action,
                 "path": "/partner-onboarding",
                 "customer_safe_boundary": "Internal partner performance judgment only; do not expose supplier private notes, internal scoring, cost, margin, or unreviewed risk notes.",
                 "safety": _safety_flags(),
@@ -2543,6 +2658,7 @@ def build_partner_performance_intelligence(db: Session, limit: int = 50) -> dict
         items,
         key=lambda item: (
             _priority_rank(str(item.get("investment_priority") or "P3")),
+            int(item.get("allocation_score") or 0),
             float(item.get("order_amount") or 0),
             float(item.get("win_rate") or 0),
             int(item.get("quote_support_count") or 0),
@@ -2561,6 +2677,26 @@ def build_partner_performance_intelligence(db: Session, limit: int = 50) -> dict
         for item in items
         if item.get("health") in {"proven_commercial_partner", "quote_support_needs_conversion", "delivery_or_feedback_risk"}
     ][:8]
+    quote_allocation_candidates = [
+        item
+        for item in items
+        if item.get("allocation_fit") in {"allocate_next_quotes", "selective_quote_allocation"}
+    ][:8]
+    pilot_candidates = [item for item in items if item.get("pilot_fit") == "pilot_candidate"][:8]
+    allocation_risks = [
+        item
+        for item in items
+        if item.get("allocation_fit") in {"hold_expansion_until_risk_review", "complete_inputs_before_allocation"}
+    ][:8]
+    product_line_allocation = sorted(
+        [
+            row
+            for item in items
+            for row in list(item.get("product_line_contribution") or [])
+        ],
+        key=lambda row: int(row.get("allocation_score") or 0),
+        reverse=True,
+    )[:24]
     return {
         "summary": {
             "partner_count": len(items),
@@ -2570,15 +2706,25 @@ def build_partner_performance_intelligence(db: Session, limit: int = 50) -> dict
             "risk_partner_count": len(risk_partners),
             "p1_partner_count": sum(1 for item in items if item.get("investment_priority") == "P1"),
             "feedback_issue_count": sum(int(item.get("feedback_issue_count") or 0) for item in items),
+            "quote_allocation_candidate_count": len(quote_allocation_candidates),
+            "pilot_candidate_count": len(pilot_candidates),
+            "allocation_risk_count": len(allocation_risks),
         },
         "items": items,
         "top_investment_candidates": top_investment,
+        "quote_allocation_candidates": quote_allocation_candidates,
+        "pilot_candidates": pilot_candidates,
+        "allocation_risks": allocation_risks,
+        "product_line_allocation": product_line_allocation,
         "delivery_or_feedback_risks": risk_partners[:8],
         "partner_scoreboard": [
             {
                 "partner_name": item.get("partner_name"),
                 "health": item.get("health"),
                 "investment_priority": item.get("investment_priority"),
+                "allocation_fit": item.get("allocation_fit"),
+                "pilot_fit": item.get("pilot_fit"),
+                "allocation_score": item.get("allocation_score"),
                 "quote_support_count": item.get("quote_support_count"),
                 "win_rate": item.get("win_rate"),
                 "order_amount": item.get("order_amount"),
@@ -2590,6 +2736,9 @@ def build_partner_performance_intelligence(db: Session, limit: int = 50) -> dict
         ],
         "management_questions": {
             "which_partner_to_invest": top_investment,
+            "who_gets_next_quote_allocation": quote_allocation_candidates,
+            "who_is_ready_for_pilot": pilot_candidates,
+            "who_should_not_get_expanded_allocation_yet": allocation_risks,
             "which_partner_has_delivery_or_feedback_risk": risk_partners[:8],
             "which_product_lines_are_supported": [
                 {
@@ -2601,7 +2750,11 @@ def build_partner_performance_intelligence(db: Session, limit: int = 50) -> dict
                 for item in items[:12]
             ],
         },
-        "next_action": "Review P1 partner candidates before allocating new quote support, pilot demand, or customer-visible resources.",
+        "next_action": "Use allocation fit before assigning the next quote, pilot demand, or product-line responsibility to a partner.",
+        "customer_safe_boundary": (
+            "Internal partner allocation judgement only. It uses quote/order/delivery/feedback/product evidence and does not expose "
+            "cost, margin, supplier private notes, raw IDs, token values, or internal-only comments."
+        ),
         "safety": _safety_flags(),
     }
 

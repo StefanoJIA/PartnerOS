@@ -205,6 +205,7 @@
                     {{ item.investment_priority || 'P3' }}
                   </el-tag>
                   <el-tag size="small" effect="plain">赢单率 {{ percent(item.win_rate) }}</el-tag>
+                  <el-tag size="small" type="success" effect="plain">{{ item.allocation_score ?? 0 }}/100</el-tag>
                 </div>
               </div>
               <p class="mt-1 text-xs text-slate-600">
@@ -212,10 +213,10 @@
                 反馈问题 {{ item.feedback_issue_count ?? 0 }}
               </p>
               <p class="mt-1 text-xs text-slate-500">
-                {{ item.health || item.capability_health || 'early_partner_candidate' }} /
+                {{ item.allocation_fit || 'exploratory_support_only' }} / {{ item.pilot_fit || 'early_candidate' }} /
                 能力 {{ item.capability_score ?? 'n/a' }}
               </p>
-              <p class="mt-1 text-xs text-slate-500">{{ item.next_action }}</p>
+              <p class="mt-1 text-xs text-slate-500">{{ item.next_allocation_action || item.next_action }}</p>
             </div>
           </div>
           <div class="rounded border border-white bg-white p-3">

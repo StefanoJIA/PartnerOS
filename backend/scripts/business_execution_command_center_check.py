@@ -307,7 +307,14 @@ def main() -> int:
                     and "feedback_issue_count" in item
                     and item.get("health")
                     and item.get("investment_priority") in {"P1", "P2", "P3"}
+                    and isinstance(item.get("allocation_profile"), dict)
+                    and item.get("allocation_fit")
+                    and item.get("pilot_fit")
+                    and isinstance(item.get("allocation_score"), int)
+                    and item.get("allocation_profile", {}).get("uses_cost_or_margin") is False
+                    and isinstance(item.get("product_line_contribution"), list)
                     and item.get("recommended_action")
+                    and item.get("next_allocation_action")
                     for item in partner_performance_items
                 ),
             ),
@@ -315,14 +322,23 @@ def main() -> int:
                 "partner performance answers management questions",
                 isinstance(partner_performance_payload.get("management_questions"), dict)
                 and "which_partner_to_invest" in partner_performance_payload["management_questions"]
+                and "who_gets_next_quote_allocation" in partner_performance_payload["management_questions"]
+                and "who_is_ready_for_pilot" in partner_performance_payload["management_questions"]
+                and "who_should_not_get_expanded_allocation_yet" in partner_performance_payload["management_questions"]
                 and "which_partner_has_delivery_or_feedback_risk" in partner_performance_payload["management_questions"]
-                and isinstance(partner_performance_payload.get("partner_scoreboard"), list),
+                and isinstance(partner_performance_payload.get("partner_scoreboard"), list)
+                and isinstance(partner_performance_payload.get("quote_allocation_candidates"), list)
+                and isinstance(partner_performance_payload.get("pilot_candidates"), list)
+                and isinstance(partner_performance_payload.get("allocation_risks"), list)
+                and isinstance(partner_performance_payload.get("product_line_allocation"), list)
+                and "quote_allocation_candidate_count" in partner_performance_payload.get("summary", {}),
             ),
             (
                 "partner performance safe boundaries",
                 partner_performance_payload.get("safety", {}).get("external_message_sent") is False
                 and partner_performance_payload.get("safety", {}).get("quote_status_changed") is False
                 and partner_performance_payload.get("safety", {}).get("order_status_changed") is False
+                and partner_performance_payload.get("safety", {}).get("customer_forbidden_fields_exposed") is False
                 and all(item.get("safety", {}).get("customer_forbidden_fields_exposed") is False for item in partner_performance_items),
             ),
             (
