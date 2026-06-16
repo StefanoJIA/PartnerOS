@@ -388,6 +388,58 @@ export interface GrowthOpportunityPayload {
 
 export type GrowthOpportunityUpdatePayload = Partial<GrowthOpportunityPayload>
 
+export interface WinLossRecord {
+  id: string
+  source_type: string
+  source_id: string
+  outcome: string
+  customer: string | null
+  opportunity_name: string | null
+  quote_number?: string | null
+  partner_focus: string | null
+  product_focus: string[]
+  commercial_value: string | null
+  competitor_signal: string | null
+  customer_decision_factors: string[]
+  won_reason: string | null
+  lost_reason: string | null
+  commercial_lesson: string
+  next_action: string
+  owner: string | null
+  path: string
+  created_at: string | null
+  updated_at: string | null
+  safety: Record<string, boolean>
+}
+
+export interface WinLossIntelligence {
+  items: WinLossRecord[]
+  summary: {
+    total: number
+    won: number
+    lost: number
+    win_rate: number | null
+    opportunity_records: number
+    quote_learning_records: number
+  }
+  filters: Record<string, string | null>
+  safety: Record<string, boolean>
+}
+
+export interface OpportunityWinLossPayload {
+  outcome: string
+  won_reason?: string | null
+  lost_reason?: string | null
+  competitor_signal?: string | null
+  customer_decision_factors?: string[]
+  product_dimensions?: string[]
+  partner_focus?: string | null
+  product_focus?: string[] | null
+  next_action?: string | null
+  owner?: string | null
+  notes?: string | null
+}
+
 export async function fetchGrowthCampaigns(): Promise<GrowthCampaignWorkspaceList> {
   const { data } = await http.get<V1Envelope<GrowthCampaignWorkspaceList>>('/v1/growth/campaigns')
   return data.data
@@ -442,5 +494,22 @@ export async function updateGrowthOpportunity(
   payload: GrowthOpportunityUpdatePayload,
 ): Promise<GrowthOpportunityRow> {
   const { data } = await http.patch<V1Envelope<GrowthOpportunityRow>>(`/v1/growth/opportunities/${id}`, payload)
+  return data.data
+}
+
+export async function fetchWinLossIntelligence(params?: {
+  outcome?: string
+  partner_focus?: string
+  product_focus?: string
+}): Promise<WinLossIntelligence> {
+  const { data } = await http.get<V1Envelope<WinLossIntelligence>>('/v1/growth/win-loss', { params })
+  return data.data
+}
+
+export async function recordOpportunityWinLoss(
+  id: string,
+  payload: OpportunityWinLossPayload,
+): Promise<WinLossRecord> {
+  const { data } = await http.post<V1Envelope<WinLossRecord>>(`/v1/growth/opportunities/${id}/win-loss`, payload)
   return data.data
 }

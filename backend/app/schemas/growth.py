@@ -268,6 +268,50 @@ class SalesOpportunityUpdate(BaseModel):
         return value
 
 
+WIN_LOSS_OUTCOMES = {"won", "lost", "no_decision", "on_hold"}
+
+
+class OpportunityWinLossRecordIn(BaseModel):
+    outcome: str = "won"
+    won_reason: str | None = None
+    lost_reason: str | None = None
+    competitor_signal: str | None = None
+    customer_decision_factors: list[str] = Field(default_factory=list)
+    product_dimensions: list[str] = Field(default_factory=list)
+    partner_focus: str | None = Field(default=None, max_length=128)
+    product_focus: list[str] | None = None
+    next_action: str | None = None
+    owner: str | None = Field(default=None, max_length=255)
+    notes: str | None = None
+
+    @field_validator("outcome")
+    @classmethod
+    def validate_outcome(cls, value: str) -> str:
+        if value not in WIN_LOSS_OUTCOMES:
+            raise ValueError("unsupported win/loss outcome")
+        return value
+
+    @field_validator("customer_decision_factors", "product_dimensions")
+    @classmethod
+    def normalize_labels(cls, value: list[str]) -> list[str]:
+        seen: set[str] = set()
+        result: list[str] = []
+        for item in value or []:
+            label = item.strip()
+            key = label.lower()
+            if label and key not in seen:
+                seen.add(key)
+                result.append(label)
+        return result[:20]
+
+    @field_validator("product_focus")
+    @classmethod
+    def normalize_win_loss_product_focus(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            return None
+        return _clean_product_focus(value)
+
+
 class OpportunityRecommendationRead(BaseModel):
     id: str
     source_type: str

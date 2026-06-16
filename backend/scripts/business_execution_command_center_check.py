@@ -588,6 +588,20 @@ def main() -> int:
                 headers={"Authorization": f"Bearer {token}"},
                 json={"decision_stage": "negotiation", "probability": 72},
             ) if created_data.get("id") else None
+            win_loss_created = client.post(
+                f"/api/v1/growth/opportunities/{created_data.get('id')}/win-loss",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "outcome": "won",
+                    "won_reason": "Runtime check captured confirmed buying factors without changing quote or order status.",
+                    "competitor_signal": "Alternative supplier compared on delivery and warranty.",
+                    "customer_decision_factors": ["delivery", "warranty", "load"],
+                    "product_dimensions": ["load", "noise", "warranty", "certification"],
+                    "next_action": "Reuse this outcome as internal commercial learning only.",
+                    "owner": "runtime-check",
+                },
+            ) if created_data.get("id") else None
+            win_loss_list = client.get("/api/v1/growth/win-loss", headers={"Authorization": f"Bearer {token}"})
             opp_list_after = client.get("/api/v1/growth/opportunities", headers={"Authorization": f"Bearer {token}"})
             response = client.get("/api/dashboard/business-execution", headers={"Authorization": f"Bearer {token}"})
             company_workspace = (
@@ -720,6 +734,30 @@ def main() -> int:
             )
         )
         checks.append(("route opportunity patch", patched is not None and patched.status_code == 200 and patched.json().get("data", {}).get("probability") == 72))
+        win_loss_data = win_loss_list.json().get("data", {}) if win_loss_list.status_code == 200 else {}
+        checks.append(
+            (
+                "route opportunity win/loss record",
+                win_loss_created is not None
+                and win_loss_created.status_code in {200, 201}
+                and win_loss_created.json().get("data", {}).get("outcome") == "won"
+                and win_loss_created.json().get("data", {}).get("safety", {}).get("quote_status_changed") is False
+                and win_loss_created.json().get("data", {}).get("safety", {}).get("order_status_changed") is False,
+            )
+        )
+        checks.append(
+            (
+                "route win/loss intelligence library",
+                win_loss_list.status_code == 200
+                and win_loss_data.get("summary", {}).get("total", 0) >= 1
+                and any(
+                    item.get("source_id") == created_data.get("id")
+                    and item.get("outcome") == "won"
+                    and item.get("safety", {}).get("external_message_sent") is False
+                    for item in win_loss_data.get("items", [])
+                ),
+            )
+        )
         checks.append(("route opportunity safety", opp_list_after.json().get("data", {}).get("safety", {}).get("email_sent") is False))
         checks.append(
             (

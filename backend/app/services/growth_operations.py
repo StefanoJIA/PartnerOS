@@ -1579,6 +1579,280 @@ def update_growth_campaign_task(db: Session, task_id: UUID, payload: Any, actor:
     return get_growth_campaign_detail(db, task.campaign_id)
 
 
+WIN_LOSS_SAFETY: dict[str, bool] = {
+    "external_message_sent": False,
+    "email_sent": False,
+    "sms_sent": False,
+    "linkedin_sent": False,
+    "customer_notified": False,
+    "supplier_notified": False,
+    "quote_status_changed": False,
+    "order_status_changed": False,
+    "raw_token_recorded": False,
+    "customer_forbidden_fields_exposed": False,
+    "cost_exposed": False,
+    "margin_exposed": False,
+    "supplier_private_notes_exposed": False,
+}
+
+
+FORBIDDEN_WIN_LOSS_TERMS = (
+    "raw token",
+    "api key",
+    "internal cost",
+    "margin",
+    "pricing breakdown",
+    "supplier private",
+    "storage key",
+)
+
+
+def _assert_win_loss_safe_text(*values: str | None) -> None:
+    text = " ".join(value or "" for value in values).lower()
+    for term in FORBIDDEN_WIN_LOSS_TERMS:
+        if term in text:
+            raise ValueError(f"win/loss text contains forbidden term: {term}")
+
+
+def _quote_product_focus_for_learning(quote: Quote) -> list[str]:
+    focus: list[str] = []
+    for line in quote.line_items or []:
+        for value in [line.product_name, line.product_category, line.manual_product_name]:
+            if value:
+                focus.extend(_campaign_focus_terms(str(value)))
+    if focus:
+        return _unique(focus)[:8]
+    return _unique([line.product_category for line in quote.line_items or [] if line.product_category])[:8]
+
+
+def _quote_partner_focus_for_learning(db: Session, quote: Quote) -> str | None:
+    partner_names: list[str] = []
+    for line in quote.line_items or []:
+        partner = db.get(ManufacturingPartner, line.partner_id) if line.partner_id else None
+        if partner and partner.partner_name:
+            partner_names.append(partner.partner_name)
+    if partner_names:
+        return ", ".join(_unique(partner_names)[:4])
+    text = " ".join(_product_text(line) for line in quote.line_items or [])
+    return _match_campaigns(text)[0].partner_focus if text else None
+
+
+def _campaign_focus_terms(value: str) -> list[str]:
+    text = value.lower()
+    terms: list[str] = []
+    for label in [
+        "lifting systems",
+        "desk frames",
+        "desk legs",
+        "lifting columns",
+        "heavy-duty supply",
+        "heavy-duty solutions",
+        "education furniture",
+        "school desks",
+        "school chairs",
+        "project furniture",
+    ]:
+        if label in text:
+            terms.append(label)
+    return terms
+
+
+def _win_loss_decision_factors(*values: str | None, labels: list[str] | None = None) -> list[str]:
+    return _unique([*(labels or []), *[value for value in values if value]])[:8]
+
+
+def _win_loss_record_from_opportunity(row: SalesOpportunity) -> dict[str, Any]:
+    outcome = "won" if row.status == "won" or row.decision_stage == "won" else "lost"
+    reason = row.won_reason if outcome == "won" else row.lost_reason
+    return {
+        "id": f"opportunity:{row.id}",
+        "source_type": "opportunity",
+        "source_id": str(row.id),
+        "outcome": outcome,
+        "customer": row.company.company_name if row.company else row.customer_segment,
+        "opportunity_name": row.opportunity_name,
+        "quote_number": row.quote.quote_number if row.quote else None,
+        "partner_focus": row.partner_focus,
+        "product_focus": row.product_focus or [],
+        "commercial_value": str(row.estimated_value) if row.estimated_value is not None else None,
+        "competitor_signal": row.competition,
+        "customer_decision_factors": _win_loss_decision_factors(reason, row.risk, row.notes),
+        "won_reason": row.won_reason,
+        "lost_reason": row.lost_reason,
+        "commercial_lesson": reason or "Record concrete customer decision reason before reusing this as sales learning.",
+        "next_action": row.next_action or "Turn this outcome into quote/product/partner learning.",
+        "owner": row.owner,
+        "path": _opportunity_path(row),
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+        "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+        "safety": dict(WIN_LOSS_SAFETY),
+    }
+
+
+def _win_loss_record_from_quote_learning(db: Session, row: QuoteLearningRecord) -> dict[str, Any] | None:
+    quote = row.quote
+    if quote is None or quote.is_archived:
+        return None
+    company = db.get(Company, quote.company_id) if quote.company_id else None
+    reason = row.won_reason if row.outcome_status == "won" else row.lost_reason
+    return {
+        "id": f"quote_learning:{row.id}",
+        "source_type": "quote_learning",
+        "source_id": str(row.id),
+        "quote_id": str(quote.id),
+        "quote_number": quote.quote_number,
+        "outcome": row.outcome_status,
+        "customer": company.company_name if company else quote.bill_to_company,
+        "opportunity_name": f"Quote {quote.quote_number}",
+        "partner_focus": _quote_partner_focus_for_learning(db, quote),
+        "product_focus": _quote_product_focus_for_learning(quote),
+        "commercial_value": str(quote.grand_total) if quote.grand_total is not None else None,
+        "competitor_signal": row.competitor_signal,
+        "customer_decision_factors": _win_loss_decision_factors(
+            reason,
+            row.customer_objection,
+            row.price_feedback,
+            row.delivery_feedback,
+            labels=row.product_dimensions or [],
+        ),
+        "won_reason": row.won_reason,
+        "lost_reason": row.lost_reason,
+        "commercial_lesson": reason or row.customer_feedback or "Record concrete quote outcome reason before reusing this as sales learning.",
+        "next_action": row.next_action or "Review whether this quote outcome changes product, partner, or pricing conversation.",
+        "owner": row.owner,
+        "path": f"/quotes/{quote.id}",
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+        "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+        "safety": dict(WIN_LOSS_SAFETY),
+    }
+
+
+def list_win_loss_intelligence(
+    db: Session,
+    *,
+    outcome: str | None = None,
+    partner_focus: str | None = None,
+    product_focus: str | None = None,
+) -> dict[str, Any]:
+    records: list[dict[str, Any]] = []
+    opportunity_rows = (
+        db.query(SalesOpportunity)
+        .filter(
+            (SalesOpportunity.status.in_(["won", "lost"]))
+            | (SalesOpportunity.decision_stage.in_(["won", "lost"]))
+            | (SalesOpportunity.won_reason.isnot(None))
+            | (SalesOpportunity.lost_reason.isnot(None))
+        )
+        .order_by(SalesOpportunity.updated_at.desc())
+        .limit(100)
+        .all()
+    )
+    records.extend(_win_loss_record_from_opportunity(row) for row in opportunity_rows)
+
+    learning_rows = (
+        db.query(QuoteLearningRecord)
+        .filter(QuoteLearningRecord.outcome_status.in_(["won", "lost", "no_decision", "on_hold"]))
+        .order_by(QuoteLearningRecord.updated_at.desc(), QuoteLearningRecord.created_at.desc())
+        .limit(160)
+        .all()
+    )
+    for row in learning_rows:
+        record = _win_loss_record_from_quote_learning(db, row)
+        if record:
+            records.append(record)
+
+    if outcome:
+        records = [record for record in records if record.get("outcome") == outcome]
+    if partner_focus:
+        needle = partner_focus.lower()
+        records = [record for record in records if needle in str(record.get("partner_focus") or "").lower()]
+    if product_focus:
+        needle = product_focus.lower()
+        records = [
+            record
+            for record in records
+            if any(needle in str(item).lower() for item in record.get("product_focus") or [])
+        ]
+
+    records = sorted(records, key=lambda item: item.get("updated_at") or "", reverse=True)[:120]
+    wins = [record for record in records if record.get("outcome") == "won"]
+    losses = [record for record in records if record.get("outcome") == "lost"]
+    return {
+        "items": records,
+        "summary": {
+            "total": len(records),
+            "won": len(wins),
+            "lost": len(losses),
+            "win_rate": round(len(wins) / (len(wins) + len(losses)), 2) if wins or losses else None,
+            "opportunity_records": len([record for record in records if record.get("source_type") == "opportunity"]),
+            "quote_learning_records": len([record for record in records if record.get("source_type") == "quote_learning"]),
+        },
+        "filters": {
+            "outcome": outcome,
+            "partner_focus": partner_focus,
+            "product_focus": product_focus,
+        },
+        "safety": dict(WIN_LOSS_SAFETY),
+    }
+
+
+def record_opportunity_win_loss(db: Session, opportunity_id: UUID, payload: Any, actor: Any | None) -> dict[str, Any] | None:
+    row = get_sales_opportunity(db, opportunity_id)
+    if row is None:
+        return None
+    data = payload.model_dump(exclude_unset=True)
+    _assert_win_loss_safe_text(
+        data.get("won_reason"),
+        data.get("lost_reason"),
+        data.get("competitor_signal"),
+        data.get("next_action"),
+        data.get("notes"),
+        " ".join(data.get("customer_decision_factors") or []),
+        " ".join(data.get("product_dimensions") or []),
+    )
+    outcome = data.get("outcome") or "won"
+    if outcome == "won" and not data.get("won_reason"):
+        raise ValueError("won_reason is required when outcome is won")
+    if outcome == "lost" and not data.get("lost_reason"):
+        raise ValueError("lost_reason is required when outcome is lost")
+
+    row.status = "won" if outcome == "won" else "lost" if outcome == "lost" else row.status
+    row.decision_stage = "won" if outcome == "won" else "lost" if outcome == "lost" else row.decision_stage
+    row.probability = 100 if outcome == "won" else 0 if outcome == "lost" else row.probability
+    if data.get("won_reason") is not None:
+        row.won_reason = data.get("won_reason")
+    if data.get("lost_reason") is not None:
+        row.lost_reason = data.get("lost_reason")
+    if data.get("competitor_signal") is not None:
+        row.competition = data.get("competitor_signal")
+    if data.get("partner_focus") is not None:
+        row.partner_focus = data.get("partner_focus")
+    if data.get("product_focus") is not None:
+        row.product_focus = data.get("product_focus")
+    if data.get("next_action") is not None:
+        row.next_action = data.get("next_action")
+    if data.get("owner") is not None:
+        row.owner = data.get("owner")
+    notes = data.get("notes")
+    factors = data.get("customer_decision_factors") or []
+    dimensions = data.get("product_dimensions") or []
+    learning_note_parts = []
+    if factors:
+        learning_note_parts.append("Decision factors: " + ", ".join(factors))
+    if dimensions:
+        learning_note_parts.append("Product dimensions: " + ", ".join(dimensions))
+    if notes:
+        learning_note_parts.append(notes)
+    if learning_note_parts:
+        existing = row.notes or ""
+        row.notes = (existing + "\n" if existing else "") + "\n".join(learning_note_parts)
+    if actor:
+        row.updated_by_id = actor.id
+    db.commit()
+    db.refresh(row)
+    return _win_loss_record_from_opportunity(row)
+
+
 def list_sales_opportunities(db: Session) -> dict[str, Any]:
     rows = (
         db.query(SalesOpportunity)

@@ -17,6 +17,7 @@ from app.schemas.growth import (
     GrowthCampaignTaskCreate,
     GrowthCampaignTaskUpdate,
     GrowthCampaignUpdate,
+    OpportunityWinLossRecordIn,
     SalesOpportunityCreate,
     SalesOpportunityUpdate,
 )
@@ -26,8 +27,10 @@ from app.services.growth_operations import (
     create_growth_campaign_task,
     create_sales_opportunity,
     get_growth_campaign_detail,
+    list_win_loss_intelligence,
     list_sales_opportunities,
     list_growth_campaigns,
+    record_opportunity_win_loss,
     update_sales_opportunity,
     update_growth_campaign,
     update_growth_campaign_task,
@@ -77,6 +80,24 @@ def get_growth_opportunities(
     return success_envelope(data, request_id=get_request_id(request))
 
 
+@router.get("/win-loss")
+def get_growth_win_loss_intelligence(
+    request: Request,
+    outcome: str | None = None,
+    partner_focus: str | None = None,
+    product_focus: str | None = None,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_permission(PERM_MARKET_READ)),
+):
+    data = list_win_loss_intelligence(
+        db,
+        outcome=outcome,
+        partner_focus=partner_focus,
+        product_focus=product_focus,
+    )
+    return success_envelope(data, request_id=get_request_id(request))
+
+
 @router.post("/opportunities", status_code=status.HTTP_201_CREATED)
 def post_growth_opportunity(
     payload: SalesOpportunityCreate,
@@ -100,6 +121,23 @@ def patch_growth_opportunity(
     if data is None:
         raise HTTPException(status_code=404, detail="sales opportunity not found")
     return success_envelope(data, request_id=get_request_id(request))
+
+
+@router.post("/opportunities/{opportunity_id}/win-loss", status_code=status.HTTP_201_CREATED)
+def post_growth_opportunity_win_loss(
+    opportunity_id: UUID,
+    payload: OpportunityWinLossRecordIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_permission(PERM_MARKET_READ)),
+):
+    try:
+        data = record_opportunity_win_loss(db, opportunity_id, payload, actor)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if data is None:
+        raise HTTPException(status_code=404, detail="sales opportunity not found")
+    return success_envelope(data, request_id=get_request_id(request), status_code=201)
 
 
 @router.get("/campaigns/{campaign_id}")

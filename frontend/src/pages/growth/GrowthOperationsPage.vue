@@ -351,6 +351,99 @@
         </div>
       </section>
 
+      <section class="rounded border border-slate-200 bg-white p-4">
+        <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 class="font-semibold text-slate-900">Win/Loss 商业经验库</h2>
+            <p class="mt-1 text-sm text-slate-600">
+              把项目机会和报价学习中的成交/丢单原因、竞争信号、客户决策因素、成交产品和 Partner 汇总成可查询经验库。
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <el-tag type="success" effect="plain">赢 {{ winLoss?.summary.won ?? 0 }}</el-tag>
+            <el-tag type="danger" effect="plain">输 {{ winLoss?.summary.lost ?? 0 }}</el-tag>
+            <el-tag effect="plain">胜率 {{ formatRate(winLoss?.summary.win_rate) }}</el-tag>
+          </div>
+        </div>
+
+        <div class="grid gap-4 xl:grid-cols-[360px_1fr]">
+          <div class="space-y-3 rounded border border-slate-100 bg-slate-50 p-3">
+            <el-select v-model="winLossForm.opportunity_id" filterable placeholder="选择项目机会">
+              <el-option
+                v-for="row in opportunities"
+                :key="row.id"
+                :label="`${row.opportunity_name} · ${row.partner_focus || 'future partner'}`"
+                :value="row.id"
+              />
+            </el-select>
+            <div class="grid gap-2 sm:grid-cols-2">
+              <el-select v-model="winLossForm.outcome" placeholder="结果">
+                <el-option label="已成交" value="won" />
+                <el-option label="已丢单" value="lost" />
+                <el-option label="无决策" value="no_decision" />
+                <el-option label="暂停" value="on_hold" />
+              </el-select>
+              <el-input v-model="winLossForm.owner" placeholder="Owner" />
+            </div>
+            <el-input v-model="winLossForm.won_reason" type="textarea" :rows="2" placeholder="成交原因：客户为什么选择我们" />
+            <el-input v-model="winLossForm.lost_reason" type="textarea" :rows="2" placeholder="丢单原因：客户为什么没有选择我们" />
+            <el-input v-model="winLossForm.competitor_signal" type="textarea" :rows="2" placeholder="竞争对手 / 替代方案 / 客户比较方式" />
+            <el-input v-model="winLossForm.customer_decision_factors_text" placeholder="客户决策因素，逗号分隔：价格、交期、认证、安装、质保..." />
+            <el-input v-model="winLossForm.product_dimensions_text" placeholder="产品维度，逗号分隔：load, noise, warranty, delivery consistency..." />
+            <el-input v-model="winLossForm.next_action" type="textarea" :rows="2" placeholder="下一步：复盘报价、更新产品话术、沉淀 Partner 经验等" />
+            <el-button type="primary" :loading="savingWinLoss" :disabled="!winLossForm.opportunity_id" @click="saveWinLoss">
+              保存 Win/Loss 记录
+            </el-button>
+            <p class="text-xs text-slate-500">
+              只记录内部商业经验；不自动发送客户消息，不自动改报价或订单状态，不记录 token、成本、利润或供应商私密信息。
+            </p>
+          </div>
+
+          <div class="min-w-0">
+            <el-table :data="winLoss?.items || []" border empty-text="暂无 Win/Loss 商业经验">
+              <el-table-column label="结果 / 客户" min-width="190">
+                <template #default="{ row }">
+                  <div class="flex flex-wrap items-center gap-1">
+                    <el-tag size="small" :type="row.outcome === 'won' ? 'success' : row.outcome === 'lost' ? 'danger' : 'info'" effect="plain">
+                      {{ outcomeLabel(row.outcome) }}
+                    </el-tag>
+                    <el-tag size="small" effect="plain">{{ sourceLabel(row.source_type) }}</el-tag>
+                  </div>
+                  <div class="mt-1 font-medium text-slate-800">{{ row.customer || row.opportunity_name || row.quote_number }}</div>
+                  <div class="mt-1 text-xs text-slate-500">{{ row.partner_focus || 'future partner' }}</div>
+                </template>
+              </el-table-column>
+              <el-table-column label="商业经验" min-width="340">
+                <template #default="{ row }">
+                  <p class="text-xs font-medium text-slate-800">{{ row.commercial_lesson }}</p>
+                  <p class="mt-1 text-xs text-slate-600">竞争：{{ row.competitor_signal || '未记录' }}</p>
+                  <div class="mt-1 flex flex-wrap gap-1">
+                    <el-tag v-for="item in row.customer_decision_factors.slice(0, 5)" :key="item" size="small" effect="plain">
+                      {{ item }}
+                    </el-tag>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="产品 / 下一步" min-width="260">
+                <template #default="{ row }">
+                  <div class="flex flex-wrap gap-1">
+                    <el-tag v-for="item in row.product_focus.slice(0, 4)" :key="item" size="small" type="info" effect="plain">
+                      {{ item }}
+                    </el-tag>
+                  </div>
+                  <p class="mt-1 text-xs text-slate-600">{{ row.next_action }}</p>
+                </template>
+              </el-table-column>
+              <el-table-column label="入口" width="90">
+                <template #default="{ row }">
+                  <el-button size="small" link type="primary" @click="go(row.path)">打开</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </div>
+      </section>
+
       <section class="grid gap-3 lg:grid-cols-3">
         <div class="rounded border border-slate-200 bg-white p-4">
           <h2 class="font-semibold text-slate-900">销售易能力适配</h2>
@@ -533,6 +626,8 @@ import {
   fetchGrowthCampaigns,
   fetchGrowthOpportunities,
   fetchGrowthOperationsConsole,
+  fetchWinLossIntelligence,
+  recordOpportunityWinLoss,
   updateGrowthCampaign,
   updateGrowthCampaignTask,
   updateGrowthOpportunity,
@@ -542,6 +637,7 @@ import {
   type GrowthOpportunityRecommendation,
   type GrowthOpportunityRow,
   type GrowthOutreachSequence,
+  type WinLossIntelligence,
 } from '@/api/growthOperations'
 
 const router = useRouter()
@@ -549,6 +645,7 @@ const data = ref<GrowthOperationsConsole | null>(null)
 const workspaceCampaigns = ref<GrowthCampaignWorkspaceRow[]>([])
 const workspaceDetail = ref<GrowthCampaignWorkspaceDetail | null>(null)
 const opportunities = ref<GrowthOpportunityRow[]>([])
+const winLoss = ref<WinLossIntelligence | null>(null)
 const opportunityStageOptions = ref<Array<{ value: string; label: string }>>([
   { value: 'discovery', label: '需求发现' },
   { value: 'qualified', label: '已确认机会' },
@@ -575,6 +672,7 @@ const recording = ref(false)
 const savingCampaign = ref(false)
 const savingTask = ref(false)
 const savingOpportunity = ref(false)
+const savingWinLoss = ref(false)
 const editingOpportunityId = ref('')
 
 const campaignForm = ref({
@@ -620,6 +718,18 @@ const opportunityForm = ref({
   notes: '',
 })
 
+const winLossForm = ref({
+  opportunity_id: '',
+  outcome: 'won',
+  won_reason: '',
+  lost_reason: '',
+  competitor_signal: '',
+  customer_decision_factors_text: 'price, delivery, certification',
+  product_dimensions_text: 'load, stability, noise, warranty, delivery',
+  next_action: '把本次结果沉淀到报价话术、产品维度和 Partner 选择判断。',
+  owner: '业务负责人',
+})
+
 const selectedSequence = computed<GrowthOutreachSequence | null>(() => {
   if (!data.value) return null
   return data.value.outreach_sequences.find((row) => row.campaign_id === selectedCampaignId.value) || null
@@ -650,14 +760,16 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    const [consoleData, workspaceData, opportunityData] = await Promise.all([
+    const [consoleData, workspaceData, opportunityData, winLossData] = await Promise.all([
       fetchGrowthOperationsConsole(),
       fetchGrowthCampaigns(),
       fetchGrowthOpportunities(),
+      fetchWinLossIntelligence(),
     ])
     data.value = consoleData
     workspaceCampaigns.value = workspaceData.campaigns
     opportunities.value = opportunityData.opportunities
+    winLoss.value = winLossData
     opportunityStageOptions.value = opportunityData.stage_options
     opportunityStatusOptions.value = opportunityData.status_options
     if (!selectedCampaignId.value) selectedCampaignId.value = data.value.campaigns[0]?.id || ''
@@ -681,6 +793,10 @@ async function reloadOpportunities() {
   opportunities.value = data.opportunities
   opportunityStageOptions.value = data.stage_options
   opportunityStatusOptions.value = data.status_options
+}
+
+async function reloadWinLoss() {
+  winLoss.value = await fetchWinLossIntelligence()
 }
 
 async function loadWorkspaceDetail(id?: string) {
@@ -848,6 +964,51 @@ async function saveOpportunity() {
   }
 }
 
+function splitLabels(value: string) {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+async function saveWinLoss() {
+  if (!winLossForm.value.opportunity_id) {
+    ElMessage.warning('请先选择项目机会。')
+    return
+  }
+  if (winLossForm.value.outcome === 'won' && !winLossForm.value.won_reason.trim()) {
+    ElMessage.warning('成交记录需要填写成交原因。')
+    return
+  }
+  if (winLossForm.value.outcome === 'lost' && !winLossForm.value.lost_reason.trim()) {
+    ElMessage.warning('丢单记录需要填写丢单原因。')
+    return
+  }
+  savingWinLoss.value = true
+  try {
+    const selected = opportunities.value.find((row) => row.id === winLossForm.value.opportunity_id)
+    await recordOpportunityWinLoss(winLossForm.value.opportunity_id, {
+      outcome: winLossForm.value.outcome,
+      won_reason: winLossForm.value.won_reason || null,
+      lost_reason: winLossForm.value.lost_reason || null,
+      competitor_signal: winLossForm.value.competitor_signal || null,
+      customer_decision_factors: splitLabels(winLossForm.value.customer_decision_factors_text),
+      product_dimensions: splitLabels(winLossForm.value.product_dimensions_text),
+      partner_focus: selected?.partner_focus || null,
+      product_focus: selected?.product_focus || null,
+      next_action: winLossForm.value.next_action || null,
+      owner: winLossForm.value.owner || null,
+      notes: 'Win/Loss 商业经验库人工记录；未自动发送外部消息，未自动修改报价或订单状态。',
+    })
+    await Promise.all([reloadOpportunities(), reloadWinLoss()])
+    ElMessage.success('已保存 Win/Loss 商业经验。')
+  } catch (err) {
+    ElMessage.error(formatApiError(err, 'Win/Loss 记录保存失败。'))
+  } finally {
+    savingWinLoss.value = false
+  }
+}
+
 function loadOpportunityIntoForm(row: GrowthOpportunityRow) {
   editingOpportunityId.value = row.id
   opportunityForm.value = {
@@ -878,6 +1039,25 @@ function recommendationSourceLabel(sourceType: string) {
   if (sourceType === 'quote_learning') return '报价学习'
   if (sourceType === 'partner_fit') return 'Partner 匹配'
   return sourceType
+}
+
+function sourceLabel(sourceType: string) {
+  if (sourceType === 'opportunity') return '机会'
+  if (sourceType === 'quote_learning') return '报价学习'
+  return sourceType
+}
+
+function outcomeLabel(outcome: string) {
+  if (outcome === 'won') return '赢单'
+  if (outcome === 'lost') return '丢单'
+  if (outcome === 'no_decision') return '无决策'
+  if (outcome === 'on_hold') return '暂停'
+  return outcome
+}
+
+function formatRate(value: number | null | undefined) {
+  if (value === null || value === undefined) return '暂无'
+  return `${Math.round(value * 100)}%`
 }
 
 function stageGateLabel(health: string) {
