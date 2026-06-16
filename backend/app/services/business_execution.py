@@ -2604,6 +2604,292 @@ def build_revenue_forecast_intelligence(db: Session, limit: int = 80) -> dict[st
     }
 
 
+def _find_revenue_forecast_item(
+    db: Session,
+    *,
+    source_type: str,
+    source_id: str,
+) -> dict[str, object] | None:
+    normalized_type = unquote(source_type or "").strip()
+    normalized_id = unquote(source_id or "").strip()
+    if not normalized_type or not normalized_id:
+        return None
+    forecast = build_revenue_forecast_intelligence(db, limit=240)
+    for item in forecast.get("forecast_items", []):
+        if not isinstance(item, dict):
+            continue
+        if item.get("source_type") == normalized_type and str(item.get("source_id") or "") == normalized_id:
+            return item
+    return None
+
+
+def _forecast_related_account_context(
+    db: Session,
+    *,
+    company_id: object | None,
+    customer_name: str | None,
+) -> dict[str, object]:
+    if company_id:
+        account = build_account_360_detail(db, account_key=f"company:{company_id}")
+        if account:
+            return {
+                "account_key": account.get("account_key"),
+                "customer_name": account.get("customer_name"),
+                "current_stage": account.get("current_stage"),
+                "priority": account.get("priority"),
+                "commercial_value": account.get("commercial_value"),
+                "next_commercial_motion": account.get("next_commercial_motion"),
+                "path": f"/companies/{company_id}",
+            }
+    if customer_name:
+        accounts = build_account_360_intelligence(db, limit=160).get("items", [])
+        for account in accounts:
+            if isinstance(account, dict) and str(account.get("customer_name") or "").lower() == customer_name.lower():
+                return {
+                    "account_key": account.get("account_key"),
+                    "customer_name": account.get("customer_name"),
+                    "current_stage": account.get("current_stage"),
+                    "priority": account.get("priority"),
+                    "commercial_value": account.get("commercial_value"),
+                    "next_commercial_motion": account.get("next_commercial_motion"),
+                    "path": account.get("path") or "/companies",
+                }
+    return {}
+
+
+def _forecast_quote_evidence(db: Session, quote: Quote) -> dict[str, object]:
+    company = db.get(Company, quote.company_id) if quote.company_id else None
+    learning_records = quote.learning_records or []
+    return {
+        "quote_id": str(quote.id),
+        "quote_number": quote.quote_number,
+        "status": quote.status,
+        "customer_name": _safe_company_name(company, quote.bill_to_company),
+        "commercial_amount": _decimal_to_float(quote.grand_total),
+        "product_focus": _quote_product_focus(quote),
+        "partner_focus": ", ".join(_quote_partner_names(db, quote)) or _partner_focus_from_text(*_quote_product_focus(quote)),
+        "follow_up_date": quote.follow_up_date.isoformat() if quote.follow_up_date else None,
+        "valid_until": quote.valid_until.isoformat() if quote.valid_until else None,
+        "learning_records": [
+            {
+                "outcome_status": learning.outcome_status,
+                "won_reason": learning.won_reason,
+                "lost_reason": learning.lost_reason,
+                "customer_objection": learning.customer_objection,
+                "competitor_signal": learning.competitor_signal,
+                "product_dimensions": learning.product_dimensions or [],
+            }
+            for learning in learning_records[:8]
+        ],
+        "commercial_intelligence": build_quote_commercial_intelligence(quote),
+        "path": f"/quotes/{quote.id}",
+    }
+
+
+def _forecast_order_evidence(db: Session, order: CustomerOrder) -> dict[str, object]:
+    company = db.get(Company, order.company_id) if order.company_id else None
+    delayed_or_blocked = [milestone for milestone in order.production_milestones if milestone.status in {"delayed", "blocked"}]
+    feedback_tickets = (
+        db.query(FeedbackTicket)
+        .filter(FeedbackTicket.order_id == order.id)
+        .order_by(FeedbackTicket.updated_at.desc(), FeedbackTicket.created_at.desc())
+        .limit(12)
+        .all()
+    )
+    product_focus = _merge_unique(
+        [
+            *_product_focus_from_text(*[line.product_name for line in order.line_items]),
+            *[line.product_category for line in order.line_items if line.product_category],
+        ],
+        limit=8,
+    )
+    return {
+        "order_id": str(order.id),
+        "order_number": order.order_number,
+        "status": order.status,
+        "customer_name": _safe_company_name(company, order.bill_to_company),
+        "commercial_amount": _decimal_to_float(order.grand_total),
+        "product_focus": product_focus,
+        "partner_focus": ", ".join(_order_partner_names(db, order)) or _partner_focus_from_text(*product_focus),
+        "production_milestones": [
+            {
+                "milestone_id": str(milestone.id),
+                "milestone_name": milestone.milestone_label,
+                "milestone_type": milestone.milestone_type,
+                "status": milestone.status,
+                "planned_date": milestone.planned_date.isoformat() if milestone.planned_date else None,
+                "actual_date": milestone.actual_date.isoformat() if milestone.actual_date else None,
+            }
+            for milestone in order.production_milestones[:12]
+        ],
+        "shipment_plans": [
+            {
+                "shipment_plan_id": str(plan.id),
+                "status": plan.status,
+                "estimated_ship_date": plan.estimated_ship_date.isoformat() if plan.estimated_ship_date else None,
+                "estimated_arrival_date": plan.estimated_arrival_date.isoformat() if plan.estimated_arrival_date else None,
+                "shipment_method": plan.shipment_method,
+                "tracking_number": plan.tracking_number,
+            }
+            for plan in order.shipment_plans[:12]
+        ],
+        "feedback_tickets": [
+            {
+                "ticket_id": str(ticket.id),
+                "subject": ticket.subject,
+                "status": ticket.status,
+                "priority": ticket.priority,
+                "feedback_type": ticket.feedback_type,
+            }
+            for ticket in feedback_tickets
+        ],
+        "delivery_signal": "delayed_or_blocked" if delayed_or_blocked else "shipment_plan_present" if order.shipment_plans else "shipment_plan_missing",
+        "path": f"/orders/{order.id}",
+    }
+
+
+def build_revenue_forecast_detail(
+    db: Session,
+    *,
+    source_type: str,
+    source_id: str,
+) -> dict[str, object] | None:
+    item = _find_revenue_forecast_item(db, source_type=source_type, source_id=source_id)
+    if item is None:
+        return None
+
+    normalized_type = str(item.get("source_type") or "")
+    normalized_id = str(item.get("source_id") or "")
+    opportunity_evidence: dict[str, object] | None = None
+    quote_evidence: dict[str, object] | None = None
+    order_evidence: dict[str, object] | None = None
+    source_paths = _merge_unique([str(item.get("path") or "")], limit=8)
+    company_id: object | None = None
+
+    try:
+        source_uuid = UUID(normalized_id)
+    except ValueError:
+        return None
+
+    if normalized_type == "opportunity":
+        opportunity = db.get(SalesOpportunity, source_uuid)
+        if opportunity is None:
+            return None
+        company_id = opportunity.company_id
+        opportunity_evidence = {
+            "opportunity_id": str(opportunity.id),
+            "opportunity_name": opportunity.opportunity_name,
+            "status": opportunity.status,
+            "stage": opportunity.stage,
+            "probability": opportunity.probability,
+            "estimated_value": _decimal_to_float(opportunity.estimated_value),
+            "expected_close_date": opportunity.expected_close_date.isoformat() if opportunity.expected_close_date else None,
+            "partner_focus": opportunity.partner_focus,
+            "product_focus": opportunity.product_focus or [],
+            "risk": opportunity.risk,
+            "blocker": opportunity.blocker,
+            "competition": opportunity.competition,
+            "next_action": opportunity.next_action,
+            "path": _opportunity_path(opportunity),
+        }
+        source_paths = _merge_unique([*source_paths, _opportunity_path(opportunity)], limit=8)
+        if opportunity.quote_id:
+            quote = db.get(Quote, opportunity.quote_id)
+            if quote and not quote.is_archived:
+                quote_evidence = _forecast_quote_evidence(db, quote)
+                source_paths = _merge_unique([*source_paths, str(quote_evidence["path"])], limit=8)
+        if opportunity.order_id:
+            order = db.get(CustomerOrder, opportunity.order_id)
+            if order:
+                order_evidence = _forecast_order_evidence(db, order)
+                source_paths = _merge_unique([*source_paths, str(order_evidence["path"])], limit=8)
+    elif normalized_type == "quote":
+        quote = db.get(Quote, source_uuid)
+        if quote is None or quote.is_archived:
+            return None
+        company_id = quote.company_id
+        quote_evidence = _forecast_quote_evidence(db, quote)
+        source_paths = _merge_unique([*source_paths, str(quote_evidence["path"])], limit=8)
+    elif normalized_type == "order_backlog":
+        order = db.get(CustomerOrder, source_uuid)
+        if order is None:
+            return None
+        company_id = order.company_id
+        order_evidence = _forecast_order_evidence(db, order)
+        source_paths = _merge_unique([*source_paths, str(order_evidence["path"])], limit=8)
+    else:
+        return None
+
+    related_account = _forecast_related_account_context(
+        db,
+        company_id=company_id,
+        customer_name=str(item.get("customer_name") or ""),
+    )
+    forecast_quality = item.get("forecast_quality") if isinstance(item.get("forecast_quality"), dict) else {}
+    risk_level = str(item.get("risk_level") or "low")
+    if risk_level == "high":
+        next_action = "Resolve the recorded risk before counting this amount as dependable future revenue."
+    elif item.get("forecast_confidence") == "manual_follow_up_needed":
+        next_action = "Follow up manually, capture customer decision factors, and update quote learning after response."
+    elif item.get("source_type") == "order_backlog":
+        next_action = "Track delivery execution and feedback so committed backlog can become repeat-business evidence."
+    else:
+        next_action = str(item.get("next_action") or "Keep owner follow-up current and confirm forecast timing.")
+
+    return {
+        "forecast_key": f"{normalized_type}:{normalized_id}",
+        "source_type": normalized_type,
+        "source_id": normalized_id,
+        "name": item.get("name"),
+        "customer_name": item.get("customer_name"),
+        "partner_focus": item.get("partner_focus"),
+        "product_focus": item.get("product_focus") or [],
+        "summary": {
+            "amount": item.get("amount") or 0,
+            "weighted_amount": item.get("weighted_amount") or 0,
+            "probability": item.get("probability") or 0,
+            "forecast_period": item.get("forecast_period"),
+            "forecast_date": item.get("forecast_date"),
+            "forecast_confidence": item.get("forecast_confidence"),
+            "revenue_bucket": item.get("revenue_bucket"),
+            "risk_level": item.get("risk_level"),
+            "forecast_quality_score": item.get("forecast_quality_score"),
+            "uses_cost_or_margin": False,
+        },
+        "forecast_quality": forecast_quality,
+        "risk_reason": item.get("risk_reason"),
+        "opportunity_evidence": opportunity_evidence,
+        "quote_evidence": quote_evidence,
+        "order_evidence": order_evidence,
+        "related_account": related_account,
+        "source_paths": source_paths,
+        "management_questions": {
+            "why_is_this_future_revenue": {
+                "answer": item.get("revenue_bucket"),
+                "evidence": f"{item.get('source_type')} amount {item.get('amount')} at probability {item.get('probability')}%.",
+            },
+            "what_could_change_forecast": {
+                "risk_level": item.get("risk_level"),
+                "risk_reason": item.get("risk_reason"),
+                "forecast_quality_action": item.get("forecast_quality_action"),
+            },
+            "what_should_happen_next": next_action,
+            "which_account_partner_product_are_involved": {
+                "customer_name": item.get("customer_name"),
+                "partner_focus": item.get("partner_focus"),
+                "product_focus": item.get("product_focus") or [],
+            },
+        },
+        "next_action": next_action,
+        "customer_safe_boundary": (
+            "Internal Revenue Forecast detail only. It uses opportunity, quote, and order amounts/statuses/probabilities; "
+            "do not expose cost, margin, pricing breakdown, supplier private notes, raw IDs, token values, internal scoring, "
+            "or unreviewed risk notes to customer Portal."
+        ),
+        "safety": _safety_flags(),
+    }
+
+
 def _partner_performance_health(
     *,
     quote_support_count: int,

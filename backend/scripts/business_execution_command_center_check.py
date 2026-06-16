@@ -968,6 +968,24 @@ def main() -> int:
                 "/api/dashboard/revenue-forecast-intelligence",
                 headers={"Authorization": f"Bearer {token}"},
             )
+            revenue_forecast_preview = revenue_forecast_route.json() if revenue_forecast_route.status_code == 200 else {}
+            first_forecast_item = (
+                revenue_forecast_preview.get("forecast_items", [{}])[0]
+                if revenue_forecast_preview.get("forecast_items")
+                else {}
+            )
+            revenue_forecast_detail_route = (
+                client.get(
+                    "/api/dashboard/revenue-forecast-intelligence/detail",
+                    params={
+                        "source_type": first_forecast_item.get("source_type"),
+                        "source_id": first_forecast_item.get("source_id"),
+                    },
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+                if first_forecast_item.get("source_type") and first_forecast_item.get("source_id")
+                else None
+            )
             partner_performance_route = client.get(
                 "/api/dashboard/partner-performance-intelligence",
                 headers={"Authorization": f"Bearer {token}"},
@@ -1104,6 +1122,11 @@ def main() -> int:
             )
         )
         revenue_forecast_route_data = revenue_forecast_route.json() if revenue_forecast_route.status_code == 200 else {}
+        revenue_forecast_detail_data = (
+            revenue_forecast_detail_route.json()
+            if revenue_forecast_detail_route is not None and revenue_forecast_detail_route.status_code == 200
+            else {}
+        )
         checks.append(
             (
                 "route revenue forecast intelligence",
@@ -1118,6 +1141,24 @@ def main() -> int:
                     and item.get("safety", {}).get("external_message_sent") is False
                     for item in revenue_forecast_route_data.get("forecast_items", [])
                 ),
+            )
+        )
+        checks.append(
+            (
+                "route revenue forecast detail",
+                revenue_forecast_detail_route is not None
+                and revenue_forecast_detail_route.status_code == 200
+                and revenue_forecast_detail_data.get("forecast_key")
+                and revenue_forecast_detail_data.get("source_type") in {"opportunity", "quote", "order_backlog"}
+                and isinstance(revenue_forecast_detail_data.get("summary"), dict)
+                and "weighted_amount" in revenue_forecast_detail_data.get("summary", {})
+                and isinstance(revenue_forecast_detail_data.get("management_questions"), dict)
+                and "why_is_this_future_revenue" in revenue_forecast_detail_data.get("management_questions", {})
+                and "what_should_happen_next" in revenue_forecast_detail_data.get("management_questions", {})
+                and isinstance(revenue_forecast_detail_data.get("source_paths"), list)
+                and revenue_forecast_detail_data.get("summary", {}).get("uses_cost_or_margin") is False
+                and revenue_forecast_detail_data.get("safety", {}).get("external_message_sent") is False
+                and revenue_forecast_detail_data.get("safety", {}).get("customer_forbidden_fields_exposed") is False,
             )
         )
         partner_performance_route_data = partner_performance_route.json() if partner_performance_route.status_code == 200 else {}

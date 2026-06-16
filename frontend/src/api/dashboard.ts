@@ -709,6 +709,35 @@ export async function fetchRevenueForecastIntelligence(limit = 80) {
   return data
 }
 
+export interface RevenueForecastDetail extends Record<string, unknown> {
+  forecast_key: string
+  source_type: string
+  source_id: string
+  name: string
+  customer_name: string
+  partner_focus: string | null
+  product_focus: string[]
+  summary: Record<string, number | string | boolean | null>
+  forecast_quality: Record<string, unknown>
+  risk_reason: string | null
+  opportunity_evidence: Record<string, unknown> | null
+  quote_evidence: Record<string, unknown> | null
+  order_evidence: Record<string, unknown> | null
+  related_account: Record<string, unknown>
+  source_paths: string[]
+  management_questions: Record<string, unknown>
+  next_action: string
+  customer_safe_boundary: string
+  safety: Record<string, boolean>
+}
+
+export async function fetchRevenueForecastDetail(sourceType: string, sourceId: string) {
+  const { data } = await http.get<RevenueForecastDetail>('/dashboard/revenue-forecast-intelligence/detail', {
+    params: { source_type: sourceType, source_id: sourceId },
+  })
+  return data
+}
+
 export interface PartnerPerformanceIntelligence {
   summary: {
     partner_count: number

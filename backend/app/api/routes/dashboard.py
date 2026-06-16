@@ -34,6 +34,7 @@ from app.services.business_execution import (
     build_partner_performance_intelligence,
     build_product_market_fit_factor_detail,
     build_product_market_fit_intelligence,
+    build_revenue_forecast_detail,
     build_revenue_forecast_intelligence,
     build_win_loss_factor_detail,
     build_win_loss_intelligence,
@@ -109,6 +110,19 @@ def dashboard_revenue_forecast_intelligence(
     _: User = Depends(get_current_user),
 ):
     return build_revenue_forecast_intelligence(db, limit=limit)
+
+
+@router.get("/revenue-forecast-intelligence/detail")
+def dashboard_revenue_forecast_detail(
+    source_type: str = Query(..., min_length=1),
+    source_id: str = Query(..., min_length=1),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    data = build_revenue_forecast_detail(db, source_type=source_type, source_id=source_id)
+    if data is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Revenue Forecast detail not found")
+    return data
 
 
 @router.get("/partner-performance-intelligence")

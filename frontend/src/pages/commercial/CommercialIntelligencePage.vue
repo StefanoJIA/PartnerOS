@@ -282,6 +282,15 @@
                   >
                     Partner performance detail
                   </el-button>
+                  <el-button
+                    v-if="activeAsset === 'forecast' && row.sourceType && row.sourceId"
+                    size="small"
+                    link
+                    type="primary"
+                    @click="openRevenueForecast(row)"
+                  >
+                    Revenue forecast detail
+                  </el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -357,6 +366,96 @@
           </section>
 
           <el-alert type="warning" :closable="false" show-icon :title="accountDetail.customer_safe_boundary" />
+        </template>
+      </div>
+    </el-drawer>
+
+    <el-drawer v-model="forecastDetailVisible" title="Revenue Forecast detail" size="580px">
+      <div v-loading="forecastDetailLoading" class="space-y-4">
+        <el-alert v-if="forecastDetailError" type="error" :closable="false" :title="forecastDetailError" />
+        <template v-if="forecastDetail">
+          <section>
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h3 class="text-base font-semibold text-slate-900">{{ forecastDetail.name }}</h3>
+                <p class="mt-1 text-sm text-slate-600">{{ forecastDetail.next_action }}</p>
+              </div>
+              <el-tag type="primary" effect="plain">{{ asRecord(forecastDetail.summary).forecast_confidence }}</el-tag>
+            </div>
+          </section>
+
+          <section class="grid gap-2 sm:grid-cols-3">
+            <div class="rounded border border-slate-100 bg-slate-50 p-3">
+              <p class="text-xs text-slate-500">Weighted amount</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ money(asRecord(forecastDetail.summary).weighted_amount) }}</p>
+            </div>
+            <div class="rounded border border-slate-100 bg-slate-50 p-3">
+              <p class="text-xs text-slate-500">Probability</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ asRecord(forecastDetail.summary).probability ?? 0 }}%</p>
+            </div>
+            <div class="rounded border border-slate-100 bg-slate-50 p-3">
+              <p class="text-xs text-slate-500">Risk</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ asRecord(forecastDetail.summary).risk_level }}</p>
+            </div>
+          </section>
+
+          <section class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Future revenue evidence</h4>
+            <div class="mt-2 flex flex-wrap gap-1">
+              <el-tag size="small" effect="plain">{{ forecastDetail.source_type }}</el-tag>
+              <el-tag size="small" type="info" effect="plain">{{ asRecord(forecastDetail.summary).revenue_bucket }}</el-tag>
+              <el-tag size="small" type="warning" effect="plain">{{ asRecord(forecastDetail.summary).forecast_period }}</el-tag>
+            </div>
+            <p class="mt-2 text-sm text-slate-700">{{ asRecord(forecastQuestions.why_is_this_future_revenue).evidence }}</p>
+            <p class="mt-1 text-xs text-slate-500">{{ forecastDetail.risk_reason }}</p>
+          </section>
+
+          <section v-if="forecastOpportunity" class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Opportunity evidence</h4>
+            <p class="mt-2 text-sm text-slate-800">{{ forecastOpportunity.opportunity_name }}</p>
+            <div class="mt-1 flex flex-wrap gap-1">
+              <el-tag size="small" effect="plain">{{ forecastOpportunity.status }}</el-tag>
+              <el-tag size="small" type="primary" effect="plain">{{ forecastOpportunity.probability }}%</el-tag>
+            </div>
+            <p class="mt-2 text-xs text-slate-600">{{ forecastOpportunity.next_action || forecastOpportunity.blocker || forecastOpportunity.risk }}</p>
+            <el-button v-if="forecastOpportunity.path" class="mt-1" size="small" link type="primary" @click="go(String(forecastOpportunity.path))">Open opportunity source</el-button>
+          </section>
+
+          <section v-if="forecastQuote" class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Quote evidence</h4>
+            <p class="mt-2 text-sm text-slate-800">{{ forecastQuote.quote_number }}</p>
+            <div class="mt-1 flex flex-wrap gap-1">
+              <el-tag size="small" effect="plain">{{ forecastQuote.status }}</el-tag>
+              <el-tag size="small" type="success" effect="plain">{{ money(forecastQuote.commercial_amount) }}</el-tag>
+            </div>
+            <p class="mt-2 text-xs text-slate-600">{{ textList(forecastQuote.product_focus).join(' / ') }}</p>
+            <el-button v-if="forecastQuote.path" class="mt-1" size="small" link type="primary" @click="go(String(forecastQuote.path))">Open quote</el-button>
+          </section>
+
+          <section v-if="forecastOrder" class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Order backlog evidence</h4>
+            <p class="mt-2 text-sm text-slate-800">{{ forecastOrder.order_number }}</p>
+            <div class="mt-1 flex flex-wrap gap-1">
+              <el-tag size="small" effect="plain">{{ forecastOrder.status }}</el-tag>
+              <el-tag size="small" type="warning" effect="plain">{{ forecastOrder.delivery_signal }}</el-tag>
+              <el-tag size="small" type="success" effect="plain">{{ money(forecastOrder.commercial_amount) }}</el-tag>
+            </div>
+            <p class="mt-2 text-xs text-slate-600">
+              Milestones {{ asList(forecastOrder.production_milestones).length }} /
+              shipment plans {{ asList(forecastOrder.shipment_plans).length }} /
+              feedback {{ asList(forecastOrder.feedback_tickets).length }}
+            </p>
+            <el-button v-if="forecastOrder.path" class="mt-1" size="small" link type="primary" @click="go(String(forecastOrder.path))">Open order</el-button>
+          </section>
+
+          <section v-if="Object.keys(forecastAccount).length" class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Related Account 360 context</h4>
+            <p class="mt-2 text-sm text-slate-800">{{ forecastAccount.customer_name }}</p>
+            <p class="mt-1 text-xs text-slate-600">{{ asRecord(forecastAccount.next_commercial_motion).next_action }}</p>
+            <el-button v-if="forecastAccount.path" class="mt-1" size="small" link type="primary" @click="go(String(forecastAccount.path))">Open account</el-button>
+          </section>
+
+          <el-alert type="warning" :closable="false" show-icon :title="forecastDetail.customer_safe_boundary" />
         </template>
       </div>
     </el-drawer>
@@ -623,6 +722,7 @@ import {
   fetchPartnerPerformanceIntelligence,
   fetchProductMarketFitFactorDetail,
   fetchProductMarketFitIntelligence,
+  fetchRevenueForecastDetail,
   fetchRevenueForecastIntelligence,
   fetchWinLossFactorDetail,
   fetchWinLossIntelligenceDashboard,
@@ -634,6 +734,7 @@ import {
   type PartnerPerformanceIntelligence,
   type ProductMarketFitFactorDetail,
   type ProductMarketFitIntelligence,
+  type RevenueForecastDetail,
   type RevenueForecastIntelligence,
   type WinLossFactorDetail,
   type WinLossIntelligenceDashboard,
@@ -667,6 +768,10 @@ const partnerDetailVisible = ref(false)
 const partnerDetailLoading = ref(false)
 const partnerDetailError = ref('')
 const revenueForecast = ref<RevenueForecastIntelligence | null>(null)
+const forecastDetail = ref<RevenueForecastDetail | null>(null)
+const forecastDetailVisible = ref(false)
+const forecastDetailLoading = ref(false)
+const forecastDetailError = ref('')
 const activeAsset = ref('account360')
 const selectedPartner = ref('')
 const selectedProduct = ref('')
@@ -704,6 +809,11 @@ const partnerQuoteRows = computed(() => asList(partnerDetail.value?.quote_sample
 const partnerOrderRows = computed(() => asList(partnerDetail.value?.order_samples))
 const partnerFeedbackRows = computed(() => asList(partnerDetail.value?.feedback_samples))
 const partnerRiskSignals = computed(() => textList(partnerDetail.value?.risk_signals))
+const forecastQuestions = computed(() => asRecord(forecastDetail.value?.management_questions))
+const forecastOpportunity = computed(() => asRecord(forecastDetail.value?.opportunity_evidence))
+const forecastQuote = computed(() => asRecord(forecastDetail.value?.quote_evidence))
+const forecastOrder = computed(() => asRecord(forecastDetail.value?.order_evidence))
+const forecastAccount = computed(() => asRecord(forecastDetail.value?.related_account))
 const coverageTags = computed(() => {
   const coverage = asRecord(accountDetail.value?.commercial_asset_coverage)
   return [
@@ -902,6 +1012,8 @@ const assetSections = computed(() => [
       ...asList(asRecord(commercial.value?.revenue_forecast).high_probability_projects),
     ]).map((item) => ({
       title: String(item.name || item.customer_name || item.source_type || '预测项目'),
+      sourceType: String(item.source_type || ''),
+      sourceId: String(item.source_id || ''),
       tags: textList([item.source_type, item.risk_level, item.forecast_confidence, item.revenue_bucket]),
       reason: `概率 ${item.probability ?? 0}%，加权金额 ${money(item.weighted_amount)}。`,
       nextAction: String(item.next_action || '保持人工跟进和预测输入更新。'),
@@ -1024,6 +1136,28 @@ async function openPartnerPerformance(item: Row) {
     partnerDetailError.value = err instanceof Error ? err.message : 'Partner Performance detail failed to load.'
   } finally {
     partnerDetailLoading.value = false
+  }
+}
+
+async function openRevenueForecast(item: Row) {
+  const sourceType = String(item.sourceType || item.source_type || '').trim()
+  const sourceId = String(item.sourceId || item.source_id || '').trim()
+  if (!sourceType || !sourceId) {
+    forecastDetailError.value = 'Revenue Forecast source key is missing.'
+    forecastDetail.value = null
+    forecastDetailVisible.value = true
+    return
+  }
+  forecastDetailVisible.value = true
+  forecastDetailLoading.value = true
+  forecastDetailError.value = ''
+  try {
+    forecastDetail.value = await fetchRevenueForecastDetail(sourceType, sourceId)
+  } catch (err) {
+    forecastDetail.value = null
+    forecastDetailError.value = err instanceof Error ? err.message : 'Revenue Forecast detail failed to load.'
+  } finally {
+    forecastDetailLoading.value = false
   }
 }
 

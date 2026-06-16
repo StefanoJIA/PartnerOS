@@ -14,6 +14,7 @@ import {
   fetchPartnerPerformanceIntelligence,
   fetchProductMarketFitFactorDetail,
   fetchProductMarketFitIntelligence,
+  fetchRevenueForecastDetail,
   fetchRevenueForecastIntelligence,
   fetchWinLossFactorDetail,
   fetchWinLossIntelligenceDashboard,
@@ -24,6 +25,7 @@ import {
   type PartnerPerformanceIntelligence,
   type ProductMarketFitFactorDetail,
   type ProductMarketFitIntelligence,
+  type RevenueForecastDetail,
   type RevenueForecastIntelligence,
   type WinLossIntelligenceDashboard,
 } from '@/api/dashboard'
@@ -43,6 +45,7 @@ vi.mock('@/api/dashboard', () => ({
   fetchPartnerPerformanceIntelligence: vi.fn(),
   fetchProductMarketFitFactorDetail: vi.fn(),
   fetchProductMarketFitIntelligence: vi.fn(),
+  fetchRevenueForecastDetail: vi.fn(),
   fetchRevenueForecastIntelligence: vi.fn(),
   fetchWinLossIntelligenceDashboard: vi.fn(),
   fetchWinLossFactorDetail: vi.fn(),
@@ -529,8 +532,9 @@ const revenueForecastPayload = {
   high_probability_projects: [
     {
       name: 'HOSUN heavy-duty lifting project',
-      customer_name: 'HOSUN industrial account',
       source_type: 'opportunity',
+      source_id: 'opp-hosun',
+      customer_name: 'HOSUN industrial account',
       probability: 85,
       weighted_amount: 76000,
       product_focus: ['heavy-duty supply', 'lifting columns'],
@@ -555,6 +559,72 @@ const revenueForecastPayload = {
   safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
 } as unknown as RevenueForecastIntelligence
 
+const revenueForecastDetailPayload = {
+  forecast_key: 'opportunity:opp-hosun',
+  source_type: 'opportunity',
+  source_id: 'opp-hosun',
+  name: 'HOSUN heavy-duty lifting project',
+  customer_name: 'HOSUN industrial account',
+  partner_focus: 'HOSUN',
+  product_focus: ['heavy-duty supply', 'lifting columns'],
+  summary: {
+    amount: 90000,
+    weighted_amount: 76000,
+    probability: 85,
+    forecast_period: '2026-Q3',
+    forecast_date: '2026-08-01',
+    forecast_confidence: 'forecastable',
+    revenue_bucket: 'weighted_pipeline',
+    risk_level: 'medium',
+    forecast_quality_score: 72,
+    uses_cost_or_margin: false,
+  },
+  forecast_quality: { confidence: 'forecastable', revenue_bucket: 'weighted_pipeline', uses_cost_or_margin: false },
+  risk_reason: 'Certification evidence must be confirmed before final quote.',
+  opportunity_evidence: {
+    opportunity_id: 'opp-hosun',
+    opportunity_name: 'HOSUN heavy-duty lifting project',
+    status: 'active',
+    stage: 'proposal',
+    probability: 85,
+    estimated_value: 90000,
+    product_focus: ['heavy-duty supply', 'lifting columns'],
+    next_action: 'Confirm load range and certification evidence before final quote.',
+    path: '/growth-operations',
+  },
+  quote_evidence: {
+    quote_id: 'q-hosun',
+    quote_number: 'Q-HOSUN-FORECAST',
+    status: 'sent',
+    commercial_amount: 90000,
+    product_focus: ['lifting columns'],
+    path: '/quotes/q-hosun',
+  },
+  order_evidence: null,
+  related_account: {
+    account_key: 'company:hosun-industrial',
+    customer_name: 'HOSUN industrial account',
+    current_stage: 'Opportunity',
+    next_commercial_motion: { next_action: 'Use forecast evidence before quote follow-up.' },
+    path: '/companies/hosun-industrial',
+  },
+  source_paths: ['/growth-operations', '/quotes/q-hosun'],
+  management_questions: {
+    why_is_this_future_revenue: {
+      answer: 'weighted_pipeline',
+      evidence: 'opportunity amount 90000 at probability 85%.',
+    },
+    what_could_change_forecast: {
+      risk_level: 'medium',
+      risk_reason: 'Certification evidence must be confirmed before final quote.',
+    },
+    what_should_happen_next: 'Confirm load range and certification evidence before final quote.',
+  },
+  next_action: 'Confirm load range and certification evidence before final quote.',
+  customer_safe_boundary: 'Internal Revenue Forecast detail only. It uses opportunity, quote, and order amounts/statuses/probabilities; do not expose cost, margin, pricing breakdown, supplier private notes, raw IDs, token values, internal scoring, or unreviewed risk notes to customer Portal.',
+  safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
+} as unknown as RevenueForecastDetail
+
 describe('CommercialIntelligencePage', () => {
   beforeEach(() => {
     push.mockReset()
@@ -566,6 +636,7 @@ describe('CommercialIntelligencePage', () => {
     vi.mocked(fetchPartnerPerformanceIntelligence).mockReset()
     vi.mocked(fetchProductMarketFitFactorDetail).mockReset()
     vi.mocked(fetchProductMarketFitIntelligence).mockReset()
+    vi.mocked(fetchRevenueForecastDetail).mockReset()
     vi.mocked(fetchRevenueForecastIntelligence).mockReset()
     vi.mocked(fetchWinLossFactorDetail).mockReset()
     vi.mocked(fetchWinLossIntelligenceDashboard).mockReset()
@@ -577,6 +648,7 @@ describe('CommercialIntelligencePage', () => {
     vi.mocked(fetchPartnerPerformanceDetail).mockResolvedValue(partnerPerformanceDetailPayload)
     vi.mocked(fetchPartnerPerformanceIntelligence).mockResolvedValue(partnerPerformancePayload)
     vi.mocked(fetchProductMarketFitFactorDetail).mockResolvedValue(pmfFactorDetailPayload)
+    vi.mocked(fetchRevenueForecastDetail).mockResolvedValue(revenueForecastDetailPayload)
     vi.mocked(fetchRevenueForecastIntelligence).mockResolvedValue(revenueForecastPayload)
     vi.mocked(fetchAccount360Detail).mockResolvedValue(accountDetailPayload as never)
     vi.mocked(fetchWinLossFactorDetail).mockResolvedValue(winLossFactorDetailPayload as never)
@@ -690,5 +762,24 @@ describe('CommercialIntelligencePage', () => {
     expect(wrapper.text()).toContain('SO-JOOBOO-001')
     expect(wrapper.text()).toContain('Resource pack requested after classroom deployment')
     expect(wrapper.text()).toContain('Do not expose cost, margin, pricing breakdown, supplier private notes')
+  })
+
+  it('opens Revenue Forecast detail for future revenue evidence', async () => {
+    const wrapper = mount(CommercialIntelligencePage, { global: { plugins: [ElementPlus] } })
+    await flushPromises()
+
+    await wrapper.findAll('.el-tabs__item').find((tab) => tab.text() === '收入预测')?.trigger('click')
+    await flushPromises()
+    await wrapper.findAll('button').find((button) => button.text() === 'Revenue forecast detail')?.trigger('click')
+    await flushPromises()
+
+    expect(fetchRevenueForecastDetail).toHaveBeenCalledWith('opportunity', 'opp-hosun')
+    expect(wrapper.text()).toContain('Revenue Forecast detail')
+    expect(wrapper.text()).toContain('Future revenue evidence')
+    expect(wrapper.text()).toContain('opportunity amount 90000 at probability 85%.')
+    expect(wrapper.text()).toContain('Opportunity evidence')
+    expect(wrapper.text()).toContain('Q-HOSUN-FORECAST')
+    expect(wrapper.text()).toContain('Related Account 360 context')
+    expect(wrapper.text()).toContain('Internal Revenue Forecast detail only')
   })
 })
