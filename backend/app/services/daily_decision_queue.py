@@ -17,6 +17,7 @@ from app.models import DailyQueueHandlingRecord, FeedbackTicket, User
 from app.schemas.dashboard_actions import (
     DailyDecisionQueueItem,
     DailyDecisionQueueOut,
+    DailyDecisionQueueRollup,
     DailyDecisionQueueSummary,
     DailyQueueHandlingRecordOut,
     DailyQueueHandlingUpdate,
@@ -498,6 +499,87 @@ def _summary(items: list[DailyDecisionQueueItem], user: User) -> DailyDecisionQu
     )
 
 
+def _rollup_for_key(key: str, label: str, rows: list[DailyDecisionQueueItem]) -> DailyDecisionQueueRollup:
+    sorted_rows = _sort_items(rows)
+    top = sorted_rows[0]
+    return DailyDecisionQueueRollup(
+        key=key,
+        label=label,
+        total=len(rows),
+        p0=sum(1 for item in rows if item.priority == "P0"),
+        p1=sum(1 for item in rows if item.priority == "P1"),
+        affects_d9=sum(1 for item in rows if item.affects_d9),
+        affects_pilot=sum(1 for item in rows if item.affects_pilot),
+        external_input_required=sum(1 for item in rows if item.depends_on_external_input),
+        top_priority=top.priority,
+        top_next_action=top.next_action,
+        source_paths=_merge_paths(item.source_path for item in sorted_rows),
+    )
+
+
+def _merge_paths(paths) -> list[str]:
+    merged: list[str] = []
+    for path in paths:
+        if path and path not in merged:
+            merged.append(path)
+        if len(merged) >= 5:
+            break
+    return merged
+
+
+def _partner_rollup(items: list[DailyDecisionQueueItem]) -> list[DailyDecisionQueueRollup]:
+    buckets: dict[str, list[DailyDecisionQueueItem]] = {}
+    for item in items:
+        key = item.partner_focus or item.customer_or_account or "internal operating"
+        buckets.setdefault(key, []).append(item)
+    return sorted(
+        [_rollup_for_key(key, key, rows) for key, rows in buckets.items()],
+        key=lambda row: (_priority_rank(row.top_priority), -row.total, row.label),
+    )[:12]
+
+
+def _product_rollup(items: list[DailyDecisionQueueItem]) -> list[DailyDecisionQueueRollup]:
+    buckets: dict[str, list[DailyDecisionQueueItem]] = {}
+    for item in items:
+        focus_values = item.product_focus or ["operating system"]
+        for focus in focus_values:
+            buckets.setdefault(focus, []).append(item)
+    return sorted(
+        [_rollup_for_key(key, key, rows) for key, rows in buckets.items()],
+        key=lambda row: (_priority_rank(row.top_priority), -row.affects_pilot, -row.total, row.label),
+    )[:16]
+
+
+def _category_rollup(items: list[DailyDecisionQueueItem]) -> list[DailyDecisionQueueRollup]:
+    buckets: dict[str, list[DailyDecisionQueueItem]] = {}
+    for item in items:
+        buckets.setdefault(item.category, []).append(item)
+    return sorted(
+        [_rollup_for_key(key, key, rows) for key, rows in buckets.items()],
+        key=lambda row: (_priority_rank(row.top_priority), -row.total, row.label),
+    )
+
+
+def _decision_brief(items: list[DailyDecisionQueueItem]) -> list[str]:
+    sorted_items = _sort_items(items)
+
+    def first_line(predicate, prefix: str) -> str | None:
+        item = next((candidate for candidate in sorted_items if predicate(candidate)), None)
+        if item is None:
+            return None
+        return f"{prefix}：{item.title}；下一步：{item.next_action}"
+
+    lines = [
+        first_line(lambda item: item.priority == "P0" and (item.affects_d9 or item.needs_staging_credentials), "先处理 Staging/D9 P0"),
+        first_line(lambda item: item.priority in {"P0", "P1"} and item.depends_on_external_input, "先跟进外部输入"),
+        first_line(lambda item: item.category == "market response", "产品/市场判断"),
+        first_line(lambda item: item.category == "partner onboarding", "Partner 接入阻塞"),
+        first_line(lambda item: item.category in {"order delivery", "feedback"}, "订单/反馈回流"),
+        first_line(lambda item: item.category == "revenue forecast", "收入机会推进"),
+    ]
+    return [line for line in lines if line][:6]
+
+
 def _sort_items(items: list[DailyDecisionQueueItem]) -> list[DailyDecisionQueueItem]:
     return sorted(
         items,
@@ -615,6 +697,10 @@ def build_daily_decision_queue(db: Session, user: User) -> DailyDecisionQueueOut
     return DailyDecisionQueueOut(
         summary=_summary(sorted_items, user),
         items=sorted_items,
+        decision_brief=_decision_brief(sorted_items),
+        partner_rollup=_partner_rollup(sorted_items),
+        product_rollup=_product_rollup(sorted_items),
+        category_rollup=_category_rollup(sorted_items),
         safety={
             "manual_only": True,
             "email_sent": False,

@@ -159,7 +159,25 @@ export type DailyDecisionQueue = {
     external_staging_state: string
   }
   items: DailyDecisionQueueItem[]
+  decision_brief: string[]
+  partner_rollup: DailyDecisionQueueRollup[]
+  product_rollup: DailyDecisionQueueRollup[]
+  category_rollup: DailyDecisionQueueRollup[]
   safety: Record<string, boolean>
+}
+
+export type DailyDecisionQueueRollup = {
+  key: string
+  label: string
+  total: number
+  p0: number
+  p1: number
+  affects_d9: number
+  affects_pilot: number
+  external_input_required: number
+  top_priority: string
+  top_next_action: string
+  source_paths: string[]
 }
 
 export async function fetchDailyDecisionQueue() {

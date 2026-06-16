@@ -162,9 +162,27 @@ class DailyDecisionQueueSummary(BaseModel):
     external_staging_state: str
 
 
+class DailyDecisionQueueRollup(BaseModel):
+    key: str
+    label: str
+    total: int
+    p0: int
+    p1: int
+    affects_d9: int
+    affects_pilot: int
+    external_input_required: int
+    top_priority: str
+    top_next_action: str
+    source_paths: list[str] = Field(default_factory=list)
+
+
 class DailyDecisionQueueOut(BaseModel):
     summary: DailyDecisionQueueSummary
     items: list[DailyDecisionQueueItem]
+    decision_brief: list[str] = Field(default_factory=list)
+    partner_rollup: list[DailyDecisionQueueRollup] = Field(default_factory=list)
+    product_rollup: list[DailyDecisionQueueRollup] = Field(default_factory=list)
+    category_rollup: list[DailyDecisionQueueRollup] = Field(default_factory=list)
     safety: dict[str, bool]
 
 

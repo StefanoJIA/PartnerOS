@@ -3,6 +3,7 @@
     <div class="flex items-center justify-between">
       <h2 class="text-xl font-semibold text-slate-800">行动看板</h2>
       <div class="flex gap-2">
+        <el-button size="small" type="primary" plain @click="router.push({ name: 'daily-decision-queue' })">今日决策队列</el-button>
         <el-button size="small" type="success" plain @click="router.push({ name: 'commercial-intelligence' })">商业智能</el-button>
         <el-button size="small" type="primary" plain @click="router.push({ name: 'demo-walkthrough' })">Demo walkthrough</el-button>
         <el-button size="small" type="warning" plain @click="router.push({ name: 'external-execution' })">外部执行 / Staging</el-button>
