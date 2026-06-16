@@ -43,6 +43,10 @@
         :company-id="companyId"
         :company-name="String(company.company_name || '')"
       />
+      <CommercialMemoryPanel
+        :company-id="companyId"
+        :company-name="String(company.company_name || '')"
+      />
 
       <el-card shadow="never">
         <template #header>快捷动作</template>
@@ -227,6 +231,7 @@ import {
 import CompanyEnrichmentPanel from '@/components/enrichment/CompanyEnrichmentPanel.vue'
 import { ElMessage } from 'element-plus'
 import AccountExecutionCard from '@/components/business/AccountExecutionCard.vue'
+import CommercialMemoryPanel from '@/components/business/CommercialMemoryPanel.vue'
 import CustomerValueIntelligenceCard from '@/components/business/CustomerValueIntelligenceCard.vue'
 
 const route = useRoute()
