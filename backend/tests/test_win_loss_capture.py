@@ -5,7 +5,8 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 from uuid import uuid4
 
-from app.services import growth_operations
+from app.services import business_execution, growth_operations
+from app.services.quotes.quote_learning import build_quote_playbook
 
 
 def test_opportunity_win_loss_capture_does_not_auto_change_stage(monkeypatch):
@@ -75,3 +76,104 @@ def test_opportunity_win_loss_capture_does_not_auto_change_stage(monkeypatch):
     assert record["safety"]["quote_status_changed"] is False
     assert record["safety"]["order_status_changed"] is False
     db.commit.assert_called_once()
+
+
+def test_quote_playbook_reuses_manual_win_loss_learning_without_customer_exposure():
+    quote = SimpleNamespace(
+        id=uuid4(),
+        company_id=None,
+        learning_records=[
+            SimpleNamespace(
+                outcome_status="won",
+                won_reason="Customer trusted stability and load proof.",
+                lost_reason=None,
+                customer_objection=None,
+                reason_category="product_fit",
+                customer_decision_factors=["stability", "project demand"],
+                product_factors=["load", "noise", "certification"],
+                product_dimensions=["load", "stability", "noise"],
+                partner_factors=["delivery support"],
+                delivery_feedback="delivery window accepted",
+            ),
+            SimpleNamespace(
+                outcome_status="lost",
+                won_reason=None,
+                lost_reason="Certification evidence was not ready.",
+                customer_objection="warranty and certification proof needed",
+                reason_category="certification",
+                customer_decision_factors=["certification", "warranty"],
+                product_factors=["warranty", "test cycle"],
+                product_dimensions=["warranty", "certification"],
+                partner_factors=["certification support", "partner capacity"],
+                delivery_feedback="delivery risk before project award",
+            ),
+        ],
+        line_items=[
+            SimpleNamespace(product_name="HOSUN heavy-duty lifting systems", product_category="desk frames", manual_product_name=None)
+        ],
+        partner_allocations=[],
+        partner_splits=[SimpleNamespace(partner=SimpleNamespace(name="HOSUN"))],
+        supplier_confirmations=[],
+        metadata={},
+        partner_focus="HOSUN",
+    )
+
+    playbook = build_quote_playbook(None, quote)
+
+    assert playbook["recommendation_type"] == "internal_quote_playbook"
+    assert playbook["evidence_count"] == 2
+    assert playbook["won_count"] == 1
+    assert playbook["lost_count"] == 1
+    assert "load" in playbook["product_factors"]
+    assert "certification" in playbook["customer_safe_wording_needed"]
+    assert "partner capacity" in playbook["avoid_or_validate_before_sending"]
+    assert playbook["safety"]["customer_notified"] is False
+    assert playbook["safety"]["quote_status_changed"] is False
+    assert "Internal recommendation only" in playbook["customer_safe_boundary"]
+
+
+def test_repeat_business_recommendation_is_internal_manual_action():
+    learning_won = [
+        SimpleNamespace(
+            won_reason="Project buyer accepted classroom deployment proof.",
+            customer_decision_factors=["durability", "delivery consistency"],
+            product_factors=["education furniture", "school desks/chairs"],
+            product_dimensions=["durability", "procurement cycle"],
+            partner_factors=["delivery support"],
+        )
+    ]
+    learning_lost = [
+        SimpleNamespace(
+            lost_reason="Procurement cycle moved to next semester.",
+            customer_objection="delivery consistency evidence needed",
+            reason_category="timing",
+            customer_decision_factors=["procurement cycle"],
+            product_factors=["delivery consistency"],
+            partner_factors=["partner capacity"],
+        )
+    ]
+
+    recommendation = business_execution._repeat_business_recommendation(
+        orders=[SimpleNamespace(id=uuid4())],
+        open_feedback=[],
+        open_quotes=[],
+        opportunities=[],
+        won_learning=learning_won,
+        lost_learning=learning_lost,
+        product_focus=["education furniture", "project furniture"],
+        partner_focus=["JOOBOO"],
+        value_tier="growth_account",
+        next_motion={
+            "owner": "account owner",
+            "reason": "Order and won learning exist without open feedback.",
+            "next_action": "Review delivery outcome before repeat follow-up.",
+        },
+    )
+
+    assert recommendation["recommendation_type"] == "internal_repeat_business_recommendation"
+    assert recommendation["repeat_potential"] == "high"
+    assert "education furniture" in recommendation["recommended_product_family"]
+    assert recommendation["manual_only"] is True
+    assert recommendation["safety"]["external_message_sent"] is False
+    assert "delivery support" in recommendation["quote_playbook_inputs"]["partner_factors_to_validate"]
+    assert "Procurement cycle moved to next semester." in recommendation["quote_playbook_inputs"]["loss_factors_to_avoid"]

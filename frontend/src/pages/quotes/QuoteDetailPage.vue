@@ -551,6 +551,72 @@ onMounted(load)
             </div>
           </div>
         </div>
+        <div v-if="quoteCommercial.quote_playbook" class="quote-playbook mt">
+          <div class="quote-commercial__head">
+            <div>
+              <h4>Quote Playbook / 内部报价复用建议</h4>
+              <p>基于人工记录的 win/loss、客户决策因素、产品因素和 Partner 因素生成；不自动发送，不客户可见。</p>
+            </div>
+            <div class="quote-commercial__tags">
+              <el-tag type="primary" effect="plain">{{ quoteCommercial.quote_playbook.status }}</el-tag>
+              <el-tag effect="plain">evidence {{ quoteCommercial.quote_playbook.evidence_count }}</el-tag>
+              <el-tag type="success" effect="plain">won {{ quoteCommercial.quote_playbook.won_count }}</el-tag>
+              <el-tag type="danger" effect="plain">lost {{ quoteCommercial.quote_playbook.lost_count }}</el-tag>
+            </div>
+          </div>
+          <p class="quote-commercial__action">{{ quoteCommercial.quote_playbook.next_quote_guidance }}</p>
+          <div class="quote-commercial__grid">
+            <div>
+              <div class="quote-commercial__label">本次报价应强调</div>
+              <div class="quote-commercial__chips">
+                <el-tag v-for="item in quoteCommercial.quote_playbook.quote_emphasis" :key="item" size="small" type="success" effect="plain">
+                  {{ item }}
+                </el-tag>
+                <span v-if="!quoteCommercial.quote_playbook.quote_emphasis.length" class="quote-commercial__empty">等待更多赢单证据</span>
+              </div>
+            </div>
+            <div>
+              <div class="quote-commercial__label">发送前需避免 / 验证</div>
+              <div class="quote-commercial__chips">
+                <el-tag v-for="item in quoteCommercial.quote_playbook.avoid_or_validate_before_sending" :key="item" size="small" type="warning" effect="plain">
+                  {{ item }}
+                </el-tag>
+                <span v-if="!quoteCommercial.quote_playbook.avoid_or_validate_before_sending.length" class="quote-commercial__empty">暂无明确丢单风险</span>
+              </div>
+            </div>
+            <div>
+              <div class="quote-commercial__label">需业务确认的话术</div>
+              <div class="quote-commercial__chips">
+                <el-tag v-for="item in quoteCommercial.quote_playbook.customer_safe_wording_needed" :key="item" size="small" type="danger" effect="plain">
+                  {{ item }}
+                </el-tag>
+                <span v-if="!quoteCommercial.quote_playbook.customer_safe_wording_needed.length" class="quote-commercial__empty">暂无高风险客户可见话术</span>
+              </div>
+            </div>
+          </div>
+          <div class="quote-commercial__grid mt">
+            <div>
+              <div class="quote-commercial__label">产品因素</div>
+              <div class="quote-commercial__chips">
+                <el-tag v-for="item in quoteCommercial.quote_playbook.product_factors.slice(0, 8)" :key="item" size="small" effect="plain">{{ item }}</el-tag>
+              </div>
+            </div>
+            <div>
+              <div class="quote-commercial__label">Partner 因素</div>
+              <div class="quote-commercial__chips">
+                <el-tag v-for="item in quoteCommercial.quote_playbook.partner_factors.slice(0, 8)" :key="item" size="small" type="info" effect="plain">{{ item }}</el-tag>
+              </div>
+            </div>
+            <div>
+              <div class="quote-commercial__label">交付 / 认证 / 售后</div>
+              <div class="quote-commercial__chips">
+                <el-tag v-for="item in quoteCommercial.quote_playbook.delivery_certification_service_factors.slice(0, 8)" :key="item" size="small" type="warning" effect="plain">
+                  {{ item }}
+                </el-tag>
+              </div>
+            </div>
+          </div>
+        </div>
         <el-alert class="mt" type="warning" :closable="false" show-icon :title="quoteCommercial.customer_safe_boundary" />
       </section>
 
@@ -1021,6 +1087,7 @@ onMounted(load)
 .quote-commercial__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .quote-commercial__label { margin-bottom: 6px; color: var(--el-text-color-secondary); font-size: 12px; }
 .quote-commercial__empty { color: var(--el-text-color-placeholder); font-size: 12px; }
+.quote-playbook { border: 1px solid var(--el-color-primary-light-7); border-radius: 8px; background: var(--el-color-primary-light-9); padding: 12px; }
 .learning-summary { border: 1px solid var(--el-border-color); border-radius: 8px; background: var(--el-fill-color-light); padding: 12px; }
 .learning-summary__head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 8px; color: var(--el-text-color-secondary); font-size: 13px; }
 .learning-form { max-width: 960px; background: var(--el-fill-color-lighter); padding: 16px; border-radius: 8px; }

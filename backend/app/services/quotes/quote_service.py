@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, object_session
 
 from app.core.errors import ApiError, NOT_FOUND, VALIDATION_ERROR
 from app.models import ProductCatalog, User
@@ -217,6 +217,7 @@ def quote_to_dict(quote: Quote, *, include_internal: bool = True) -> dict[str, A
     from app.services.quotes.quote_partner_readiness import build_quote_partner_readiness
 
     expired = derived_expired(quote)
+    db = object_session(quote)
     warnings: list[str] = []
     if expired:
         warnings.append("quote_validity_expired")
@@ -257,7 +258,7 @@ def quote_to_dict(quote: Quote, *, include_internal: bool = True) -> dict[str, A
         "adjustments": [_serialize_adjustment(a) for a in quote.adjustments],
         "versions_count": len(quote.versions),
         "latest_learning": latest_quote_learning(quote),
-        "commercial_intelligence": build_quote_commercial_intelligence(quote),
+        "commercial_intelligence": build_quote_commercial_intelligence(quote, db),
         "partner_readiness": build_quote_partner_readiness(quote),
         "warnings": warnings,
         "safety": dict(QUOTE_SAFETY),

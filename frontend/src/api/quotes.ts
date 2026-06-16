@@ -101,7 +101,34 @@ export interface QuoteCommercialIntelligence {
   market_response_review_needed: boolean
   quote_learning_impacts: string[]
   readiness_impact: string[]
+  quote_playbook?: QuotePlaybook
   next_best_action: string
+  customer_safe_boundary: string
+  safety: QuoteLearningSafety
+}
+
+export interface QuotePlaybook {
+  recommendation_type: string
+  status: string
+  partner_focus: string
+  product_focus: string[]
+  evidence_count: number
+  won_count: number
+  lost_count: number
+  no_response_count: number
+  deferred_count: number
+  common_winning_factors: string[]
+  common_loss_factors: string[]
+  customer_decision_factors: string[]
+  product_factors: string[]
+  partner_factors: string[]
+  delivery_certification_service_factors: string[]
+  quote_emphasis: string[]
+  avoid_or_validate_before_sending: string[]
+  customer_safe_wording_needed: string[]
+  business_owner_confirmation_needed: string[]
+  next_quote_guidance: string
+  source_scope: string
   customer_safe_boundary: string
   safety: QuoteLearningSafety
 }

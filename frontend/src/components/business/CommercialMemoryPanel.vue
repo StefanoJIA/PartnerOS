@@ -81,6 +81,44 @@
         </div>
       </div>
 
+      <div v-if="repeatRecommendation" class="rounded border border-emerald-100 bg-emerald-50 p-3">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p class="font-semibold text-slate-900">Repeat Business Recommendation / 内部复购建议</p>
+            <p class="mt-1 text-sm text-slate-700">{{ textFrom(repeatRecommendation, ['next_action'], nextCommercialAction) }}</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <el-tag type="success" effect="plain">{{ textFrom(repeatRecommendation, ['repeat_potential'], 'needs_qualification') }}</el-tag>
+            <el-tag effect="plain">{{ textFrom(repeatRecommendation, ['follow_up_timing'], 'manual review') }}</el-tag>
+          </div>
+        </div>
+        <div class="mt-3 grid gap-3 md:grid-cols-3">
+          <div>
+            <p class="text-xs font-medium text-slate-600">推荐产品线</p>
+            <div class="mt-1 flex flex-wrap gap-2">
+              <el-tag v-for="item in arrayFrom(repeatRecommendation.recommended_product_family)" :key="String(item)" size="small" effect="plain">
+                {{ item }}
+              </el-tag>
+              <span v-if="!arrayFrom(repeatRecommendation.recommended_product_family).length" class="text-xs text-slate-500">等待产品线证据</span>
+            </div>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-600">跟进前风险</p>
+            <div class="mt-1 flex flex-wrap gap-2">
+              <el-tag v-for="item in arrayFrom(repeatRecommendation.risk_before_follow_up)" :key="String(item)" size="small" type="warning" effect="plain">
+                {{ item }}
+              </el-tag>
+              <span v-if="!arrayFrom(repeatRecommendation.risk_before_follow_up).length" class="text-xs text-slate-500">暂无明显阻塞</span>
+            </div>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-600">Owner / 原因</p>
+            <p class="mt-1 text-xs text-slate-700">{{ textFrom(repeatRecommendation, ['recommended_owner'], 'account owner') }}</p>
+            <p class="mt-1 text-xs text-slate-600">{{ textFrom(repeatRecommendation, ['reason'], 'Derived from commercial memory.') }}</p>
+          </div>
+        </div>
+      </div>
+
       <div class="grid gap-3 lg:grid-cols-2">
         <div class="rounded border border-slate-100 p-3">
           <p class="font-semibold text-slate-900">为什么赢 / 为什么输</p>
@@ -220,6 +258,20 @@ const nextCommercialAction = computed(() => {
     valueDetail.value?.next_action ||
     '先补齐客户价值、报价经验和反馈证据，再决定下一次商业动作。'
   )
+})
+
+const repeatRecommendation = computed<Record<string, unknown> | null>(() => {
+  const sources = [
+    accountDetail.value?.repeat_business_recommendation,
+    valueDetail.value?.repeat_business_recommendation,
+    (valueDetail.value?.related_account as Record<string, unknown> | undefined)?.repeat_business_recommendation,
+  ]
+  for (const source of sources) {
+    if (source && typeof source === 'object' && Object.keys(source as Record<string, unknown>).length) {
+      return source as Record<string, unknown>
+    }
+  }
+  return null
 })
 
 const winLossLessons = computed(() => {

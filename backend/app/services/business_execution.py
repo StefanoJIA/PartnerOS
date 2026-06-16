@@ -946,7 +946,7 @@ def _build_quotation_intelligence(db: Session) -> list[QuotationIntelligenceItem
     for quote in rows:
         company = db.get(Company, quote.company_id) if quote.company_id else None
         version_count = len(quote.versions)
-        commercial_intelligence = build_quote_commercial_intelligence(quote)
+        commercial_intelligence = build_quote_commercial_intelligence(quote, db)
         partner_readiness = build_quote_partner_readiness(quote, db)
         latest_learning = (
             db.query(QuoteLearningRecord)
@@ -2505,9 +2505,11 @@ def build_customer_value_detail(db: Session, company_id: str) -> dict[str, objec
             "account_key": account_detail.get("account_key"),
             "relationship_depth": account_detail.get("relationship_depth"),
             "next_commercial_motion": account_detail.get("next_commercial_motion") or {},
+            "repeat_business_recommendation": account_detail.get("repeat_business_recommendation") or {},
             "commercial_asset_coverage": account_detail.get("commercial_asset_coverage") or {},
             "path": account_detail.get("path") or profile.get("path"),
         },
+        "repeat_business_recommendation": account_detail.get("repeat_business_recommendation") or {},
         "management_questions": {
             "why_this_customer_matters": {
                 "answer": profile.get("recommended_reason"),
@@ -2522,6 +2524,7 @@ def build_customer_value_detail(db: Session, company_id: str) -> dict[str, objec
             },
             "what_risks_block_value": profile.get("active_risks") or [],
             "what_learning_can_be_reused": lessons,
+            "what_repeat_business_to_try_next": (account_detail.get("repeat_business_recommendation") or {}).get("next_action"),
         },
         "source_paths": _merge_unique(
             [
@@ -3000,7 +3003,7 @@ def _forecast_quote_evidence(db: Session, quote: Quote) -> dict[str, object]:
             }
             for learning in learning_records[:8]
         ],
-        "commercial_intelligence": build_quote_commercial_intelligence(quote),
+        "commercial_intelligence": build_quote_commercial_intelligence(quote, db),
         "path": f"/quotes/{quote.id}",
     }
 
@@ -4641,6 +4644,112 @@ def _account_360_next_commercial_motion(
     }
 
 
+def _repeat_business_recommendation(
+    *,
+    orders: list[CustomerOrder],
+    open_feedback: list[FeedbackTicket],
+    open_quotes: list[Quote],
+    opportunities: list[SalesOpportunity],
+    won_learning: list[QuoteLearningRecord],
+    lost_learning: list[QuoteLearningRecord],
+    product_focus: list[str],
+    partner_focus: list[str],
+    value_tier: str,
+    next_motion: dict[str, object],
+) -> dict[str, object]:
+    won_factors = _merge_unique(
+        [
+            *[row.won_reason or "" for row in won_learning],
+            *[factor for row in won_learning for factor in (row.customer_decision_factors or [])],
+            *[factor for row in won_learning for factor in (row.product_factors or [])],
+            *[factor for row in won_learning for factor in (row.product_dimensions or [])],
+        ],
+        limit=8,
+    )
+    loss_factors = _merge_unique(
+        [
+            *[row.lost_reason or "" for row in lost_learning],
+            *[row.customer_objection or "" for row in lost_learning],
+            *[row.reason_category or "" for row in lost_learning],
+            *[factor for row in lost_learning for factor in (row.customer_decision_factors or [])],
+            *[factor for row in lost_learning for factor in (row.product_factors or [])],
+        ],
+        limit=8,
+    )
+    partner_factors = _merge_unique(
+        [
+            *[factor for row in [*won_learning, *lost_learning] for factor in (row.partner_factors or [])],
+            *partner_focus,
+        ],
+        limit=8,
+    )
+    product_family = _merge_unique(
+        [
+            *product_focus,
+            *[factor for factor in won_factors if any(term in factor.lower() for term in ["lifting", "desk", "school", "education", "furniture"])],
+        ],
+        limit=6,
+    )
+    risk_before_follow_up = _merge_unique(
+        [
+            *[ticket.subject for ticket in open_feedback],
+            *loss_factors,
+            *[
+                factor
+                for factor in partner_factors
+                if any(term in factor.lower() for term in ["capacity", "delivery", "certification", "after-sales", "warranty"])
+            ],
+        ],
+        limit=8,
+    )
+    if open_feedback:
+        repeat_potential = "blocked_by_feedback"
+        timing = "after feedback is resolved and customer-safe response is recorded"
+    elif open_quotes or opportunities:
+        repeat_potential = "active_sales_motion"
+        timing = "after current quote/opportunity response is captured"
+    elif orders and (won_learning or value_tier in {"strategic_account", "growth_account"}):
+        repeat_potential = "high"
+        timing = "within 30 days after delivery/feedback review"
+    elif orders:
+        repeat_potential = "medium"
+        timing = "within 60 days after delivery outcome review"
+    elif lost_learning:
+        repeat_potential = "reactivation_candidate"
+        timing = "after lost factors are resolved or positioning changes"
+    else:
+        repeat_potential = "needs_qualification"
+        timing = "after product fit and project timing are qualified"
+    next_action = str(next_motion.get("next_action") or "Review Account 360 before creating any manual follow-up.")
+    if repeat_potential == "high" and won_factors:
+        next_action = f"Prepare a manual repeat-business quote using {', '.join(won_factors[:3])}; validate risks before outreach."
+    elif repeat_potential == "blocked_by_feedback":
+        next_action = "Resolve feedback and record customer-safe outcome before any repeat-business follow-up."
+    elif repeat_potential == "reactivation_candidate":
+        next_action = "Review lost factors and decide whether a narrower quote or product-fit reactivation is justified."
+    return {
+        "recommendation_type": "internal_repeat_business_recommendation",
+        "repeat_potential": repeat_potential,
+        "recommended_product_family": product_family,
+        "follow_up_timing": timing,
+        "risk_before_follow_up": risk_before_follow_up,
+        "reason": str(next_motion.get("reason") or "Derived from quote/order/feedback/win-loss commercial memory."),
+        "recommended_owner": str(next_motion.get("owner") or "account owner"),
+        "next_action": next_action,
+        "quote_playbook_inputs": {
+            "winning_factors_to_reuse": won_factors,
+            "loss_factors_to_avoid": loss_factors,
+            "partner_factors_to_validate": partner_factors,
+        },
+        "manual_only": True,
+        "customer_safe_boundary": (
+            "Internal repeat-business recommendation only. Do not auto-send outreach, do not expose internal feedback, "
+            "cost, margin, supplier private notes, or unreviewed claims to customers."
+        ),
+        "safety": _safety_flags(),
+    }
+
+
 def _account_360_relationship_map(
     *,
     leads: list[Lead],
@@ -4841,6 +4950,18 @@ def _build_account_360_profile(db: Session, company_id: object) -> dict[str, obj
         value_tier=value_tier,
         path=path,
     )
+    repeat_recommendation = _repeat_business_recommendation(
+        orders=orders,
+        open_feedback=open_feedback,
+        open_quotes=open_quotes,
+        opportunities=open_opportunities,
+        won_learning=won_learning,
+        lost_learning=lost_learning,
+        product_focus=product_focus,
+        partner_focus=partner_focus,
+        value_tier=value_tier,
+        next_motion=next_commercial_motion,
+    )
     return {
         "account_key": f"company:{company.id}",
         "company_id": str(company.id),
@@ -4945,6 +5066,7 @@ def _build_account_360_profile(db: Session, company_id: object) -> dict[str, obj
         "relationship_map": relationship_map,
         "relationship_depth": relationship_map.get("relationship_depth"),
         "next_commercial_motion": next_commercial_motion,
+        "repeat_business_recommendation": repeat_recommendation,
         "next_motion_type": next_commercial_motion.get("motion_type"),
         "next_motion_owner": next_commercial_motion.get("owner"),
         "repeat_business_signal": (

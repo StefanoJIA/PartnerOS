@@ -680,6 +680,7 @@ export interface CustomerValueDetail extends Record<string, unknown> {
   feedback_evidence: Array<Record<string, unknown>>
   win_loss_learning: Record<string, unknown>
   related_account: Record<string, unknown>
+  repeat_business_recommendation?: Record<string, unknown>
   management_questions: Record<string, unknown>
   source_paths: string[]
   next_action: string
@@ -934,6 +935,7 @@ export interface Account360Detail extends Record<string, unknown> {
   commercial_asset_coverage: Record<string, boolean>
   object_timeline: Array<Record<string, unknown>>
   next_commercial_motion: Record<string, unknown>
+  repeat_business_recommendation?: Record<string, unknown>
   customer_safe_boundary: string
   safety: Record<string, boolean>
 }

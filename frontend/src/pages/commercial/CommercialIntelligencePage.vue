@@ -347,6 +347,42 @@
             </div>
           </section>
 
+          <section v-if="Object.keys(accountRepeatRecommendation).length" class="rounded border border-emerald-100 bg-emerald-50 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">内部复购建议 / Repeat Business</h4>
+            <p class="mt-1 text-sm text-slate-700">
+              {{ accountRepeatRecommendation.next_action || '等待更多人工赢输记录和交付反馈。' }}
+            </p>
+            <div class="mt-2 flex flex-wrap gap-1">
+              <el-tag size="small" type="success" effect="plain">
+                {{ accountRepeatRecommendation.repeat_potential || 'needs_qualification' }}
+              </el-tag>
+              <el-tag size="small" effect="plain">
+                {{ accountRepeatRecommendation.follow_up_timing || 'manual review' }}
+              </el-tag>
+              <el-tag size="small" type="info" effect="plain">
+                {{ accountRepeatRecommendation.recommended_owner || 'account owner' }}
+              </el-tag>
+            </div>
+            <div class="mt-2 grid gap-2 sm:grid-cols-2">
+              <div>
+                <p class="text-xs font-medium text-slate-600">推荐产品线</p>
+                <div class="mt-1 flex flex-wrap gap-1">
+                  <el-tag v-for="item in textList(accountRepeatRecommendation.recommended_product_family)" :key="item" size="small" effect="plain">
+                    {{ item }}
+                  </el-tag>
+                </div>
+              </div>
+              <div>
+                <p class="text-xs font-medium text-slate-600">跟进前风险</p>
+                <div class="mt-1 flex flex-wrap gap-1">
+                  <el-tag v-for="item in textList(accountRepeatRecommendation.risk_before_follow_up)" :key="item" size="small" type="warning" effect="plain">
+                    {{ item }}
+                  </el-tag>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <section class="rounded border border-slate-100 p-3">
             <h4 class="text-sm font-semibold text-slate-900">Commercial asset coverage</h4>
             <div class="mt-2 flex flex-wrap gap-1">
@@ -950,6 +986,7 @@ const customerValueQuotes = computed(() => asList(customerValueDetail.value?.quo
 const customerValueOrders = computed(() => asList(customerValueDetail.value?.order_evidence))
 const customerValueOpportunities = computed(() => asList(customerValueDetail.value?.opportunity_evidence))
 const customerValueAccount = computed(() => asRecord(customerValueDetail.value?.related_account))
+const accountRepeatRecommendation = computed(() => asRecord(accountDetail.value?.repeat_business_recommendation))
 const customerValuePartners = computed(() => textList(customerValueDetail.value?.partner_focus))
 const customerValueProducts = computed(() => textList(customerValueDetail.value?.product_focus))
 const customerValueRisks = computed(() => textList(customerValueDetail.value?.active_risks))

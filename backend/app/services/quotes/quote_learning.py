@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from datetime import date, datetime, timezone
 from typing import Any
 from uuid import UUID
@@ -201,6 +202,163 @@ def _dimension_baseline(partner_focus: str) -> list[str]:
     return FUTURE_PARTNER_QUOTE_DIMENSIONS
 
 
+def _merge_unique(values: list[str], limit: int = 8) -> list[str]:
+    seen: set[str] = set()
+    merged: list[str] = []
+    for value in values:
+        text = str(value or "").strip()
+        if not text:
+            continue
+        key = text.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(text)
+        if len(merged) >= limit:
+            break
+    return merged
+
+
+def _top_values(values: list[str], limit: int = 6) -> list[str]:
+    counter = Counter(str(value or "").strip() for value in values if str(value or "").strip())
+    return [value for value, _ in counter.most_common(limit)]
+
+
+def build_quote_playbook(db: Session | None, quote: Quote) -> dict[str, Any]:
+    partner_focus = _partner_focus(quote)
+    product_focus = _quote_product_focus(quote)
+    baseline_dimensions = _dimension_baseline(partner_focus)
+    current_records = list(quote.learning_records or [])
+    historical_records: list[QuoteLearningRecord] = []
+    if db is not None and quote.company_id:
+        quote_ids = [
+            row_id
+            for (row_id,) in (
+                db.query(Quote.id)
+                .filter(Quote.company_id == quote.company_id, Quote.id != quote.id, Quote.is_archived.is_(False))
+                .order_by(Quote.updated_at.desc())
+                .limit(24)
+                .all()
+            )
+        ]
+        if quote_ids:
+            historical_records = (
+                db.query(QuoteLearningRecord)
+                .filter(QuoteLearningRecord.quote_id.in_(quote_ids))
+                .order_by(QuoteLearningRecord.updated_at.desc(), QuoteLearningRecord.created_at.desc())
+                .limit(80)
+                .all()
+            )
+
+    records = [*current_records, *historical_records]
+    won_records = [row for row in records if row.outcome_status == "won"]
+    lost_records = [row for row in records if row.outcome_status == "lost"]
+    no_response_records = [row for row in records if row.outcome_status in {"no_response", "no_decision"}]
+    deferred_records = [row for row in records if row.outcome_status in {"deferred", "on_hold", "still_active"}]
+    winning_factors = _top_values(
+        [
+            *[row.won_reason or "" for row in won_records],
+            *[factor for row in won_records for factor in (row.customer_decision_factors or [])],
+            *[factor for row in won_records for factor in (row.product_factors or [])],
+            *[factor for row in won_records for factor in (row.product_dimensions or [])],
+        ]
+    )
+    loss_factors = _top_values(
+        [
+            *[row.lost_reason or "" for row in lost_records],
+            *[row.customer_objection or "" for row in lost_records],
+            *[row.reason_category or "" for row in lost_records],
+            *[factor for row in lost_records for factor in (row.customer_decision_factors or [])],
+            *[factor for row in lost_records for factor in (row.product_factors or [])],
+        ]
+    )
+    customer_factors = _top_values([factor for row in records for factor in (row.customer_decision_factors or [])], limit=8)
+    product_factors = _top_values(
+        [
+            *[factor for row in records for factor in (row.product_factors or [])],
+            *[factor for row in records for factor in (row.product_dimensions or [])],
+        ],
+        limit=10,
+    )
+    partner_factors = _top_values([factor for row in records for factor in (row.partner_factors or [])], limit=8)
+    delivery_and_service_factors = [
+        factor
+        for factor in _merge_unique(
+            [*[row.delivery_feedback or "" for row in records], *product_factors, *partner_factors],
+            limit=16,
+        )
+        if any(
+            term in factor.lower()
+            for term in ["delivery", "certification", "installation", "after-sales", "warranty", "packaging", "test cycle"]
+        )
+    ][:8]
+    dimensions_needing_wording = [
+        dimension
+        for dimension in baseline_dimensions
+        if dimension in product_factors
+        or dimension in {"load", "stability", "noise", "warranty", "certification", "test cycle", "project demand"}
+    ][:8]
+    quote_emphasis = _merge_unique(
+        [
+            *winning_factors,
+            *[factor for factor in customer_factors if factor not in loss_factors],
+            *[factor for factor in product_factors if factor in baseline_dimensions],
+            *product_focus,
+        ],
+        limit=8,
+    )
+    avoid_or_validate = _merge_unique(
+        [
+            *loss_factors,
+            *[
+                factor
+                for factor in partner_factors
+                if any(term in factor.lower() for term in ["capacity", "delivery", "certification", "after-sales"])
+            ],
+            *[factor for factor in delivery_and_service_factors if factor not in quote_emphasis],
+        ],
+        limit=8,
+    )
+    if quote_emphasis and avoid_or_validate:
+        next_quote_guidance = (
+            f"Emphasize {', '.join(quote_emphasis[:3])}; validate or avoid {', '.join(avoid_or_validate[:3])} before sending."
+        )
+    elif quote_emphasis:
+        next_quote_guidance = f"Emphasize {', '.join(quote_emphasis[:4])} and keep manual follow-up evidence attached to the quote."
+    elif avoid_or_validate:
+        next_quote_guidance = f"Resolve {', '.join(avoid_or_validate[:4])} before treating this quote as ready to advance."
+    else:
+        next_quote_guidance = "Record more manual win/loss evidence before treating this as a repeatable quote playbook."
+    return {
+        "recommendation_type": "internal_quote_playbook",
+        "status": "ready" if records else "needs_manual_outcome_evidence",
+        "partner_focus": partner_focus,
+        "product_focus": product_focus,
+        "evidence_count": len(records),
+        "won_count": len(won_records),
+        "lost_count": len(lost_records),
+        "no_response_count": len(no_response_records),
+        "deferred_count": len(deferred_records),
+        "common_winning_factors": winning_factors,
+        "common_loss_factors": loss_factors,
+        "customer_decision_factors": customer_factors,
+        "product_factors": product_factors,
+        "partner_factors": partner_factors,
+        "delivery_certification_service_factors": delivery_and_service_factors,
+        "quote_emphasis": quote_emphasis,
+        "avoid_or_validate_before_sending": avoid_or_validate,
+        "customer_safe_wording_needed": dimensions_needing_wording,
+        "business_owner_confirmation_needed": dimensions_needing_wording,
+        "next_quote_guidance": next_quote_guidance,
+        "source_scope": "current quote plus same-account historical quote learning" if db is not None else "current quote learning only",
+        "customer_safe_boundary": (
+            "Internal recommendation only. Do not expose as customer feedback, AI output, cost, margin, pricing breakdown, "
+            "supplier private notes, or customer-visible promise without business owner confirmation."
+        ),
+        "safety": dict(QUOTE_LEARNING_SAFETY),
+    }
+
+
 def _quote_due_state(quote: Quote) -> str:
     if quote.follow_up_date and quote.follow_up_date <= date.today() and quote.status not in {"converted_to_order"}:
         return "due"
@@ -209,7 +367,7 @@ def _quote_due_state(quote: Quote) -> str:
     return "missing"
 
 
-def build_quote_commercial_intelligence(quote: Quote) -> dict[str, Any]:
+def build_quote_commercial_intelligence(quote: Quote, db: Session | None = None) -> dict[str, Any]:
     latest = _latest_learning_model(quote)
     learning_records = quote.learning_records or []
     partner_focus = _partner_focus(quote)
@@ -329,6 +487,7 @@ def build_quote_commercial_intelligence(quote: Quote) -> dict[str, Any]:
             if enabled
         ],
         "readiness_impact": readiness_impact,
+        "quote_playbook": build_quote_playbook(db, quote),
         "next_best_action": next_action,
         "customer_safe_boundary": "内部经营判断；进入 Portal 或客户材料前必须经过 customer-safe wording 与 business/security sign-off。",
         "safety": dict(QUOTE_LEARNING_SAFETY),

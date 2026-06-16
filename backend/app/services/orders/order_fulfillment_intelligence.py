@@ -208,7 +208,7 @@ def _build_partner_execution_readiness(
 
 def build_order_fulfillment_intelligence(db: Session, order: CustomerOrder) -> dict[str, Any]:
     quote = db.query(Quote).filter(Quote.id == order.source_quote_id).first()
-    quote_intelligence = build_quote_commercial_intelligence(quote) if quote else {}
+    quote_intelligence = build_quote_commercial_intelligence(quote, db) if quote else {}
     quote_partner_readiness = build_quote_partner_readiness(quote, db) if quote else {}
     delayed = [row for row in order.production_milestones if row.status in {"delayed", "blocked"}]
     completed = [row for row in order.production_milestones if row.status == "completed"]

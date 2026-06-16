@@ -303,6 +303,42 @@
                       只读聚合报价、订单、反馈和交付证据；不自动发送、不改报价/订单状态、不暴露成本或供应商私密信息。
                     </p>
                   </div>
+                  <div
+                    v-if="row.opportunity_playbook_input && (row.opportunity_playbook_input.quote_emphasis.length || row.opportunity_playbook_input.avoid_or_validate_before_sending.length)"
+                    class="mt-3 rounded border border-purple-100 bg-purple-50 p-2"
+                  >
+                    <div class="flex flex-wrap items-center gap-1">
+                      <el-tag size="small" type="primary" effect="plain">内部报价复用</el-tag>
+                      <el-tag v-if="row.opportunity_playbook_input.outcome_status" size="small" effect="plain">
+                        {{ row.opportunity_playbook_input.outcome_status }}
+                      </el-tag>
+                      <el-tag v-if="row.opportunity_playbook_input.reason_category" size="small" type="info" effect="plain">
+                        {{ row.opportunity_playbook_input.reason_category }}
+                      </el-tag>
+                    </div>
+                    <p class="mt-1 text-xs font-medium text-slate-800">{{ row.opportunity_playbook_input.next_quote_guidance }}</p>
+                    <div class="mt-1 flex flex-wrap gap-1">
+                      <el-tag
+                        v-for="item in row.opportunity_playbook_input.quote_emphasis.slice(0, 5)"
+                        :key="`emphasis-${item}`"
+                        size="small"
+                        type="success"
+                        effect="plain"
+                      >
+                        强调 {{ item }}
+                      </el-tag>
+                      <el-tag
+                        v-for="item in row.opportunity_playbook_input.avoid_or_validate_before_sending.slice(0, 5)"
+                        :key="`validate-${item}`"
+                        size="small"
+                        type="warning"
+                        effect="plain"
+                      >
+                        先验证 {{ item }}
+                      </el-tag>
+                    </div>
+                    <p class="mt-1 text-[11px] text-purple-700">仅内部人工建议，不自动改机会/报价/订单状态，不作为客户真实反馈。</p>
+                  </div>
                   <div v-if="row.recommendations?.length" class="mt-3 space-y-2">
                     <div
                       v-for="rec in row.recommendations.slice(0, 2)"

@@ -1312,6 +1312,21 @@ def _serialize_opportunity(row: SalesOpportunity, db: Session | None = None) -> 
     recommendations = _opportunity_recommendations(db, row)
     stage_gate = derive_opportunity_stage_gate(row, recommendations)
     execution_context = build_opportunity_execution_context(db, row, recommendations, stage_gate)
+    quote_emphasis = _unique(
+        [
+            *(row.customer_decision_factors or []),
+            *(row.product_factors or []),
+            *(row.product_focus or []),
+        ]
+    )[:8]
+    validate_before_quote = _unique(
+        [
+            *(row.partner_factors or []),
+            *([row.lost_reason] if row.lost_reason else []),
+            *([row.risk] if row.risk else []),
+            *([row.blocker] if row.blocker else []),
+        ]
+    )[:8]
     return {
         "id": str(row.id),
         "opportunity_name": row.opportunity_name,
@@ -1352,6 +1367,27 @@ def _serialize_opportunity(row: SalesOpportunity, db: Session | None = None) -> 
         "partner_fit": next((item.get("partner_fit") for item in recommendations if item.get("source_type") == "partner_fit"), {}),
         "stage_gate": stage_gate,
         "execution_context": execution_context,
+        "opportunity_playbook_input": {
+            "recommendation_type": "internal_opportunity_playbook_input",
+            "outcome_status": row.outcome_status,
+            "reason_category": row.outcome_reason_category,
+            "quote_emphasis": quote_emphasis,
+            "avoid_or_validate_before_sending": validate_before_quote,
+            "customer_decision_factors": row.customer_decision_factors or [],
+            "product_factors": row.product_factors or [],
+            "partner_factors": row.partner_factors or [],
+            "next_quote_guidance": row.next_action
+            or (
+                "Reuse these manually recorded opportunity factors when preparing the next quote; validate partner capacity, delivery, certification, and after-sales before sending."
+                if quote_emphasis or validate_before_quote
+                else "Record manual outcome factors before treating this opportunity as reusable quote playbook evidence."
+            ),
+            "manual_only": True,
+            "customer_safe_boundary": (
+                "Internal recommendation only. Do not expose as customer feedback or customer-safe wording without business owner confirmation."
+            ),
+            "safety": dict(OPPORTUNITY_EXECUTION_SAFETY),
+        },
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "updated_at": row.updated_at.isoformat() if row.updated_at else None,
     }

@@ -314,6 +314,21 @@ export interface GrowthOpportunityExecutionContext {
   safety?: Record<string, boolean>
 }
 
+export interface GrowthOpportunityPlaybookInput {
+  recommendation_type: string
+  outcome_status: string | null
+  reason_category: string | null
+  quote_emphasis: string[]
+  avoid_or_validate_before_sending: string[]
+  customer_decision_factors: string[]
+  product_factors: string[]
+  partner_factors: string[]
+  next_quote_guidance: string
+  manual_only: boolean
+  customer_safe_boundary: string
+  safety: Record<string, boolean>
+}
+
 export interface GrowthOpportunityRow {
   id: string
   opportunity_name: string
@@ -354,6 +369,7 @@ export interface GrowthOpportunityRow {
   partner_fit?: GrowthOpportunityRecommendation['partner_fit']
   stage_gate: GrowthOpportunityStageGate
   execution_context: GrowthOpportunityExecutionContext
+  opportunity_playbook_input?: GrowthOpportunityPlaybookInput
   created_at: string
   updated_at: string
 }
