@@ -554,3 +554,29 @@ export async function fetchBusinessExecution() {
   const { data } = await http.get<BusinessExecution>('/dashboard/business-execution')
   return data
 }
+
+export interface CustomerValueIntelligence {
+  items: Array<Record<string, unknown>>
+  summary: {
+    total_accounts: number
+    strategic_accounts: number
+    growth_accounts: number
+    active_prospects: number
+    weighted_pipeline_amount: number
+    won_order_amount: number
+    open_quote_amount: number
+  }
+  management_questions: {
+    who_to_follow: Array<unknown>
+    why_follow: Array<unknown>
+    future_revenue_from: Array<Record<string, unknown>>
+  }
+  safety: Record<string, boolean>
+}
+
+export async function fetchCustomerValueIntelligence(limit = 50) {
+  const { data } = await http.get<CustomerValueIntelligence>('/dashboard/customer-value-intelligence', {
+    params: { limit },
+  })
+  return data
+}

@@ -25,7 +25,7 @@ from app.schemas.dashboard_actions import (
     DashboardActionsOut,
 )
 from app.services.dashboard_actions import build_dashboard_actions
-from app.services.business_execution import build_business_execution_center
+from app.services.business_execution import build_business_execution_center, build_customer_value_intelligence
 from app.services.daily_decision_queue import (
     build_daily_decision_queue,
     list_daily_queue_handling,
@@ -57,6 +57,15 @@ def dashboard_business_execution(
     user: User = Depends(get_current_user),
 ) -> BusinessExecutionOut:
     return build_business_execution_center(db, user)
+
+
+@router.get("/customer-value-intelligence")
+def dashboard_customer_value_intelligence(
+    limit: int = Query(50, ge=1, le=100),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    return build_customer_value_intelligence(db, limit=limit)
 
 
 @router.get("/daily-decision-queue/handling", response_model=list[DailyQueueHandlingRecordOut])

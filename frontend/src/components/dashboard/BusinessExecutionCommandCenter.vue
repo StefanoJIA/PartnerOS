@@ -152,11 +152,18 @@
             <div v-for="item in safeCommercial.customer_value.slice(0, 3)" :key="String(item.company_id)" class="mb-2 last:mb-0">
               <div class="flex items-center justify-between gap-2">
                 <span class="text-sm font-medium text-slate-800">{{ item.customer_name }}</span>
-                <el-tag size="small" effect="plain">{{ item.strategic_value }}</el-tag>
+                <div class="flex flex-wrap justify-end gap-1">
+                  <el-tag size="small" effect="plain">{{ item.strategic_value }}</el-tag>
+                  <el-tag size="small" type="primary" effect="plain">{{ item.value_score ?? 0 }}/100</el-tag>
+                </div>
               </div>
               <p class="mt-1 text-xs text-slate-600">
                 报价 {{ money(item.historical_quote_amount) }} / 成交 {{ money(item.won_order_amount) }} / 转化 {{ percent(item.conversion_rate) }}
               </p>
+              <p class="mt-1 text-xs text-slate-500">
+                Pipeline {{ money(item.weighted_pipeline_amount) }} / {{ item.future_revenue_signal || 'qualification_needed' }}
+              </p>
+              <p class="mt-1 text-xs text-slate-500">{{ item.recommended_reason }}</p>
             </div>
           </div>
         </div>

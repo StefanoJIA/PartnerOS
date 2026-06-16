@@ -39,7 +39,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 from app.core.database import SessionLocal  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.models import Company, Lead, User  # noqa: E402
-from app.services.business_execution import build_business_execution_center  # noqa: E402
+from app.services.business_execution import build_business_execution_center, build_customer_value_intelligence  # noqa: E402
 
 
 def main() -> int:
@@ -60,6 +60,8 @@ def main() -> int:
         ]
         commercial = payload.commercial_intelligence
         revenue_forecast = commercial.revenue_forecast or {}
+        customer_value_payload = build_customer_value_intelligence(db, limit=20)
+        customer_value_items = customer_value_payload.get("items", [])
         commercial_safety_items = [
             item.get("safety", {})
             for collection in [
@@ -166,6 +168,36 @@ def main() -> int:
                 any(item.get("source_type") in {"opportunity", "quote_learning"} for item in commercial.win_loss)
                 or any(item.get("quote_count", 0) >= 0 and item.get("order_count", 0) >= 0 for item in commercial.customer_value)
                 or any(item.get("quote_support_count", 0) >= 0 for item in commercial.partner_performance),
+            ),
+            (
+                "customer value intelligence profiles accounts",
+                isinstance(customer_value_items, list)
+                and all(
+                    item.get("customer_name")
+                    and item.get("value_tier")
+                    and isinstance(item.get("value_score"), int)
+                    and item.get("priority") in {"P1", "P2", "P3"}
+                    and "weighted_pipeline_amount" in item
+                    and "future_revenue_signal" in item
+                    and item.get("recommended_reason")
+                    and item.get("next_action")
+                    for item in customer_value_items
+                ),
+            ),
+            (
+                "customer value answers management questions",
+                isinstance(customer_value_payload.get("management_questions"), dict)
+                and "who_to_follow" in customer_value_payload["management_questions"]
+                and "future_revenue_from" in customer_value_payload["management_questions"]
+                and isinstance(customer_value_payload.get("summary"), dict)
+                and "weighted_pipeline_amount" in customer_value_payload["summary"],
+            ),
+            (
+                "customer value safe boundaries",
+                customer_value_payload.get("safety", {}).get("external_message_sent") is False
+                and customer_value_payload.get("safety", {}).get("quote_status_changed") is False
+                and customer_value_payload.get("safety", {}).get("order_status_changed") is False
+                and all(item.get("safety", {}).get("customer_forbidden_fields_exposed") is False for item in customer_value_items),
             ),
             (
                 "commercial intelligence safe boundaries",
@@ -604,6 +636,10 @@ def main() -> int:
             win_loss_list = client.get("/api/v1/growth/win-loss", headers={"Authorization": f"Bearer {token}"})
             opp_list_after = client.get("/api/v1/growth/opportunities", headers={"Authorization": f"Bearer {token}"})
             response = client.get("/api/dashboard/business-execution", headers={"Authorization": f"Bearer {token}"})
+            customer_value_route = client.get(
+                "/api/dashboard/customer-value-intelligence",
+                headers={"Authorization": f"Bearer {token}"},
+            )
             company_workspace = (
                 client.get(f"/api/companies/{company_id}/workspace", headers={"Authorization": f"Bearer {token}"})
                 if company_id
@@ -619,6 +655,23 @@ def main() -> int:
                 and isinstance(response_data["commercial_intelligence"].get("revenue_forecast"), dict)
                 and "weighted_opportunity_amount" in response_data["commercial_intelligence"]["revenue_forecast"]
                 and isinstance(response_data["commercial_intelligence"].get("account_360"), list),
+            )
+        )
+        customer_value_route_data = customer_value_route.json() if customer_value_route.status_code == 200 else {}
+        checks.append(
+            (
+                "route customer value intelligence",
+                customer_value_route.status_code == 200
+                and isinstance(customer_value_route_data.get("items"), list)
+                and isinstance(customer_value_route_data.get("summary"), dict)
+                and "management_questions" in customer_value_route_data
+                and "who_to_follow" in customer_value_route_data["management_questions"]
+                and all(
+                    item.get("value_tier")
+                    and "weighted_pipeline_amount" in item
+                    and item.get("safety", {}).get("external_message_sent") is False
+                    for item in customer_value_route_data.get("items", [])
+                ),
             )
         )
         checks.append(

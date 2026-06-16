@@ -1530,57 +1530,261 @@ def _build_win_loss_intelligence(db: Session) -> list[dict[str, object]]:
 
 
 def _build_customer_value_intelligence(db: Session) -> list[dict[str, object]]:
+    return list(build_customer_value_intelligence(db, limit=16).get("items", []))
+
+
+def _learning_records_for_quote_ids(db: Session, quote_ids: set[object]) -> list[QuoteLearningRecord]:
+    if not quote_ids:
+        return []
+    return (
+        db.query(QuoteLearningRecord)
+        .filter(QuoteLearningRecord.quote_id.in_(quote_ids))
+        .order_by(QuoteLearningRecord.updated_at.desc())
+        .all()
+    )
+
+
+def _customer_value_tier(
+    *,
+    won_order_amount: Decimal,
+    weighted_pipeline_amount: Decimal,
+    quote_count: int,
+    order_count: int,
+    feedback_count: int,
+    has_won_learning: bool,
+) -> tuple[str, int]:
+    score = 20
+    if won_order_amount >= Decimal("100000"):
+        score += 35
+    elif won_order_amount >= Decimal("50000"):
+        score += 28
+    elif won_order_amount > 0:
+        score += 18
+    if weighted_pipeline_amount >= Decimal("50000"):
+        score += 20
+    elif weighted_pipeline_amount > 0:
+        score += 12
+    if order_count > 1:
+        score += 12
+    elif order_count == 1:
+        score += 7
+    if quote_count >= 3:
+        score += 8
+    elif quote_count:
+        score += 4
+    if has_won_learning:
+        score += 8
+    if feedback_count:
+        score -= min(feedback_count * 4, 12)
+    score = max(0, min(score, 100))
+    if score >= 75:
+        return "strategic_account", score
+    if score >= 55:
+        return "growth_account", score
+    if score >= 35:
+        return "active_prospect", score
+    return "early_signal", score
+
+
+def _customer_value_priority(value_tier: str, weighted_pipeline_amount: Decimal, feedback_count: int) -> str:
+    if feedback_count and value_tier in {"strategic_account", "growth_account"}:
+        return "P1"
+    if value_tier == "strategic_account" or weighted_pipeline_amount >= Decimal("50000"):
+        return "P1"
+    if value_tier in {"growth_account", "active_prospect"}:
+        return "P2"
+    return "P3"
+
+
+def _build_customer_value_profile(db: Session, company_id: object) -> dict[str, object] | None:
+    company = db.get(Company, company_id)
+    quotes = (
+        db.query(Quote)
+        .filter(Quote.company_id == company_id, Quote.is_archived.is_(False))
+        .order_by(Quote.updated_at.desc())
+        .all()
+    )
+    orders = (
+        db.query(CustomerOrder)
+        .filter(CustomerOrder.company_id == company_id)
+        .order_by(CustomerOrder.updated_at.desc())
+        .all()
+    )
+    opportunities = (
+        db.query(SalesOpportunity)
+        .filter(SalesOpportunity.company_id == company_id)
+        .order_by(SalesOpportunity.updated_at.desc())
+        .all()
+    )
+    feedback = (
+        db.query(FeedbackTicket)
+        .filter(FeedbackTicket.company_id == company_id)
+        .order_by(FeedbackTicket.updated_at.desc())
+        .all()
+    )
+    quote_ids = {quote.id for quote in quotes}
+    learning_records = _learning_records_for_quote_ids(db, quote_ids)
+
+    quote_total = sum((quote.grand_total or Decimal("0")) for quote in quotes)
+    order_total = sum((order.grand_total or Decimal("0")) for order in orders)
+    open_opportunities = [row for row in opportunities if row.status not in {"won", "lost", "cancelled"}]
+    weighted_pipeline = sum(
+        (row.estimated_value or Decimal("0")) * Decimal(row.probability or 0) / Decimal("100")
+        for row in open_opportunities
+    )
+    open_quote_rows = [quote for quote in quotes if quote.status in {"ready_to_send", "sent", "revised"}]
+    open_quote_amount = sum((quote.grand_total or Decimal("0")) for quote in open_quote_rows)
+    won_learning = [row for row in learning_records if row.outcome_status == "won"]
+    lost_learning = [row for row in learning_records if row.outcome_status == "lost"]
+
+    partner_focus = _merge_unique(
+        [
+            *[name for quote in quotes for name in _quote_partner_names(db, quote)],
+            *[name for order in orders for name in _order_partner_names(db, order)],
+            *[row.partner_focus or "" for row in opportunities],
+        ],
+        limit=6,
+    )
+    product_focus = _merge_unique(
+        [
+            *[focus for quote in quotes for focus in _quote_product_focus(quote)],
+            *[focus for row in opportunities for focus in (row.product_focus or [])],
+            *_product_focus_from_text(company.product_interest_tags if company else ""),
+        ],
+        limit=10,
+    )
+    customer_decision_factors = _merge_unique(
+        [
+            *[factor for row in learning_records for factor in (row.product_dimensions or [])],
+            *[row.won_reason or "" for row in won_learning],
+            *[row.lost_reason or "" for row in lost_learning],
+            *[row.customer_objection or "" for row in learning_records],
+            *[row.delivery_feedback or "" for row in learning_records],
+        ],
+        limit=10,
+    )
+    active_risks = _merge_unique(
+        [
+            *[row.risk or "" for row in open_opportunities],
+            *[ticket.subject for ticket in feedback if ticket.status not in {"closed", "resolved"}],
+        ],
+        limit=6,
+    )
+    value_tier, value_score = _customer_value_tier(
+        won_order_amount=order_total,
+        weighted_pipeline_amount=weighted_pipeline,
+        quote_count=len(quotes),
+        order_count=len(orders),
+        feedback_count=len(feedback),
+        has_won_learning=bool(won_learning),
+    )
+    priority = _customer_value_priority(value_tier, weighted_pipeline, len(feedback))
+    conversion_rate = round(len(orders) / len(quotes), 2) if quotes else 0
+    repeat_business_count = max(0, len(orders) - 1)
+    project_scale = _size_label(order_total or quote_total or weighted_pipeline, len(quotes) + len(orders))
+    recommended_reason = (
+        "Existing order value and repeat signal make this account worth management attention."
+        if order_total and repeat_business_count
+        else "Open weighted pipeline makes this account a near-term revenue source."
+        if weighted_pipeline > 0
+        else "Quote history exists; convert learning into the next commercial action."
+        if quotes
+        else "Commercial history is thin; qualify strategic fit before deeper investment."
+    )
+    next_action = (
+        "Resolve feedback risk before asking for repeat business or referral."
+        if feedback and value_tier in {"strategic_account", "growth_account"}
+        else "Advance the highest-probability opportunity and confirm customer decision factors."
+        if weighted_pipeline > 0
+        else "Review quote learning and decide whether this account deserves a new campaign touch."
+        if quotes
+        else "Qualify product fit, project timing, and stakeholder value."
+    )
+    return {
+        "company_id": str(company_id),
+        "customer_name": _safe_company_name(company),
+        "value_tier": value_tier,
+        "value_score": value_score,
+        "priority": priority,
+        "historical_quote_amount": _decimal_to_float(quote_total),
+        "won_order_amount": _decimal_to_float(order_total),
+        "weighted_pipeline_amount": _decimal_to_float(weighted_pipeline),
+        "open_quote_amount": _decimal_to_float(open_quote_amount),
+        "quote_count": len(quotes),
+        "order_count": len(orders),
+        "opportunity_count": len(opportunities),
+        "open_opportunity_count": len(open_opportunities),
+        "conversion_rate": conversion_rate,
+        "repeat_business_count": repeat_business_count,
+        "feedback_count": len(feedback),
+        "win_learning_count": len(won_learning),
+        "loss_learning_count": len(lost_learning),
+        "project_scale": project_scale,
+        "strategic_value": value_tier,
+        "referral_value": "candidate_after_delivery_success" if len(orders) and not feedback else "needs_relationship_proof",
+        "partner_focus": partner_focus,
+        "product_focus": product_focus,
+        "customer_decision_factors": customer_decision_factors,
+        "active_risks": active_risks,
+        "recommended_reason": recommended_reason,
+        "next_action": next_action,
+        "future_revenue_signal": (
+            "weighted_pipeline"
+            if weighted_pipeline > 0
+            else "repeat_business"
+            if repeat_business_count
+            else "quote_reactivation"
+            if quotes
+            else "qualification_needed"
+        ),
+        "path": f"/companies/{company_id}" if company else "/lead-intelligence",
+        "safety": _safety_flags(),
+    }
+
+
+def build_customer_value_intelligence(db: Session, limit: int = 50) -> dict[str, object]:
     company_ids = {
         row[0]
         for row in db.query(Quote.company_id).filter(Quote.company_id.isnot(None), Quote.is_archived.is_(False)).all()
     } | {row[0] for row in db.query(CustomerOrder.company_id).filter(CustomerOrder.company_id.isnot(None)).all()} | {
         row[0] for row in db.query(SalesOpportunity.company_id).filter(SalesOpportunity.company_id.isnot(None)).all()
+    } | {row[0] for row in db.query(FeedbackTicket.company_id).filter(FeedbackTicket.company_id.isnot(None)).all()}
+    items = [profile for company_id in company_ids if (profile := _build_customer_value_profile(db, company_id))]
+    items = sorted(
+        items,
+        key=lambda item: (
+            _priority_rank(str(item.get("priority"))),
+            -int(item.get("value_score") or 0),
+            -float(item.get("weighted_pipeline_amount") or 0),
+            -float(item.get("won_order_amount") or 0),
+        ),
+    )[:limit]
+    return {
+        "items": items,
+        "summary": {
+            "total_accounts": len(items),
+            "strategic_accounts": len([item for item in items if item.get("value_tier") == "strategic_account"]),
+            "growth_accounts": len([item for item in items if item.get("value_tier") == "growth_account"]),
+            "active_prospects": len([item for item in items if item.get("value_tier") == "active_prospect"]),
+            "weighted_pipeline_amount": round(sum(float(item.get("weighted_pipeline_amount") or 0) for item in items), 2),
+            "won_order_amount": round(sum(float(item.get("won_order_amount") or 0) for item in items), 2),
+            "open_quote_amount": round(sum(float(item.get("open_quote_amount") or 0) for item in items), 2),
+        },
+        "management_questions": {
+            "who_to_follow": [item.get("customer_name") for item in items[:5]],
+            "why_follow": [item.get("recommended_reason") for item in items[:5]],
+            "future_revenue_from": [
+                {
+                    "customer_name": item.get("customer_name"),
+                    "signal": item.get("future_revenue_signal"),
+                    "weighted_pipeline_amount": item.get("weighted_pipeline_amount"),
+                    "open_quote_amount": item.get("open_quote_amount"),
+                }
+                for item in items[:5]
+            ],
+        },
+        "safety": _safety_flags(),
     }
-    items: list[dict[str, object]] = []
-    for company_id in company_ids:
-        company = db.get(Company, company_id)
-        quotes = db.query(Quote).filter(Quote.company_id == company_id, Quote.is_archived.is_(False)).all()
-        orders = db.query(CustomerOrder).filter(CustomerOrder.company_id == company_id).all()
-        opportunities = db.query(SalesOpportunity).filter(SalesOpportunity.company_id == company_id).all()
-        feedback_count = (
-            db.query(func.count(FeedbackTicket.id))
-            .filter(FeedbackTicket.company_id == company_id)
-            .scalar()
-            or 0
-        )
-        quote_total = sum((quote.grand_total or Decimal("0")) for quote in quotes)
-        order_total = sum((order.grand_total or Decimal("0")) for order in orders)
-        quote_count = len(quotes)
-        order_count = len(orders)
-        conversion_rate = round(order_count / quote_count, 2) if quote_count else 0
-        repeat_rate = max(0, order_count - 1)
-        strategic_value = "high" if order_total >= Decimal("50000") or repeat_rate else "medium" if quote_total >= Decimal("10000") else "early"
-        items.append(
-            {
-                "company_id": str(company_id),
-                "customer_name": _safe_company_name(company),
-                "historical_quote_amount": _decimal_to_float(quote_total),
-                "won_order_amount": _decimal_to_float(order_total),
-                "quote_count": quote_count,
-                "order_count": order_count,
-                "opportunity_count": len(opportunities),
-                "conversion_rate": conversion_rate,
-                "repeat_business_count": repeat_rate,
-                "feedback_count": int(feedback_count),
-                "strategic_value": strategic_value,
-                "referral_value": "review after delivery success" if order_count else "not proven",
-                "next_action": (
-                    "Plan repeat-business or referral follow-up."
-                    if order_count > 1
-                    else "Convert quote/opportunity history into next commercial action."
-                    if quote_count or opportunities
-                    else "Capture customer commercial history."
-                ),
-                "path": f"/companies/{company_id}" if company else "/lead-intelligence",
-                "safety": _safety_flags(),
-            }
-        )
-    return sorted(items, key=lambda item: (item["won_order_amount"], item["historical_quote_amount"]), reverse=True)[:16]
 
 
 def _build_partner_performance_intelligence(db: Session) -> list[dict[str, object]]:
