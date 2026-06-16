@@ -21,6 +21,8 @@
     />
     <el-alert v-if="error" type="error" :closable="false" show-icon :title="error" />
 
+    <RevenueForecastIntelligenceCard context-label="Growth Operations" />
+
     <el-skeleton v-if="loading && !data" animated :rows="8" />
 
     <template v-else-if="data">
@@ -618,6 +620,7 @@ import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { postLeadIntelligenceTouchpoint } from '@/api/aDomain'
 import { formatApiError } from '@/api/errors'
+import RevenueForecastIntelligenceCard from '@/components/business/RevenueForecastIntelligenceCard.vue'
 import {
   createGrowthCampaign,
   createGrowthCampaignTask,
