@@ -638,3 +638,30 @@ export async function fetchPartnerPerformanceIntelligence(limit = 50) {
   })
   return data
 }
+
+export interface Account360Intelligence {
+  summary: {
+    account_count: number
+    p1_account_count: number
+    strategic_account_count: number
+    open_opportunity_count: number
+    open_quote_count: number
+    open_feedback_count: number
+    weighted_pipeline_amount: number
+    won_order_amount: number
+  }
+  items: Array<Record<string, unknown>>
+  recommended_accounts: Array<Record<string, unknown>>
+  accounts_with_open_feedback: Array<Record<string, unknown>>
+  repeat_business_candidates: Array<Record<string, unknown>>
+  management_questions: Record<string, unknown>
+  next_action: string
+  safety: Record<string, boolean>
+}
+
+export async function fetchAccount360Intelligence(limit = 50) {
+  const { data } = await http.get<Account360Intelligence>('/dashboard/account-360-intelligence', {
+    params: { limit },
+  })
+  return data
+}

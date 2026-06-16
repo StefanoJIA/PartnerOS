@@ -40,6 +40,7 @@ from app.core.database import SessionLocal  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.models import Company, Lead, User  # noqa: E402
 from app.services.business_execution import (  # noqa: E402
+    build_account_360_intelligence,
     build_business_execution_center,
     build_customer_value_intelligence,
     build_partner_performance_intelligence,
@@ -71,6 +72,8 @@ def main() -> int:
         revenue_forecast_items = revenue_forecast_payload.get("forecast_items", [])
         partner_performance_payload = build_partner_performance_intelligence(db, limit=40)
         partner_performance_items = partner_performance_payload.get("items", [])
+        account_360_payload = build_account_360_intelligence(db, limit=40)
+        account_360_items = account_360_payload.get("items", [])
         commercial_safety_items = [
             item.get("safety", {})
             for collection in [
@@ -271,6 +274,39 @@ def main() -> int:
                 and partner_performance_payload.get("safety", {}).get("quote_status_changed") is False
                 and partner_performance_payload.get("safety", {}).get("order_status_changed") is False
                 and all(item.get("safety", {}).get("customer_forbidden_fields_exposed") is False for item in partner_performance_items),
+            ),
+            (
+                "account 360 profiles full commercial history",
+                isinstance(account_360_items, list)
+                and isinstance(account_360_payload.get("summary"), dict)
+                and "weighted_pipeline_amount" in account_360_payload["summary"]
+                and all(
+                    item.get("customer_name")
+                    and isinstance(item.get("source_counts"), dict)
+                    and {"leads", "opportunities", "quotes", "orders", "feedback", "win_loss_records"}.issubset(item["source_counts"].keys())
+                    and isinstance(item.get("commercial_value"), dict)
+                    and "weighted_pipeline_amount" in item["commercial_value"]
+                    and isinstance(item.get("object_timeline"), list)
+                    and isinstance(item.get("win_loss_summary"), dict)
+                    and isinstance(item.get("delivery_summary"), dict)
+                    and item.get("repeat_business_signal")
+                    and item.get("next_action")
+                    for item in account_360_items
+                ),
+            ),
+            (
+                "account 360 answers management questions",
+                isinstance(account_360_payload.get("management_questions"), dict)
+                and "who_to_follow" in account_360_payload["management_questions"]
+                and "which_accounts_have_full_history" in account_360_payload["management_questions"]
+                and "which_accounts_need_feedback_before_repeat" in account_360_payload["management_questions"],
+            ),
+            (
+                "account 360 safe boundaries",
+                account_360_payload.get("safety", {}).get("external_message_sent") is False
+                and account_360_payload.get("safety", {}).get("quote_status_changed") is False
+                and account_360_payload.get("safety", {}).get("order_status_changed") is False
+                and all(item.get("safety", {}).get("customer_forbidden_fields_exposed") is False for item in account_360_items),
             ),
             (
                 "commercial intelligence safe boundaries",
@@ -721,6 +757,10 @@ def main() -> int:
                 "/api/dashboard/partner-performance-intelligence",
                 headers={"Authorization": f"Bearer {token}"},
             )
+            account_360_route = client.get(
+                "/api/dashboard/account-360-intelligence",
+                headers={"Authorization": f"Bearer {token}"},
+            )
             company_workspace = (
                 client.get(f"/api/companies/{company_id}/workspace", headers={"Authorization": f"Bearer {token}"})
                 if company_id
@@ -785,6 +825,23 @@ def main() -> int:
                     and item.get("safety", {}).get("external_message_sent") is False
                     and item.get("safety", {}).get("customer_forbidden_fields_exposed") is False
                     for item in partner_performance_route_data.get("items", [])
+                ),
+            )
+        )
+        account_360_route_data = account_360_route.json() if account_360_route.status_code == 200 else {}
+        checks.append(
+            (
+                "route account 360 intelligence",
+                account_360_route.status_code == 200
+                and isinstance(account_360_route_data.get("summary"), dict)
+                and "who_to_follow" in account_360_route_data.get("management_questions", {})
+                and isinstance(account_360_route_data.get("recommended_accounts"), list)
+                and all(
+                    item.get("customer_name")
+                    and isinstance(item.get("object_timeline"), list)
+                    and item.get("safety", {}).get("external_message_sent") is False
+                    and item.get("safety", {}).get("customer_forbidden_fields_exposed") is False
+                    for item in account_360_route_data.get("items", [])
                 ),
             )
         )

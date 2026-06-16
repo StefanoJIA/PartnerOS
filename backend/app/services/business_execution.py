@@ -2316,10 +2316,393 @@ def _build_revenue_forecast_intelligence(
     return forecast
 
 
+def _account_360_path(
+    *,
+    company_id: object,
+    leads: list[Lead],
+    opportunities: list[SalesOpportunity],
+    quotes: list[Quote],
+    orders: list[CustomerOrder],
+    feedback: list[FeedbackTicket],
+) -> str:
+    if opportunities:
+        return f"/growth-operations?company={company_id}"
+    if quotes:
+        return f"/quotes/{quotes[0].id}"
+    if orders:
+        return f"/orders/{orders[0].id}"
+    if feedback:
+        return "/feedback-tickets"
+    if leads:
+        return f"/leads/{leads[0].id}"
+    return f"/companies/{company_id}"
+
+
+def _account_360_stage(
+    *,
+    leads: list[Lead],
+    opportunities: list[SalesOpportunity],
+    quotes: list[Quote],
+    orders: list[CustomerOrder],
+    feedback: list[FeedbackTicket],
+) -> str:
+    if len(orders) > 1:
+        return "Repeat Business"
+    if feedback:
+        return "After-Sales"
+    if orders:
+        return "Order / Delivery"
+    if quotes:
+        return "Quotation"
+    if opportunities:
+        return "Opportunity"
+    if leads:
+        return "Lead"
+    return "Company"
+
+
+def _account_360_next_action(
+    *,
+    weighted_pipeline: Decimal,
+    open_quotes: list[Quote],
+    open_feedback: list[FeedbackTicket],
+    orders: list[CustomerOrder],
+    opportunities: list[SalesOpportunity],
+    value_tier: str,
+) -> str:
+    if open_feedback:
+        return "Resolve open feedback before asking for repeat business, referral, or customer-visible success story."
+    if weighted_pipeline > 0 and opportunities:
+        return "Advance the highest-probability opportunity and capture customer decision factors."
+    if open_quotes:
+        return "Follow up open quotes manually and record win/loss learning when the customer responds."
+    if len(orders) > 1 or value_tier in {"strategic_account", "growth_account"}:
+        return "Review delivery outcome and decide whether to create a repeat-business or referral motion."
+    return "Qualify product fit, project timing, stakeholder value, and partner fit before deeper investment."
+
+
+def _build_account_360_profile(db: Session, company_id: object) -> dict[str, object] | None:
+    company = db.get(Company, company_id)
+    if company is None:
+        return None
+    leads = (
+        db.query(Lead)
+        .filter(Lead.company_id == company_id, Lead.is_active.is_(True))
+        .order_by(Lead.updated_at.desc())
+        .all()
+    )
+    opportunities = (
+        db.query(SalesOpportunity)
+        .filter(SalesOpportunity.company_id == company_id)
+        .order_by(SalesOpportunity.updated_at.desc())
+        .all()
+    )
+    quotes = (
+        db.query(Quote)
+        .filter(Quote.company_id == company_id, Quote.is_archived.is_(False))
+        .order_by(Quote.updated_at.desc())
+        .all()
+    )
+    orders = (
+        db.query(CustomerOrder)
+        .filter(CustomerOrder.company_id == company_id)
+        .order_by(CustomerOrder.updated_at.desc())
+        .all()
+    )
+    feedback = (
+        db.query(FeedbackTicket)
+        .filter(FeedbackTicket.company_id == company_id)
+        .order_by(FeedbackTicket.updated_at.desc())
+        .all()
+    )
+    learning_records = _learning_records_for_quote_ids(db, {quote.id for quote in quotes})
+    customer_value = _build_customer_value_profile(db, company_id) or {}
+
+    open_opportunities = [row for row in opportunities if row.status not in {"won", "lost", "closed_won", "closed_lost", "cancelled"}]
+    open_quotes = [quote for quote in quotes if quote.status in OPEN_QUOTE_STATUSES]
+    open_feedback = [ticket for ticket in feedback if ticket.status not in {"resolved", "closed"}]
+    won_learning = [row for row in learning_records if row.outcome_status == "won"]
+    lost_learning = [row for row in learning_records if row.outcome_status == "lost"]
+    weighted_pipeline = sum(
+        (row.estimated_value or Decimal("0")) * Decimal(row.probability or 0) / Decimal("100")
+        for row in open_opportunities
+    )
+    quote_amount = sum((quote.grand_total or Decimal("0")) for quote in quotes)
+    order_amount = sum((order.grand_total or Decimal("0")) for order in orders)
+    delayed_or_blocked_orders = sum(
+        1
+        for order in orders
+        if any(milestone.status in {"delayed", "blocked"} for milestone in order.production_milestones)
+    )
+    shipment_missing_orders = sum(1 for order in orders if not order.shipment_plans)
+    partner_focus = _merge_unique(
+        [
+            *[name for quote in quotes for name in _quote_partner_names(db, quote)],
+            *[name for order in orders for name in _order_partner_names(db, order)],
+            *[row.partner_focus or "" for row in opportunities],
+        ],
+        limit=8,
+    )
+    product_focus = _merge_unique(
+        [
+            *_product_focus_from_text(company.product_interest_tags, company.business_description),
+            *[focus for quote in quotes for focus in _quote_product_focus(quote)],
+            *[focus for row in opportunities for focus in (row.product_focus or [])],
+            *[line.product_category for order in orders for line in order.line_items if line.product_category],
+        ],
+        limit=10,
+    )
+    decision_factors = _merge_unique(
+        [
+            *[factor for record in learning_records for factor in (record.product_dimensions or [])],
+            *[record.won_reason or "" for record in won_learning],
+            *[record.lost_reason or "" for record in lost_learning],
+            *[record.customer_objection or "" for record in learning_records],
+            *[row.risk or "" for row in opportunities],
+        ],
+        limit=10,
+    )
+    blockers = _merge_unique(
+        [
+            *[ticket.subject for ticket in open_feedback],
+            *[row.blocker or "" for row in open_opportunities],
+            *["delivery risk" for _ in range(delayed_or_blocked_orders)],
+            *["shipment visibility missing" for _ in range(shipment_missing_orders)],
+        ],
+        limit=8,
+    )
+    value_tier = str(customer_value.get("value_tier") or "early_signal")
+    value_score = int(customer_value.get("value_score") or 0)
+    stage = _account_360_stage(
+        leads=leads,
+        opportunities=opportunities,
+        quotes=quotes,
+        orders=orders,
+        feedback=feedback,
+    )
+    priority = _customer_value_priority(value_tier, weighted_pipeline, len(open_feedback))
+    next_action = _account_360_next_action(
+        weighted_pipeline=weighted_pipeline,
+        open_quotes=open_quotes,
+        open_feedback=open_feedback,
+        orders=orders,
+        opportunities=open_opportunities,
+        value_tier=value_tier,
+    )
+    return {
+        "account_key": f"company:{company.id}",
+        "company_id": str(company.id),
+        "customer_name": company.company_name,
+        "current_stage": stage,
+        "priority": priority,
+        "value_tier": value_tier,
+        "value_score": value_score,
+        "company_profile": {
+            "company_type": company.company_type,
+            "industry": company.industry,
+            "customer_segment": company.customer_segment,
+            "strategic_level": company.strategic_level,
+            "country": company.country,
+        },
+        "source_counts": {
+            "leads": len(leads),
+            "opportunities": len(opportunities),
+            "open_opportunities": len(open_opportunities),
+            "quotes": len(quotes),
+            "open_quotes": len(open_quotes),
+            "orders": len(orders),
+            "feedback": len(feedback),
+            "open_feedback": len(open_feedback),
+            "win_loss_records": len(learning_records),
+        },
+        "commercial_value": {
+            "historical_quote_amount": _decimal_to_float(quote_amount),
+            "won_order_amount": _decimal_to_float(order_amount),
+            "weighted_pipeline_amount": _decimal_to_float(weighted_pipeline),
+            "conversion_rate": round(len(orders) / len(quotes), 2) if quotes else 0,
+            "repeat_business_count": max(0, len(orders) - 1),
+            "strategic_value": customer_value.get("strategic_value") or value_tier,
+        },
+        "object_timeline": [
+            {
+                "source_type": "lead",
+                "source_id": str(row.id),
+                "label": row.lead_name,
+                "status": row.current_stage,
+                "path": f"/leads/{row.id}",
+            }
+            for row in leads[:4]
+        ]
+        + [
+            {
+                "source_type": "opportunity",
+                "source_id": str(row.id),
+                "label": row.opportunity_name,
+                "status": row.status,
+                "path": _opportunity_path(row),
+            }
+            for row in opportunities[:4]
+        ]
+        + [
+            {
+                "source_type": "quote",
+                "source_id": str(row.id),
+                "label": row.quote_number,
+                "status": row.status,
+                "path": f"/quotes/{row.id}",
+            }
+            for row in quotes[:4]
+        ]
+        + [
+            {
+                "source_type": "order",
+                "source_id": str(row.id),
+                "label": row.order_number,
+                "status": row.status,
+                "path": f"/orders/{row.id}",
+            }
+            for row in orders[:4]
+        ]
+        + [
+            {
+                "source_type": "feedback",
+                "source_id": str(row.id),
+                "label": row.ticket_number,
+                "status": row.status,
+                "path": "/feedback-tickets",
+            }
+            for row in feedback[:4]
+        ],
+        "partner_focus": partner_focus,
+        "product_focus": product_focus,
+        "decision_factors": decision_factors,
+        "win_loss_summary": {
+            "won": len(won_learning),
+            "lost": len(lost_learning),
+            "lessons": _merge_unique(
+                [record.won_reason or record.lost_reason or record.customer_objection or "" for record in learning_records],
+                limit=6,
+            ),
+        },
+        "delivery_summary": {
+            "order_count": len(orders),
+            "delayed_or_blocked_orders": delayed_or_blocked_orders,
+            "shipment_missing_orders": shipment_missing_orders,
+            "open_feedback_count": len(open_feedback),
+        },
+        "repeat_business_signal": (
+            "repeat_ready"
+            if len(orders) > 1 and not open_feedback
+            else "resolve_feedback_first"
+            if open_feedback
+            else "pipeline_or_quote_follow_up"
+            if weighted_pipeline or open_quotes
+            else "qualification_needed"
+        ),
+        "open_blockers": blockers,
+        "active_paths": _merge_unique(
+            [
+                _account_360_path(
+                    company_id=company.id,
+                    leads=leads,
+                    opportunities=opportunities,
+                    quotes=quotes,
+                    orders=orders,
+                    feedback=feedback,
+                ),
+                *[f"/orders/{order.id}" for order in orders[:2]],
+                *[f"/quotes/{quote.id}" for quote in quotes[:2]],
+                "/feedback-tickets" if feedback else "",
+            ],
+            limit=6,
+        ),
+        "decision_reason": (
+            blockers[0]
+            if blockers
+            else f"{stage}: quote {len(quotes)}, order {len(orders)}, pipeline {_decimal_to_float(weighted_pipeline)}."
+        ),
+        "next_action": next_action,
+        "path": _account_360_path(
+            company_id=company.id,
+            leads=leads,
+            opportunities=opportunities,
+            quotes=quotes,
+            orders=orders,
+            feedback=feedback,
+        ),
+        "customer_safe_boundary": "Internal Account 360 profile; do not expose feedback details, internal notes, cost, margin, pricing breakdown, supplier private notes, or raw IDs to customer Portal.",
+        "safety": _safety_flags(),
+    }
+
+
+def build_account_360_intelligence(db: Session, limit: int = 50) -> dict[str, object]:
+    company_ids: set[object] = set()
+    for (company_id,) in db.query(Company.id).filter(Company.is_active.is_(True)).limit(200).all():
+        company_ids.add(company_id)
+    for model in [Lead, SalesOpportunity, Quote, CustomerOrder, FeedbackTicket]:
+        query = db.query(model.company_id).filter(model.company_id.isnot(None))
+        if model is Quote:
+            query = query.filter(Quote.is_archived.is_(False))
+        for (company_id,) in query.limit(200).all():
+            company_ids.add(company_id)
+
+    items = [profile for company_id in company_ids if (profile := _build_account_360_profile(db, company_id))]
+    items = sorted(
+        items,
+        key=lambda item: (
+            _priority_rank(str(item.get("priority") or "P3")),
+            -int(item.get("value_score") or 0),
+            -float(item.get("commercial_value", {}).get("weighted_pipeline_amount") or 0),
+            -float(item.get("commercial_value", {}).get("won_order_amount") or 0),
+        ),
+    )[:limit]
+    return {
+        "summary": {
+            "account_count": len(items),
+            "p1_account_count": sum(1 for item in items if item.get("priority") == "P1"),
+            "strategic_account_count": sum(1 for item in items if item.get("value_tier") == "strategic_account"),
+            "open_opportunity_count": sum(int(item.get("source_counts", {}).get("open_opportunities") or 0) for item in items),
+            "open_quote_count": sum(int(item.get("source_counts", {}).get("open_quotes") or 0) for item in items),
+            "open_feedback_count": sum(int(item.get("source_counts", {}).get("open_feedback") or 0) for item in items),
+            "weighted_pipeline_amount": round(
+                sum(float(item.get("commercial_value", {}).get("weighted_pipeline_amount") or 0) for item in items),
+                2,
+            ),
+            "won_order_amount": round(
+                sum(float(item.get("commercial_value", {}).get("won_order_amount") or 0) for item in items),
+                2,
+            ),
+        },
+        "items": items,
+        "recommended_accounts": items[:12],
+        "accounts_with_open_feedback": [item for item in items if item.get("source_counts", {}).get("open_feedback")][:12],
+        "repeat_business_candidates": [item for item in items if item.get("repeat_business_signal") == "repeat_ready"][:12],
+        "management_questions": {
+            "who_to_follow": items[:8],
+            "which_accounts_have_full_history": [
+                item
+                for item in items
+                if item.get("source_counts", {}).get("leads")
+                and item.get("source_counts", {}).get("quotes")
+                and item.get("source_counts", {}).get("orders")
+            ][:8],
+            "which_accounts_need_feedback_before_repeat": [
+                item for item in items if item.get("repeat_business_signal") == "resolve_feedback_first"
+            ][:8],
+        },
+        "next_action": "Use Account 360 to choose the next customer follow-up, quote/order review, feedback resolution, or repeat-business motion.",
+        "safety": _safety_flags(),
+    }
+
+
 def _build_account_360_intelligence(
+    db: Session,
     account_lifecycle: list[CustomerAccountExecutionItem],
     customer_value: list[dict[str, object]],
 ) -> list[dict[str, object]]:
+    account_payload = build_account_360_intelligence(db, limit=16)
+    if account_payload.get("items"):
+        return list(account_payload["items"])
     value_by_name = {str(item.get("customer_name")): item for item in customer_value}
     items: list[dict[str, object]] = []
     for account in account_lifecycle[:16]:
@@ -2362,7 +2745,7 @@ def _build_commercial_intelligence(
         partner_performance=_build_partner_performance_intelligence(db),
         product_market_fit=_build_product_market_fit_intelligence(products, quotations),
         revenue_forecast=_build_revenue_forecast_intelligence(opportunities, quotations, db),
-        account_360=_build_account_360_intelligence(account_lifecycle, customer_value),
+        account_360=_build_account_360_intelligence(db, account_lifecycle, customer_value),
     )
 
 

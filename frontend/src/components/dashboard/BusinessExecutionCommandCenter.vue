@@ -106,12 +106,27 @@
             <div v-for="account in safeCommercial.account_360.slice(0, 3)" :key="String(account.account_key)" class="mb-2 last:mb-0">
               <div class="flex items-center justify-between gap-2">
                 <span class="text-sm font-medium text-slate-800">{{ account.customer_name }}</span>
-                <el-tag size="small" effect="plain">{{ account.current_stage }}</el-tag>
+                <div class="flex flex-wrap justify-end gap-1">
+                  <el-tag size="small" :type="priorityType(String(account.priority || 'P3'))" effect="plain">
+                    {{ account.priority || 'P3' }}
+                  </el-tag>
+                  <el-tag size="small" effect="plain">{{ account.current_stage }}</el-tag>
+                </div>
               </div>
               <p class="mt-1 text-xs text-slate-600">{{ account.next_action }}</p>
               <p class="mt-1 text-xs text-slate-500">
-                成交 {{ money(commercialValue(account).won_order_amount) }} / 报价 {{ money(commercialValue(account).historical_quote_amount) }}
+                成交 {{ money(commercialValue(account).won_order_amount) }} /
+                Pipeline {{ money(commercialValue(account).weighted_pipeline_amount) }} /
+                报价 {{ money(commercialValue(account).historical_quote_amount) }}
               </p>
+              <p class="mt-1 text-xs text-slate-500">
+                {{ accountCounts(account).leads || 0 }} leads /
+                {{ accountCounts(account).opportunities || 0 }} opp /
+                {{ accountCounts(account).quotes || 0 }} quotes /
+                {{ accountCounts(account).orders || 0 }} orders /
+                {{ accountCounts(account).feedback || 0 }} feedback
+              </p>
+              <p class="mt-1 text-xs text-slate-500">{{ account.repeat_business_signal || 'qualification_needed' }}</p>
             </div>
           </div>
 
@@ -641,6 +656,10 @@ function listLabel(value: unknown) {
 
 function commercialValue(account: Record<string, unknown>) {
   return (account.commercial_value || {}) as Record<string, unknown>
+}
+
+function accountCounts(account: Record<string, unknown>) {
+  return (account.source_counts || {}) as Record<string, unknown>
 }
 
 function forecastProjects(forecast: Record<string, unknown>) {

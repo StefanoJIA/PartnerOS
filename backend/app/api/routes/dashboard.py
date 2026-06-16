@@ -26,6 +26,7 @@ from app.schemas.dashboard_actions import (
 )
 from app.services.dashboard_actions import build_dashboard_actions
 from app.services.business_execution import (
+    build_account_360_intelligence,
     build_business_execution_center,
     build_customer_value_intelligence,
     build_partner_performance_intelligence,
@@ -89,6 +90,15 @@ def dashboard_partner_performance_intelligence(
     _: User = Depends(get_current_user),
 ):
     return build_partner_performance_intelligence(db, limit=limit)
+
+
+@router.get("/account-360-intelligence")
+def dashboard_account_360_intelligence(
+    limit: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    return build_account_360_intelligence(db, limit=limit)
 
 
 @router.get("/daily-decision-queue/handling", response_model=list[DailyQueueHandlingRecordOut])
