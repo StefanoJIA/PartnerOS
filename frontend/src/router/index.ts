@@ -17,6 +17,7 @@ const router = createRouter({
       meta: { requiresAuth: true },
       children: [
         { path: '', name: 'dashboard', component: () => import('@/pages/dashboard/DashboardPage.vue') },
+        { path: 'commercial-intelligence', name: 'commercial-intelligence', component: () => import('@/pages/commercial/CommercialIntelligencePage.vue') },
         { path: 'demo-walkthrough', name: 'demo-walkthrough', component: () => import('@/pages/demo/DemoWalkthroughPage.vue') },
         { path: 'system-health', name: 'system-health', component: () => import('@/pages/system/SystemHealthPage.vue') },
         { path: 'external-execution', name: 'external-execution', component: () => import('@/pages/execution/ExternalExecutionPage.vue') },

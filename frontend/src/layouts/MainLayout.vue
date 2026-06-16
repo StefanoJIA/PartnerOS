@@ -48,6 +48,7 @@ const navGroups = [
     label: '工作台',
     items: [
       { path: '/', label: '仪表盘' },
+      { path: '/commercial-intelligence', label: '商业智能' },
       { path: '/demo-walkthrough', label: '演示流程' },
       { path: '/system-health', label: '系统健康' },
     ],
