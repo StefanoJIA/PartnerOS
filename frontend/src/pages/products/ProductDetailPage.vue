@@ -28,6 +28,14 @@
         <p class="text-sm">{{ product.application_scenarios || '—' }}</p>
       </el-card>
 
+      <ProductMarketFitCard
+        :key="productId"
+        :product-name="String(product.product_name || '')"
+        :partner-focus="primaryPartnerFocus"
+        :product-keywords="productExecutionKeywords"
+        :related-order-count="relatedOrders.length"
+      />
+
       <ObjectExecutionImpactCard
         title="产品经营影响"
         subtitle="市场验证 / 项目机会 / 报价学习 / 交付关联"
@@ -164,6 +172,7 @@ import {
 } from '@/components/object-panels'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ObjectExecutionImpactCard from '@/components/business/ObjectExecutionImpactCard.vue'
+import ProductMarketFitCard from '@/components/business/ProductMarketFitCard.vue'
 
 const route = useRoute()
 const productId = computed(() => route.params.productId as string)
