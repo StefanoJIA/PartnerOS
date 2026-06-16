@@ -8,11 +8,17 @@ import CommercialIntelligencePage from './CommercialIntelligencePage.vue'
 import {
   fetchAccount360Intelligence,
   fetchBusinessExecution,
+  fetchCustomerValueIntelligence,
+  fetchPartnerPerformanceIntelligence,
   fetchProductMarketFitIntelligence,
+  fetchRevenueForecastIntelligence,
   fetchWinLossIntelligenceDashboard,
   type Account360Intelligence,
   type BusinessExecution,
+  type CustomerValueIntelligence,
+  type PartnerPerformanceIntelligence,
   type ProductMarketFitIntelligence,
+  type RevenueForecastIntelligence,
   type WinLossIntelligenceDashboard,
 } from '@/api/dashboard'
 
@@ -25,7 +31,10 @@ vi.mock('vue-router', () => ({
 vi.mock('@/api/dashboard', () => ({
   fetchAccount360Intelligence: vi.fn(),
   fetchBusinessExecution: vi.fn(),
+  fetchCustomerValueIntelligence: vi.fn(),
+  fetchPartnerPerformanceIntelligence: vi.fn(),
   fetchProductMarketFitIntelligence: vi.fn(),
+  fetchRevenueForecastIntelligence: vi.fn(),
   fetchWinLossIntelligenceDashboard: vi.fn(),
 }))
 
@@ -166,17 +175,151 @@ const accountPayload = {
   safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
 } as unknown as Account360Intelligence
 
+const customerValuePayload = {
+  items: [
+    {
+      customer_name: 'Strategic school buyer',
+      value_tier: 'strategic_account',
+      priority: 'P1',
+      historical_quote_amount: 180000,
+      won_order_amount: 90000,
+      weighted_pipeline_amount: 60000,
+      next_action: 'Prioritize next education furniture quote.',
+      path: '/companies/school',
+    },
+  ],
+  summary: {
+    total_accounts: 1,
+    strategic_accounts: 1,
+    growth_accounts: 0,
+    active_prospects: 1,
+    weighted_pipeline_amount: 60000,
+    won_order_amount: 90000,
+    open_quote_amount: 80000,
+    healthy_revenue_proxy: 150000,
+    commercial_quality_leader_count: 1,
+    service_burden_account_count: 0,
+  },
+  commercial_quality_leaders: [],
+  service_burden_accounts: [],
+  management_questions: {
+    who_to_follow: [],
+    why_follow: [],
+    what_is_commercially_healthy: [],
+    which_value_is_at_risk: [],
+    future_revenue_from: [],
+  },
+  customer_safe_boundary: 'internal only',
+  safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
+} as unknown as CustomerValueIntelligence
+
+const partnerPerformancePayload = {
+  summary: {
+    partner_count: 1,
+    active_partner_count: 1,
+    quote_support_amount: 100000,
+    order_amount: 90000,
+    risk_partner_count: 0,
+    p1_partner_count: 1,
+    feedback_issue_count: 0,
+    quote_allocation_candidate_count: 1,
+    pilot_candidate_count: 1,
+    allocation_risk_count: 0,
+  },
+  items: [
+    {
+      partner_name: 'JOOBOO',
+      investment_priority: 'P1',
+      quote_support_count: 3,
+      win_rate: 0.66,
+      order_amount: 90000,
+      product_coverage: ['education furniture', 'project furniture'],
+      next_allocation_action: 'Use JOOBOO for school desk/chair project quote allocation.',
+      path: '/partner-onboarding',
+    },
+  ],
+  top_investment_candidates: [],
+  quote_allocation_candidates: [],
+  pilot_candidates: [],
+  allocation_risks: [],
+  product_line_allocation: [],
+  delivery_or_feedback_risks: [],
+  partner_scoreboard: [],
+  management_questions: {},
+  next_action: 'Review partner performance.',
+  customer_safe_boundary: 'internal only',
+  safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
+} as unknown as PartnerPerformanceIntelligence
+
+const revenueForecastPayload = {
+  summary: {
+    total_forecast_amount: 220000,
+    total_weighted_amount: 140000,
+    weighted_opportunity_amount: 60000,
+    open_quote_amount: 80000,
+    weighted_quote_amount: 64000,
+    booked_backlog_amount: 16000,
+    at_risk_weighted_amount: 12000,
+    item_count: 2,
+    high_probability_count: 1,
+    high_risk_count: 1,
+    committed_backlog_amount: 16000,
+    forecastable_weighted_amount: 124000,
+    manual_follow_up_weighted_amount: 16000,
+    weak_signal_weighted_amount: 0,
+    forecast_quality_score: 76,
+  },
+  total_weighted_amount: 140000,
+  open_quote_amount: 80000,
+  weighted_quote_amount: 64000,
+  at_risk_weighted_amount: 12000,
+  forecast_items: [],
+  high_probability_projects: [
+    {
+      name: 'HOSUN heavy-duty lifting project',
+      customer_name: 'HOSUN industrial account',
+      source_type: 'opportunity',
+      probability: 85,
+      weighted_amount: 76000,
+      product_focus: ['heavy-duty supply', 'lifting columns'],
+      next_action: 'Confirm load range and certification evidence before final quote.',
+      path: '/growth-operations',
+    },
+  ],
+  high_risk_projects: [],
+  committed_backlog: [],
+  forecastable_revenue: [],
+  manual_follow_up_revenue: [],
+  weak_signal_revenue: [],
+  revenue_bucket_mix: [],
+  source_type_mix: [],
+  forecast_by_partner: [],
+  forecast_by_product: [],
+  forecast_by_customer: [],
+  future_revenue_sources: [],
+  management_questions: {},
+  next_action: 'Review revenue forecast.',
+  customer_safe_boundary: 'internal only',
+  safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
+} as unknown as RevenueForecastIntelligence
+
 describe('CommercialIntelligencePage', () => {
   beforeEach(() => {
     push.mockReset()
     vi.mocked(fetchAccount360Intelligence).mockReset()
     vi.mocked(fetchBusinessExecution).mockReset()
+    vi.mocked(fetchCustomerValueIntelligence).mockReset()
+    vi.mocked(fetchPartnerPerformanceIntelligence).mockReset()
     vi.mocked(fetchProductMarketFitIntelligence).mockReset()
+    vi.mocked(fetchRevenueForecastIntelligence).mockReset()
     vi.mocked(fetchWinLossIntelligenceDashboard).mockReset()
     vi.mocked(fetchBusinessExecution).mockResolvedValue(payload)
     vi.mocked(fetchWinLossIntelligenceDashboard).mockResolvedValue(winLossPayload)
     vi.mocked(fetchProductMarketFitIntelligence).mockResolvedValue(pmfPayload)
     vi.mocked(fetchAccount360Intelligence).mockResolvedValue(accountPayload)
+    vi.mocked(fetchCustomerValueIntelligence).mockResolvedValue(customerValuePayload)
+    vi.mocked(fetchPartnerPerformanceIntelligence).mockResolvedValue(partnerPerformancePayload)
+    vi.mocked(fetchRevenueForecastIntelligence).mockResolvedValue(revenueForecastPayload)
   })
 
   it('renders management questions and six commercial assets', async () => {
@@ -187,6 +330,9 @@ describe('CommercialIntelligencePage', () => {
     expect(fetchWinLossIntelligenceDashboard).toHaveBeenCalled()
     expect(fetchProductMarketFitIntelligence).toHaveBeenCalled()
     expect(fetchAccount360Intelligence).toHaveBeenCalled()
+    expect(fetchCustomerValueIntelligence).toHaveBeenCalled()
+    expect(fetchPartnerPerformanceIntelligence).toHaveBeenCalled()
+    expect(fetchRevenueForecastIntelligence).toHaveBeenCalled()
     expect(wrapper.text()).toContain('商业智能工作台')
     expect(wrapper.text()).toContain('谁最值得跟进')
     expect(wrapper.text()).toContain('什么最容易成交')
@@ -200,6 +346,9 @@ describe('CommercialIntelligencePage', () => {
     expect(wrapper.text()).toContain('delivery consistency')
     expect(wrapper.text()).toContain('Use validated load range.')
     expect(wrapper.text()).toContain('Create repeat motion from won learning.')
+    expect(wrapper.text()).toContain('Strategic school buyer')
+    expect(wrapper.text()).toContain('Use JOOBOO for school desk/chair project quote allocation.')
+    expect(wrapper.text()).toContain('HOSUN heavy-duty lifting project')
   })
 
   it('keeps navigation as manual operator action', async () => {

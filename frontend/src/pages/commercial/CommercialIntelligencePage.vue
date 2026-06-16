@@ -98,8 +98,11 @@
           </div>
           <div class="flex flex-wrap gap-1">
             <el-tag type="primary" effect="plain">原因簇 {{ winLossReasonClusters.length }}</el-tag>
-            <el-tag type="success" effect="plain">购买因素 {{ pmfBuyingFactors.length }}</el-tag>
+            <el-tag type="success" effect="plain">PMF 购买因素 {{ pmfBuyingFactors.length }}</el-tag>
             <el-tag type="warning" effect="plain">推荐账户 {{ accountRecommendations.length }}</el-tag>
+            <el-tag type="info" effect="plain">客户价值 {{ customerValueRows.length }}</el-tag>
+            <el-tag type="info" effect="plain">Partner 绩效 {{ partnerPerformanceRows.length }}</el-tag>
+            <el-tag type="info" effect="plain">收入预测 {{ revenueForecastRows.length }}</el-tag>
           </div>
         </div>
 
@@ -183,7 +186,7 @@
         <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 class="font-semibold text-slate-900">商业资产明细</h3>
-            <p class="mt-1 text-sm text-slate-600">按资产类型查看前 8 条可用经营证据，继续处理时跳转到原始业务对象。</p>
+            <p class="mt-1 text-sm text-slate-600">按资产类型查看专用商业智能 API 产出的经营证据，继续处理时跳转到原始业务对象。</p>
           </div>
           <el-tag type="info" effect="plain">{{ activeAssetLabel }}</el-tag>
         </div>
@@ -227,11 +230,17 @@ import { useRouter } from 'vue-router'
 import {
   fetchAccount360Intelligence,
   fetchBusinessExecution,
+  fetchCustomerValueIntelligence,
+  fetchPartnerPerformanceIntelligence,
   fetchProductMarketFitIntelligence,
+  fetchRevenueForecastIntelligence,
   fetchWinLossIntelligenceDashboard,
   type Account360Intelligence,
   type BusinessExecution,
+  type CustomerValueIntelligence,
+  type PartnerPerformanceIntelligence,
   type ProductMarketFitIntelligence,
+  type RevenueForecastIntelligence,
   type WinLossIntelligenceDashboard,
 } from '@/api/dashboard'
 
@@ -244,6 +253,9 @@ const data = ref<BusinessExecution | null>(null)
 const winLossDashboard = ref<WinLossIntelligenceDashboard | null>(null)
 const productMarketFit = ref<ProductMarketFitIntelligence | null>(null)
 const account360 = ref<Account360Intelligence | null>(null)
+const customerValue = ref<CustomerValueIntelligence | null>(null)
+const partnerPerformance = ref<PartnerPerformanceIntelligence | null>(null)
+const revenueForecast = ref<RevenueForecastIntelligence | null>(null)
 const activeAsset = ref('account360')
 const selectedPartner = ref('')
 const selectedProduct = ref('')
@@ -271,11 +283,30 @@ const accountRecommendations = computed(() => [
   ...asList(account360.value?.repeat_or_referral_accounts),
   ...asList(account360.value?.reactivation_accounts),
 ])
+const customerValueRows = computed(() => [
+  ...asList(customerValue.value?.commercial_quality_leaders),
+  ...asList(customerValue.value?.items),
+])
+const partnerPerformanceRows = computed(() => [
+  ...asList(partnerPerformance.value?.top_investment_candidates),
+  ...asList(partnerPerformance.value?.quote_allocation_candidates),
+  ...asList(partnerPerformance.value?.pilot_candidates),
+  ...asList(partnerPerformance.value?.items),
+])
+const revenueForecastRows = computed(() => [
+  ...asList(revenueForecast.value?.high_probability_projects),
+  ...asList(revenueForecast.value?.high_risk_projects),
+  ...asList(revenueForecast.value?.committed_backlog),
+  ...asList(revenueForecast.value?.forecastable_revenue),
+  ...asList(revenueForecast.value?.forecast_items),
+])
 const partnerOptions = computed(() =>
   uniqueText([
     ...asList(productMarketFit.value?.items).flatMap((item) => [item.partner_focus, item.partner, item.partner_name]),
     ...asList(winLossDashboard.value?.partner_rollup).flatMap((item) => [item.partner_focus, item.partner, item.partner_name]),
     ...asList(account360.value?.items).flatMap((item) => (Array.isArray(item.partner_focus) ? item.partner_focus : [item.partner_focus])),
+    ...partnerPerformanceRows.value.flatMap((item) => [item.partner_focus, item.partner, item.partner_name]),
+    ...revenueForecastRows.value.flatMap((item) => [item.partner_focus, item.partner, item.partner_name]),
   ]),
 )
 const productOptions = computed(() =>
@@ -283,6 +314,8 @@ const productOptions = computed(() =>
     ...asList(productMarketFit.value?.items).flatMap((item) => (Array.isArray(item.product_focus) ? item.product_focus : [item.product_focus, item.product_family, item.product])),
     ...asList(winLossDashboard.value?.product_rollup).flatMap((item) => [item.product_focus, item.product_family, item.product]),
     ...asList(account360.value?.items).flatMap((item) => (Array.isArray(item.product_focus) ? item.product_focus : [item.product_focus])),
+    ...partnerPerformanceRows.value.flatMap((item) => (Array.isArray(item.product_coverage) ? item.product_coverage : [item.product_focus, item.product_family])),
+    ...revenueForecastRows.value.flatMap((item) => (Array.isArray(item.product_focus) ? item.product_focus : [item.product_family, item.product_focus])),
   ]),
 )
 const factorOptions = computed(() =>
@@ -296,6 +329,8 @@ const customerOptions = computed(() =>
   uniqueText([
     ...asList(account360.value?.items).flatMap((item) => [item.customer_name, item.account_key]),
     ...asList(winLossDashboard.value?.items).flatMap((item) => [item.customer, item.customer_name]),
+    ...customerValueRows.value.flatMap((item) => [item.customer_name, item.account_key]),
+    ...revenueForecastRows.value.flatMap((item) => [item.customer_name, item.customer_or_segment, item.account_key]),
   ]),
 )
 const filteredReasonClusters = computed(() => filterExperienceRows(winLossReasonClusters.value))
@@ -374,7 +409,7 @@ const assetSections = computed(() => [
   {
     key: 'partner',
     label: 'Partner Performance',
-    items: asList(commercial.value?.partner_performance).map((item) => ({
+    items: uniqueRows([...partnerPerformanceRows.value, ...asList(commercial.value?.partner_performance)]).map((item) => ({
       title: String(item.partner_name || item.partner_focus || 'Partner'),
       tags: textList([item.investment_priority, item.allocation_fit, item.pilot_fit, ...(Array.isArray(item.product_coverage) ? item.product_coverage : [])]),
       reason: `报价支持 ${item.quote_support_count ?? 0}，赢单率 ${percent(item.win_rate)}，订单额 ${money(item.order_amount)}。`,
@@ -396,7 +431,7 @@ const assetSections = computed(() => [
   {
     key: 'customerValue',
     label: '客户价值',
-    items: asList(commercial.value?.customer_value).map((item) => ({
+    items: uniqueRows([...customerValueRows.value, ...asList(commercial.value?.customer_value)]).map((item) => ({
       title: String(item.customer_name || '客户'),
       tags: textList([item.value_tier, item.priority, item.future_revenue_signal, asRecord(item.commercial_quality).tier]),
       reason: `报价 ${money(item.historical_quote_amount)}，成交 ${money(item.won_order_amount)}，pipeline ${money(item.weighted_pipeline_amount)}。`,
@@ -407,7 +442,10 @@ const assetSections = computed(() => [
   {
     key: 'forecast',
     label: '收入预测',
-    items: asList(asRecord(commercial.value?.revenue_forecast).high_probability_projects).map((item) => ({
+    items: uniqueRows([
+      ...revenueForecastRows.value,
+      ...asList(asRecord(commercial.value?.revenue_forecast).high_probability_projects),
+    ]).map((item) => ({
       title: String(item.name || item.customer_name || item.source_type || '预测项目'),
       tags: textList([item.source_type, item.risk_level, item.forecast_confidence, item.revenue_bucket]),
       reason: `概率 ${item.probability ?? 0}%，加权金额 ${money(item.weighted_amount)}。`,
@@ -423,16 +461,22 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    const [businessExecution, winLoss, pmf, accounts] = await Promise.all([
+    const [businessExecution, winLoss, pmf, accounts, customers, partners, forecast] = await Promise.all([
       fetchBusinessExecution(),
       fetchWinLossIntelligenceDashboard(120),
       fetchProductMarketFitIntelligence(80),
       fetchAccount360Intelligence(80),
+      fetchCustomerValueIntelligence(80),
+      fetchPartnerPerformanceIntelligence(80),
+      fetchRevenueForecastIntelligence(120),
     ])
     data.value = businessExecution
     winLossDashboard.value = winLoss
     productMarketFit.value = pmf
     account360.value = accounts
+    customerValue.value = customers
+    partnerPerformance.value = partners
+    revenueForecast.value = forecast
   } catch (err) {
     error.value = err instanceof Error ? err.message : '商业智能数据加载失败'
   } finally {
@@ -473,6 +517,16 @@ function textList(value: unknown) {
 
 function uniqueText(values: unknown[]) {
   return [...new Set(textList(values))].sort((left, right) => left.localeCompare(right))
+}
+
+function uniqueRows(rows: Row[]) {
+  const seen = new Set<string>()
+  return rows.filter((row) => {
+    const key = rowKey(row)
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
 
 function rowSearchText(row: Row) {
