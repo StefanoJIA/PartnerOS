@@ -146,6 +146,7 @@ class ExecutiveDecisionItem(BaseModel):
 
 
 class CommercialIntelligenceOut(BaseModel):
+    executive_summary: dict[str, Any] = Field(default_factory=dict)
     win_loss: list[dict[str, Any]] = Field(default_factory=list)
     customer_value: list[dict[str, Any]] = Field(default_factory=list)
     partner_performance: list[dict[str, Any]] = Field(default_factory=list)

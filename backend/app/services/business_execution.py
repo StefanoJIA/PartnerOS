@@ -3936,6 +3936,219 @@ def _build_account_360_intelligence(
     return items
 
 
+def _commercial_path(item: dict[str, object], fallback: str = "/") -> str:
+    path = item.get("path") or item.get("source_path") or item.get("primary_path")
+    if path:
+        return str(path)
+    active_paths = item.get("active_paths")
+    if isinstance(active_paths, list) and active_paths:
+        return str(active_paths[0])
+    next_motion = item.get("next_commercial_motion")
+    if isinstance(next_motion, dict) and next_motion.get("path"):
+        return str(next_motion["path"])
+    return fallback
+
+
+def _commercial_answer_item(
+    *,
+    title: str,
+    reason: str,
+    next_action: str,
+    path: str,
+    source_asset: str,
+    priority: str = "P2",
+    owner: str = "business owner",
+    partner_focus: str | None = None,
+    product_focus: list[str] | None = None,
+) -> dict[str, object]:
+    return {
+        "title": title,
+        "reason": reason,
+        "next_action": next_action,
+        "path": path,
+        "source_asset": source_asset,
+        "priority": priority,
+        "owner": owner,
+        "partner_focus": partner_focus,
+        "product_focus": product_focus or [],
+        "safety": _safety_flags(),
+    }
+
+
+def _build_commercial_executive_summary(
+    *,
+    win_loss: list[dict[str, object]],
+    customer_value: list[dict[str, object]],
+    partner_performance: list[dict[str, object]],
+    product_market_fit: list[dict[str, object]],
+    revenue_forecast: dict[str, object],
+    account_360: list[dict[str, object]],
+) -> dict[str, object]:
+    forecast_summary = revenue_forecast.get("summary", {}) if isinstance(revenue_forecast, dict) else {}
+    forecast_questions = revenue_forecast.get("management_questions", {}) if isinstance(revenue_forecast, dict) else {}
+    if not isinstance(forecast_questions, dict):
+        forecast_questions = {}
+
+    follow_accounts: list[dict[str, object]] = []
+    for item in account_360[:5]:
+        motion = item.get("next_commercial_motion") if isinstance(item.get("next_commercial_motion"), dict) else {}
+        commercial_value = item.get("commercial_value") if isinstance(item.get("commercial_value"), dict) else {}
+        follow_accounts.append(
+            _commercial_answer_item(
+                title=str(item.get("customer_name") or "Unnamed account"),
+                reason=(
+                    f"{item.get('current_stage') or 'unknown stage'}; "
+                    f"weighted pipeline {commercial_value.get('weighted_pipeline_amount', 0)}; "
+                    f"{item.get('decision_reason') or motion.get('reason') or 'commercial context available'}"
+                ),
+                next_action=str(item.get("next_action") or motion.get("next_action") or "Review Account 360 and choose the next manual motion."),
+                path=_commercial_path(item, "/growth-operations"),
+                source_asset="account_360",
+                priority=str(item.get("priority") or "P2"),
+                owner=str(motion.get("owner") or "account owner"),
+                partner_focus=str(item.get("partner_focus", [None])[0]) if isinstance(item.get("partner_focus"), list) and item.get("partner_focus") else None,
+                product_focus=[str(value) for value in item.get("product_focus", [])[:5]] if isinstance(item.get("product_focus"), list) else [],
+            )
+        )
+
+    conversion_lines: list[dict[str, object]] = []
+    for item in product_market_fit[:5]:
+        counts = item.get("evidence_counts") if isinstance(item.get("evidence_counts"), dict) else {}
+        conversion_lines.append(
+            _commercial_answer_item(
+                title=f"{item.get('partner_focus') or 'future partner'} / {', '.join([str(value) for value in item.get('product_focus', [])[:2]]) if isinstance(item.get('product_focus'), list) else item.get('product_focus') or 'product family'}",
+                reason=(
+                    f"fit {item.get('fit_status') or 'baseline_only'}; "
+                    f"wins {counts.get('wins', 0)}, losses {counts.get('losses', 0)}, "
+                    f"orders {counts.get('orders', 0)}, feedback {counts.get('feedback', 0)}"
+                ),
+                next_action=str(item.get("next_action") or "Review buying factors and customer-safe product evidence."),
+                path=_commercial_path(item, "/market-response"),
+                source_asset="product_market_fit",
+                priority=str(item.get("priority") or ("P1" if item.get("fit_status") in {"pilot_risk", "conversion_risk", "order_validated"} else "P2")),
+                owner="product/market owner",
+                partner_focus=str(item.get("partner_focus") or ""),
+                product_focus=[str(value) for value in item.get("product_focus", [])[:5]] if isinstance(item.get("product_focus"), list) else [],
+            )
+        )
+
+    healthy_accounts: list[dict[str, object]] = []
+    for item in customer_value[:5]:
+        quality = item.get("commercial_quality") if isinstance(item.get("commercial_quality"), dict) else {}
+        healthy_accounts.append(
+            _commercial_answer_item(
+                title=str(item.get("customer_name") or "Unnamed customer"),
+                reason=(
+                    f"{quality.get('tier') or item.get('value_tier') or 'quality_pending'}; "
+                    f"won {item.get('won_order_amount', 0)}, pipeline {item.get('weighted_pipeline_amount', 0)}, "
+                    f"service burden {item.get('service_burden') or 'unknown'}"
+                ),
+                next_action=str(item.get("next_action") or item.get("recommended_reason") or "Use customer value profile to decide follow-up depth."),
+                path=_commercial_path(item, "/companies"),
+                source_asset="customer_value",
+                priority=str(item.get("priority") or "P2"),
+                owner="account owner",
+            )
+        )
+
+    wins = [item for item in win_loss if item.get("outcome") == "won"][:5]
+    losses = [item for item in win_loss if item.get("outcome") == "lost"][:5]
+    why_we_win = [
+        _commercial_answer_item(
+            title=str(item.get("customer") or item.get("quote_number") or "Won learning"),
+            reason=str(item.get("commercial_lesson") or item.get("won_reason") or item.get("reason_category") or "Won reason captured."),
+            next_action=str(item.get("next_quote_guidance") or "Reuse the validated buying factor in the next quote review."),
+            path=_commercial_path(item, "/quotes"),
+            source_asset="win_loss",
+            priority="P2",
+            owner="sales owner",
+            product_focus=[str(value) for value in item.get("decision_factors", [])[:5]] if isinstance(item.get("decision_factors"), list) else [],
+        )
+        for item in wins
+    ]
+    why_we_lose = [
+        _commercial_answer_item(
+            title=str(item.get("customer") or item.get("quote_number") or "Lost learning"),
+            reason=str(item.get("commercial_lesson") or item.get("lost_reason") or item.get("reason_category") or "Lost reason captured."),
+            next_action=str(item.get("next_quote_guidance") or "Review objection before expanding campaign or quote volume."),
+            path=_commercial_path(item, "/quotes"),
+            source_asset="win_loss",
+            priority="P1",
+            owner="sales owner",
+            product_focus=[str(value) for value in item.get("decision_factors", [])[:5]] if isinstance(item.get("decision_factors"), list) else [],
+        )
+        for item in losses
+    ]
+
+    partner_investment = [
+        _commercial_answer_item(
+            title=str(item.get("partner_name") or item.get("partner_focus") or "Partner"),
+            reason=(
+                f"allocation score {item.get('allocation_score', item.get('capability_score', 'n/a'))}; "
+                f"win rate {item.get('win_rate', 'n/a')}; "
+                f"{item.get('allocation_fit') or item.get('pilot_fit') or 'allocation context available'}"
+            ),
+            next_action=str(item.get("next_allocation_action") or item.get("next_action") or "Review partner allocation evidence."),
+            path=_commercial_path(item, "/partner-onboarding"),
+            source_asset="partner_performance",
+            priority=str(item.get("investment_priority") or "P2"),
+            owner="partner owner",
+            partner_focus=str(item.get("partner_name") or item.get("partner_focus") or ""),
+            product_focus=[str(value) for value in item.get("product_coverage", [])[:5]] if isinstance(item.get("product_coverage"), list) else [],
+        )
+        for item in partner_performance[:5]
+    ]
+
+    future_revenue = forecast_questions.get("future_revenue_from")
+    if not isinstance(future_revenue, list):
+        future_revenue = revenue_forecast.get("high_probability_projects", []) if isinstance(revenue_forecast, dict) else []
+
+    executive_actions = [
+        *follow_accounts[:2],
+        *conversion_lines[:2],
+        *partner_investment[:1],
+        *why_we_lose[:1],
+    ][:8]
+
+    return {
+        "management_questions": {
+            "who_to_follow_today": follow_accounts,
+            "what_converts": conversion_lines,
+            "what_is_commercially_healthy": healthy_accounts,
+            "why_we_win": why_we_win,
+            "why_we_lose": why_we_lose,
+            "future_revenue_from": future_revenue[:8],
+            "which_partner_to_invest": partner_investment,
+        },
+        "commercial_snapshot": {
+            "account_360_count": len(account_360),
+            "win_loss_records": len(win_loss),
+            "customer_value_accounts": len(customer_value),
+            "partner_performance_items": len(partner_performance),
+            "product_market_fit_lines": len(product_market_fit),
+            "total_weighted_revenue": forecast_summary.get("total_weighted_amount", 0),
+            "weighted_opportunity_amount": revenue_forecast.get("weighted_opportunity_amount", 0),
+            "weighted_quote_amount": revenue_forecast.get("weighted_quote_amount", 0),
+            "forecast_quality_score": forecast_summary.get("forecast_quality_score", 0),
+            "at_risk_weighted_amount": forecast_summary.get("at_risk_weighted_amount", 0),
+        },
+        "executive_actions": executive_actions,
+        "asset_map": [
+            {"asset": "Win/Loss Intelligence", "answers": "为什么赢 / 为什么输", "items": len(win_loss), "path": "/quotes"},
+            {"asset": "Customer Value Intelligence", "answers": "谁值得深跟 / 哪些客户健康", "items": len(customer_value), "path": "/companies"},
+            {"asset": "Partner Performance Intelligence", "answers": "哪个 Partner 值得投入", "items": len(partner_performance), "path": "/partner-onboarding"},
+            {"asset": "Product-Market Fit Intelligence", "answers": "什么产品因素真正影响成交", "items": len(product_market_fit), "path": "/market-response"},
+            {"asset": "Revenue Forecast Intelligence", "answers": "未来收入来自哪里", "items": len(future_revenue), "path": "/growth-operations"},
+            {"asset": "Account 360", "answers": "每个客户下一步商业动作", "items": len(account_360), "path": "/growth-operations"},
+        ],
+        "customer_safe_boundary": (
+            "Internal commercial intelligence summary only. It does not expose cost, margin, pricing breakdown, supplier private notes, "
+            "raw tokens, backend paths, internal-only comments, or customer-unsafe fields to the Portal."
+        ),
+        "safety": _safety_flags(),
+    }
+
+
 def _build_commercial_intelligence(
     db: Session,
     account_lifecycle: list[CustomerAccountExecutionItem],
@@ -3944,13 +4157,26 @@ def _build_commercial_intelligence(
     products: list[ProductIntelligenceItem],
 ) -> CommercialIntelligenceOut:
     customer_value = _build_customer_value_intelligence(db)
+    win_loss = _build_win_loss_intelligence(db)
+    partner_performance = _build_partner_performance_intelligence(db)
+    product_market_fit = _build_product_market_fit_intelligence(db, products, quotations)
+    revenue_forecast = _build_revenue_forecast_intelligence(opportunities, quotations, db)
+    account_360 = _build_account_360_intelligence(db, account_lifecycle, customer_value)
     return CommercialIntelligenceOut(
-        win_loss=_build_win_loss_intelligence(db),
+        executive_summary=_build_commercial_executive_summary(
+            win_loss=win_loss,
+            customer_value=customer_value,
+            partner_performance=partner_performance,
+            product_market_fit=product_market_fit,
+            revenue_forecast=revenue_forecast,
+            account_360=account_360,
+        ),
+        win_loss=win_loss,
         customer_value=customer_value,
-        partner_performance=_build_partner_performance_intelligence(db),
-        product_market_fit=_build_product_market_fit_intelligence(db, products, quotations),
-        revenue_forecast=_build_revenue_forecast_intelligence(opportunities, quotations, db),
-        account_360=_build_account_360_intelligence(db, account_lifecycle, customer_value),
+        partner_performance=partner_performance,
+        product_market_fit=product_market_fit,
+        revenue_forecast=revenue_forecast,
+        account_360=account_360,
     )
 
 

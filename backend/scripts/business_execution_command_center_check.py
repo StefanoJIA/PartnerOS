@@ -70,6 +70,10 @@ def main() -> int:
         ]
         commercial = payload.commercial_intelligence
         revenue_forecast = commercial.revenue_forecast or {}
+        executive_summary = commercial.executive_summary or {}
+        executive_questions = executive_summary.get("management_questions", {})
+        executive_actions = executive_summary.get("executive_actions", [])
+        executive_snapshot = executive_summary.get("commercial_snapshot", {})
         customer_value_payload = build_customer_value_intelligence(db, limit=20)
         customer_value_items = customer_value_payload.get("items", [])
         revenue_forecast_payload = build_revenue_forecast_intelligence(db, limit=40)
@@ -172,7 +176,8 @@ def main() -> int:
             ),
             (
                 "commercial intelligence covers six assets",
-                isinstance(commercial.win_loss, list)
+                isinstance(executive_summary, dict)
+                and isinstance(commercial.win_loss, list)
                 and isinstance(commercial.customer_value, list)
                 and isinstance(commercial.partner_performance, list)
                 and isinstance(commercial.product_market_fit, list)
@@ -180,6 +185,33 @@ def main() -> int:
                 and isinstance(revenue_forecast, dict)
                 and "weighted_opportunity_amount" in revenue_forecast
                 and "weighted_quote_amount" in revenue_forecast,
+            ),
+            (
+                "commercial intelligence executive summary answers management questions",
+                isinstance(executive_questions, dict)
+                and "who_to_follow_today" in executive_questions
+                and "what_converts" in executive_questions
+                and "what_is_commercially_healthy" in executive_questions
+                and "why_we_win" in executive_questions
+                and "why_we_lose" in executive_questions
+                and "future_revenue_from" in executive_questions
+                and "which_partner_to_invest" in executive_questions
+                and isinstance(executive_actions, list)
+                and isinstance(executive_snapshot, dict)
+                and "total_weighted_revenue" in executive_snapshot
+                and "forecast_quality_score" in executive_snapshot,
+            ),
+            (
+                "commercial intelligence executive summary safe boundaries",
+                executive_summary.get("safety", {}).get("external_message_sent") is False
+                and executive_summary.get("safety", {}).get("quote_status_changed") is False
+                and executive_summary.get("safety", {}).get("order_status_changed") is False
+                and executive_summary.get("safety", {}).get("customer_forbidden_fields_exposed") is False
+                and all(
+                    item.get("safety", {}).get("customer_forbidden_fields_exposed") is False
+                    for item in executive_actions
+                    if isinstance(item, dict)
+                ),
             ),
             (
                 "commercial intelligence links business objects",
@@ -921,6 +953,8 @@ def main() -> int:
                 "route commercial intelligence",
                 response.status_code == 200
                 and isinstance(response_data.get("commercial_intelligence"), dict)
+                and isinstance(response_data["commercial_intelligence"].get("executive_summary"), dict)
+                and "management_questions" in response_data["commercial_intelligence"]["executive_summary"]
                 and isinstance(response_data["commercial_intelligence"].get("revenue_forecast"), dict)
                 and "weighted_opportunity_amount" in response_data["commercial_intelligence"]["revenue_forecast"]
                 and isinstance(response_data["commercial_intelligence"].get("account_360"), list),

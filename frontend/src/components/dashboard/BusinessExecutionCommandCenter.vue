@@ -61,6 +61,58 @@
             <el-tag size="small" effect="plain">PMF {{ safeCommercial.product_market_fit.length }}</el-tag>
           </div>
         </div>
+        <div class="mb-3 rounded border border-indigo-100 bg-white p-3">
+          <div class="mb-2 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h5 class="text-sm font-semibold text-slate-900">管理层商业判断摘要</h5>
+              <p class="mt-1 text-xs text-slate-600">
+                直接回答：谁最值得跟进、什么更容易成交、未来收入来自哪里、哪个 Partner 值得投入、为什么赢/输。
+              </p>
+            </div>
+            <div class="flex flex-wrap gap-1">
+              <el-tag size="small" type="success" effect="plain">
+                加权收入 {{ money(executiveSnapshot.total_weighted_revenue) }}
+              </el-tag>
+              <el-tag size="small" type="primary" effect="plain">
+                预测质量 {{ executiveSnapshot.forecast_quality_score ?? 0 }}/100
+              </el-tag>
+              <el-tag size="small" type="warning" effect="plain">
+                风险收入 {{ money(executiveSnapshot.at_risk_weighted_amount) }}
+              </el-tag>
+            </div>
+          </div>
+          <div class="grid gap-2 lg:grid-cols-3">
+            <div
+              v-for="action in executiveActions.slice(0, 6)"
+              :key="`${action.source_asset}-${action.title}-${action.path}`"
+              class="rounded border border-slate-100 bg-slate-50 p-2"
+            >
+              <div class="mb-1 flex flex-wrap items-center gap-1">
+                <el-tag size="small" :type="priorityType(String(action.priority || 'P2'))" effect="plain">
+                  {{ action.priority || 'P2' }}
+                </el-tag>
+                <el-tag size="small" type="info" effect="plain">{{ action.source_asset }}</el-tag>
+                <el-tag v-if="action.partner_focus" size="small" effect="plain">{{ action.partner_focus }}</el-tag>
+              </div>
+              <div class="text-sm font-medium text-slate-800">{{ action.title }}</div>
+              <p class="mt-1 text-xs text-slate-600">{{ action.reason }}</p>
+              <p class="mt-1 text-xs text-slate-700">{{ action.next_action }}</p>
+              <el-button class="mt-2" size="small" link type="primary" @click="go(String(action.path || '/'))">
+                进入对应资产
+              </el-button>
+            </div>
+          </div>
+          <div class="mt-2 flex flex-wrap gap-1">
+            <el-tag
+              v-for="asset in executiveAssetMap"
+              :key="String(asset.asset)"
+              size="small"
+              effect="plain"
+            >
+              {{ asset.asset }}：{{ asset.answers }} / {{ asset.items ?? 0 }}
+            </el-tag>
+          </div>
+        </div>
         <div class="grid gap-3 lg:grid-cols-3">
           <div class="rounded border border-white bg-white p-3">
             <div class="mb-2 flex items-center justify-between">
@@ -661,6 +713,12 @@ const props = defineProps<{
 const router = useRouter()
 
 const defaultCommercial = {
+  executive_summary: {
+    management_questions: {},
+    executive_actions: [] as Array<Record<string, unknown>>,
+    commercial_snapshot: {},
+    asset_map: [] as Array<Record<string, unknown>>,
+  } as Record<string, unknown>,
   win_loss: [] as Array<Record<string, unknown>>,
   customer_value: [] as Array<Record<string, unknown>>,
   partner_performance: [] as Array<Record<string, unknown>>,
@@ -681,6 +739,18 @@ const defaultCommercial = {
 }
 
 const safeCommercial = computed(() => props.data?.commercial_intelligence || defaultCommercial)
+const commercialExecutiveSummary = computed(() => (safeCommercial.value.executive_summary || {}) as Record<string, unknown>)
+const executiveSnapshot = computed(() => (commercialExecutiveSummary.value.commercial_snapshot || {}) as Record<string, unknown>)
+const executiveActions = computed(() =>
+  Array.isArray(commercialExecutiveSummary.value.executive_actions)
+    ? (commercialExecutiveSummary.value.executive_actions as Array<Record<string, unknown>>)
+    : [],
+)
+const executiveAssetMap = computed(() =>
+  Array.isArray(commercialExecutiveSummary.value.asset_map)
+    ? (commercialExecutiveSummary.value.asset_map as Array<Record<string, unknown>>)
+    : [],
+)
 
 function go(path: string) {
   router.push(path)

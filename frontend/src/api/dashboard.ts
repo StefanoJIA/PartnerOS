@@ -531,6 +531,7 @@ export type BusinessExecution = {
     }
   }>
   commercial_intelligence: {
+    executive_summary: Record<string, unknown>
     win_loss: Array<Record<string, unknown>>
     customer_value: Array<Record<string, unknown>>
     partner_performance: Array<Record<string, unknown>>
