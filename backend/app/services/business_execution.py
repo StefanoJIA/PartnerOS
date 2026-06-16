@@ -2224,6 +2224,258 @@ def build_customer_value_intelligence(db: Session, limit: int = 50) -> dict[str,
     }
 
 
+def build_customer_value_detail(db: Session, company_id: str) -> dict[str, object] | None:
+    normalized = unquote(company_id or "").strip()
+    if normalized.startswith("company:"):
+        normalized = normalized.split(":", 1)[1]
+    try:
+        parsed_company_id = UUID(normalized)
+    except ValueError:
+        company = (
+            db.query(Company)
+            .filter(Company.is_active.is_(True), func.lower(Company.company_name) == normalized.lower())
+            .first()
+        )
+        parsed_company_id = company.id if company else None
+    if parsed_company_id is None:
+        return None
+
+    profile = _build_customer_value_profile(db, parsed_company_id)
+    if profile is None:
+        return None
+    company = db.get(Company, parsed_company_id)
+    quotes = (
+        db.query(Quote)
+        .filter(Quote.company_id == parsed_company_id, Quote.is_archived.is_(False))
+        .order_by(Quote.updated_at.desc())
+        .limit(12)
+        .all()
+    )
+    orders = (
+        db.query(CustomerOrder)
+        .filter(CustomerOrder.company_id == parsed_company_id)
+        .order_by(CustomerOrder.updated_at.desc())
+        .limit(12)
+        .all()
+    )
+    opportunities = (
+        db.query(SalesOpportunity)
+        .filter(SalesOpportunity.company_id == parsed_company_id)
+        .order_by(SalesOpportunity.updated_at.desc())
+        .limit(12)
+        .all()
+    )
+    feedback = (
+        db.query(FeedbackTicket)
+        .filter(FeedbackTicket.company_id == parsed_company_id)
+        .order_by(FeedbackTicket.updated_at.desc())
+        .limit(12)
+        .all()
+    )
+    learning_records = _learning_records_for_quote_ids(db, {quote.id for quote in quotes})
+    account_detail = build_account_360_detail(db, f"company:{parsed_company_id}") or {}
+
+    quote_evidence = [
+        {
+            "quote_id": str(quote.id),
+            "quote_number": quote.quote_number,
+            "status": quote.status,
+            "commercial_amount": _decimal_to_float(quote.grand_total or Decimal("0")),
+            "product_focus": _quote_product_focus(quote),
+            "partner_focus": _quote_partner_names(db, quote),
+            "learning_records": [
+                {
+                    "outcome_status": record.outcome_status,
+                    "reason_category": _win_loss_reason_category(
+                        record.won_reason,
+                        record.lost_reason,
+                        record.customer_objection,
+                        record.customer_feedback,
+                        record.competitor_signal,
+                    ),
+                    "won_reason": record.won_reason,
+                    "lost_reason": record.lost_reason,
+                    "customer_objection": record.customer_objection,
+                    "product_dimensions": record.product_dimensions or [],
+                    "next_quote_guidance": record.next_action
+                    or _win_loss_next_quote_guidance(
+                        record.outcome_status,
+                        _win_loss_reason_category(
+                            record.won_reason,
+                            record.lost_reason,
+                            record.customer_objection,
+                            record.customer_feedback,
+                            record.competitor_signal,
+                        ),
+                        _quote_product_focus(quote),
+                    ),
+                }
+                for record in learning_records
+                if record.quote_id == quote.id
+            ][:4],
+            "path": f"/quotes/{quote.id}",
+        }
+        for quote in quotes
+    ]
+    feedback_by_order_id: dict[object, list[FeedbackTicket]] = {}
+    order_ids = [order.id for order in orders]
+    if order_ids:
+        for ticket in (
+            db.query(FeedbackTicket)
+            .filter(FeedbackTicket.order_id.in_(order_ids))
+            .order_by(FeedbackTicket.updated_at.desc(), FeedbackTicket.created_at.desc())
+            .all()
+        ):
+            feedback_by_order_id.setdefault(ticket.order_id, []).append(ticket)
+    order_evidence = [
+        {
+            "order_id": str(order.id),
+            "order_number": order.order_number,
+            "status": order.status,
+            "commercial_amount": _decimal_to_float(order.grand_total or Decimal("0")),
+            "partner_focus": _order_partner_names(db, order),
+            "production_milestone_count": len(order.production_milestones),
+            "delayed_or_blocked_milestones": [
+                {
+                    "milestone_label": milestone.milestone_label,
+                    "status": milestone.status,
+                    "actual_date": milestone.actual_date.isoformat() if milestone.actual_date else None,
+                }
+                for milestone in order.production_milestones
+                if milestone.status in {"delayed", "blocked"}
+            ][:4],
+            "shipment_plan_count": len(order.shipment_plans),
+            "feedback_count": len(feedback_by_order_id.get(order.id, [])),
+            "delivery_signal": (
+                "delivery_or_feedback_review_needed"
+                if order.status == "on_hold"
+                or feedback_by_order_id.get(order.id)
+                or any(milestone.status in {"delayed", "blocked"} for milestone in order.production_milestones)
+                else "delivery_evidence_available"
+            ),
+            "path": f"/orders/{order.id}",
+        }
+        for order in orders
+    ]
+    opportunity_evidence = [
+        {
+            "opportunity_id": str(opportunity.id),
+            "opportunity_name": opportunity.opportunity_name,
+            "status": opportunity.status,
+            "stage": opportunity.stage,
+            "estimated_value": _decimal_to_float(opportunity.estimated_value or Decimal("0")),
+            "probability": opportunity.probability or 0,
+            "weighted_amount": _decimal_to_float(
+                (opportunity.estimated_value or Decimal("0")) * Decimal(opportunity.probability or 0) / Decimal("100")
+            ),
+            "partner_focus": opportunity.partner_focus,
+            "product_focus": opportunity.product_focus or [],
+            "risk": opportunity.risk,
+            "blocker": opportunity.blocker,
+            "next_action": opportunity.next_action,
+            "path": _opportunity_path(opportunity),
+        }
+        for opportunity in opportunities
+    ]
+    feedback_evidence = [
+        {
+            "ticket_id": str(ticket.id),
+            "ticket_number": ticket.ticket_number,
+            "status": ticket.status,
+            "priority": ticket.priority,
+            "subject": ticket.subject,
+            "response_summary": ticket.response_summary,
+            "path": "/feedback-tickets",
+        }
+        for ticket in feedback
+    ]
+    lessons = _merge_unique(
+        [
+            *[record.won_reason or "" for record in learning_records if record.outcome_status == "won"],
+            *[record.lost_reason or "" for record in learning_records if record.outcome_status == "lost"],
+            *[record.customer_objection or "" for record in learning_records],
+            *[record.next_action or "" for record in learning_records],
+        ],
+        limit=10,
+    )
+    detail_summary = {
+        "value_tier": profile.get("value_tier"),
+        "value_score": profile.get("value_score"),
+        "priority": profile.get("priority"),
+        "historical_quote_amount": profile.get("historical_quote_amount", 0),
+        "won_order_amount": profile.get("won_order_amount", 0),
+        "weighted_pipeline_amount": profile.get("weighted_pipeline_amount", 0),
+        "open_quote_amount": profile.get("open_quote_amount", 0),
+        "healthy_revenue_proxy": profile.get("healthy_revenue_proxy", 0),
+        "conversion_rate": profile.get("conversion_rate", 0),
+        "repeat_business_count": profile.get("repeat_business_count", 0),
+        "service_burden": profile.get("service_burden"),
+        "uses_cost_or_margin": False,
+    }
+    return {
+        "company_id": str(parsed_company_id),
+        "customer_name": _safe_company_name(company),
+        "summary": detail_summary,
+        "commercial_quality": profile.get("commercial_quality") or {},
+        "project_scale": profile.get("project_scale"),
+        "strategic_value": profile.get("strategic_value"),
+        "referral_value": profile.get("referral_value"),
+        "future_revenue_signal": profile.get("future_revenue_signal"),
+        "partner_focus": profile.get("partner_focus") or [],
+        "product_focus": profile.get("product_focus") or [],
+        "customer_decision_factors": profile.get("customer_decision_factors") or [],
+        "active_risks": profile.get("active_risks") or [],
+        "quote_evidence": quote_evidence,
+        "order_evidence": order_evidence,
+        "opportunity_evidence": opportunity_evidence,
+        "feedback_evidence": feedback_evidence,
+        "win_loss_learning": {
+            "won": len([record for record in learning_records if record.outcome_status == "won"]),
+            "lost": len([record for record in learning_records if record.outcome_status == "lost"]),
+            "lessons": lessons,
+        },
+        "related_account": {
+            "account_key": account_detail.get("account_key"),
+            "relationship_depth": account_detail.get("relationship_depth"),
+            "next_commercial_motion": account_detail.get("next_commercial_motion") or {},
+            "commercial_asset_coverage": account_detail.get("commercial_asset_coverage") or {},
+            "path": account_detail.get("path") or profile.get("path"),
+        },
+        "management_questions": {
+            "why_this_customer_matters": {
+                "answer": profile.get("recommended_reason"),
+                "evidence": detail_summary,
+            },
+            "what_to_do_next": profile.get("next_action"),
+            "what_revenue_is_supported": {
+                "won_order_amount": profile.get("won_order_amount", 0),
+                "weighted_pipeline_amount": profile.get("weighted_pipeline_amount", 0),
+                "open_quote_amount": profile.get("open_quote_amount", 0),
+                "healthy_revenue_proxy": profile.get("healthy_revenue_proxy", 0),
+            },
+            "what_risks_block_value": profile.get("active_risks") or [],
+            "what_learning_can_be_reused": lessons,
+        },
+        "source_paths": _merge_unique(
+            [
+                profile.get("path") or "",
+                *[item["path"] for item in quote_evidence],
+                *[item["path"] for item in order_evidence],
+                *[item["path"] for item in opportunity_evidence],
+                "/feedback-tickets" if feedback_evidence else "",
+            ],
+            limit=12,
+        ),
+        "next_action": profile.get("next_action"),
+        "customer_safe_boundary": (
+            "Internal Customer Value detail only. It uses quote amount, order amount, pipeline, conversion, repeat, delivery, "
+            "feedback, and win/loss learning as commercial signals; do not expose cost, margin, pricing breakdown, supplier "
+            "private notes, raw IDs, token values, internal scoring, or unreviewed risk notes to customer Portal."
+        ),
+        "safety": _safety_flags(),
+    }
+
+
 OPEN_OPPORTUNITY_STATUSES = {"open", "active", "qualified", "negotiating"}
 OPEN_QUOTE_STATUSES = {"ready_to_send", "sent", "revised"}
 ORDER_BACKLOG_STATUSES = {

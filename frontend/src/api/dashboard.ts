@@ -661,6 +661,39 @@ export async function fetchCustomerValueIntelligence(limit = 50) {
   return data
 }
 
+export interface CustomerValueDetail extends Record<string, unknown> {
+  company_id: string
+  customer_name: string
+  summary: Record<string, number | string | boolean | null>
+  commercial_quality: Record<string, unknown>
+  project_scale: string
+  strategic_value: string
+  referral_value: string
+  future_revenue_signal: string
+  partner_focus: string[]
+  product_focus: string[]
+  customer_decision_factors: string[]
+  active_risks: string[]
+  quote_evidence: Array<Record<string, unknown>>
+  order_evidence: Array<Record<string, unknown>>
+  opportunity_evidence: Array<Record<string, unknown>>
+  feedback_evidence: Array<Record<string, unknown>>
+  win_loss_learning: Record<string, unknown>
+  related_account: Record<string, unknown>
+  management_questions: Record<string, unknown>
+  source_paths: string[]
+  next_action: string
+  customer_safe_boundary: string
+  safety: Record<string, boolean>
+}
+
+export async function fetchCustomerValueDetail(companyId: string) {
+  const { data } = await http.get<CustomerValueDetail>('/dashboard/customer-value-intelligence/detail', {
+    params: { company_id: companyId },
+  })
+  return data
+}
+
 export interface RevenueForecastIntelligence {
   summary: {
     total_forecast_amount: number

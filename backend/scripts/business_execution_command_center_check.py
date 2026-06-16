@@ -42,6 +42,7 @@ from app.models import Company, Lead, User  # noqa: E402
 from app.services.business_execution import (  # noqa: E402
     build_account_360_intelligence,
     build_business_execution_center,
+    build_customer_value_detail,
     build_customer_value_intelligence,
     build_partner_performance_intelligence,
     build_product_market_fit_intelligence,
@@ -77,6 +78,12 @@ def main() -> int:
         executive_snapshot = executive_summary.get("commercial_snapshot", {})
         customer_value_payload = build_customer_value_intelligence(db, limit=20)
         customer_value_items = customer_value_payload.get("items", [])
+        first_customer_value_item = customer_value_items[0] if customer_value_items else {}
+        customer_value_detail_payload = (
+            build_customer_value_detail(db, str(first_customer_value_item.get("company_id")))
+            if first_customer_value_item.get("company_id")
+            else None
+        )
         revenue_forecast_payload = build_revenue_forecast_intelligence(db, limit=40)
         revenue_forecast_items = revenue_forecast_payload.get("forecast_items", [])
         partner_performance_payload = build_partner_performance_intelligence(db, limit=40)
@@ -316,6 +323,20 @@ def main() -> int:
                 and customer_value_payload.get("safety", {}).get("order_status_changed") is False
                 and customer_value_payload.get("safety", {}).get("customer_forbidden_fields_exposed") is False
                 and all(item.get("safety", {}).get("customer_forbidden_fields_exposed") is False for item in customer_value_items),
+            ),
+            (
+                "customer value detail profiles source evidence",
+                customer_value_detail_payload is not None
+                and isinstance(customer_value_detail_payload.get("summary"), dict)
+                and customer_value_detail_payload["summary"].get("uses_cost_or_margin") is False
+                and isinstance(customer_value_detail_payload.get("quote_evidence"), list)
+                and isinstance(customer_value_detail_payload.get("order_evidence"), list)
+                and isinstance(customer_value_detail_payload.get("opportunity_evidence"), list)
+                and isinstance(customer_value_detail_payload.get("feedback_evidence"), list)
+                and isinstance(customer_value_detail_payload.get("management_questions"), dict)
+                and "what_to_do_next" in customer_value_detail_payload["management_questions"]
+                and customer_value_detail_payload.get("safety", {}).get("external_message_sent") is False
+                and customer_value_detail_payload.get("safety", {}).get("customer_forbidden_fields_exposed") is False,
             ),
             (
                 "revenue forecast intelligence profiles future revenue",
@@ -964,6 +985,19 @@ def main() -> int:
                 "/api/dashboard/customer-value-intelligence",
                 headers={"Authorization": f"Bearer {token}"},
             )
+            customer_value_preview = customer_value_route.json() if customer_value_route.status_code == 200 else {}
+            first_customer_value_route_item = (
+                customer_value_preview.get("items", [{}])[0] if customer_value_preview.get("items") else {}
+            )
+            customer_value_detail_route = (
+                client.get(
+                    "/api/dashboard/customer-value-intelligence/detail",
+                    params={"company_id": first_customer_value_route_item.get("company_id")},
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+                if first_customer_value_route_item.get("company_id")
+                else None
+            )
             revenue_forecast_route = client.get(
                 "/api/dashboard/revenue-forecast-intelligence",
                 headers={"Authorization": f"Bearer {token}"},
@@ -1105,6 +1139,11 @@ def main() -> int:
             )
         )
         customer_value_route_data = customer_value_route.json() if customer_value_route.status_code == 200 else {}
+        customer_value_detail_data = (
+            customer_value_detail_route.json()
+            if customer_value_detail_route is not None and customer_value_detail_route.status_code == 200
+            else {}
+        )
         checks.append(
             (
                 "route customer value intelligence",
@@ -1119,6 +1158,22 @@ def main() -> int:
                     and item.get("safety", {}).get("external_message_sent") is False
                     for item in customer_value_route_data.get("items", [])
                 ),
+            )
+        )
+        checks.append(
+            (
+                "route customer value detail",
+                customer_value_detail_route is not None
+                and customer_value_detail_route.status_code == 200
+                and customer_value_detail_data.get("company_id")
+                and isinstance(customer_value_detail_data.get("summary"), dict)
+                and customer_value_detail_data["summary"].get("uses_cost_or_margin") is False
+                and isinstance(customer_value_detail_data.get("quote_evidence"), list)
+                and isinstance(customer_value_detail_data.get("order_evidence"), list)
+                and isinstance(customer_value_detail_data.get("source_paths"), list)
+                and "why_this_customer_matters" in customer_value_detail_data.get("management_questions", {})
+                and customer_value_detail_data.get("safety", {}).get("external_message_sent") is False
+                and customer_value_detail_data.get("safety", {}).get("customer_forbidden_fields_exposed") is False,
             )
         )
         revenue_forecast_route_data = revenue_forecast_route.json() if revenue_forecast_route.status_code == 200 else {}

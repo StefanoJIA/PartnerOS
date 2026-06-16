@@ -29,6 +29,7 @@ from app.services.business_execution import (
     build_account_360_detail,
     build_account_360_intelligence,
     build_business_execution_center,
+    build_customer_value_detail,
     build_customer_value_intelligence,
     build_partner_performance_detail,
     build_partner_performance_intelligence,
@@ -101,6 +102,18 @@ def dashboard_customer_value_intelligence(
     _: User = Depends(get_current_user),
 ):
     return build_customer_value_intelligence(db, limit=limit)
+
+
+@router.get("/customer-value-intelligence/detail")
+def dashboard_customer_value_detail(
+    company_id: str = Query(..., min_length=1),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    data = build_customer_value_detail(db, company_id=company_id)
+    if data is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer Value detail not found")
+    return data
 
 
 @router.get("/revenue-forecast-intelligence")

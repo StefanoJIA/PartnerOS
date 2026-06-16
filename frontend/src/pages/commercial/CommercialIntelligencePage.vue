@@ -274,6 +274,15 @@
                 <template #default="{ row }">
                   <el-button size="small" link type="primary" @click="go(row.path)">打开</el-button>
                   <el-button
+                    v-if="activeAsset === 'customerValue' && row.companyId"
+                    size="small"
+                    link
+                    type="primary"
+                    @click="openCustomerValue(row)"
+                  >
+                    Customer Value detail
+                  </el-button>
+                  <el-button
                     v-if="activeAsset === 'partner' && row.partnerKey"
                     size="small"
                     link
@@ -366,6 +375,122 @@
           </section>
 
           <el-alert type="warning" :closable="false" show-icon :title="accountDetail.customer_safe_boundary" />
+        </template>
+      </div>
+    </el-drawer>
+
+    <el-drawer v-model="customerValueDetailVisible" title="Customer Value detail" size="580px">
+      <div v-loading="customerValueDetailLoading" class="space-y-4">
+        <el-alert v-if="customerValueDetailError" type="error" :closable="false" :title="customerValueDetailError" />
+        <template v-if="customerValueDetail">
+          <section>
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h3 class="text-base font-semibold text-slate-900">{{ customerValueDetail.customer_name }}</h3>
+                <p class="mt-1 text-sm text-slate-600">{{ customerValueDetail.next_action }}</p>
+              </div>
+              <el-tag :type="priorityType(String(asRecord(customerValueDetail.summary).priority || 'P3'))" effect="plain">
+                {{ asRecord(customerValueDetail.summary).priority || 'P3' }}
+              </el-tag>
+            </div>
+            <p class="mt-2 text-xs text-slate-500">{{ String(asRecord(customerValueQuestions.why_this_customer_matters).answer || '') }}</p>
+          </section>
+
+          <section class="grid gap-2 sm:grid-cols-3">
+            <div class="rounded border border-slate-100 bg-slate-50 p-3">
+              <p class="text-xs text-slate-500">Won order amount</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ money(asRecord(customerValueDetail.summary).won_order_amount) }}</p>
+            </div>
+            <div class="rounded border border-slate-100 bg-slate-50 p-3">
+              <p class="text-xs text-slate-500">Weighted pipeline</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ money(asRecord(customerValueDetail.summary).weighted_pipeline_amount) }}</p>
+            </div>
+            <div class="rounded border border-slate-100 bg-slate-50 p-3">
+              <p class="text-xs text-slate-500">Healthy revenue proxy</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ money(asRecord(customerValueDetail.summary).healthy_revenue_proxy) }}</p>
+            </div>
+          </section>
+
+          <section class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Customer value evidence</h4>
+            <div class="mt-2 flex flex-wrap gap-1">
+              <el-tag size="small" type="primary" effect="plain">{{ asRecord(customerValueDetail.summary).value_tier }}</el-tag>
+              <el-tag size="small" effect="plain">{{ customerValueDetail.future_revenue_signal }}</el-tag>
+              <el-tag size="small" type="warning" effect="plain">{{ asRecord(customerValueDetail.summary).service_burden }}</el-tag>
+            </div>
+            <p class="mt-2 text-sm text-slate-700">{{ String(customerValueQuestions.what_to_do_next || customerValueDetail.next_action || '') }}</p>
+          </section>
+
+          <section class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Quote / order / pipeline evidence</h4>
+            <div class="mt-2 grid gap-2 sm:grid-cols-3">
+              <div class="rounded bg-slate-50 p-2 text-sm">
+                <p class="text-xs text-slate-500">Quotes</p>
+                <p class="font-semibold text-slate-900">{{ customerValueQuotes.length }}</p>
+              </div>
+              <div class="rounded bg-slate-50 p-2 text-sm">
+                <p class="text-xs text-slate-500">Orders</p>
+                <p class="font-semibold text-slate-900">{{ customerValueOrders.length }}</p>
+              </div>
+              <div class="rounded bg-slate-50 p-2 text-sm">
+                <p class="text-xs text-slate-500">Opportunities</p>
+                <p class="font-semibold text-slate-900">{{ customerValueOpportunities.length }}</p>
+              </div>
+            </div>
+            <div v-for="item in customerValueQuotes.slice(0, 4)" :key="rowKey(item)" class="mt-2 rounded bg-slate-50 p-2">
+              <div class="flex flex-wrap items-center gap-1">
+                <el-tag size="small" effect="plain">{{ item.quote_number }}</el-tag>
+                <el-tag size="small" type="info" effect="plain">{{ item.status }}</el-tag>
+                <el-tag size="small" type="success" effect="plain">{{ money(item.commercial_amount) }}</el-tag>
+              </div>
+              <p class="mt-1 text-xs text-slate-600">{{ textList(item.product_focus).join(' / ') }}</p>
+              <el-button v-if="item.path" class="mt-1" size="small" link type="primary" @click="go(String(item.path))">Open quote</el-button>
+            </div>
+            <div v-for="item in customerValueOrders.slice(0, 4)" :key="rowKey(item)" class="mt-2 rounded bg-slate-50 p-2">
+              <div class="flex flex-wrap items-center gap-1">
+                <el-tag size="small" effect="plain">{{ item.order_number }}</el-tag>
+                <el-tag size="small" type="info" effect="plain">{{ item.status }}</el-tag>
+                <el-tag size="small" type="warning" effect="plain">{{ item.delivery_signal }}</el-tag>
+              </div>
+              <p class="mt-1 text-xs text-slate-600">
+                Milestones {{ item.production_milestone_count ?? 0 }} /
+                shipment plans {{ item.shipment_plan_count ?? 0 }} /
+                feedback {{ item.feedback_count ?? 0 }}
+              </p>
+              <el-button v-if="item.path" class="mt-1" size="small" link type="primary" @click="go(String(item.path))">Open order</el-button>
+            </div>
+            <div v-for="item in customerValueOpportunities.slice(0, 4)" :key="rowKey(item)" class="mt-2 rounded bg-slate-50 p-2">
+              <div class="flex flex-wrap items-center gap-1">
+                <el-tag size="small" effect="plain">{{ item.opportunity_name }}</el-tag>
+                <el-tag size="small" type="primary" effect="plain">{{ item.probability ?? 0 }}%</el-tag>
+                <el-tag size="small" type="success" effect="plain">{{ money(item.weighted_amount) }}</el-tag>
+              </div>
+              <p class="mt-1 text-xs text-slate-600">{{ item.next_action || item.blocker || item.risk }}</p>
+              <el-button v-if="item.path" class="mt-1" size="small" link type="primary" @click="go(String(item.path))">Open opportunity</el-button>
+            </div>
+          </section>
+
+          <section class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Reusable learning / value risks</h4>
+            <div class="mt-2 flex flex-wrap gap-1">
+              <el-tag v-for="item in customerValuePartners" :key="item" size="small" effect="plain">{{ item }}</el-tag>
+              <el-tag v-for="item in customerValueProducts" :key="item" size="small" type="success" effect="plain">{{ item }}</el-tag>
+            </div>
+            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+              <li v-for="item in customerValueLessons.slice(0, 8)" :key="item">{{ item }}</li>
+            </ul>
+            <ul v-if="customerValueRisks.length" class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+              <li v-for="item in customerValueRisks.slice(0, 6)" :key="item">{{ item }}</li>
+            </ul>
+          </section>
+
+          <section v-if="Object.keys(customerValueAccount).length" class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Related Account 360 context</h4>
+            <p class="mt-2 text-sm text-slate-700">{{ asRecord(customerValueAccount.next_commercial_motion).next_action }}</p>
+            <el-button v-if="customerValueAccount.path" class="mt-1" size="small" link type="primary" @click="go(String(customerValueAccount.path))">Open account</el-button>
+          </section>
+
+          <el-alert type="warning" :closable="false" show-icon :title="customerValueDetail.customer_safe_boundary" />
         </template>
       </div>
     </el-drawer>
@@ -717,6 +842,7 @@ import {
   fetchAccount360Detail,
   fetchAccount360Intelligence,
   fetchBusinessExecution,
+  fetchCustomerValueDetail,
   fetchCustomerValueIntelligence,
   fetchPartnerPerformanceDetail,
   fetchPartnerPerformanceIntelligence,
@@ -729,6 +855,7 @@ import {
   type Account360Detail,
   type Account360Intelligence,
   type BusinessExecution,
+  type CustomerValueDetail,
   type CustomerValueIntelligence,
   type PartnerPerformanceDetail,
   type PartnerPerformanceIntelligence,
@@ -762,6 +889,10 @@ const factorDetailVisible = ref(false)
 const factorDetailLoading = ref(false)
 const factorDetailError = ref('')
 const customerValue = ref<CustomerValueIntelligence | null>(null)
+const customerValueDetail = ref<CustomerValueDetail | null>(null)
+const customerValueDetailVisible = ref(false)
+const customerValueDetailLoading = ref(false)
+const customerValueDetailError = ref('')
 const partnerPerformance = ref<PartnerPerformanceIntelligence | null>(null)
 const partnerDetail = ref<PartnerPerformanceDetail | null>(null)
 const partnerDetailVisible = ref(false)
@@ -814,6 +945,15 @@ const forecastOpportunity = computed(() => asRecord(forecastDetail.value?.opport
 const forecastQuote = computed(() => asRecord(forecastDetail.value?.quote_evidence))
 const forecastOrder = computed(() => asRecord(forecastDetail.value?.order_evidence))
 const forecastAccount = computed(() => asRecord(forecastDetail.value?.related_account))
+const customerValueQuestions = computed(() => asRecord(customerValueDetail.value?.management_questions))
+const customerValueQuotes = computed(() => asList(customerValueDetail.value?.quote_evidence))
+const customerValueOrders = computed(() => asList(customerValueDetail.value?.order_evidence))
+const customerValueOpportunities = computed(() => asList(customerValueDetail.value?.opportunity_evidence))
+const customerValueAccount = computed(() => asRecord(customerValueDetail.value?.related_account))
+const customerValuePartners = computed(() => textList(customerValueDetail.value?.partner_focus))
+const customerValueProducts = computed(() => textList(customerValueDetail.value?.product_focus))
+const customerValueRisks = computed(() => textList(customerValueDetail.value?.active_risks))
+const customerValueLessons = computed(() => textList(asRecord(customerValueDetail.value?.win_loss_learning).lessons))
 const coverageTags = computed(() => {
   const coverage = asRecord(accountDetail.value?.commercial_asset_coverage)
   return [
@@ -998,6 +1138,7 @@ const assetSections = computed(() => [
     label: '客户价值',
     items: uniqueRows([...customerValueRows.value, ...asList(commercial.value?.customer_value)]).map((item) => ({
       title: String(item.customer_name || '客户'),
+      companyId: String(item.company_id || ''),
       tags: textList([item.value_tier, item.priority, item.future_revenue_signal, asRecord(item.commercial_quality).tier]),
       reason: `报价 ${money(item.historical_quote_amount)}，成交 ${money(item.won_order_amount)}，pipeline ${money(item.weighted_pipeline_amount)}。`,
       nextAction: String(item.next_action || item.recommended_reason || '按客户价值决定跟进深度。'),
@@ -1073,6 +1214,27 @@ async function openAccount360(item: Row) {
     accountDetailError.value = err instanceof Error ? err.message : 'Account 360 detail failed to load.'
   } finally {
     accountDetailLoading.value = false
+  }
+}
+
+async function openCustomerValue(item: Row) {
+  const companyId = String(item.companyId || item.company_id || '').trim()
+  if (!companyId) {
+    customerValueDetailError.value = 'Customer Value company id is missing.'
+    customerValueDetail.value = null
+    customerValueDetailVisible.value = true
+    return
+  }
+  customerValueDetailVisible.value = true
+  customerValueDetailLoading.value = true
+  customerValueDetailError.value = ''
+  try {
+    customerValueDetail.value = await fetchCustomerValueDetail(companyId)
+  } catch (err) {
+    customerValueDetail.value = null
+    customerValueDetailError.value = err instanceof Error ? err.message : 'Customer Value detail failed to load.'
+  } finally {
+    customerValueDetailLoading.value = false
   }
 }
 

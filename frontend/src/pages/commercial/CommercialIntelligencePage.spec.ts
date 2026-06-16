@@ -9,6 +9,7 @@ import {
   fetchAccount360Detail,
   fetchAccount360Intelligence,
   fetchBusinessExecution,
+  fetchCustomerValueDetail,
   fetchCustomerValueIntelligence,
   fetchPartnerPerformanceDetail,
   fetchPartnerPerformanceIntelligence,
@@ -20,6 +21,7 @@ import {
   fetchWinLossIntelligenceDashboard,
   type Account360Intelligence,
   type BusinessExecution,
+  type CustomerValueDetail,
   type CustomerValueIntelligence,
   type PartnerPerformanceDetail,
   type PartnerPerformanceIntelligence,
@@ -40,6 +42,7 @@ vi.mock('@/api/dashboard', () => ({
   fetchAccount360Detail: vi.fn(),
   fetchAccount360Intelligence: vi.fn(),
   fetchBusinessExecution: vi.fn(),
+  fetchCustomerValueDetail: vi.fn(),
   fetchCustomerValueIntelligence: vi.fn(),
   fetchPartnerPerformanceDetail: vi.fn(),
   fetchPartnerPerformanceIntelligence: vi.fn(),
@@ -354,12 +357,14 @@ const pmfFactorDetailPayload = {
 const customerValuePayload = {
   items: [
     {
+      company_id: 'school-buyer',
       customer_name: 'Strategic school buyer',
       value_tier: 'strategic_account',
       priority: 'P1',
       historical_quote_amount: 180000,
       won_order_amount: 90000,
       weighted_pipeline_amount: 60000,
+      commercial_quality: { tier: 'healthy_growth_account', uses_cost_or_margin: false },
       next_action: 'Prioritize next education furniture quote.',
       path: '/companies/school',
     },
@@ -388,6 +393,105 @@ const customerValuePayload = {
   customer_safe_boundary: 'internal only',
   safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
 } as unknown as CustomerValueIntelligence
+
+const customerValueDetailPayload = {
+  company_id: 'school-buyer',
+  customer_name: 'Strategic school buyer',
+  summary: {
+    value_tier: 'strategic_account',
+    value_score: 88,
+    priority: 'P1',
+    historical_quote_amount: 180000,
+    won_order_amount: 90000,
+    weighted_pipeline_amount: 60000,
+    open_quote_amount: 80000,
+    healthy_revenue_proxy: 150000,
+    conversion_rate: 0.5,
+    repeat_business_count: 1,
+    service_burden: 'clean_or_light_burden',
+    uses_cost_or_margin: false,
+  },
+  commercial_quality: {
+    tier: 'healthy_growth_account',
+    management_answer: 'Healthy commercial value without cost or margin exposure.',
+  },
+  project_scale: 'large_project',
+  strategic_value: 'strategic_account',
+  referral_value: 'candidate_after_delivery_success',
+  future_revenue_signal: 'weighted_pipeline',
+  partner_focus: ['JOOBOO'],
+  product_focus: ['education furniture', 'school desks/chairs'],
+  customer_decision_factors: ['delivery consistency', 'resource needs'],
+  active_risks: ['business owner must confirm customer-safe classroom deployment wording'],
+  quote_evidence: [
+    {
+      quote_id: 'quote-school',
+      quote_number: 'Q-JOOBOO-SCHOOL',
+      status: 'sent',
+      commercial_amount: 180000,
+      product_focus: ['education furniture'],
+      partner_focus: ['JOOBOO'],
+      learning_records: [{ outcome_status: 'won', won_reason: 'delivery consistency matched project timing' }],
+      path: '/quotes/quote-school',
+    },
+  ],
+  order_evidence: [
+    {
+      order_id: 'order-school',
+      order_number: 'SO-JOOBOO-SCHOOL',
+      status: 'confirmed',
+      commercial_amount: 90000,
+      partner_focus: ['JOOBOO'],
+      production_milestone_count: 2,
+      shipment_plan_count: 1,
+      feedback_count: 0,
+      delivery_signal: 'delivery_evidence_available',
+      path: '/orders/order-school',
+    },
+  ],
+  opportunity_evidence: [
+    {
+      opportunity_id: 'opp-school',
+      opportunity_name: 'School district classroom refresh',
+      status: 'qualified',
+      stage: 'quote_review',
+      estimated_value: 120000,
+      probability: 70,
+      weighted_amount: 84000,
+      partner_focus: 'JOOBOO',
+      product_focus: ['project furniture'],
+      next_action: 'Confirm procurement timing and resource pack.',
+      path: '/growth-operations',
+    },
+  ],
+  feedback_evidence: [],
+  win_loss_learning: {
+    won: 1,
+    lost: 0,
+    lessons: ['delivery consistency matched project timing', 'resource pack helped school procurement'],
+  },
+  related_account: {
+    account_key: 'company:school-buyer',
+    relationship_depth: 'full_commercial_history',
+    next_commercial_motion: { next_action: 'Prepare repeat quote with JOOBOO evidence.' },
+    commercial_asset_coverage: { quote: true, order_delivery: true, feedback: false },
+    path: '/companies/school',
+  },
+  management_questions: {
+    why_this_customer_matters: {
+      answer: 'Strategic account with won order and weighted school project pipeline.',
+      evidence: {},
+    },
+    what_to_do_next: 'Prioritize next education furniture quote.',
+    what_revenue_is_supported: { won_order_amount: 90000, weighted_pipeline_amount: 60000 },
+    what_risks_block_value: ['business owner must confirm customer-safe classroom deployment wording'],
+    what_learning_can_be_reused: ['delivery consistency matched project timing'],
+  },
+  source_paths: ['/quotes/quote-school', '/orders/order-school', '/growth-operations'],
+  next_action: 'Prioritize next education furniture quote.',
+  customer_safe_boundary: 'Internal Customer Value detail only. Do not expose cost, margin, pricing breakdown, supplier private notes, raw IDs, token values, internal scoring, or unreviewed risk notes to customer Portal.',
+  safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
+} as unknown as CustomerValueDetail
 
 const partnerPerformancePayload = {
   summary: {
@@ -631,6 +735,7 @@ describe('CommercialIntelligencePage', () => {
     vi.mocked(fetchAccount360Detail).mockReset()
     vi.mocked(fetchAccount360Intelligence).mockReset()
     vi.mocked(fetchBusinessExecution).mockReset()
+    vi.mocked(fetchCustomerValueDetail).mockReset()
     vi.mocked(fetchCustomerValueIntelligence).mockReset()
     vi.mocked(fetchPartnerPerformanceDetail).mockReset()
     vi.mocked(fetchPartnerPerformanceIntelligence).mockReset()
@@ -644,6 +749,7 @@ describe('CommercialIntelligencePage', () => {
     vi.mocked(fetchWinLossIntelligenceDashboard).mockResolvedValue(winLossPayload)
     vi.mocked(fetchProductMarketFitIntelligence).mockResolvedValue(pmfPayload)
     vi.mocked(fetchAccount360Intelligence).mockResolvedValue(accountPayload)
+    vi.mocked(fetchCustomerValueDetail).mockResolvedValue(customerValueDetailPayload)
     vi.mocked(fetchCustomerValueIntelligence).mockResolvedValue(customerValuePayload)
     vi.mocked(fetchPartnerPerformanceDetail).mockResolvedValue(partnerPerformanceDetailPayload)
     vi.mocked(fetchPartnerPerformanceIntelligence).mockResolvedValue(partnerPerformancePayload)
@@ -743,6 +849,27 @@ describe('CommercialIntelligencePage', () => {
     expect(wrapper.text()).toContain('load range after business approval')
     expect(wrapper.text()).toContain('raw test notes')
     expect(wrapper.text()).toContain('Internal Product-Market Fit factor detail only')
+  })
+
+  it('opens Customer Value detail for account value evidence', async () => {
+    const wrapper = mount(CommercialIntelligencePage, { global: { plugins: [ElementPlus] } })
+    await flushPromises()
+
+    await wrapper.findAll('.el-tabs__item').find((tab) => tab.text() === '客户价值')?.trigger('click')
+    await flushPromises()
+    await wrapper.findAll('button').find((button) => button.text() === 'Customer Value detail')?.trigger('click')
+    await flushPromises()
+
+    expect(fetchCustomerValueDetail).toHaveBeenCalledWith('school-buyer')
+    expect(wrapper.text()).toContain('Customer Value detail')
+    expect(wrapper.text()).toContain('Strategic school buyer')
+    expect(wrapper.text()).toContain('Customer value evidence')
+    expect(wrapper.text()).toContain('Q-JOOBOO-SCHOOL')
+    expect(wrapper.text()).toContain('SO-JOOBOO-SCHOOL')
+    expect(wrapper.text()).toContain('School district classroom refresh')
+    expect(wrapper.text()).toContain('delivery consistency matched project timing')
+    expect(wrapper.text()).toContain('Related Account 360 context')
+    expect(wrapper.text()).toContain('Do not expose cost, margin, pricing breakdown, supplier private notes')
   })
 
   it('opens Partner Performance detail for allocation evidence', async () => {
