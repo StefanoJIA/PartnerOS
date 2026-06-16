@@ -639,6 +639,32 @@ export async function fetchPartnerPerformanceIntelligence(limit = 50) {
   return data
 }
 
+export interface ProductMarketFitIntelligence {
+  summary: {
+    product_line_count: number
+    p1_product_line_count: number
+    order_validated_count: number
+    pilot_risk_count: number
+    quote_learning_count: number
+    feedback_signal_count: number
+    order_amount: number
+  }
+  items: Array<Record<string, unknown>>
+  top_product_lines: Array<Record<string, unknown>>
+  pilot_risk_product_lines: Array<Record<string, unknown>>
+  validated_buying_factors: Array<Record<string, unknown>>
+  management_questions: Record<string, unknown>
+  next_action: string
+  safety: Record<string, boolean>
+}
+
+export async function fetchProductMarketFitIntelligence(limit = 50) {
+  const { data } = await http.get<ProductMarketFitIntelligence>('/dashboard/product-market-fit-intelligence', {
+    params: { limit },
+  })
+  return data
+}
+
 export interface Account360Intelligence {
   summary: {
     account_count: number

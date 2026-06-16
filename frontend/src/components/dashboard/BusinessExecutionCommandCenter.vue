@@ -144,8 +144,30 @@
               </div>
               <p class="mt-1 text-xs text-slate-700">{{ item.next_action }}</p>
               <p class="mt-1 text-xs text-slate-500">
+                订单 {{ pmfCounts(item).orders || 0 }} /
+                报价 {{ pmfCounts(item).quotes || 0 }} /
+                赢 {{ pmfCounts(item).wins || 0 }} /
+                输 {{ pmfCounts(item).losses || 0 }} /
+                反馈 {{ pmfCounts(item).feedback || 0 }}
+              </p>
+              <p class="mt-1 text-xs text-slate-500">
+                订单额 {{ money(pmfValue(item).order_amount) }} /
+                报价额 {{ money(pmfValue(item).quote_amount) }}
+              </p>
+              <p class="mt-1 text-xs text-slate-500">
                 购买因素：{{ listLabel(item.purchase_factors).slice(0, 5).join(' / ') || '待沉淀' }}
               </p>
+              <div class="mt-1 flex flex-wrap gap-1">
+                <el-tag
+                  v-for="factor in pmfFactors(item).slice(0, 3)"
+                  :key="String(factor.factor)"
+                  size="small"
+                  type="info"
+                  effect="plain"
+                >
+                  {{ factor.factor }} {{ factor.evidence_count }}
+                </el-tag>
+              </div>
             </div>
           </div>
         </div>
@@ -660,6 +682,20 @@ function commercialValue(account: Record<string, unknown>) {
 
 function accountCounts(account: Record<string, unknown>) {
   return (account.source_counts || {}) as Record<string, unknown>
+}
+
+function pmfCounts(item: Record<string, unknown>) {
+  return (item.evidence_counts || {}) as Record<string, unknown>
+}
+
+function pmfValue(item: Record<string, unknown>) {
+  return (item.commercial_value || {}) as Record<string, unknown>
+}
+
+function pmfFactors(item: Record<string, unknown>) {
+  return Array.isArray(item.buying_factors_ranked)
+    ? (item.buying_factors_ranked as Array<Record<string, unknown>>)
+    : []
 }
 
 function forecastProjects(forecast: Record<string, unknown>) {

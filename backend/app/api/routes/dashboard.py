@@ -30,6 +30,7 @@ from app.services.business_execution import (
     build_business_execution_center,
     build_customer_value_intelligence,
     build_partner_performance_intelligence,
+    build_product_market_fit_intelligence,
     build_revenue_forecast_intelligence,
 )
 from app.services.daily_decision_queue import (
@@ -90,6 +91,15 @@ def dashboard_partner_performance_intelligence(
     _: User = Depends(get_current_user),
 ):
     return build_partner_performance_intelligence(db, limit=limit)
+
+
+@router.get("/product-market-fit-intelligence")
+def dashboard_product_market_fit_intelligence(
+    limit: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    return build_product_market_fit_intelligence(db, limit=limit)
 
 
 @router.get("/account-360-intelligence")

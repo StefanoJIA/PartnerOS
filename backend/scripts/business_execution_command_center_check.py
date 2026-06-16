@@ -44,6 +44,7 @@ from app.services.business_execution import (  # noqa: E402
     build_business_execution_center,
     build_customer_value_intelligence,
     build_partner_performance_intelligence,
+    build_product_market_fit_intelligence,
     build_revenue_forecast_intelligence,
 )
 
@@ -72,6 +73,8 @@ def main() -> int:
         revenue_forecast_items = revenue_forecast_payload.get("forecast_items", [])
         partner_performance_payload = build_partner_performance_intelligence(db, limit=40)
         partner_performance_items = partner_performance_payload.get("items", [])
+        product_market_fit_payload = build_product_market_fit_intelligence(db, limit=40)
+        product_market_fit_items = product_market_fit_payload.get("items", [])
         account_360_payload = build_account_360_intelligence(db, limit=40)
         account_360_items = account_360_payload.get("items", [])
         commercial_safety_items = [
@@ -371,6 +374,50 @@ def main() -> int:
                     and item.get("safety", {}).get("staging_validated") is False
                     and item.get("customer_safe_boundary")
                     for item in product_validation_context_items
+                ),
+            ),
+            (
+                "product-market fit intelligence profiles conversion evidence",
+                isinstance(product_market_fit_payload.get("summary"), dict)
+                and "quote_learning_count" in product_market_fit_payload["summary"]
+                and all(
+                    item.get("partner_focus")
+                    and item.get("product_focus")
+                    and isinstance(item.get("evidence_counts"), dict)
+                    and {"opportunities", "quotes", "orders", "feedback", "wins", "losses"}.issubset(item["evidence_counts"].keys())
+                    and isinstance(item.get("commercial_value"), dict)
+                    and "order_amount" in item["commercial_value"]
+                    and isinstance(item.get("buying_factors_ranked"), list)
+                    and item.get("conversion_signal")
+                    and item.get("next_action")
+                    for item in product_market_fit_items
+                ),
+            ),
+            (
+                "product-market fit answers management questions",
+                isinstance(product_market_fit_payload.get("management_questions"), dict)
+                and "what_converts" in product_market_fit_payload["management_questions"]
+                and "why_customers_buy_or_decline" in product_market_fit_payload["management_questions"]
+                and "which_product_lines_need_validation_before_pilot" in product_market_fit_payload["management_questions"],
+            ),
+            (
+                "product-market fit covers multi-partner product dimensions",
+                any("load" in item.get("dimensions", []) or "noise" in item.get("dimensions", []) for item in product_market_fit_items)
+                and any("delivery consistency" in item.get("dimensions", []) or "resource needs" in item.get("dimensions", []) for item in product_market_fit_items)
+                and any("quote logic" in item.get("dimensions", []) or "resource taxonomy" in item.get("dimensions", []) for item in product_market_fit_items),
+            ),
+            (
+                "product-market fit safe boundaries",
+                product_market_fit_payload.get("safety", {}).get("external_message_sent") is False
+                and product_market_fit_payload.get("safety", {}).get("quote_status_changed") is False
+                and product_market_fit_payload.get("safety", {}).get("order_status_changed") is False
+                and all(
+                    item.get("safety", {}).get("external_message_sent") is False
+                    and item.get("safety", {}).get("quote_status_changed") is False
+                    and item.get("safety", {}).get("order_status_changed") is False
+                    and item.get("safety", {}).get("customer_forbidden_fields_exposed") is False
+                    and item.get("customer_safe_boundary")
+                    for item in product_market_fit_items
                 ),
             ),
             ("partner intelligence present", bool(payload.partners)),
@@ -757,6 +804,10 @@ def main() -> int:
                 "/api/dashboard/partner-performance-intelligence",
                 headers={"Authorization": f"Bearer {token}"},
             )
+            product_market_fit_route = client.get(
+                "/api/dashboard/product-market-fit-intelligence",
+                headers={"Authorization": f"Bearer {token}"},
+            )
             account_360_route = client.get(
                 "/api/dashboard/account-360-intelligence",
                 headers={"Authorization": f"Bearer {token}"},
@@ -825,6 +876,23 @@ def main() -> int:
                     and item.get("safety", {}).get("external_message_sent") is False
                     and item.get("safety", {}).get("customer_forbidden_fields_exposed") is False
                     for item in partner_performance_route_data.get("items", [])
+                ),
+            )
+        )
+        product_market_fit_route_data = product_market_fit_route.json() if product_market_fit_route.status_code == 200 else {}
+        checks.append(
+            (
+                "route product-market fit intelligence",
+                product_market_fit_route.status_code == 200
+                and isinstance(product_market_fit_route_data.get("summary"), dict)
+                and "why_customers_buy_or_decline" in product_market_fit_route_data.get("management_questions", {})
+                and isinstance(product_market_fit_route_data.get("validated_buying_factors"), list)
+                and all(
+                    item.get("partner_focus")
+                    and isinstance(item.get("buying_factors_ranked"), list)
+                    and item.get("safety", {}).get("external_message_sent") is False
+                    and item.get("safety", {}).get("customer_forbidden_fields_exposed") is False
+                    for item in product_market_fit_route_data.get("items", [])
                 ),
             )
         )

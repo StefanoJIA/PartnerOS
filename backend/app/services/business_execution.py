@@ -980,6 +980,11 @@ def _build_quotation_intelligence(db: Session) -> list[QuotationIntelligenceItem
 
 
 def _dimensions_for_focus(product_focus: list[str], partner_focus: str | None) -> list[str]:
+    partner_text = (partner_focus or "").lower()
+    if _brand("jo", "oboo") in partner_text or "education" in partner_text or "school" in partner_text:
+        return EDUCATION_DIMENSIONS
+    if _brand("ho", "sun") in partner_text or "lifting" in partner_text:
+        return LIFTING_DIMENSIONS
     text = " ".join(product_focus + [partner_focus or ""]).lower()
     if any(term in text for term in ["lifting", "desk", "column", "heavy-duty"]):
         return LIFTING_DIMENSIONS
@@ -2257,7 +2262,387 @@ def _build_partner_performance_intelligence(db: Session) -> list[dict[str, objec
     return list(build_partner_performance_intelligence(db, limit=16).get("items", []))
 
 
-def _build_product_market_fit_intelligence(products: list[ProductIntelligenceItem], quotations: list[QuotationIntelligenceItem]) -> list[dict[str, object]]:
+def _pmf_item_key(partner_focus: str | None, product_focus: list[str]) -> tuple[str, str]:
+    partner = partner_focus or _partner_focus_from_text(*product_focus) or "future partner"
+    focus = product_focus or ["future product family"]
+    return partner, focus[0]
+
+
+def _pmf_new_item(partner_focus: str, product_focus: list[str]) -> dict[str, object]:
+    dimensions = _dimensions_for_focus(product_focus, partner_focus)
+    return {
+        "partner_focus": partner_focus,
+        "product_focus": product_focus,
+        "dimensions": dimensions,
+        "evidence_counts": {
+            "opportunities": 0,
+            "open_opportunities": 0,
+            "quotes": 0,
+            "quote_learning": 0,
+            "wins": 0,
+            "losses": 0,
+            "orders": 0,
+            "feedback": 0,
+            "open_feedback": 0,
+            "delivery_risks": 0,
+            "market_reviews": 0,
+            "customer_safe_reviews": 0,
+        },
+        "commercial_value": {
+            "pipeline_amount": 0.0,
+            "quote_amount": 0.0,
+            "order_amount": 0.0,
+        },
+        "factor_evidence": {dimension: {"evidence": 0, "wins": 0, "losses": 0, "feedback": 0} for dimension in dimensions},
+        "customer_objections": [],
+        "competitor_signals": [],
+        "project_experience": [],
+        "source_paths": [],
+    }
+
+
+def _pmf_factor_hits(text: str, dimensions: list[str]) -> list[str]:
+    lower = text.lower()
+    hits = [dimension for dimension in dimensions if dimension.lower() in lower]
+    return hits or [dimension for dimension in dimensions[:2] if dimension]
+
+
+def _pmf_add_factor(
+    item: dict[str, object],
+    *,
+    text: str,
+    source: str,
+    outcome: str | None = None,
+) -> None:
+    factors = item.setdefault("factor_evidence", {})
+    dimensions = list(item.get("dimensions") or [])
+    for factor in _pmf_factor_hits(text, dimensions):
+        row = factors.setdefault(factor, {"evidence": 0, "wins": 0, "losses": 0, "feedback": 0})
+        row["evidence"] = int(row.get("evidence") or 0) + 1
+        if outcome == "won":
+            row["wins"] = int(row.get("wins") or 0) + 1
+        elif outcome == "lost":
+            row["losses"] = int(row.get("losses") or 0) + 1
+        if source == "feedback":
+            row["feedback"] = int(row.get("feedback") or 0) + 1
+
+
+def _pmf_status(item: dict[str, object]) -> tuple[str, str, str]:
+    counts = item.get("evidence_counts", {})
+    delivery_risks = int(counts.get("delivery_risks") or 0)
+    open_feedback = int(counts.get("open_feedback") or 0)
+    losses = int(counts.get("losses") or 0)
+    orders = int(counts.get("orders") or 0)
+    wins = int(counts.get("wins") or 0)
+    quotes = int(counts.get("quotes") or 0)
+    market_reviews = int(counts.get("market_reviews") or 0)
+    customer_safe_reviews = int(counts.get("customer_safe_reviews") or 0)
+    if delivery_risks or open_feedback:
+        return (
+            "pilot_risk",
+            "P1",
+            "Resolve delivery or after-sales evidence before treating this product line as repeatable.",
+        )
+    if losses > wins and losses:
+        return (
+            "conversion_risk",
+            "P1",
+            "Review lost reasons and customer objections before expanding Campaign or quote volume.",
+        )
+    if orders and wins:
+        return (
+            "order_validated",
+            "P1",
+            "Use won/order evidence to refine quote positioning, partner allocation, and repeat-business targeting.",
+        )
+    if quotes or market_reviews:
+        return (
+            "market_learning",
+            "P2",
+            "Connect quote learning and Market Response reviews into customer-safe wording after business review.",
+        )
+    if customer_safe_reviews:
+        return (
+            "customer_safe_preview",
+            "P2",
+            "Reuse customer-safe preview cautiously and keep capturing quote/order/feedback evidence.",
+        )
+    return (
+        "baseline_only",
+        "P3",
+        "Capture opportunity, quote, order, and feedback evidence before making product-market claims.",
+    )
+
+
+def build_product_market_fit_intelligence(db: Session, limit: int = 50) -> dict[str, object]:
+    items_by_key: dict[tuple[str, str], dict[str, object]] = {}
+
+    def ensure_item(partner_focus: str | None, product_focus: list[str]) -> dict[str, object]:
+        partner, primary_focus = _pmf_item_key(partner_focus, product_focus)
+        key = (partner, primary_focus)
+        if key not in items_by_key:
+            items_by_key[key] = _pmf_new_item(partner, product_focus or [primary_focus])
+        return items_by_key[key]
+
+    for row in db.query(SalesOpportunity).order_by(SalesOpportunity.updated_at.desc()).limit(240).all():
+        product_focus = row.product_focus or _product_focus_from_text(row.opportunity_name, row.risk, row.next_action)
+        item = ensure_item(row.partner_focus or _partner_focus_from_text(*product_focus, row.opportunity_name), product_focus)
+        counts = item["evidence_counts"]
+        counts["opportunities"] = int(counts.get("opportunities") or 0) + 1
+        if row.status not in {"won", "lost", "closed_won", "closed_lost", "cancelled"}:
+            counts["open_opportunities"] = int(counts.get("open_opportunities") or 0) + 1
+        if "won" in row.status:
+            counts["wins"] = int(counts.get("wins") or 0) + 1
+        if "lost" in row.status:
+            counts["losses"] = int(counts.get("losses") or 0) + 1
+        value = item["commercial_value"]
+        value["pipeline_amount"] = round(float(value.get("pipeline_amount") or 0) + _decimal_to_float(row.estimated_value), 2)
+        _pmf_add_factor(
+            item,
+            text=" ".join([row.opportunity_name or "", row.won_reason or "", row.lost_reason or "", row.risk or "", row.notes or ""]),
+            source="opportunity",
+            outcome="won" if "won" in row.status else "lost" if "lost" in row.status else None,
+        )
+        if row.lost_reason or row.risk or row.blocker:
+            item["customer_objections"] = _merge_unique(
+                [*list(item.get("customer_objections") or []), row.lost_reason or row.risk or row.blocker or ""],
+                limit=8,
+            )
+        if row.competition:
+            item["competitor_signals"] = _merge_unique([*list(item.get("competitor_signals") or []), row.competition], limit=8)
+        item["source_paths"] = _merge_unique([*list(item.get("source_paths") or []), _opportunity_path(row)], limit=8)
+
+    quote_ids_seen: set[object] = set()
+    for line in db.query(QuoteLineItem).order_by(QuoteLineItem.updated_at.desc()).limit(700).all():
+        quote = line.quote
+        if quote is None or quote.is_archived:
+            continue
+        product_focus = _product_focus_from_text(_line_text(line)) or _quote_product_focus(quote)
+        partner = db.get(ManufacturingPartner, line.partner_id) if line.partner_id else None
+        partner_focus = partner.partner_name if partner else ", ".join(_quote_partner_names(db, quote)) or _partner_focus_from_text(*product_focus)
+        item = ensure_item(partner_focus, product_focus)
+        counts = item["evidence_counts"]
+        if quote.id not in quote_ids_seen:
+            counts["quotes"] = int(counts.get("quotes") or 0) + 1
+            value = item["commercial_value"]
+            value["quote_amount"] = round(float(value.get("quote_amount") or 0) + _decimal_to_float(quote.grand_total), 2)
+            quote_ids_seen.add(quote.id)
+        learning_records = quote.learning_records or []
+        for learning in learning_records:
+            counts["quote_learning"] = int(counts.get("quote_learning") or 0) + 1
+            if learning.outcome_status == "won":
+                counts["wins"] = int(counts.get("wins") or 0) + 1
+            elif learning.outcome_status == "lost":
+                counts["losses"] = int(counts.get("losses") or 0) + 1
+            text = " ".join(
+                [
+                    learning.won_reason or "",
+                    learning.lost_reason or "",
+                    learning.customer_objection or "",
+                    learning.price_feedback or "",
+                    learning.delivery_feedback or "",
+                    " ".join(learning.product_dimensions or []),
+                ]
+            )
+            _pmf_add_factor(item, text=text, source="quote_learning", outcome=learning.outcome_status)
+            if learning.customer_objection or learning.lost_reason:
+                item["customer_objections"] = _merge_unique(
+                    [*list(item.get("customer_objections") or []), learning.customer_objection or learning.lost_reason or ""],
+                    limit=8,
+                )
+            if learning.competitor_signal:
+                item["competitor_signals"] = _merge_unique([*list(item.get("competitor_signals") or []), learning.competitor_signal], limit=8)
+        _pmf_add_factor(item, text=_line_text(line), source="quote")
+        item["source_paths"] = _merge_unique([*list(item.get("source_paths") or []), f"/quotes/{quote.id}"], limit=8)
+
+    order_ids_seen: set[object] = set()
+    for order in db.query(CustomerOrder).order_by(CustomerOrder.updated_at.desc()).limit(220).all():
+        product_focus = _merge_unique(
+            [
+                *_product_focus_from_text(*[_line_text(line) for line in order.line_items]),
+                *[line.product_category for line in order.line_items if line.product_category],
+            ],
+            limit=6,
+        )
+        partner_names = _order_partner_names(db, order)
+        item = ensure_item(", ".join(partner_names) or _partner_focus_from_text(*product_focus), product_focus)
+        counts = item["evidence_counts"]
+        if order.id not in order_ids_seen:
+            counts["orders"] = int(counts.get("orders") or 0) + 1
+            value = item["commercial_value"]
+            value["order_amount"] = round(float(value.get("order_amount") or 0) + _decimal_to_float(order.grand_total), 2)
+            order_ids_seen.add(order.id)
+        delivery_risk = any(milestone.status in {"delayed", "blocked"} for milestone in order.production_milestones) or not order.shipment_plans
+        if delivery_risk:
+            counts["delivery_risks"] = int(counts.get("delivery_risks") or 0) + 1
+        _pmf_add_factor(item, text=" ".join([*[_line_text(line) for line in order.line_items], order.customer_notes or ""]), source="order")
+        item["project_experience"] = _merge_unique(
+            [
+                *list(item.get("project_experience") or []),
+                f"{order.order_number}: {order.status}; shipment {'present' if order.shipment_plans else 'missing'}",
+            ],
+            limit=8,
+        )
+        item["source_paths"] = _merge_unique([*list(item.get("source_paths") or []), f"/orders/{order.id}"], limit=8)
+
+    for ticket in db.query(FeedbackTicket).order_by(FeedbackTicket.updated_at.desc(), FeedbackTicket.created_at.desc()).limit(240).all():
+        order = db.get(CustomerOrder, ticket.order_id) if ticket.order_id else None
+        product_focus = (
+            _merge_unique(
+                [
+                    *_product_focus_from_text(*[_line_text(line) for line in order.line_items]),
+                    *[line.product_category for line in order.line_items if line.product_category],
+                ],
+                limit=6,
+            )
+            if order
+            else _product_focus_from_text(ticket.subject, ticket.message, ticket.feedback_type)
+        )
+        partner_focus = ", ".join(_order_partner_names(db, order)) if order else _partner_focus_from_text(*product_focus, ticket.subject, ticket.message)
+        item = ensure_item(partner_focus, product_focus)
+        counts = item["evidence_counts"]
+        counts["feedback"] = int(counts.get("feedback") or 0) + 1
+        if ticket.status not in {"resolved", "closed", "archived"}:
+            counts["open_feedback"] = int(counts.get("open_feedback") or 0) + 1
+        _pmf_add_factor(item, text=" ".join([ticket.feedback_type, ticket.subject, ticket.message, ticket.response_summary or ""]), source="feedback")
+        item["customer_objections"] = _merge_unique(
+            [*list(item.get("customer_objections") or []), ticket.subject],
+            limit=8,
+        )
+        item["source_paths"] = _merge_unique([*list(item.get("source_paths") or []), "/feedback-tickets"], limit=8)
+
+    for review in db.query(MarketResponseReview).order_by(MarketResponseReview.updated_at.desc()).limit(240).all():
+        item = ensure_item(review.partner_focus, review.product_focus or [review.focus_category])
+        counts = item["evidence_counts"]
+        counts["market_reviews"] = int(counts.get("market_reviews") or 0) + 1
+        if review.visibility_class == "customer-safe":
+            counts["customer_safe_reviews"] = int(counts.get("customer_safe_reviews") or 0) + 1
+        _pmf_add_factor(
+            item,
+            text=" ".join([review.review_dimension, review.source_summary, review.evidence_summary or "", review.customer_safe_summary or ""]),
+            source="market_response",
+        )
+        item["source_paths"] = _merge_unique(
+            [*list(item.get("source_paths") or []), f"/market-response?partner_focus={review.partner_focus}"],
+            limit=8,
+        )
+
+    baseline_items = [
+        (_brand("HO", "SUN"), ["lifting systems", "desk frames", "desk legs", "lifting columns", "heavy-duty solutions"]),
+        (_brand("JOO", "BOO"), ["education furniture", "school desks", "school chairs", "project furniture"]),
+        ("future partner", ["onboarding data", "product family", "quote logic", "delivery requirement", "resource taxonomy"]),
+    ]
+    for partner, focus in baseline_items:
+        ensure_item(partner, focus)
+
+    items: list[dict[str, object]] = []
+    for item in items_by_key.values():
+        status, priority, next_action = _pmf_status(item)
+        factors = item.get("factor_evidence", {})
+        ranked_factors = sorted(
+            [
+                {
+                    "factor": factor,
+                    "evidence_count": int(values.get("evidence") or 0),
+                    "wins": int(values.get("wins") or 0),
+                    "losses": int(values.get("losses") or 0),
+                    "feedback": int(values.get("feedback") or 0),
+                    "status": "validated" if values.get("wins") or values.get("feedback") else "needs evidence",
+                }
+                for factor, values in factors.items()
+            ],
+            key=lambda row: (int(row["evidence_count"]), int(row["wins"]), int(row["feedback"])),
+            reverse=True,
+        )
+        counts = item.get("evidence_counts", {})
+        quotes = int(counts.get("quotes") or 0)
+        orders = int(counts.get("orders") or 0)
+        wins = int(counts.get("wins") or 0)
+        losses = int(counts.get("losses") or 0)
+        item.update(
+            {
+                "fit_status": status,
+                "priority": priority,
+                "purchase_factors": [str(row["factor"]) for row in ranked_factors[:10]] or list(item.get("dimensions") or []),
+                "buying_factors_ranked": ranked_factors,
+                "conversion_signal": {
+                    "quote_to_order_rate": round(orders / quotes, 2) if quotes else 0,
+                    "win_loss_ratio": round(wins / (wins + losses), 2) if wins + losses else 0,
+                    "validated_by_orders": bool(orders),
+                    "validated_by_learning": bool(wins or losses),
+                },
+                "commercial_question": "Which product factors are actually driving wins, losses, orders, feedback, or pilot risk?",
+                "next_action": next_action,
+                "path": (list(item.get("source_paths") or []) or ["/market-response"])[0],
+                "customer_safe_boundary": (
+                    "Internal Product-Market Fit intelligence only. Customer-visible claims still require business approval; "
+                    "do not expose cost, margin, supplier private notes, raw IDs, internal scoring, or unreviewed risk notes."
+                ),
+                "safety": _safety_flags(),
+            }
+        )
+        items.append(item)
+
+    items = sorted(
+        items,
+        key=lambda item: (
+            _priority_rank(str(item.get("priority") or "P3")),
+            float(item.get("commercial_value", {}).get("order_amount") or 0),
+            int(item.get("evidence_counts", {}).get("wins") or 0),
+            int(item.get("evidence_counts", {}).get("market_reviews") or 0),
+        ),
+    )[:limit]
+    return {
+        "summary": {
+            "product_line_count": len(items),
+            "p1_product_line_count": sum(1 for item in items if item.get("priority") == "P1"),
+            "order_validated_count": sum(1 for item in items if item.get("fit_status") == "order_validated"),
+            "pilot_risk_count": sum(1 for item in items if item.get("fit_status") == "pilot_risk"),
+            "quote_learning_count": sum(int(item.get("evidence_counts", {}).get("quote_learning") or 0) for item in items),
+            "feedback_signal_count": sum(int(item.get("evidence_counts", {}).get("feedback") or 0) for item in items),
+            "order_amount": round(sum(float(item.get("commercial_value", {}).get("order_amount") or 0) for item in items), 2),
+        },
+        "items": items,
+        "top_product_lines": items[:12],
+        "pilot_risk_product_lines": [item for item in items if item.get("fit_status") == "pilot_risk"][:8],
+        "validated_buying_factors": [
+            {
+                "partner_focus": item.get("partner_focus"),
+                "product_focus": item.get("product_focus"),
+                "buying_factors": item.get("buying_factors_ranked", [])[:5],
+            }
+            for item in items
+            if item.get("buying_factors_ranked")
+        ][:12],
+        "management_questions": {
+            "what_converts": [item for item in items if item.get("fit_status") == "order_validated"][:8],
+            "why_customers_buy_or_decline": [
+                {
+                    "partner_focus": item.get("partner_focus"),
+                    "product_focus": item.get("product_focus"),
+                    "customer_objections": item.get("customer_objections"),
+                    "competitor_signals": item.get("competitor_signals"),
+                    "buying_factors": item.get("buying_factors_ranked", [])[:5],
+                }
+                for item in items[:8]
+            ],
+            "which_product_lines_need_validation_before_pilot": [
+                item for item in items if item.get("fit_status") in {"pilot_risk", "conversion_risk", "baseline_only"}
+            ][:8],
+        },
+        "next_action": "Review P1 PMF lines before campaign expansion, quote wording, customer-safe claims, or pilot allocation.",
+        "safety": _safety_flags(),
+    }
+
+
+def _build_product_market_fit_intelligence(
+    db: Session,
+    products: list[ProductIntelligenceItem],
+    quotations: list[QuotationIntelligenceItem],
+) -> list[dict[str, object]]:
+    pmf_payload = build_product_market_fit_intelligence(db, limit=16)
+    if pmf_payload.get("items"):
+        return list(pmf_payload["items"])
     items: list[dict[str, object]] = []
     quote_dimensions = {
         dimension
@@ -2743,7 +3128,7 @@ def _build_commercial_intelligence(
         win_loss=_build_win_loss_intelligence(db),
         customer_value=customer_value,
         partner_performance=_build_partner_performance_intelligence(db),
-        product_market_fit=_build_product_market_fit_intelligence(products, quotations),
+        product_market_fit=_build_product_market_fit_intelligence(db, products, quotations),
         revenue_forecast=_build_revenue_forecast_intelligence(opportunities, quotations, db),
         account_360=_build_account_360_intelligence(db, account_lifecycle, customer_value),
     )
