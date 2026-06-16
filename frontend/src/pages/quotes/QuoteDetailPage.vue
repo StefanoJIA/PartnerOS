@@ -26,6 +26,7 @@ import {
   type TimelineItem,
 } from '@/api/quotes'
 import AccountExecutionCard from '@/components/business/AccountExecutionCard.vue'
+import QuoteWinLossIntelligenceCard from '@/components/business/QuoteWinLossIntelligenceCard.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -136,6 +137,11 @@ const latestLearning = computed(() => quote.value?.latest_learning || learningRe
 const quoteCompanyId = computed(() => quote.value?.company_id ?? null)
 const quoteCommercial = computed(() => quote.value?.commercial_intelligence ?? null)
 const quotePartnerReadiness = computed(() => quote.value?.partner_readiness ?? null)
+const quoteProductKeywords = computed(() => {
+  const lineProducts = quote.value?.line_items.flatMap((line) => [line.product_name, line.pricing_source]) ?? []
+  return executionKeywords(...lineProducts, ...(quoteCommercial.value?.product_focus ?? []))
+})
+const quotePartnerFocus = computed(() => quoteCommercial.value?.partner_focus || quotePartnerReadiness.value?.partners?.[0]?.partner_name || null)
 
 async function loadActiveOrder() {
   if (!quote.value) return
@@ -293,6 +299,14 @@ async function load() {
   } finally {
     loading.value = false
   }
+}
+
+function executionKeywords(...values: unknown[]) {
+  const tokens = values
+    .flatMap((value) => String(value ?? '').split(/[;,/|，、\s]+/))
+    .map((value) => value.trim())
+    .filter((value) => value.length >= 3)
+  return [...new Set(tokens)].slice(0, 16)
 }
 
 function learningPayload() {
@@ -500,6 +514,14 @@ onMounted(load)
         </div>
         <el-alert class="mt" type="warning" :closable="false" show-icon :title="quoteCommercial.customer_safe_boundary" />
       </section>
+
+      <QuoteWinLossIntelligenceCard
+        :quote-id="quote.id"
+        :quote-number="quote.quote_number"
+        :customer-name="quote.bill_to_company"
+        :partner-focus="quotePartnerFocus"
+        :product-keywords="quoteProductKeywords"
+      />
 
       <AccountExecutionCard
         :company-id="quoteCompanyId"
