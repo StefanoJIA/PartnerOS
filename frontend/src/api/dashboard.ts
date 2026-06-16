@@ -612,3 +612,29 @@ export async function fetchRevenueForecastIntelligence(limit = 80) {
   })
   return data
 }
+
+export interface PartnerPerformanceIntelligence {
+  summary: {
+    partner_count: number
+    active_partner_count: number
+    quote_support_amount: number
+    order_amount: number
+    risk_partner_count: number
+    p1_partner_count: number
+    feedback_issue_count: number
+  }
+  items: Array<Record<string, unknown>>
+  top_investment_candidates: Array<Record<string, unknown>>
+  delivery_or_feedback_risks: Array<Record<string, unknown>>
+  partner_scoreboard: Array<Record<string, unknown>>
+  management_questions: Record<string, unknown>
+  next_action: string
+  safety: Record<string, boolean>
+}
+
+export async function fetchPartnerPerformanceIntelligence(limit = 50) {
+  const { data } = await http.get<PartnerPerformanceIntelligence>('/dashboard/partner-performance-intelligence', {
+    params: { limit },
+  })
+  return data
+}

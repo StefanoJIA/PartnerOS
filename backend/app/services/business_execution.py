@@ -2060,10 +2060,52 @@ def build_revenue_forecast_intelligence(db: Session, limit: int = 80) -> dict[st
     }
 
 
-def _build_partner_performance_intelligence(db: Session) -> list[dict[str, object]]:
+def _partner_performance_health(
+    *,
+    quote_support_count: int,
+    order_count: int,
+    win_rate: float,
+    on_time_delivery_rate: float | None,
+    feedback_issue_count: int,
+    missing_inputs: list[str],
+    risk_signals: list[str],
+) -> tuple[str, str, str]:
+    if risk_signals or feedback_issue_count or (on_time_delivery_rate is not None and on_time_delivery_rate < 0.8):
+        return (
+            "delivery_or_feedback_risk",
+            "P1",
+            "Review delivery and feedback before allocating more high-value projects.",
+        )
+    if order_count and win_rate >= 0.5:
+        return (
+            "proven_commercial_partner",
+            "P1",
+            "Use this partner as a benchmark for quote allocation, product focus, and repeat-business planning.",
+        )
+    if quote_support_count and not order_count:
+        return (
+            "quote_support_needs_conversion",
+            "P2",
+            "Review quote follow-up and win/loss factors before expanding quote volume.",
+        )
+    if missing_inputs:
+        return (
+            "capability_gap",
+            "P2",
+            "Complete product coverage, pricing basis, delivery ability, and customer-safe resources before pilot allocation.",
+        )
+    return (
+        "early_partner_candidate",
+        "P3",
+        "Capture quote support, product coverage, and delivery evidence before using this partner in commercial decisions.",
+    )
+
+
+def build_partner_performance_intelligence(db: Session, limit: int = 50) -> dict[str, object]:
     partners = db.query(ManufacturingPartner).filter(ManufacturingPartner.is_active.is_(True)).order_by(ManufacturingPartner.updated_at.desc()).limit(24).all()
     items: list[dict[str, object]] = []
     for partner in partners:
+        capability = build_partner_capability_intelligence(db, partner)
         quote_lines = db.query(QuoteLineItem).filter(QuoteLineItem.partner_id == partner.id).all()
         quote_ids = {line.quote_id for line in quote_lines}
         quotes = [db.get(Quote, quote_id) for quote_id in quote_ids]
@@ -2072,6 +2114,19 @@ def _build_partner_performance_intelligence(db: Session) -> list[dict[str, objec
         order_ids = {line.order_id for line in order_lines}
         orders = [db.get(CustomerOrder, order_id) for order_id in order_ids]
         orders = [order for order in orders if order]
+        product_focus = _merge_unique(
+            [
+                *(_split_tags(partner.main_product_categories) or []),
+                *(_split_tags(partner.preferred_product_categories) or []),
+                *[line.product_category for line in quote_lines if line.product_category],
+                *[line.product_name for line in quote_lines if line.product_name],
+                *[line.product_category for line in order_lines if line.product_category],
+                *[line.product_name for line in order_lines if line.product_name],
+                *[str(item) for item in capability.get("product_coverage", [])],
+            ],
+            limit=10,
+        )
+        quote_support_amount = sum((line.total_price or Decimal("0")) for line in quote_lines)
         order_amount = sum((order.grand_total or Decimal("0")) for order in orders)
         won_quote_count = sum(1 for quote in quotes if quote and quote.status == "converted_to_order")
         win_rate = round(won_quote_count / len(quotes), 2) if quotes else 0
@@ -2085,33 +2140,121 @@ def _build_partner_performance_intelligence(db: Session) -> list[dict[str, objec
             for order in orders
         )
         on_time_delivery_rate = round((len(orders) - delayed_or_blocked_orders) / len(orders), 2) if orders else None
+        missing_inputs = list(capability.get("missing_inputs") or [])
+        risk_signals = list(capability.get("risk_signals") or [])
+        health, investment_priority, recommended_action = _partner_performance_health(
+            quote_support_count=len(quotes),
+            order_count=len(orders),
+            win_rate=win_rate,
+            on_time_delivery_rate=on_time_delivery_rate,
+            feedback_issue_count=feedback_issue_count,
+            missing_inputs=missing_inputs,
+            risk_signals=risk_signals,
+        )
         items.append(
             {
                 "partner_id": str(partner.id),
                 "partner_name": partner.partner_name,
+                "product_focus": product_focus,
                 "quote_support_count": len(quotes),
+                "quote_support_amount": _decimal_to_float(quote_support_amount),
                 "won_quote_count": won_quote_count,
                 "win_rate": win_rate,
                 "order_amount": _decimal_to_float(order_amount),
                 "order_count": len(orders),
                 "on_time_delivery_rate": on_time_delivery_rate,
                 "feedback_issue_count": feedback_issue_count,
+                "health": health,
+                "investment_priority": investment_priority,
                 "cooperation_history": {
                     "quote_lines": len(quote_lines),
                     "order_lines": len(order_lines),
                     "delayed_or_blocked_orders": delayed_or_blocked_orders,
+                    "active_order_statuses": sorted({order.status for order in orders}),
                 },
+                "capability_score": capability.get("score"),
+                "capability_health": capability.get("health"),
+                "missing_inputs": missing_inputs,
+                "risk_signals": risk_signals,
+                "readiness_impact": capability.get("readiness_impact") or [],
                 "risk_assessment": partner.risk_level or partner.ai_risk_summary or "risk not assessed",
-                "next_action": (
-                    "Review delivery issues and feedback before allocating more pilot demand."
-                    if delayed_or_blocked_orders or feedback_issue_count
-                    else "Use partner performance in quote and product-line allocation decisions."
-                ),
+                "commercial_question": "Which partner deserves the next quote or pilot allocation?",
+                "recommended_action": recommended_action,
+                "next_action": recommended_action,
                 "path": "/partner-onboarding",
+                "customer_safe_boundary": "Internal partner performance judgment only; do not expose supplier private notes, internal scoring, cost, margin, or unreviewed risk notes.",
                 "safety": _safety_flags(),
             }
         )
-    return sorted(items, key=lambda item: (item["order_amount"], item["win_rate"], item["quote_support_count"]), reverse=True)[:16]
+    items = sorted(
+        items,
+        key=lambda item: (
+            _priority_rank(str(item.get("investment_priority") or "P3")),
+            float(item.get("order_amount") or 0),
+            float(item.get("win_rate") or 0),
+            int(item.get("quote_support_count") or 0),
+        ),
+    )[:limit]
+    total_order_amount = round(sum(float(item.get("order_amount") or 0) for item in items), 2)
+    total_quote_amount = round(sum(float(item.get("quote_support_amount") or 0) for item in items), 2)
+    active_partners = [item for item in items if item.get("order_count") or item.get("quote_support_count")]
+    risk_partners = [
+        item
+        for item in items
+        if item.get("health") == "delivery_or_feedback_risk" or item.get("risk_signals") or item.get("feedback_issue_count")
+    ]
+    top_investment = [
+        item
+        for item in items
+        if item.get("health") in {"proven_commercial_partner", "quote_support_needs_conversion", "delivery_or_feedback_risk"}
+    ][:8]
+    return {
+        "summary": {
+            "partner_count": len(items),
+            "active_partner_count": len(active_partners),
+            "quote_support_amount": total_quote_amount,
+            "order_amount": total_order_amount,
+            "risk_partner_count": len(risk_partners),
+            "p1_partner_count": sum(1 for item in items if item.get("investment_priority") == "P1"),
+            "feedback_issue_count": sum(int(item.get("feedback_issue_count") or 0) for item in items),
+        },
+        "items": items,
+        "top_investment_candidates": top_investment,
+        "delivery_or_feedback_risks": risk_partners[:8],
+        "partner_scoreboard": [
+            {
+                "partner_name": item.get("partner_name"),
+                "health": item.get("health"),
+                "investment_priority": item.get("investment_priority"),
+                "quote_support_count": item.get("quote_support_count"),
+                "win_rate": item.get("win_rate"),
+                "order_amount": item.get("order_amount"),
+                "on_time_delivery_rate": item.get("on_time_delivery_rate"),
+                "feedback_issue_count": item.get("feedback_issue_count"),
+                "recommended_action": item.get("recommended_action"),
+            }
+            for item in items
+        ],
+        "management_questions": {
+            "which_partner_to_invest": top_investment,
+            "which_partner_has_delivery_or_feedback_risk": risk_partners[:8],
+            "which_product_lines_are_supported": [
+                {
+                    "partner_name": item.get("partner_name"),
+                    "product_focus": item.get("product_focus"),
+                    "quote_support_count": item.get("quote_support_count"),
+                    "order_count": item.get("order_count"),
+                }
+                for item in items[:12]
+            ],
+        },
+        "next_action": "Review P1 partner candidates before allocating new quote support, pilot demand, or customer-visible resources.",
+        "safety": _safety_flags(),
+    }
+
+
+def _build_partner_performance_intelligence(db: Session) -> list[dict[str, object]]:
+    return list(build_partner_performance_intelligence(db, limit=16).get("items", []))
 
 
 def _build_product_market_fit_intelligence(products: list[ProductIntelligenceItem], quotations: list[QuotationIntelligenceItem]) -> list[dict[str, object]]:

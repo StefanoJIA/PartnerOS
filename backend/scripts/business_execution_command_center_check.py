@@ -42,6 +42,7 @@ from app.models import Company, Lead, User  # noqa: E402
 from app.services.business_execution import (  # noqa: E402
     build_business_execution_center,
     build_customer_value_intelligence,
+    build_partner_performance_intelligence,
     build_revenue_forecast_intelligence,
 )
 
@@ -68,6 +69,8 @@ def main() -> int:
         customer_value_items = customer_value_payload.get("items", [])
         revenue_forecast_payload = build_revenue_forecast_intelligence(db, limit=40)
         revenue_forecast_items = revenue_forecast_payload.get("forecast_items", [])
+        partner_performance_payload = build_partner_performance_intelligence(db, limit=40)
+        partner_performance_items = partner_performance_payload.get("items", [])
         commercial_safety_items = [
             item.get("safety", {})
             for collection in [
@@ -235,6 +238,39 @@ def main() -> int:
                 and revenue_forecast_payload.get("safety", {}).get("quote_status_changed") is False
                 and revenue_forecast_payload.get("safety", {}).get("order_status_changed") is False
                 and all(item.get("safety", {}).get("customer_forbidden_fields_exposed") is False for item in revenue_forecast_items),
+            ),
+            (
+                "partner performance intelligence profiles partner investment",
+                isinstance(partner_performance_items, list)
+                and isinstance(partner_performance_payload.get("summary"), dict)
+                and "order_amount" in partner_performance_payload["summary"]
+                and "quote_support_amount" in partner_performance_payload["summary"]
+                and all(
+                    item.get("partner_name")
+                    and "quote_support_count" in item
+                    and "win_rate" in item
+                    and "order_amount" in item
+                    and "on_time_delivery_rate" in item
+                    and "feedback_issue_count" in item
+                    and item.get("health")
+                    and item.get("investment_priority") in {"P1", "P2", "P3"}
+                    and item.get("recommended_action")
+                    for item in partner_performance_items
+                ),
+            ),
+            (
+                "partner performance answers management questions",
+                isinstance(partner_performance_payload.get("management_questions"), dict)
+                and "which_partner_to_invest" in partner_performance_payload["management_questions"]
+                and "which_partner_has_delivery_or_feedback_risk" in partner_performance_payload["management_questions"]
+                and isinstance(partner_performance_payload.get("partner_scoreboard"), list),
+            ),
+            (
+                "partner performance safe boundaries",
+                partner_performance_payload.get("safety", {}).get("external_message_sent") is False
+                and partner_performance_payload.get("safety", {}).get("quote_status_changed") is False
+                and partner_performance_payload.get("safety", {}).get("order_status_changed") is False
+                and all(item.get("safety", {}).get("customer_forbidden_fields_exposed") is False for item in partner_performance_items),
             ),
             (
                 "commercial intelligence safe boundaries",
@@ -681,6 +717,10 @@ def main() -> int:
                 "/api/dashboard/revenue-forecast-intelligence",
                 headers={"Authorization": f"Bearer {token}"},
             )
+            partner_performance_route = client.get(
+                "/api/dashboard/partner-performance-intelligence",
+                headers={"Authorization": f"Bearer {token}"},
+            )
             company_workspace = (
                 client.get(f"/api/companies/{company_id}/workspace", headers={"Authorization": f"Bearer {token}"})
                 if company_id
@@ -729,6 +769,22 @@ def main() -> int:
                     item.get("source_type") in {"opportunity", "quote", "order_backlog"}
                     and item.get("safety", {}).get("external_message_sent") is False
                     for item in revenue_forecast_route_data.get("forecast_items", [])
+                ),
+            )
+        )
+        partner_performance_route_data = partner_performance_route.json() if partner_performance_route.status_code == 200 else {}
+        checks.append(
+            (
+                "route partner performance intelligence",
+                partner_performance_route.status_code == 200
+                and isinstance(partner_performance_route_data.get("summary"), dict)
+                and "which_partner_to_invest" in partner_performance_route_data.get("management_questions", {})
+                and isinstance(partner_performance_route_data.get("partner_scoreboard"), list)
+                and all(
+                    item.get("partner_name")
+                    and item.get("safety", {}).get("external_message_sent") is False
+                    and item.get("safety", {}).get("customer_forbidden_fields_exposed") is False
+                    for item in partner_performance_route_data.get("items", [])
                 ),
             )
         )

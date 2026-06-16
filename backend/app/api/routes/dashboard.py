@@ -28,6 +28,7 @@ from app.services.dashboard_actions import build_dashboard_actions
 from app.services.business_execution import (
     build_business_execution_center,
     build_customer_value_intelligence,
+    build_partner_performance_intelligence,
     build_revenue_forecast_intelligence,
 )
 from app.services.daily_decision_queue import (
@@ -79,6 +80,15 @@ def dashboard_revenue_forecast_intelligence(
     _: User = Depends(get_current_user),
 ):
     return build_revenue_forecast_intelligence(db, limit=limit)
+
+
+@router.get("/partner-performance-intelligence")
+def dashboard_partner_performance_intelligence(
+    limit: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    return build_partner_performance_intelligence(db, limit=limit)
 
 
 @router.get("/daily-decision-queue/handling", response_model=list[DailyQueueHandlingRecordOut])

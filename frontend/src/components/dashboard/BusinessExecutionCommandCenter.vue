@@ -151,10 +151,20 @@
             <div v-for="item in safeCommercial.partner_performance.slice(0, 3)" :key="String(item.partner_id)" class="mb-2 last:mb-0">
               <div class="flex items-center justify-between gap-2">
                 <span class="text-sm font-medium text-slate-800">{{ item.partner_name }}</span>
-                <el-tag size="small" effect="plain">赢单率 {{ percent(item.win_rate) }}</el-tag>
+                <div class="flex flex-wrap justify-end gap-1">
+                  <el-tag size="small" :type="priorityType(String(item.investment_priority || 'P3'))" effect="plain">
+                    {{ item.investment_priority || 'P3' }}
+                  </el-tag>
+                  <el-tag size="small" effect="plain">赢单率 {{ percent(item.win_rate) }}</el-tag>
+                </div>
               </div>
               <p class="mt-1 text-xs text-slate-600">
-                订单 {{ money(item.order_amount) }} / 反馈问题 {{ item.feedback_issue_count ?? 0 }}
+                订单 {{ money(item.order_amount) }} / 报价支持 {{ item.quote_support_count ?? 0 }} /
+                反馈问题 {{ item.feedback_issue_count ?? 0 }}
+              </p>
+              <p class="mt-1 text-xs text-slate-500">
+                {{ item.health || item.capability_health || 'early_partner_candidate' }} /
+                能力 {{ item.capability_score ?? 'n/a' }}
               </p>
               <p class="mt-1 text-xs text-slate-500">{{ item.next_action }}</p>
             </div>
