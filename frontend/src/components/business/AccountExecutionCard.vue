@@ -96,6 +96,35 @@
         show-icon
         :closable="false"
       />
+
+      <div class="rounded border border-indigo-100 bg-indigo-50 p-3">
+        <div class="mb-2 flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <p class="font-semibold text-slate-900">Account 360 商业档案</p>
+            <p class="mt-1 text-xs text-slate-600">
+              把 Lead、Opportunity、Quote、Order/Delivery、Feedback、Win/Loss、Repeat Business 汇到客户视角，用于判断下一次商业动作。
+            </p>
+          </div>
+          <el-tag type="primary" effect="plain">完整度 {{ account360Summary.covered }}/{{ account360Summary.total }}</el-tag>
+        </div>
+        <div class="grid gap-2 md:grid-cols-3">
+          <div v-for="asset in account360Assets" :key="asset.key" class="rounded bg-white p-2">
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-sm font-medium text-slate-800">{{ asset.label }}</p>
+              <el-tag size="small" :type="asset.count ? 'success' : 'info'" effect="plain">{{ asset.count }}</el-tag>
+            </div>
+            <p class="mt-1 min-h-8 text-xs text-slate-600">{{ asset.signal }}</p>
+            <el-button v-if="asset.path" class="mt-1" size="small" link type="primary" @click="router.push(asset.path)">
+              查看来源
+            </el-button>
+          </div>
+        </div>
+        <div class="mt-3 rounded bg-white p-2 text-xs text-slate-600">
+          <span class="font-medium text-slate-800">下一商业动作：</span>
+          {{ account360NextAction }}
+        </div>
+      </div>
+
       <div v-if="accountExecution.open_blockers?.length" class="rounded border border-amber-200 bg-amber-50 p-3">
         <p class="font-medium text-amber-900">当前阻塞</p>
         <ul class="mt-1 list-disc pl-5 text-amber-900">
@@ -179,7 +208,16 @@ interface AccountLifecycleRow {
   lifecycle_stage?: string
   current_signal?: string
   next_action?: string
+  blocker?: string | null
   path?: string
+}
+
+type Account360Asset = {
+  key: string
+  label: string
+  count: number
+  signal: string
+  path: string
 }
 
 const props = withDefaults(
@@ -202,6 +240,29 @@ const workspace = ref<Record<string, unknown> | null>(null)
 const businessExecution = computed(() => workspace.value?.business_execution as Record<string, unknown> | undefined)
 const accountExecution = computed(() => (businessExecution.value?.account as AccountExecution | undefined) ?? null)
 const accountLifecycle = computed(() => (businessExecution.value?.lifecycle as AccountLifecycleRow[]) ?? [])
+const account360Assets = computed<Account360Asset[]>(() => {
+  const rows = accountLifecycle.value
+  const quoteRows = rows.filter((row) => row.source_type === 'quote')
+  const feedbackRows = rows.filter((row) => row.source_type === 'feedback')
+  return [
+    buildAsset('lead', 'Lead / 客户开发', rows.filter((row) => row.source_type === 'lead'), '暂无关联线索。'),
+    buildAsset('opportunity', 'Opportunity / 项目机会', rows.filter((row) => row.source_type === 'opportunity'), '暂无机会记录。'),
+    buildAsset('quote', 'Quote / 报价经验', quoteRows, '暂无报价或报价学习。'),
+    buildAsset('delivery', 'Order / Delivery', rows.filter((row) => row.source_type === 'order'), '暂无订单交付记录。'),
+    buildAsset('feedback', 'Feedback / 售后反馈', feedbackRows, '暂无反馈记录。'),
+    buildAsset('winloss', 'Win/Loss / Repeat', [...quoteRows, ...feedbackRows], '暂无赢输复盘或复购信号。'),
+  ]
+})
+const account360Summary = computed(() => ({
+  total: account360Assets.value.length,
+  covered: account360Assets.value.filter((asset) => asset.count > 0).length,
+}))
+const account360NextAction = computed(() => {
+  const stageAction = accountExecution.value?.stage_progression?.recommended_action
+  const healthAction = accountExecution.value?.commercial_health?.next_best_action
+  const explicitAction = accountExecution.value?.next_action
+  return stageAction || healthAction || explicitAction || '补齐客户关联对象后再选择下一次商业动作。'
+})
 
 async function load() {
   if (!props.companyId) {
@@ -289,6 +350,19 @@ function sourceCountsText(value: unknown) {
   if (!value || typeof value !== 'object') return '暂无'
   const entries = Object.entries(value as Record<string, number>).filter(([, count]) => Number(count) > 0)
   return entries.length ? entries.map(([source, count]) => `${sourceLabel(source)} ${count}`).join(' · ') : '暂无'
+}
+
+function buildAsset(key: string, label: string, rows: AccountLifecycleRow[], fallback: string): Account360Asset {
+  const top = rows[0]
+  const blocker = rows.find((row) => row.blocker)?.blocker
+  const signal = blocker || top?.current_signal || top?.next_action || fallback
+  return {
+    key,
+    label,
+    count: rows.length,
+    signal,
+    path: top?.path || '',
+  }
 }
 
 watch(() => props.companyId, load, { immediate: true })
