@@ -58,6 +58,20 @@ def main() -> int:
         product_validation_context_items = [
             item.validation_context for item in payload.products if item.validation_context
         ]
+        commercial = payload.commercial_intelligence
+        revenue_forecast = commercial.revenue_forecast or {}
+        commercial_safety_items = [
+            item.get("safety", {})
+            for collection in [
+                commercial.win_loss,
+                commercial.customer_value,
+                commercial.partner_performance,
+                commercial.product_market_fit,
+                commercial.account_360,
+            ]
+            for item in collection
+            if isinstance(item, dict)
+        ]
         product_validation_impacts = {
             impact
             for item in product_validation_context_items
@@ -128,6 +142,42 @@ def main() -> int:
             ("account lifecycle present", bool(payload.account_lifecycle)),
             ("opportunity pipeline present", bool(payload.opportunities)),
             ("quotation intelligence present", bool(payload.quotations)),
+            (
+                "commercial intelligence present",
+                bool(commercial.win_loss)
+                or bool(commercial.customer_value)
+                or bool(commercial.partner_performance)
+                or bool(commercial.product_market_fit)
+                or bool(commercial.account_360),
+            ),
+            (
+                "commercial intelligence covers six assets",
+                isinstance(commercial.win_loss, list)
+                and isinstance(commercial.customer_value, list)
+                and isinstance(commercial.partner_performance, list)
+                and isinstance(commercial.product_market_fit, list)
+                and isinstance(commercial.account_360, list)
+                and isinstance(revenue_forecast, dict)
+                and "weighted_opportunity_amount" in revenue_forecast
+                and "weighted_quote_amount" in revenue_forecast,
+            ),
+            (
+                "commercial intelligence links business objects",
+                any(item.get("source_type") in {"opportunity", "quote_learning"} for item in commercial.win_loss)
+                or any(item.get("quote_count", 0) >= 0 and item.get("order_count", 0) >= 0 for item in commercial.customer_value)
+                or any(item.get("quote_support_count", 0) >= 0 for item in commercial.partner_performance),
+            ),
+            (
+                "commercial intelligence safe boundaries",
+                all(
+                    safety.get("external_message_sent") is False
+                    and safety.get("quote_status_changed") is False
+                    and safety.get("order_status_changed") is False
+                    and safety.get("raw_token_recorded") is False
+                    and safety.get("customer_forbidden_fields_exposed") is False
+                    for safety in commercial_safety_items
+                ),
+            ),
             ("product intelligence present", bool(payload.products)),
             (
                 "product validation context present",
@@ -547,6 +597,16 @@ def main() -> int:
             )
         response_data = response.json() if response.status_code == 200 else {}
         checks.append(("route business execution", response.status_code == 200 and response_data.get("executive_decisions")))
+        checks.append(
+            (
+                "route commercial intelligence",
+                response.status_code == 200
+                and isinstance(response_data.get("commercial_intelligence"), dict)
+                and isinstance(response_data["commercial_intelligence"].get("revenue_forecast"), dict)
+                and "weighted_opportunity_amount" in response_data["commercial_intelligence"]["revenue_forecast"]
+                and isinstance(response_data["commercial_intelligence"].get("account_360"), list),
+            )
+        )
         checks.append(
             (
                 "route product validation context",

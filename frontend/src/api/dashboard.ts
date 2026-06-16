@@ -190,6 +190,7 @@ export type BusinessExecution = {
     delivery_risks: number
     product_validation_items: number
     partner_investment_items: number
+    commercial_intelligence_items: number
     executive_decisions: number
     status: string
     external_staging_state: string
@@ -529,6 +530,14 @@ export type BusinessExecution = {
       safety: Record<string, boolean>
     }
   }>
+  commercial_intelligence: {
+    win_loss: Array<Record<string, unknown>>
+    customer_value: Array<Record<string, unknown>>
+    partner_performance: Array<Record<string, unknown>>
+    product_market_fit: Array<Record<string, unknown>>
+    revenue_forecast: Record<string, unknown>
+    account_360: Array<Record<string, unknown>>
+  }
   executive_decisions: Array<{
     decision_id: string
     question: string

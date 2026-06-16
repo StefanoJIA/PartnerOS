@@ -28,6 +28,7 @@ from app.models import (
 from app.schemas.business_execution import (
     BusinessExecutionOut,
     BusinessExecutionSummary,
+    CommercialIntelligenceOut,
     CompanyExecutionContext,
     CustomerAccountExecutionItem,
     CustomerLifecycleItem,
@@ -1420,6 +1421,370 @@ def _build_delivery_visibility(db: Session) -> list[DeliveryVisibilityItem]:
     return items
 
 
+def _decimal_to_float(value: Decimal | None) -> float:
+    return float(value or Decimal("0"))
+
+
+def _quote_partner_names(db: Session, quote: Quote) -> list[str]:
+    names: list[str] = []
+    for line in quote.line_items:
+        partner = db.get(ManufacturingPartner, line.partner_id) if line.partner_id else None
+        if partner and partner.partner_name:
+            names.append(partner.partner_name)
+    return _merge_unique(names, limit=6)
+
+
+def _order_partner_names(db: Session, order: CustomerOrder) -> list[str]:
+    names: list[str] = []
+    for line in order.line_items:
+        partner = db.get(ManufacturingPartner, line.partner_id) if line.partner_id else None
+        if partner and partner.partner_name:
+            names.append(partner.partner_name)
+    return _merge_unique(names, limit=6)
+
+
+def _safe_company_name(company: Company | None, fallback: str | None = None) -> str:
+    return company.company_name if company else fallback or "Unknown customer"
+
+
+def _build_win_loss_intelligence(db: Session) -> list[dict[str, object]]:
+    items: list[dict[str, object]] = []
+    opportunities = (
+        db.query(SalesOpportunity)
+        .filter(SalesOpportunity.status.in_(["won", "lost", "closed_won", "closed_lost"]))
+        .order_by(SalesOpportunity.updated_at.desc())
+        .limit(12)
+        .all()
+    )
+    for row in opportunities:
+        outcome = "won" if "won" in row.status else "lost"
+        reason = row.won_reason if outcome == "won" else row.lost_reason
+        company = row.company
+        items.append(
+            {
+                "source_type": "opportunity",
+                "source_id": str(row.id),
+                "outcome": outcome,
+                "customer": _safe_company_name(company, row.customer_segment),
+                "opportunity_name": row.opportunity_name,
+                "partner_focus": row.partner_focus,
+                "product_focus": row.product_focus or [],
+                "estimated_value": _decimal_to_float(row.estimated_value),
+                "decision_factors": _merge_unique(
+                    [
+                        reason or "reason not recorded",
+                        row.competition or "",
+                        row.risk or "",
+                        row.notes or "",
+                    ],
+                    limit=6,
+                ),
+                "competitor_signal": row.competition or "competitor not recorded",
+                "commercial_lesson": reason or "Record why this opportunity was won or lost.",
+                "path": "/growth-operations",
+                "safety": _safety_flags(),
+            }
+        )
+
+    learning_rows = (
+        db.query(QuoteLearningRecord)
+        .filter(QuoteLearningRecord.outcome_status.in_(["won", "lost"]))
+        .order_by(QuoteLearningRecord.updated_at.desc(), QuoteLearningRecord.created_at.desc())
+        .limit(16)
+        .all()
+    )
+    for learning in learning_rows:
+        quote = learning.quote
+        if quote is None or quote.is_archived:
+            continue
+        company = db.get(Company, quote.company_id) if quote.company_id else None
+        reason = learning.won_reason if learning.outcome_status == "won" else learning.lost_reason
+        items.append(
+            {
+                "source_type": "quote_learning",
+                "source_id": str(learning.id),
+                "quote_id": str(quote.id),
+                "quote_number": quote.quote_number,
+                "outcome": learning.outcome_status,
+                "customer": _safe_company_name(company, quote.bill_to_company),
+                "partner_focus": ", ".join(_quote_partner_names(db, quote)) or _partner_focus_from_text(*_quote_product_focus(quote)),
+                "product_focus": _quote_product_focus(quote),
+                "quote_value": _decimal_to_float(quote.grand_total),
+                "decision_factors": _merge_unique(
+                    [
+                        reason or "reason not recorded",
+                        learning.customer_objection or "",
+                        learning.competitor_signal or "",
+                        learning.price_feedback or "",
+                        learning.delivery_feedback or "",
+                    ],
+                    limit=6,
+                ),
+                "competitor_signal": learning.competitor_signal or "competitor not recorded",
+                "commercial_lesson": reason or "Record customer decision reason before using this as commercial learning.",
+                "path": f"/quotes/{quote.id}",
+                "safety": _safety_flags(),
+            }
+        )
+    return items[:16]
+
+
+def _build_customer_value_intelligence(db: Session) -> list[dict[str, object]]:
+    company_ids = {
+        row[0]
+        for row in db.query(Quote.company_id).filter(Quote.company_id.isnot(None), Quote.is_archived.is_(False)).all()
+    } | {row[0] for row in db.query(CustomerOrder.company_id).filter(CustomerOrder.company_id.isnot(None)).all()} | {
+        row[0] for row in db.query(SalesOpportunity.company_id).filter(SalesOpportunity.company_id.isnot(None)).all()
+    }
+    items: list[dict[str, object]] = []
+    for company_id in company_ids:
+        company = db.get(Company, company_id)
+        quotes = db.query(Quote).filter(Quote.company_id == company_id, Quote.is_archived.is_(False)).all()
+        orders = db.query(CustomerOrder).filter(CustomerOrder.company_id == company_id).all()
+        opportunities = db.query(SalesOpportunity).filter(SalesOpportunity.company_id == company_id).all()
+        feedback_count = (
+            db.query(func.count(FeedbackTicket.id))
+            .filter(FeedbackTicket.company_id == company_id)
+            .scalar()
+            or 0
+        )
+        quote_total = sum((quote.grand_total or Decimal("0")) for quote in quotes)
+        order_total = sum((order.grand_total or Decimal("0")) for order in orders)
+        quote_count = len(quotes)
+        order_count = len(orders)
+        conversion_rate = round(order_count / quote_count, 2) if quote_count else 0
+        repeat_rate = max(0, order_count - 1)
+        strategic_value = "high" if order_total >= Decimal("50000") or repeat_rate else "medium" if quote_total >= Decimal("10000") else "early"
+        items.append(
+            {
+                "company_id": str(company_id),
+                "customer_name": _safe_company_name(company),
+                "historical_quote_amount": _decimal_to_float(quote_total),
+                "won_order_amount": _decimal_to_float(order_total),
+                "quote_count": quote_count,
+                "order_count": order_count,
+                "opportunity_count": len(opportunities),
+                "conversion_rate": conversion_rate,
+                "repeat_business_count": repeat_rate,
+                "feedback_count": int(feedback_count),
+                "strategic_value": strategic_value,
+                "referral_value": "review after delivery success" if order_count else "not proven",
+                "next_action": (
+                    "Plan repeat-business or referral follow-up."
+                    if order_count > 1
+                    else "Convert quote/opportunity history into next commercial action."
+                    if quote_count or opportunities
+                    else "Capture customer commercial history."
+                ),
+                "path": f"/companies/{company_id}" if company else "/lead-intelligence",
+                "safety": _safety_flags(),
+            }
+        )
+    return sorted(items, key=lambda item: (item["won_order_amount"], item["historical_quote_amount"]), reverse=True)[:16]
+
+
+def _build_partner_performance_intelligence(db: Session) -> list[dict[str, object]]:
+    partners = db.query(ManufacturingPartner).filter(ManufacturingPartner.is_active.is_(True)).order_by(ManufacturingPartner.updated_at.desc()).limit(24).all()
+    items: list[dict[str, object]] = []
+    for partner in partners:
+        quote_lines = db.query(QuoteLineItem).filter(QuoteLineItem.partner_id == partner.id).all()
+        quote_ids = {line.quote_id for line in quote_lines}
+        quotes = [db.get(Quote, quote_id) for quote_id in quote_ids]
+        quotes = [quote for quote in quotes if quote and not quote.is_archived]
+        order_lines = [line for order in db.query(CustomerOrder).order_by(CustomerOrder.updated_at.desc()).limit(200).all() for line in order.line_items if line.partner_id == partner.id]
+        order_ids = {line.order_id for line in order_lines}
+        orders = [db.get(CustomerOrder, order_id) for order_id in order_ids]
+        orders = [order for order in orders if order]
+        order_amount = sum((order.grand_total or Decimal("0")) for order in orders)
+        won_quote_count = sum(1 for quote in quotes if quote and quote.status == "converted_to_order")
+        win_rate = round(won_quote_count / len(quotes), 2) if quotes else 0
+        delayed_or_blocked_orders = sum(
+            1
+            for order in orders
+            if any(milestone.status in {"delayed", "blocked"} for milestone in order.production_milestones)
+        )
+        feedback_issue_count = sum(
+            int(db.query(func.count(FeedbackTicket.id)).filter(FeedbackTicket.order_id == order.id).scalar() or 0)
+            for order in orders
+        )
+        on_time_delivery_rate = round((len(orders) - delayed_or_blocked_orders) / len(orders), 2) if orders else None
+        items.append(
+            {
+                "partner_id": str(partner.id),
+                "partner_name": partner.partner_name,
+                "quote_support_count": len(quotes),
+                "won_quote_count": won_quote_count,
+                "win_rate": win_rate,
+                "order_amount": _decimal_to_float(order_amount),
+                "order_count": len(orders),
+                "on_time_delivery_rate": on_time_delivery_rate,
+                "feedback_issue_count": feedback_issue_count,
+                "cooperation_history": {
+                    "quote_lines": len(quote_lines),
+                    "order_lines": len(order_lines),
+                    "delayed_or_blocked_orders": delayed_or_blocked_orders,
+                },
+                "risk_assessment": partner.risk_level or partner.ai_risk_summary or "risk not assessed",
+                "next_action": (
+                    "Review delivery issues and feedback before allocating more pilot demand."
+                    if delayed_or_blocked_orders or feedback_issue_count
+                    else "Use partner performance in quote and product-line allocation decisions."
+                ),
+                "path": "/partner-onboarding",
+                "safety": _safety_flags(),
+            }
+        )
+    return sorted(items, key=lambda item: (item["order_amount"], item["win_rate"], item["quote_support_count"]), reverse=True)[:16]
+
+
+def _build_product_market_fit_intelligence(products: list[ProductIntelligenceItem], quotations: list[QuotationIntelligenceItem]) -> list[dict[str, object]]:
+    items: list[dict[str, object]] = []
+    quote_dimensions = {
+        dimension
+        for quote in quotations
+        for dimension in quote.commercial_intelligence.get("captured_dimensions", []) + quote.commercial_intelligence.get("dimension_review_needs", [])
+    }
+    for product in products:
+        context = product.validation_context or {}
+        counts = context.get("evidence_counts", {})
+        purchase_factors = _merge_unique(
+            [
+                *product.dimensions,
+                *context.get("dimensions_requiring_evidence", []),
+                *list(quote_dimensions),
+            ],
+            limit=10,
+        )
+        items.append(
+            {
+                "partner_focus": product.partner_focus,
+                "product_focus": product.product_focus,
+                "purchase_factors": purchase_factors,
+                "project_experience": {
+                    "opportunities": counts.get("opportunities", 0),
+                    "quotes": counts.get("quotes", 0),
+                    "orders": counts.get("orders", 0),
+                    "feedback": counts.get("feedback", 0),
+                    "delivery_risks": counts.get("delivery_risks", 0),
+                    "market_reviews": counts.get("market_reviews", 0),
+                },
+                "fit_status": context.get("health") or "baseline_only",
+                "commercial_question": (
+                    "Which buying factor most improves win rate or repeat business for this product family?"
+                    if counts
+                    else "What real customer evidence is needed before treating this product family as validated?"
+                ),
+                "next_action": context.get("next_best_action") or product.next_action,
+                "path": product.source_path,
+                "customer_safe_boundary": context.get("customer_safe_boundary"),
+                "safety": context.get("safety") or _safety_flags(),
+            }
+        )
+    return items[:16]
+
+
+def _build_revenue_forecast_intelligence(
+    opportunities: list[OpportunityPipelineItem],
+    quotations: list[QuotationIntelligenceItem],
+    db: Session,
+) -> dict[str, object]:
+    open_opportunities = [
+        row
+        for row in db.query(SalesOpportunity).filter(SalesOpportunity.status.in_(["open", "active", "qualified", "negotiating"])).all()
+    ]
+    forecast_amount = sum((row.estimated_value or Decimal("0")) * Decimal(row.probability) / Decimal("100") for row in open_opportunities)
+    open_quote_rows = db.query(Quote).filter(Quote.is_archived.is_(False), Quote.status.in_(["ready_to_send", "sent", "revised"])).all()
+    open_quote_amount = sum((quote.grand_total or Decimal("0")) for quote in open_quote_rows)
+    weighted_quote_amount = sum((quote.grand_total or Decimal("0")) * Decimal(_probability(quote.status)) / Decimal("100") for quote in open_quote_rows)
+    high_probability_projects = [
+        {
+            "name": row.opportunity_name,
+            "customer": row.customer_or_segment,
+            "partner_focus": row.partner_focus,
+            "product_focus": row.product_focus,
+            "probability": row.probability,
+            "path": row.path,
+        }
+        for row in opportunities
+        if row.probability >= 60
+    ][:8]
+    high_risk_projects = [
+        {
+            "name": row.opportunity_name,
+            "customer": row.customer_or_segment,
+            "risk": row.risk,
+            "next_action": row.next_action,
+            "path": row.path,
+        }
+        for row in opportunities
+        if row.risk and row.risk.lower() not in {"risk not recorded yet.", "unknown"}
+    ][:8]
+    return {
+        "weighted_opportunity_amount": _decimal_to_float(forecast_amount),
+        "open_quote_amount": _decimal_to_float(open_quote_amount),
+        "weighted_quote_amount": _decimal_to_float(weighted_quote_amount),
+        "high_probability_projects": high_probability_projects,
+        "high_risk_projects": high_risk_projects,
+        "future_revenue_sources": [
+            "open opportunities with estimated value and probability",
+            "sent/revised quotes still under customer review",
+            "repeat-business candidates from delivered orders and feedback resolution",
+        ],
+        "next_action": "Review high-probability projects, quote follow-ups, and high-risk opportunities before weekly revenue forecast.",
+        "safety": _safety_flags(),
+    }
+
+
+def _build_account_360_intelligence(
+    account_lifecycle: list[CustomerAccountExecutionItem],
+    customer_value: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    value_by_name = {str(item.get("customer_name")): item for item in customer_value}
+    items: list[dict[str, object]] = []
+    for account in account_lifecycle[:16]:
+        value = value_by_name.get(account.customer_name, {})
+        items.append(
+            {
+                "account_key": account.account_key,
+                "customer_name": account.customer_name,
+                "current_stage": account.current_stage,
+                "source_counts": account.source_counts,
+                "commercial_value": {
+                    "historical_quote_amount": value.get("historical_quote_amount", 0),
+                    "won_order_amount": value.get("won_order_amount", 0),
+                    "conversion_rate": value.get("conversion_rate", 0),
+                    "repeat_business_count": value.get("repeat_business_count", 0),
+                    "strategic_value": value.get("strategic_value", "unknown"),
+                },
+                "active_paths": account.active_paths,
+                "open_blockers": account.open_blockers,
+                "next_action": account.next_action,
+                "decision_reason": account.decision_reason,
+                "path": account.active_paths[0] if account.active_paths else "/",
+                "safety": _safety_flags(),
+            }
+        )
+    return items
+
+
+def _build_commercial_intelligence(
+    db: Session,
+    account_lifecycle: list[CustomerAccountExecutionItem],
+    opportunities: list[OpportunityPipelineItem],
+    quotations: list[QuotationIntelligenceItem],
+    products: list[ProductIntelligenceItem],
+) -> CommercialIntelligenceOut:
+    customer_value = _build_customer_value_intelligence(db)
+    return CommercialIntelligenceOut(
+        win_loss=_build_win_loss_intelligence(db),
+        customer_value=customer_value,
+        partner_performance=_build_partner_performance_intelligence(db),
+        product_market_fit=_build_product_market_fit_intelligence(products, quotations),
+        revenue_forecast=_build_revenue_forecast_intelligence(opportunities, quotations, db),
+        account_360=_build_account_360_intelligence(account_lifecycle, customer_value),
+    )
+
+
 def _build_executive_decisions(
     account_lifecycle: list[CustomerAccountExecutionItem],
     lifecycle: list[CustomerLifecycleItem],
@@ -1545,6 +1910,7 @@ def build_business_execution_center(db: Session, user: User) -> BusinessExecutio
     products = _build_product_intelligence(db)
     partners = _build_partner_intelligence(db)
     delivery = _build_delivery_visibility(db)
+    commercial = _build_commercial_intelligence(db, account_lifecycle, opportunities, quotations, products)
     decisions = _build_executive_decisions(account_lifecycle, lifecycle, opportunities, quotations, products, partners, delivery)
 
     return BusinessExecutionOut(
@@ -1564,6 +1930,13 @@ def build_business_execution_center(db: Session, user: User) -> BusinessExecutio
                     or row.capability_intelligence.get("risk_signals")
                 ]
             ),
+            commercial_intelligence_items=(
+                len(commercial.win_loss)
+                + len(commercial.customer_value)
+                + len(commercial.partner_performance)
+                + len(commercial.product_market_fit)
+                + len(commercial.account_360)
+            ),
             executive_decisions=len(decisions),
         ),
         account_lifecycle=account_lifecycle,
@@ -1573,6 +1946,7 @@ def build_business_execution_center(db: Session, user: User) -> BusinessExecutio
         products=products,
         partners=partners,
         delivery=delivery,
+        commercial_intelligence=commercial,
         executive_decisions=decisions,
         safety=_safety_flags(),
     )

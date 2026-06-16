@@ -13,6 +13,7 @@ class BusinessExecutionSummary(BaseModel):
     delivery_risks: int = 0
     product_validation_items: int = 0
     partner_investment_items: int = 0
+    commercial_intelligence_items: int = 0
     executive_decisions: int = 0
     status: str = "READY_FOR_STAGING_HANDOFF"
     external_staging_state: str = "WAITING_FOR_REAL_STAGING_EVIDENCE"
@@ -144,6 +145,15 @@ class ExecutiveDecisionItem(BaseModel):
     path: str
 
 
+class CommercialIntelligenceOut(BaseModel):
+    win_loss: list[dict[str, Any]] = Field(default_factory=list)
+    customer_value: list[dict[str, Any]] = Field(default_factory=list)
+    partner_performance: list[dict[str, Any]] = Field(default_factory=list)
+    product_market_fit: list[dict[str, Any]] = Field(default_factory=list)
+    revenue_forecast: dict[str, Any] = Field(default_factory=dict)
+    account_360: list[dict[str, Any]] = Field(default_factory=list)
+
+
 class BusinessExecutionOut(BaseModel):
     summary: BusinessExecutionSummary
     account_lifecycle: list[CustomerAccountExecutionItem]
@@ -153,5 +163,6 @@ class BusinessExecutionOut(BaseModel):
     products: list[ProductIntelligenceItem]
     partners: list[PartnerIntelligenceItem]
     delivery: list[DeliveryVisibilityItem]
+    commercial_intelligence: CommercialIntelligenceOut
     executive_decisions: list[ExecutiveDecisionItem]
     safety: dict[str, bool]

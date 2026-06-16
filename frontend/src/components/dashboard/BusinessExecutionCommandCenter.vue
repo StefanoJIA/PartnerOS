@@ -13,6 +13,7 @@
         <el-tag type="warning" effect="plain">报价经验 {{ data?.summary.quote_learning_items ?? 0 }}</el-tag>
         <el-tag type="danger" effect="plain">交付风险 {{ data?.summary.delivery_risks ?? 0 }}</el-tag>
         <el-tag type="info" effect="plain">Partner 投入 {{ data?.summary.partner_investment_items ?? 0 }}</el-tag>
+        <el-tag type="primary" effect="plain">商业资产 {{ data?.summary.commercial_intelligence_items ?? 0 }}</el-tag>
       </div>
     </div>
 
@@ -45,6 +46,121 @@
           <el-button class="mt-2" size="small" type="primary" plain @click="go(item.path)">进入处理</el-button>
         </div>
       </div>
+
+      <section class="mt-4 rounded border border-indigo-100 bg-indigo-50/40 p-3">
+        <div class="mb-3 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h4 class="font-semibold text-slate-900">商业智能资产</h4>
+            <p class="mt-1 text-xs text-slate-600">
+              把赢输原因、客户价值、Partner 绩效、产品市场匹配、收入预测和 Account 360 汇总成经营判断，不自动外发、不改状态。
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <el-tag size="small" effect="plain">Win/Loss {{ safeCommercial.win_loss.length }}</el-tag>
+            <el-tag size="small" effect="plain">客户价值 {{ safeCommercial.customer_value.length }}</el-tag>
+            <el-tag size="small" effect="plain">PMF {{ safeCommercial.product_market_fit.length }}</el-tag>
+          </div>
+        </div>
+        <div class="grid gap-3 lg:grid-cols-3">
+          <div class="rounded border border-white bg-white p-3">
+            <div class="mb-2 flex items-center justify-between">
+              <h5 class="text-sm font-semibold text-slate-900">未来收入来自哪里</h5>
+              <el-tag size="small" type="success" effect="plain">
+                {{ money(safeCommercial.revenue_forecast.weighted_opportunity_amount) }}
+              </el-tag>
+            </div>
+            <p class="text-xs text-slate-600">
+              报价池 {{ money(safeCommercial.revenue_forecast.open_quote_amount) }}，
+              加权报价 {{ money(safeCommercial.revenue_forecast.weighted_quote_amount) }}。
+            </p>
+            <p class="mt-2 text-xs text-slate-700">{{ safeCommercial.revenue_forecast.next_action }}</p>
+            <div class="mt-2 flex flex-wrap gap-1">
+              <el-tag
+                v-for="project in forecastProjects(safeCommercial.revenue_forecast).slice(0, 3)"
+                :key="String(project.name)"
+                size="small"
+                effect="plain"
+              >
+                {{ project.name }} {{ project.probability }}%
+              </el-tag>
+            </div>
+          </div>
+
+          <div class="rounded border border-white bg-white p-3">
+            <div class="mb-2 flex items-center justify-between">
+              <h5 class="text-sm font-semibold text-slate-900">谁最值得跟进</h5>
+              <el-tag size="small" type="primary" effect="plain">Account 360</el-tag>
+            </div>
+            <div v-for="account in safeCommercial.account_360.slice(0, 3)" :key="String(account.account_key)" class="mb-2 last:mb-0">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-sm font-medium text-slate-800">{{ account.customer_name }}</span>
+                <el-tag size="small" effect="plain">{{ account.current_stage }}</el-tag>
+              </div>
+              <p class="mt-1 text-xs text-slate-600">{{ account.next_action }}</p>
+              <p class="mt-1 text-xs text-slate-500">
+                成交 {{ money(commercialValue(account).won_order_amount) }} / 报价 {{ money(commercialValue(account).historical_quote_amount) }}
+              </p>
+            </div>
+          </div>
+
+          <div class="rounded border border-white bg-white p-3">
+            <div class="mb-2 flex items-center justify-between">
+              <h5 class="text-sm font-semibold text-slate-900">什么正在获得市场验证</h5>
+              <el-tag size="small" type="warning" effect="plain">Product-Market Fit</el-tag>
+            </div>
+            <div v-for="item in safeCommercial.product_market_fit.slice(0, 3)" :key="`${item.partner_focus}-${String(item.product_focus)}`" class="mb-2 last:mb-0">
+              <div class="flex flex-wrap items-center gap-1">
+                <el-tag size="small" effect="plain">{{ item.partner_focus }}</el-tag>
+                <el-tag size="small" :type="productValidationType(String(item.fit_status || 'baseline_only'))" effect="plain">
+                  {{ productValidationLabel(String(item.fit_status || 'baseline_only')) }}
+                </el-tag>
+              </div>
+              <p class="mt-1 text-xs text-slate-700">{{ item.next_action }}</p>
+              <p class="mt-1 text-xs text-slate-500">
+                购买因素：{{ listLabel(item.purchase_factors).slice(0, 5).join(' / ') || '待沉淀' }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-3 grid gap-3 lg:grid-cols-3">
+          <div class="rounded border border-white bg-white p-3">
+            <h5 class="mb-2 text-sm font-semibold text-slate-900">为什么赢 / 为什么输</h5>
+            <div v-for="item in safeCommercial.win_loss.slice(0, 3)" :key="`${item.source_type}-${item.source_id}`" class="mb-2 last:mb-0">
+              <div class="flex flex-wrap items-center gap-1">
+                <el-tag size="small" :type="item.outcome === 'won' ? 'success' : 'danger'" effect="plain">{{ item.outcome }}</el-tag>
+                <span class="text-xs text-slate-700">{{ item.customer }}</span>
+              </div>
+              <p class="mt-1 text-xs text-slate-600">{{ item.commercial_lesson }}</p>
+            </div>
+          </div>
+          <div class="rounded border border-white bg-white p-3">
+            <h5 class="mb-2 text-sm font-semibold text-slate-900">哪个 Partner 值得投入</h5>
+            <div v-for="item in safeCommercial.partner_performance.slice(0, 3)" :key="String(item.partner_id)" class="mb-2 last:mb-0">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-sm font-medium text-slate-800">{{ item.partner_name }}</span>
+                <el-tag size="small" effect="plain">赢单率 {{ percent(item.win_rate) }}</el-tag>
+              </div>
+              <p class="mt-1 text-xs text-slate-600">
+                订单 {{ money(item.order_amount) }} / 反馈问题 {{ item.feedback_issue_count ?? 0 }}
+              </p>
+              <p class="mt-1 text-xs text-slate-500">{{ item.next_action }}</p>
+            </div>
+          </div>
+          <div class="rounded border border-white bg-white p-3">
+            <h5 class="mb-2 text-sm font-semibold text-slate-900">客户价值排序</h5>
+            <div v-for="item in safeCommercial.customer_value.slice(0, 3)" :key="String(item.company_id)" class="mb-2 last:mb-0">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-sm font-medium text-slate-800">{{ item.customer_name }}</span>
+                <el-tag size="small" effect="plain">{{ item.strategic_value }}</el-tag>
+              </div>
+              <p class="mt-1 text-xs text-slate-600">
+                报价 {{ money(item.historical_quote_amount) }} / 成交 {{ money(item.won_order_amount) }} / 转化 {{ percent(item.conversion_rate) }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section class="mt-4 rounded border border-slate-100 p-3">
         <div class="mb-2 flex items-center justify-between">
@@ -441,17 +557,62 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { BusinessExecution } from '@/api/dashboard'
 
-defineProps<{
+const props = defineProps<{
   data: BusinessExecution | null
 }>()
 
 const router = useRouter()
 
+const defaultCommercial = {
+  win_loss: [] as Array<Record<string, unknown>>,
+  customer_value: [] as Array<Record<string, unknown>>,
+  partner_performance: [] as Array<Record<string, unknown>>,
+  product_market_fit: [] as Array<Record<string, unknown>>,
+  revenue_forecast: {
+    weighted_opportunity_amount: 0,
+    open_quote_amount: 0,
+    weighted_quote_amount: 0,
+    next_action: '等待商业智能数据加载。',
+    high_probability_projects: [] as Array<Record<string, unknown>>,
+  } as Record<string, unknown>,
+  account_360: [] as Array<Record<string, unknown>>,
+}
+
+const safeCommercial = computed(() => props.data?.commercial_intelligence || defaultCommercial)
+
 function go(path: string) {
   router.push(path)
+}
+
+function asNumber(value: unknown) {
+  const number = Number(value ?? 0)
+  return Number.isFinite(number) ? number : 0
+}
+
+function money(value: unknown) {
+  return `$${asNumber(value).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+}
+
+function percent(value: unknown) {
+  return `${Math.round(asNumber(value) * 100)}%`
+}
+
+function listLabel(value: unknown) {
+  return Array.isArray(value) ? value.map((item) => String(item)) : []
+}
+
+function commercialValue(account: Record<string, unknown>) {
+  return (account.commercial_value || {}) as Record<string, unknown>
+}
+
+function forecastProjects(forecast: Record<string, unknown>) {
+  return Array.isArray(forecast.high_probability_projects)
+    ? (forecast.high_probability_projects as Array<Record<string, unknown>>)
+    : []
 }
 
 function priorityType(priority: string) {
