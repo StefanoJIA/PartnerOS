@@ -231,6 +231,10 @@ def main() -> int:
                     and item.get("priority") in {"P1", "P2", "P3"}
                     and "weighted_pipeline_amount" in item
                     and "future_revenue_signal" in item
+                    and isinstance(item.get("commercial_quality"), dict)
+                    and "healthy_revenue_proxy" in item
+                    and item.get("commercial_quality", {}).get("uses_cost_or_margin") is False
+                    and item.get("commercial_quality", {}).get("tier")
                     and item.get("recommended_reason")
                     and item.get("next_action")
                     for item in customer_value_items
@@ -241,14 +245,20 @@ def main() -> int:
                 isinstance(customer_value_payload.get("management_questions"), dict)
                 and "who_to_follow" in customer_value_payload["management_questions"]
                 and "future_revenue_from" in customer_value_payload["management_questions"]
+                and "what_is_commercially_healthy" in customer_value_payload["management_questions"]
+                and "which_value_is_at_risk" in customer_value_payload["management_questions"]
                 and isinstance(customer_value_payload.get("summary"), dict)
-                and "weighted_pipeline_amount" in customer_value_payload["summary"],
+                and "weighted_pipeline_amount" in customer_value_payload["summary"]
+                and "healthy_revenue_proxy" in customer_value_payload["summary"]
+                and isinstance(customer_value_payload.get("commercial_quality_leaders"), list)
+                and isinstance(customer_value_payload.get("service_burden_accounts"), list),
             ),
             (
                 "customer value safe boundaries",
                 customer_value_payload.get("safety", {}).get("external_message_sent") is False
                 and customer_value_payload.get("safety", {}).get("quote_status_changed") is False
                 and customer_value_payload.get("safety", {}).get("order_status_changed") is False
+                and customer_value_payload.get("safety", {}).get("customer_forbidden_fields_exposed") is False
                 and all(item.get("safety", {}).get("customer_forbidden_fields_exposed") is False for item in customer_value_items),
             ),
             (

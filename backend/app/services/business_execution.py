@@ -1804,6 +1804,76 @@ def _customer_value_priority(value_tier: str, weighted_pipeline_amount: Decimal,
     return "P3"
 
 
+def _customer_service_burden(
+    *,
+    unresolved_feedback_count: int,
+    delivery_risk_count: int,
+    lost_learning_count: int,
+) -> tuple[str, int]:
+    burden_score = unresolved_feedback_count * 18 + delivery_risk_count * 20 + lost_learning_count * 5
+    if burden_score >= 45:
+        return "high_service_burden", min(burden_score, 100)
+    if burden_score >= 18:
+        return "watch_service_burden", burden_score
+    return "clean_or_light_burden", burden_score
+
+
+def _customer_commercial_quality(
+    *,
+    value_score: int,
+    conversion_rate: float,
+    repeat_business_count: int,
+    unresolved_feedback_count: int,
+    delivery_risk_count: int,
+    lost_learning_count: int,
+    weighted_pipeline_amount: Decimal,
+    won_order_amount: Decimal,
+) -> dict[str, object]:
+    quality_score = value_score
+    quality_score += min(int(conversion_rate * 18), 18)
+    quality_score += min(repeat_business_count * 8, 16)
+    quality_score -= min(unresolved_feedback_count * 10, 25)
+    quality_score -= min(delivery_risk_count * 12, 30)
+    quality_score -= min(lost_learning_count * 3, 12)
+    quality_score = max(0, min(quality_score, 100))
+    service_burden, service_burden_score = _customer_service_burden(
+        unresolved_feedback_count=unresolved_feedback_count,
+        delivery_risk_count=delivery_risk_count,
+        lost_learning_count=lost_learning_count,
+    )
+    if quality_score >= 75 and service_burden == "clean_or_light_burden":
+        tier = "healthy_growth_account"
+    elif quality_score >= 60:
+        tier = "commercially_promising_but_needs_follow_up"
+    elif service_burden != "clean_or_light_burden":
+        tier = "value_at_risk"
+    else:
+        tier = "qualification_needed"
+    healthy_revenue_proxy = won_order_amount + (
+        weighted_pipeline_amount * Decimal("0.5") if service_burden == "clean_or_light_burden" else Decimal("0")
+    )
+    return {
+        "score": quality_score,
+        "tier": tier,
+        "service_burden": service_burden,
+        "service_burden_score": min(service_burden_score, 100),
+        "unresolved_feedback_count": unresolved_feedback_count,
+        "delivery_risk_count": delivery_risk_count,
+        "loss_learning_count": lost_learning_count,
+        "healthy_revenue_proxy": _decimal_to_float(healthy_revenue_proxy),
+        "uses_cost_or_margin": False,
+        "management_answer": (
+            "Healthy commercial value: conversion/repeat potential is supported by low delivery and feedback burden."
+            if tier == "healthy_growth_account"
+            else "Promising account: revenue signal exists, but follow-up is needed before treating it as clean growth."
+            if tier == "commercially_promising_but_needs_follow_up"
+            else "Value at risk: resolve delivery, feedback, or lost-decision learning before pursuing repeat business."
+            if tier == "value_at_risk"
+            else "Qualification needed: build product fit and decision-factor evidence before management attention."
+        ),
+    }
+
+
 def _build_customer_value_profile(db: Session, company_id: object) -> dict[str, object] | None:
     company = db.get(Company, company_id)
     quotes = (
@@ -1844,6 +1914,17 @@ def _build_customer_value_profile(db: Session, company_id: object) -> dict[str, 
     open_quote_amount = sum((quote.grand_total or Decimal("0")) for quote in open_quote_rows)
     won_learning = [row for row in learning_records if row.outcome_status == "won"]
     lost_learning = [row for row in learning_records if row.outcome_status == "lost"]
+    unresolved_feedback = [ticket for ticket in feedback if ticket.status not in {"closed", "resolved"}]
+    delivery_risk_orders = [
+        order
+        for order in orders
+        if order.status == "on_hold"
+        or any(milestone.status in {"delayed", "blocked"} for milestone in order.production_milestones)
+        or (
+            order.status in {"ready_to_ship", "in_production"}
+            and any(plan.status in {"draft", "planned"} for plan in order.shipment_plans)
+        )
+    ]
 
     partner_focus = _merge_unique(
         [
@@ -1889,8 +1970,21 @@ def _build_customer_value_profile(db: Session, company_id: object) -> dict[str, 
     priority = _customer_value_priority(value_tier, weighted_pipeline, len(feedback))
     conversion_rate = round(len(orders) / len(quotes), 2) if quotes else 0
     repeat_business_count = max(0, len(orders) - 1)
+    commercial_quality = _customer_commercial_quality(
+        value_score=value_score,
+        conversion_rate=conversion_rate,
+        repeat_business_count=repeat_business_count,
+        unresolved_feedback_count=len(unresolved_feedback),
+        delivery_risk_count=len(delivery_risk_orders),
+        lost_learning_count=len(lost_learning),
+        weighted_pipeline_amount=weighted_pipeline,
+        won_order_amount=order_total,
+    )
     project_scale = _size_label(order_total or quote_total or weighted_pipeline, len(quotes) + len(orders))
     recommended_reason = (
+        commercial_quality["management_answer"]
+        if commercial_quality.get("tier") in {"healthy_growth_account", "value_at_risk"}
+        else
         "Existing order value and repeat signal make this account worth management attention."
         if order_total and repeat_business_count
         else "Open weighted pipeline makes this account a near-term revenue source."
@@ -1945,6 +2039,12 @@ def _build_customer_value_profile(db: Session, company_id: object) -> dict[str, 
             if quotes
             else "qualification_needed"
         ),
+        "commercial_quality": commercial_quality,
+        "healthy_revenue_proxy": commercial_quality.get("healthy_revenue_proxy", 0),
+        "service_burden": commercial_quality.get("service_burden"),
+        "unresolved_feedback_count": len(unresolved_feedback),
+        "delivery_risk_order_count": len(delivery_risk_orders),
+        "management_question": "Which customers are commercially valuable without relying on internal cost or margin exposure?",
         "path": f"/companies/{company_id}" if company else "/lead-intelligence",
         "safety": _safety_flags(),
     }
@@ -1962,11 +2062,24 @@ def build_customer_value_intelligence(db: Session, limit: int = 50) -> dict[str,
         items,
         key=lambda item: (
             _priority_rank(str(item.get("priority"))),
+            -int((item.get("commercial_quality") or {}).get("score") or 0) if isinstance(item.get("commercial_quality"), dict) else 0,
             -int(item.get("value_score") or 0),
             -float(item.get("weighted_pipeline_amount") or 0),
             -float(item.get("won_order_amount") or 0),
         ),
     )[:limit]
+    commercial_quality_leaders = [
+        item
+        for item in items
+        if isinstance(item.get("commercial_quality"), dict)
+        and item["commercial_quality"].get("tier") in {"healthy_growth_account", "commercially_promising_but_needs_follow_up"}
+    ][:8]
+    service_burden_accounts = [
+        item
+        for item in items
+        if isinstance(item.get("commercial_quality"), dict)
+        and item["commercial_quality"].get("service_burden") != "clean_or_light_burden"
+    ][:8]
     return {
         "items": items,
         "summary": {
@@ -1977,10 +2090,38 @@ def build_customer_value_intelligence(db: Session, limit: int = 50) -> dict[str,
             "weighted_pipeline_amount": round(sum(float(item.get("weighted_pipeline_amount") or 0) for item in items), 2),
             "won_order_amount": round(sum(float(item.get("won_order_amount") or 0) for item in items), 2),
             "open_quote_amount": round(sum(float(item.get("open_quote_amount") or 0) for item in items), 2),
+            "healthy_revenue_proxy": round(sum(float(item.get("healthy_revenue_proxy") or 0) for item in items), 2),
+            "commercial_quality_leader_count": len(commercial_quality_leaders),
+            "service_burden_account_count": len(service_burden_accounts),
         },
+        "commercial_quality_leaders": commercial_quality_leaders,
+        "service_burden_accounts": service_burden_accounts,
         "management_questions": {
             "who_to_follow": [item.get("customer_name") for item in items[:5]],
             "why_follow": [item.get("recommended_reason") for item in items[:5]],
+            "what_is_commercially_healthy": [
+                {
+                    "customer_name": item.get("customer_name"),
+                    "commercial_quality": item.get("commercial_quality"),
+                    "healthy_revenue_proxy": item.get("healthy_revenue_proxy"),
+                    "conversion_rate": item.get("conversion_rate"),
+                    "repeat_business_count": item.get("repeat_business_count"),
+                    "next_action": item.get("next_action"),
+                    "path": item.get("path"),
+                }
+                for item in commercial_quality_leaders
+            ],
+            "which_value_is_at_risk": [
+                {
+                    "customer_name": item.get("customer_name"),
+                    "service_burden": item.get("service_burden"),
+                    "unresolved_feedback_count": item.get("unresolved_feedback_count"),
+                    "delivery_risk_order_count": item.get("delivery_risk_order_count"),
+                    "next_action": item.get("next_action"),
+                    "path": item.get("path"),
+                }
+                for item in service_burden_accounts
+            ],
             "future_revenue_from": [
                 {
                     "customer_name": item.get("customer_name"),
@@ -1991,6 +2132,10 @@ def build_customer_value_intelligence(db: Session, limit: int = 50) -> dict[str,
                 for item in items[:5]
             ],
         },
+        "customer_safe_boundary": (
+            "Customer value intelligence uses quote/order/pipeline/repeat/feedback/delivery signals only. "
+            "It does not use or expose cost, margin, pricing breakdown, supplier private notes, raw IDs, or internal scoring."
+        ),
         "safety": _safety_flags(),
     }
 

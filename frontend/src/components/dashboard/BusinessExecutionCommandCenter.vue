@@ -225,6 +225,7 @@
                 <span class="text-sm font-medium text-slate-800">{{ item.customer_name }}</span>
                 <div class="flex flex-wrap justify-end gap-1">
                   <el-tag size="small" effect="plain">{{ item.strategic_value }}</el-tag>
+                  <el-tag size="small" type="success" effect="plain">{{ commercialQuality(item).tier || 'quality_pending' }}</el-tag>
                   <el-tag size="small" type="primary" effect="plain">{{ item.value_score ?? 0 }}/100</el-tag>
                 </div>
               </div>
@@ -233,6 +234,9 @@
               </p>
               <p class="mt-1 text-xs text-slate-500">
                 Pipeline {{ money(item.weighted_pipeline_amount) }} / {{ item.future_revenue_signal || 'qualification_needed' }}
+              </p>
+              <p class="mt-1 text-xs text-slate-500">
+                商业健康 {{ commercialQuality(item).score ?? 0 }}/100 / 健康收入 proxy {{ money(item.healthy_revenue_proxy) }} / 服务负担 {{ item.service_burden || 'clean_or_light_burden' }}
               </p>
               <p class="mt-1 text-xs text-slate-500">{{ item.recommended_reason }}</p>
             </div>
@@ -690,6 +694,10 @@ function listLabel(value: unknown) {
 
 function commercialValue(account: Record<string, unknown>) {
   return (account.commercial_value || {}) as Record<string, unknown>
+}
+
+function commercialQuality(account: Record<string, unknown>) {
+  return (account.commercial_quality || {}) as Record<string, unknown>
 }
 
 function accountCounts(account: Record<string, unknown>) {

@@ -595,12 +595,20 @@ export interface CustomerValueIntelligence {
     weighted_pipeline_amount: number
     won_order_amount: number
     open_quote_amount: number
+    healthy_revenue_proxy: number
+    commercial_quality_leader_count: number
+    service_burden_account_count: number
   }
+  commercial_quality_leaders: Array<Record<string, unknown>>
+  service_burden_accounts: Array<Record<string, unknown>>
   management_questions: {
     who_to_follow: Array<unknown>
     why_follow: Array<unknown>
+    what_is_commercially_healthy: Array<Record<string, unknown>>
+    which_value_is_at_risk: Array<Record<string, unknown>>
     future_revenue_from: Array<Record<string, unknown>>
   }
+  customer_safe_boundary: string
   safety: Record<string, boolean>
 }
 
