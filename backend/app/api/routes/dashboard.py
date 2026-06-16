@@ -32,6 +32,7 @@ from app.services.business_execution import (
     build_partner_performance_intelligence,
     build_product_market_fit_intelligence,
     build_revenue_forecast_intelligence,
+    build_win_loss_intelligence,
 )
 from app.services.daily_decision_queue import (
     build_daily_decision_queue,
@@ -64,6 +65,15 @@ def dashboard_business_execution(
     user: User = Depends(get_current_user),
 ) -> BusinessExecutionOut:
     return build_business_execution_center(db, user)
+
+
+@router.get("/win-loss-intelligence")
+def dashboard_win_loss_intelligence(
+    limit: int = Query(80, ge=1, le=200),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    return build_win_loss_intelligence(db, limit=limit)
 
 
 @router.get("/customer-value-intelligence")

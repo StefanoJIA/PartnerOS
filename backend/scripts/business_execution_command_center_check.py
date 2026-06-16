@@ -46,6 +46,7 @@ from app.services.business_execution import (  # noqa: E402
     build_partner_performance_intelligence,
     build_product_market_fit_intelligence,
     build_revenue_forecast_intelligence,
+    build_win_loss_intelligence,
 )
 
 
@@ -57,6 +58,8 @@ def main() -> int:
             print("[FAIL] admin actor")
             return 1
         payload = build_business_execution_center(db, actor)
+        win_loss_payload = build_win_loss_intelligence(db, limit=80)
+        win_loss_items = win_loss_payload.get("items", [])
         all_product_dimensions = {
             dimension
             for item in payload.products
@@ -183,6 +186,40 @@ def main() -> int:
                 any(item.get("source_type") in {"opportunity", "quote_learning"} for item in commercial.win_loss)
                 or any(item.get("quote_count", 0) >= 0 and item.get("order_count", 0) >= 0 for item in commercial.customer_value)
                 or any(item.get("quote_support_count", 0) >= 0 for item in commercial.partner_performance),
+            ),
+            (
+                "win-loss intelligence profiles commercial lessons",
+                isinstance(win_loss_payload.get("summary"), dict)
+                and "commercial_amount" in win_loss_payload["summary"]
+                and all(
+                    item.get("source_type") in {"opportunity", "quote_learning"}
+                    and item.get("outcome")
+                    and item.get("reason_category")
+                    and isinstance(item.get("decision_factors"), list)
+                    and item.get("commercial_lesson")
+                    and item.get("next_quote_guidance")
+                    and item.get("safety", {}).get("external_message_sent") is False
+                    for item in win_loss_items
+                ),
+            ),
+            (
+                "win-loss intelligence answers management questions",
+                isinstance(win_loss_payload.get("management_questions"), dict)
+                and "why_we_win" in win_loss_payload["management_questions"]
+                and "why_we_lose" in win_loss_payload["management_questions"]
+                and "what_to_change_next_quote" in win_loss_payload["management_questions"]
+                and isinstance(win_loss_payload.get("reason_clusters"), list)
+                and isinstance(win_loss_payload.get("partner_rollup"), list)
+                and isinstance(win_loss_payload.get("product_rollup"), list)
+                and isinstance(win_loss_payload.get("decision_factor_rows"), list),
+            ),
+            (
+                "win-loss intelligence safe boundaries",
+                win_loss_payload.get("safety", {}).get("external_message_sent") is False
+                and win_loss_payload.get("safety", {}).get("quote_status_changed") is False
+                and win_loss_payload.get("safety", {}).get("order_status_changed") is False
+                and win_loss_payload.get("safety", {}).get("customer_forbidden_fields_exposed") is False
+                and all(item.get("safety", {}).get("customer_forbidden_fields_exposed") is False for item in win_loss_items),
             ),
             (
                 "customer value intelligence profiles accounts",
@@ -792,6 +829,10 @@ def main() -> int:
             win_loss_list = client.get("/api/v1/growth/win-loss", headers={"Authorization": f"Bearer {token}"})
             opp_list_after = client.get("/api/v1/growth/opportunities", headers={"Authorization": f"Bearer {token}"})
             response = client.get("/api/dashboard/business-execution", headers={"Authorization": f"Bearer {token}"})
+            win_loss_route = client.get(
+                "/api/dashboard/win-loss-intelligence",
+                headers={"Authorization": f"Bearer {token}"},
+            )
             customer_value_route = client.get(
                 "/api/dashboard/customer-value-intelligence",
                 headers={"Authorization": f"Bearer {token}"},
@@ -827,6 +868,23 @@ def main() -> int:
                 and isinstance(response_data["commercial_intelligence"].get("revenue_forecast"), dict)
                 and "weighted_opportunity_amount" in response_data["commercial_intelligence"]["revenue_forecast"]
                 and isinstance(response_data["commercial_intelligence"].get("account_360"), list),
+            )
+        )
+        win_loss_route_data = win_loss_route.json() if win_loss_route.status_code == 200 else {}
+        checks.append(
+            (
+                "route win-loss intelligence dashboard",
+                win_loss_route.status_code == 200
+                and isinstance(win_loss_route_data.get("summary"), dict)
+                and "what_to_change_next_quote" in win_loss_route_data.get("management_questions", {})
+                and isinstance(win_loss_route_data.get("reason_clusters"), list)
+                and all(
+                    item.get("reason_category")
+                    and item.get("next_quote_guidance")
+                    and item.get("safety", {}).get("external_message_sent") is False
+                    and item.get("safety", {}).get("customer_forbidden_fields_exposed") is False
+                    for item in win_loss_route_data.get("items", [])
+                ),
             )
         )
         customer_value_route_data = customer_value_route.json() if customer_value_route.status_code == 200 else {}

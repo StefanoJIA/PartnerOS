@@ -555,6 +555,36 @@ export async function fetchBusinessExecution() {
   return data
 }
 
+export interface WinLossIntelligenceDashboard {
+  summary: {
+    total: number
+    won: number
+    lost: number
+    open_or_unclear: number
+    win_rate: number | null
+    commercial_amount: number
+    opportunity_records: number
+    quote_learning_records: number
+  }
+  items: Array<Record<string, unknown>>
+  reason_clusters: Array<Record<string, unknown>>
+  partner_rollup: Array<Record<string, unknown>>
+  product_rollup: Array<Record<string, unknown>>
+  decision_factor_rows: Array<Record<string, unknown>>
+  competitor_signals: string[]
+  management_questions: Record<string, unknown>
+  next_action: string
+  customer_safe_boundary: string
+  safety: Record<string, boolean>
+}
+
+export async function fetchWinLossIntelligenceDashboard(limit = 80) {
+  const { data } = await http.get<WinLossIntelligenceDashboard>('/dashboard/win-loss-intelligence', {
+    params: { limit },
+  })
+  return data
+}
+
 export interface CustomerValueIntelligence {
   items: Array<Record<string, unknown>>
   summary: {

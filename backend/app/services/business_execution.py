@@ -1452,50 +1452,175 @@ def _safe_company_name(company: Company | None, fallback: str | None = None) -> 
     return company.company_name if company else fallback or "Unknown customer"
 
 
-def _build_win_loss_intelligence(db: Session) -> list[dict[str, object]]:
+def _win_loss_reason_category(*values: str | None) -> str:
+    text = " ".join(value or "" for value in values).lower()
+    if any(term in text for term in ["price", "pricing", "cost", "budget", "expensive", "discount"]):
+        return "price_or_budget"
+    if any(term in text for term in ["delivery", "lead time", "eta", "shipment", "logistics"]):
+        return "delivery_or_timing"
+    if any(term in text for term in ["load", "stability", "noise", "certification", "warranty", "durability", "quality", "product"]):
+        return "product_fit"
+    if any(term in text for term in ["competitor", "alternative", "incumbent", "supplier"]):
+        return "competition"
+    if any(term in text for term in ["project", "procurement", "timing", "school", "installation"]):
+        return "project_requirement"
+    if any(term in text for term in ["relationship", "trust", "service", "after-sales", "support"]):
+        return "trust_or_service"
+    return "reason_needs_structure"
+
+
+def _win_loss_next_quote_guidance(outcome: str, reason_category: str, product_focus: list[str]) -> str:
+    focus_text = " / ".join(product_focus[:3]) if product_focus else "this product line"
+    if outcome == "won":
+        if reason_category == "product_fit":
+            return f"Reuse the winning product-fit proof for {focus_text}, but keep customer-visible claims reviewed."
+        if reason_category == "delivery_or_timing":
+            return f"Reuse delivery confidence for {focus_text} and confirm planned dates before sending the next quote."
+        if reason_category == "price_or_budget":
+            return f"Reuse the value framing for {focus_text}; do not expose internal cost or margin."
+        return f"Turn this win into quote positioning and partner allocation guidance for {focus_text}."
+    if outcome == "lost":
+        if reason_category == "price_or_budget":
+            return f"Review value framing and pricing conversation for {focus_text}; do not expose cost or margin."
+        if reason_category == "delivery_or_timing":
+            return f"Clarify lead time, shipment plan, and delivery risk before quoting {focus_text} again."
+        if reason_category == "product_fit":
+            return f"Validate product claims and missing specifications before pitching {focus_text} again."
+        if reason_category == "competition":
+            return f"Capture competitor positioning and adjust differentiation for {focus_text}."
+        return f"Record a sharper lost reason before reusing this quote pattern for {focus_text}."
+    return f"Keep this outcome as internal learning until the customer decision is confirmed for {focus_text}."
+
+
+def _win_loss_record_amount(record: dict[str, object]) -> float:
+    return float(record.get("estimated_value") or record.get("quote_value") or 0)
+
+
+def _win_loss_rollup(records: list[dict[str, object]], field: str) -> list[dict[str, object]]:
+    rows: dict[str, dict[str, object]] = {}
+    for record in records:
+        values = record.get(field)
+        if isinstance(values, list):
+            keys = [str(value) for value in values if value]
+        else:
+            keys = [str(values)] if values else ["unassigned"]
+        for key in keys:
+            row = rows.setdefault(
+                key,
+                {
+                    "name": key,
+                    "total": 0,
+                    "won": 0,
+                    "lost": 0,
+                    "open_or_unclear": 0,
+                    "commercial_amount": 0.0,
+                    "sample_lessons": [],
+                },
+            )
+            row["total"] = int(row["total"]) + 1
+            outcome = str(record.get("outcome") or "")
+            if outcome == "won":
+                row["won"] = int(row["won"]) + 1
+            elif outcome == "lost":
+                row["lost"] = int(row["lost"]) + 1
+            else:
+                row["open_or_unclear"] = int(row["open_or_unclear"]) + 1
+            row["commercial_amount"] = round(float(row["commercial_amount"]) + _win_loss_record_amount(record), 2)
+            row["sample_lessons"] = _merge_unique(
+                [*list(row.get("sample_lessons") or []), str(record.get("commercial_lesson") or "")],
+                limit=5,
+            )
+    return sorted(
+        rows.values(),
+        key=lambda row: (int(row.get("total") or 0), float(row.get("commercial_amount") or 0)),
+        reverse=True,
+    )
+
+
+def _win_loss_factor_rows(records: list[dict[str, object]]) -> list[dict[str, object]]:
+    rows: dict[str, dict[str, object]] = {}
+    for record in records:
+        for factor in record.get("decision_factors", []) or []:
+            key = str(factor)
+            row = rows.setdefault(
+                key,
+                {"factor": key, "total": 0, "won": 0, "lost": 0, "sample_lessons": [], "product_focus": []},
+            )
+            row["total"] = int(row["total"]) + 1
+            if record.get("outcome") == "won":
+                row["won"] = int(row["won"]) + 1
+            elif record.get("outcome") == "lost":
+                row["lost"] = int(row["lost"]) + 1
+            row["sample_lessons"] = _merge_unique(
+                [*list(row.get("sample_lessons") or []), str(record.get("commercial_lesson") or "")],
+                limit=4,
+            )
+            row["product_focus"] = _merge_unique(
+                [*list(row.get("product_focus") or []), *[str(item) for item in (record.get("product_focus") or [])]],
+                limit=6,
+            )
+    return sorted(rows.values(), key=lambda row: int(row.get("total") or 0), reverse=True)[:24]
+
+
+def build_win_loss_intelligence(db: Session, limit: int = 80) -> dict[str, object]:
     items: list[dict[str, object]] = []
     opportunities = (
         db.query(SalesOpportunity)
-        .filter(SalesOpportunity.status.in_(["won", "lost", "closed_won", "closed_lost"]))
+        .filter(
+            (SalesOpportunity.status.in_(["won", "lost", "closed_won", "closed_lost"]))
+            | (SalesOpportunity.decision_stage.in_(["won", "lost"]))
+            | (SalesOpportunity.won_reason.isnot(None))
+            | (SalesOpportunity.lost_reason.isnot(None))
+        )
         .order_by(SalesOpportunity.updated_at.desc())
-        .limit(12)
+        .limit(160)
         .all()
     )
     for row in opportunities:
-        outcome = "won" if "won" in row.status else "lost"
+        outcome = "won" if "won" in row.status or row.decision_stage == "won" else "lost"
         reason = row.won_reason if outcome == "won" else row.lost_reason
         company = row.company
+        product_focus = row.product_focus or _product_focus_from_text(row.opportunity_name, row.risk, row.notes)
+        reason_category = _win_loss_reason_category(reason, row.risk, row.notes, row.competition)
+        decision_factors = _merge_unique(
+            [
+                reason or "reason not recorded",
+                row.competition or "",
+                row.risk or "",
+                row.notes or "",
+                *product_focus,
+            ],
+            limit=10,
+        )
         items.append(
             {
                 "source_type": "opportunity",
                 "source_id": str(row.id),
+                "record_key": f"opportunity:{row.id}",
                 "outcome": outcome,
                 "customer": _safe_company_name(company, row.customer_segment),
                 "opportunity_name": row.opportunity_name,
                 "partner_focus": row.partner_focus,
-                "product_focus": row.product_focus or [],
+                "product_focus": product_focus,
                 "estimated_value": _decimal_to_float(row.estimated_value),
-                "decision_factors": _merge_unique(
-                    [
-                        reason or "reason not recorded",
-                        row.competition or "",
-                        row.risk or "",
-                        row.notes or "",
-                    ],
-                    limit=6,
-                ),
+                "commercial_amount": _decimal_to_float(row.estimated_value),
+                "reason_category": reason_category,
+                "decision_factors": decision_factors,
                 "competitor_signal": row.competition or "competitor not recorded",
                 "commercial_lesson": reason or "Record why this opportunity was won or lost.",
+                "next_quote_guidance": _win_loss_next_quote_guidance(outcome, reason_category, product_focus),
+                "management_question": "Why did this opportunity win or lose, and what should change in the next quote?",
                 "path": "/growth-operations",
+                "updated_at": row.updated_at.isoformat() if row.updated_at else None,
                 "safety": _safety_flags(),
             }
         )
 
     learning_rows = (
         db.query(QuoteLearningRecord)
-        .filter(QuoteLearningRecord.outcome_status.in_(["won", "lost"]))
+        .filter(QuoteLearningRecord.outcome_status.in_(["won", "lost", "no_decision", "on_hold"]))
         .order_by(QuoteLearningRecord.updated_at.desc(), QuoteLearningRecord.created_at.desc())
-        .limit(16)
+        .limit(200)
         .all()
     )
     for learning in learning_rows:
@@ -1504,34 +1629,112 @@ def _build_win_loss_intelligence(db: Session) -> list[dict[str, object]]:
             continue
         company = db.get(Company, quote.company_id) if quote.company_id else None
         reason = learning.won_reason if learning.outcome_status == "won" else learning.lost_reason
+        product_focus = _quote_product_focus(quote)
+        partner_focus = ", ".join(_quote_partner_names(db, quote)) or _partner_focus_from_text(*product_focus)
+        reason_category = _win_loss_reason_category(
+            reason,
+            learning.customer_objection,
+            learning.competitor_signal,
+            learning.price_feedback,
+            learning.delivery_feedback,
+            learning.customer_feedback,
+        )
+        decision_factors = _merge_unique(
+            [
+                reason or "reason not recorded",
+                learning.customer_objection or "",
+                learning.competitor_signal or "",
+                learning.price_feedback or "",
+                learning.delivery_feedback or "",
+                *(learning.product_dimensions or []),
+                *product_focus,
+            ],
+            limit=10,
+        )
         items.append(
             {
                 "source_type": "quote_learning",
                 "source_id": str(learning.id),
+                "record_key": f"quote_learning:{learning.id}",
                 "quote_id": str(quote.id),
                 "quote_number": quote.quote_number,
                 "outcome": learning.outcome_status,
                 "customer": _safe_company_name(company, quote.bill_to_company),
-                "partner_focus": ", ".join(_quote_partner_names(db, quote)) or _partner_focus_from_text(*_quote_product_focus(quote)),
-                "product_focus": _quote_product_focus(quote),
+                "partner_focus": partner_focus,
+                "product_focus": product_focus,
                 "quote_value": _decimal_to_float(quote.grand_total),
-                "decision_factors": _merge_unique(
-                    [
-                        reason or "reason not recorded",
-                        learning.customer_objection or "",
-                        learning.competitor_signal or "",
-                        learning.price_feedback or "",
-                        learning.delivery_feedback or "",
-                    ],
-                    limit=6,
-                ),
+                "commercial_amount": _decimal_to_float(quote.grand_total),
+                "reason_category": reason_category,
+                "decision_factors": decision_factors,
                 "competitor_signal": learning.competitor_signal or "competitor not recorded",
                 "commercial_lesson": reason or "Record customer decision reason before using this as commercial learning.",
+                "next_quote_guidance": _win_loss_next_quote_guidance(learning.outcome_status, reason_category, product_focus),
+                "management_question": "What did this quote teach us about customer decision factors?",
                 "path": f"/quotes/{quote.id}",
+                "updated_at": learning.updated_at.isoformat() if learning.updated_at else None,
                 "safety": _safety_flags(),
             }
         )
-    return items[:16]
+    items = sorted(items, key=lambda item: str(item.get("updated_at") or ""), reverse=True)[:limit]
+    wins = [item for item in items if item.get("outcome") == "won"]
+    losses = [item for item in items if item.get("outcome") == "lost"]
+    open_or_unclear = [item for item in items if item.get("outcome") not in {"won", "lost"}]
+    reason_rows = _win_loss_rollup(items, "reason_category")
+    partner_rows = _win_loss_rollup(items, "partner_focus")
+    product_rows = _win_loss_rollup(items, "product_focus")
+    factor_rows = _win_loss_factor_rows(items)
+    return {
+        "summary": {
+            "total": len(items),
+            "won": len(wins),
+            "lost": len(losses),
+            "open_or_unclear": len(open_or_unclear),
+            "win_rate": round(len(wins) / (len(wins) + len(losses)), 2) if wins or losses else None,
+            "commercial_amount": round(sum(_win_loss_record_amount(item) for item in items), 2),
+            "opportunity_records": len([item for item in items if item.get("source_type") == "opportunity"]),
+            "quote_learning_records": len([item for item in items if item.get("source_type") == "quote_learning"]),
+        },
+        "items": items,
+        "reason_clusters": reason_rows,
+        "partner_rollup": partner_rows,
+        "product_rollup": product_rows,
+        "decision_factor_rows": factor_rows,
+        "competitor_signals": _merge_unique(
+            [
+                str(item.get("competitor_signal") or "")
+                for item in items
+                if item.get("competitor_signal") and item.get("competitor_signal") != "competitor not recorded"
+            ],
+            limit=16,
+        ),
+        "management_questions": {
+            "why_we_win": wins[:8],
+            "why_we_lose": losses[:8],
+            "what_to_change_next_quote": [
+                {
+                    "customer": item.get("customer"),
+                    "partner_focus": item.get("partner_focus"),
+                    "product_focus": item.get("product_focus"),
+                    "outcome": item.get("outcome"),
+                    "reason_category": item.get("reason_category"),
+                    "next_quote_guidance": item.get("next_quote_guidance"),
+                    "path": item.get("path"),
+                }
+                for item in items[:12]
+            ],
+            "which_factors_show_up_most": factor_rows[:10],
+        },
+        "next_action": "Review top win/loss factors before changing campaign targeting, quote wording, product positioning, or partner allocation.",
+        "customer_safe_boundary": (
+            "Internal commercial learning only. Do not expose cost, margin, supplier private notes, raw IDs, internal scoring, "
+            "or unreviewed competitor/customer notes to customer Portal."
+        ),
+        "safety": _safety_flags(),
+    }
+
+
+def _build_win_loss_intelligence(db: Session) -> list[dict[str, object]]:
+    return list(build_win_loss_intelligence(db, limit=16).get("items", []))
 
 
 def _build_customer_value_intelligence(db: Session) -> list[dict[str, object]]:

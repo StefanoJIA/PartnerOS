@@ -178,9 +178,21 @@
             <div v-for="item in safeCommercial.win_loss.slice(0, 3)" :key="`${item.source_type}-${item.source_id}`" class="mb-2 last:mb-0">
               <div class="flex flex-wrap items-center gap-1">
                 <el-tag size="small" :type="item.outcome === 'won' ? 'success' : 'danger'" effect="plain">{{ item.outcome }}</el-tag>
+                <el-tag size="small" type="info" effect="plain">{{ item.reason_category || 'reason_needs_structure' }}</el-tag>
                 <span class="text-xs text-slate-700">{{ item.customer }}</span>
               </div>
               <p class="mt-1 text-xs text-slate-600">{{ item.commercial_lesson }}</p>
+              <p class="mt-1 text-xs text-slate-500">{{ item.next_quote_guidance }}</p>
+              <div class="mt-1 flex flex-wrap gap-1">
+                <el-tag
+                  v-for="factor in listLabel(item.decision_factors).slice(0, 3)"
+                  :key="factor"
+                  size="small"
+                  effect="plain"
+                >
+                  {{ factor }}
+                </el-tag>
+              </div>
             </div>
           </div>
           <div class="rounded border border-white bg-white p-3">
