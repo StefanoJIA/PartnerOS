@@ -2167,6 +2167,54 @@ def _forecast_risk_level(*values: str | None) -> str:
     return "low"
 
 
+def _forecast_quality_profile(
+    *,
+    source_type: str,
+    probability: int,
+    risk_level: str,
+    forecast_date: date | None,
+) -> dict[str, object]:
+    score = probability
+    if source_type == "order_backlog":
+        score += 12
+    elif source_type == "quote":
+        score -= 5
+    if risk_level == "high":
+        score -= 30
+    elif risk_level == "medium":
+        score -= 12
+    if not forecast_date:
+        score -= 10
+    score = max(0, min(score, 100))
+    if risk_level == "high":
+        confidence = "at_risk"
+        bucket = "at_risk_revenue"
+        action = "Resolve the blocking risk before using this amount as dependable forecast."
+    elif source_type == "order_backlog" and score >= 75:
+        confidence = "committed_or_high_confidence"
+        bucket = "committed_backlog"
+        action = "Track delivery execution and keep this amount in committed backlog."
+    elif score >= 60:
+        confidence = "forecastable"
+        bucket = "weighted_pipeline"
+        action = "Keep owner follow-up current and confirm the forecast date."
+    elif source_type == "quote":
+        confidence = "manual_follow_up_needed"
+        bucket = "quote_follow_up"
+        action = "Follow up manually and capture customer decision factors before upgrading forecast confidence."
+    else:
+        confidence = "weak_signal"
+        bucket = "early_pipeline"
+        action = "Qualify decision timing, customer value, and product fit before counting this as forecast."
+    return {
+        "score": score,
+        "confidence": confidence,
+        "revenue_bucket": bucket,
+        "quality_action": action,
+        "uses_cost_or_margin": False,
+    }
+
+
 def _forecast_item(
     *,
     source_type: str,
@@ -2185,6 +2233,12 @@ def _forecast_item(
     path: str,
 ) -> dict[str, object]:
     weighted_amount = amount * Decimal(probability) / Decimal("100")
+    quality = _forecast_quality_profile(
+        source_type=source_type,
+        probability=probability,
+        risk_level=risk_level,
+        forecast_date=forecast_date,
+    )
     return {
         "source_type": source_type,
         "source_id": str(source_id),
@@ -2201,6 +2255,11 @@ def _forecast_item(
         "risk_level": risk_level,
         "risk_reason": risk_reason,
         "next_action": next_action,
+        "forecast_quality": quality,
+        "forecast_confidence": quality.get("confidence"),
+        "revenue_bucket": quality.get("revenue_bucket"),
+        "forecast_quality_score": quality.get("score"),
+        "forecast_quality_action": quality.get("quality_action"),
         "path": path,
         "safety": _safety_flags(),
     }
@@ -2218,6 +2277,19 @@ def _forecast_rollup(items: list[dict[str, object]], key: str) -> list[dict[str,
             bucket["amount"] = round(float(bucket["amount"]) + float(item.get("amount") or 0), 2)
             bucket["item_count"] = int(bucket["item_count"]) + 1
     return sorted(buckets.values(), key=lambda row: float(row["weighted_amount"]), reverse=True)[:12]
+
+
+def _forecast_source_mix(items: list[dict[str, object]], key: str) -> list[dict[str, object]]:
+    buckets: dict[str, dict[str, object]] = {}
+    for item in items:
+        label = str(item.get(key) or "unassigned")
+        bucket = buckets.setdefault(label, {"name": label, "weighted_amount": 0.0, "amount": 0.0, "item_count": 0, "at_risk_count": 0})
+        bucket["weighted_amount"] = round(float(bucket["weighted_amount"]) + float(item.get("weighted_amount") or 0), 2)
+        bucket["amount"] = round(float(bucket["amount"]) + float(item.get("amount") or 0), 2)
+        bucket["item_count"] = int(bucket["item_count"]) + 1
+        if item.get("risk_level") == "high":
+            bucket["at_risk_count"] = int(bucket["at_risk_count"]) + 1
+    return sorted(buckets.values(), key=lambda row: float(row["weighted_amount"]), reverse=True)
 
 
 def _opportunity_path(opportunity: SalesOpportunity) -> str:
@@ -2353,6 +2425,16 @@ def build_revenue_forecast_intelligence(db: Session, limit: int = 80) -> dict[st
     total_weighted = round(sum(float(item.get("weighted_amount") or 0) for item in items), 2)
     total_amount = round(sum(float(item.get("amount") or 0) for item in items), 2)
     at_risk_amount = round(sum(float(item.get("weighted_amount") or 0) for item in high_risk), 2)
+    committed_backlog = [item for item in items if item.get("revenue_bucket") == "committed_backlog"]
+    forecastable = [item for item in items if item.get("forecast_confidence") in {"committed_or_high_confidence", "forecastable"}]
+    manual_follow_up = [item for item in items if item.get("forecast_confidence") == "manual_follow_up_needed"]
+    weak_signals = [item for item in items if item.get("forecast_confidence") == "weak_signal"]
+    revenue_bucket_mix = _forecast_source_mix(items, "revenue_bucket")
+    source_type_mix = _forecast_source_mix(items, "source_type")
+    forecast_quality_score = round(
+        sum(int(item.get("forecast_quality_score") or 0) for item in items) / len(items),
+        1,
+    ) if items else 0
     weighted_opportunity_amount = round(
         sum(float(item.get("weighted_amount") or 0) for item in items if item.get("source_type") == "opportunity"),
         2,
@@ -2380,10 +2462,25 @@ def build_revenue_forecast_intelligence(db: Session, limit: int = 80) -> dict[st
             "item_count": len(items),
             "high_probability_count": len(high_probability),
             "high_risk_count": len(high_risk),
+            "committed_backlog_amount": round(sum(float(item.get("amount") or 0) for item in committed_backlog), 2),
+            "forecastable_weighted_amount": round(sum(float(item.get("weighted_amount") or 0) for item in forecastable), 2),
+            "manual_follow_up_weighted_amount": round(sum(float(item.get("weighted_amount") or 0) for item in manual_follow_up), 2),
+            "weak_signal_weighted_amount": round(sum(float(item.get("weighted_amount") or 0) for item in weak_signals), 2),
+            "forecast_quality_score": forecast_quality_score,
         },
+        "total_weighted_amount": total_weighted,
+        "open_quote_amount": open_quote_amount,
+        "weighted_quote_amount": weighted_quote_amount,
+        "at_risk_weighted_amount": at_risk_amount,
         "forecast_items": items,
         "high_probability_projects": high_probability,
         "high_risk_projects": high_risk,
+        "committed_backlog": committed_backlog[:12],
+        "forecastable_revenue": forecastable[:12],
+        "manual_follow_up_revenue": manual_follow_up[:12],
+        "weak_signal_revenue": weak_signals[:12],
+        "revenue_bucket_mix": revenue_bucket_mix,
+        "source_type_mix": source_type_mix,
         "forecast_by_partner": _forecast_rollup(items, "partner_focus"),
         "forecast_by_product": _forecast_rollup(items, "product_focus"),
         "forecast_by_customer": _forecast_rollup(items, "customer_name"),
@@ -2401,14 +2498,24 @@ def build_revenue_forecast_intelligence(db: Session, limit: int = 80) -> dict[st
                     "weighted_amount": item.get("weighted_amount"),
                     "probability": item.get("probability"),
                     "risk_level": item.get("risk_level"),
+                    "forecast_confidence": item.get("forecast_confidence"),
+                    "revenue_bucket": item.get("revenue_bucket"),
                     "next_action": item.get("next_action"),
                 }
                 for item in items[:8]
             ],
             "high_probability_projects": high_probability[:8],
             "high_risk_revenue": high_risk[:8],
+            "what_is_committed": committed_backlog[:8],
+            "what_needs_manual_follow_up": manual_follow_up[:8],
+            "what_is_weak_signal": weak_signals[:8],
+            "revenue_source_mix": revenue_bucket_mix,
         },
-        "next_action": "Review high-probability projects, quote follow-ups, and at-risk backlog before weekly revenue forecast.",
+        "next_action": "Use forecast confidence to separate committed backlog, forecastable pipeline, manual quote follow-up, and at-risk revenue before weekly revenue decisions.",
+        "customer_safe_boundary": (
+            "Internal revenue forecast only. It uses opportunity, quote, and order amounts/probabilities/statuses; "
+            "it does not expose cost, margin, pricing breakdown, supplier private notes, raw IDs, token values, or internal-only comments."
+        ),
         "safety": _safety_flags(),
     }
 

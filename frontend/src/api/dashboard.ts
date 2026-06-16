@@ -631,16 +631,32 @@ export interface RevenueForecastIntelligence {
     item_count: number
     high_probability_count: number
     high_risk_count: number
+    committed_backlog_amount: number
+    forecastable_weighted_amount: number
+    manual_follow_up_weighted_amount: number
+    weak_signal_weighted_amount: number
+    forecast_quality_score: number
   }
+  total_weighted_amount: number
+  open_quote_amount: number
+  weighted_quote_amount: number
+  at_risk_weighted_amount: number
   forecast_items: Array<Record<string, unknown>>
   high_probability_projects: Array<Record<string, unknown>>
   high_risk_projects: Array<Record<string, unknown>>
+  committed_backlog: Array<Record<string, unknown>>
+  forecastable_revenue: Array<Record<string, unknown>>
+  manual_follow_up_revenue: Array<Record<string, unknown>>
+  weak_signal_revenue: Array<Record<string, unknown>>
+  revenue_bucket_mix: Array<Record<string, unknown>>
+  source_type_mix: Array<Record<string, unknown>>
   forecast_by_partner: Array<Record<string, unknown>>
   forecast_by_product: Array<Record<string, unknown>>
   forecast_by_customer: Array<Record<string, unknown>>
   future_revenue_sources: string[]
   management_questions: Record<string, unknown>
   next_action: string
+  customer_safe_boundary: string
   safety: Record<string, boolean>
 }
 

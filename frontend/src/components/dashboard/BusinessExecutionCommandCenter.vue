@@ -74,6 +74,11 @@
               加权报价 {{ money(safeCommercial.revenue_forecast.weighted_quote_amount) }}，
               风险收入 {{ money(forecastSummary(safeCommercial.revenue_forecast).at_risk_weighted_amount) }}。
             </p>
+            <p class="mt-1 text-xs text-slate-600">
+              预测质量 {{ forecastSummary(safeCommercial.revenue_forecast).forecast_quality_score ?? 0 }}/100，
+              可预测 {{ money(forecastSummary(safeCommercial.revenue_forecast).forecastable_weighted_amount) }}，
+              人工跟进 {{ money(forecastSummary(safeCommercial.revenue_forecast).manual_follow_up_weighted_amount) }}。
+            </p>
             <p class="mt-2 text-xs text-slate-700">{{ safeCommercial.revenue_forecast.next_action }}</p>
             <div class="mt-2 flex flex-wrap gap-1">
               <el-tag
@@ -82,12 +87,12 @@
                 size="small"
                 effect="plain"
               >
-                {{ project.name }} {{ project.probability }}%
+                {{ project.name }} {{ project.probability }}% / {{ project.forecast_confidence || 'forecastable' }}
               </el-tag>
             </div>
             <div class="mt-2 flex flex-wrap gap-1">
               <el-tag
-                v-for="row in forecastByProduct(safeCommercial.revenue_forecast).slice(0, 3)"
+                v-for="row in forecastBucketMix(safeCommercial.revenue_forecast).slice(0, 3)"
                 :key="String(row.name)"
                 size="small"
                 type="info"
@@ -733,6 +738,12 @@ function forecastByProduct(forecast: Record<string, unknown>) {
   return Array.isArray(forecast.forecast_by_product)
     ? (forecast.forecast_by_product as Array<Record<string, unknown>>)
     : []
+}
+
+function forecastBucketMix(forecast: Record<string, unknown>) {
+  return Array.isArray(forecast.revenue_bucket_mix)
+    ? (forecast.revenue_bucket_mix as Array<Record<string, unknown>>)
+    : forecastByProduct(forecast)
 }
 
 function priorityType(priority: string) {

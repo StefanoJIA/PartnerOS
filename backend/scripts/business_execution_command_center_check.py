@@ -273,6 +273,11 @@ def main() -> int:
                     and "probability" in item
                     and item.get("customer_name")
                     and item.get("risk_level") in {"low", "medium", "high"}
+                    and isinstance(item.get("forecast_quality"), dict)
+                    and item.get("forecast_confidence")
+                    and item.get("revenue_bucket")
+                    and isinstance(item.get("forecast_quality_score"), int)
+                    and item.get("forecast_quality", {}).get("uses_cost_or_margin") is False
                     and item.get("next_action")
                     for item in revenue_forecast_items
                 ),
@@ -281,15 +286,25 @@ def main() -> int:
                 "revenue forecast answers management questions",
                 isinstance(revenue_forecast_payload.get("management_questions"), dict)
                 and "future_revenue_from" in revenue_forecast_payload["management_questions"]
+                and "what_is_committed" in revenue_forecast_payload["management_questions"]
+                and "what_needs_manual_follow_up" in revenue_forecast_payload["management_questions"]
+                and "what_is_weak_signal" in revenue_forecast_payload["management_questions"]
+                and "revenue_source_mix" in revenue_forecast_payload["management_questions"]
                 and isinstance(revenue_forecast_payload.get("forecast_by_partner"), list)
                 and isinstance(revenue_forecast_payload.get("forecast_by_product"), list)
-                and isinstance(revenue_forecast_payload.get("forecast_by_customer"), list),
+                and isinstance(revenue_forecast_payload.get("forecast_by_customer"), list)
+                and isinstance(revenue_forecast_payload.get("revenue_bucket_mix"), list)
+                and isinstance(revenue_forecast_payload.get("source_type_mix"), list)
+                and "forecast_quality_score" in revenue_forecast_payload.get("summary", {})
+                and "forecastable_weighted_amount" in revenue_forecast_payload.get("summary", {})
+                and "manual_follow_up_weighted_amount" in revenue_forecast_payload.get("summary", {}),
             ),
             (
                 "revenue forecast safe boundaries",
                 revenue_forecast_payload.get("safety", {}).get("external_message_sent") is False
                 and revenue_forecast_payload.get("safety", {}).get("quote_status_changed") is False
                 and revenue_forecast_payload.get("safety", {}).get("order_status_changed") is False
+                and revenue_forecast_payload.get("safety", {}).get("customer_forbidden_fields_exposed") is False
                 and all(item.get("safety", {}).get("customer_forbidden_fields_exposed") is False for item in revenue_forecast_items),
             ),
             (
