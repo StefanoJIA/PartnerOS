@@ -66,12 +66,13 @@
             <div class="mb-2 flex items-center justify-between">
               <h5 class="text-sm font-semibold text-slate-900">未来收入来自哪里</h5>
               <el-tag size="small" type="success" effect="plain">
-                {{ money(safeCommercial.revenue_forecast.weighted_opportunity_amount) }}
+                {{ money(forecastSummary(safeCommercial.revenue_forecast).total_weighted_amount ?? safeCommercial.revenue_forecast.weighted_opportunity_amount) }}
               </el-tag>
             </div>
             <p class="text-xs text-slate-600">
               报价池 {{ money(safeCommercial.revenue_forecast.open_quote_amount) }}，
-              加权报价 {{ money(safeCommercial.revenue_forecast.weighted_quote_amount) }}。
+              加权报价 {{ money(safeCommercial.revenue_forecast.weighted_quote_amount) }}，
+              风险收入 {{ money(forecastSummary(safeCommercial.revenue_forecast).at_risk_weighted_amount) }}。
             </p>
             <p class="mt-2 text-xs text-slate-700">{{ safeCommercial.revenue_forecast.next_action }}</p>
             <div class="mt-2 flex flex-wrap gap-1">
@@ -82,6 +83,17 @@
                 effect="plain"
               >
                 {{ project.name }} {{ project.probability }}%
+              </el-tag>
+            </div>
+            <div class="mt-2 flex flex-wrap gap-1">
+              <el-tag
+                v-for="row in forecastByProduct(safeCommercial.revenue_forecast).slice(0, 3)"
+                :key="String(row.name)"
+                size="small"
+                type="info"
+                effect="plain"
+              >
+                {{ row.name }} {{ money(row.weighted_amount) }}
               </el-tag>
             </div>
           </div>
@@ -580,11 +592,16 @@ const defaultCommercial = {
   partner_performance: [] as Array<Record<string, unknown>>,
   product_market_fit: [] as Array<Record<string, unknown>>,
   revenue_forecast: {
+    summary: {
+      total_weighted_amount: 0,
+      at_risk_weighted_amount: 0,
+    },
     weighted_opportunity_amount: 0,
     open_quote_amount: 0,
     weighted_quote_amount: 0,
     next_action: '等待商业智能数据加载。',
     high_probability_projects: [] as Array<Record<string, unknown>>,
+    forecast_by_product: [] as Array<Record<string, unknown>>,
   } as Record<string, unknown>,
   account_360: [] as Array<Record<string, unknown>>,
 }
@@ -619,6 +636,16 @@ function commercialValue(account: Record<string, unknown>) {
 function forecastProjects(forecast: Record<string, unknown>) {
   return Array.isArray(forecast.high_probability_projects)
     ? (forecast.high_probability_projects as Array<Record<string, unknown>>)
+    : []
+}
+
+function forecastSummary(forecast: Record<string, unknown>) {
+  return (forecast.summary || {}) as Record<string, unknown>
+}
+
+function forecastByProduct(forecast: Record<string, unknown>) {
+  return Array.isArray(forecast.forecast_by_product)
+    ? (forecast.forecast_by_product as Array<Record<string, unknown>>)
     : []
 }
 

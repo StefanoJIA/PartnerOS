@@ -136,6 +136,7 @@ def main() -> int:
             ("external execution items", _has_category(items, "external execution")),
             ("market response items", _has_category(items, "market response")),
             ("partner onboarding items", _has_category(items, "partner onboarding")),
+            ("revenue forecast items", _has_category(items, "revenue forecast")),
             ("order or feedback risk items", any(item.category in {"order delivery", "feedback"} for item in items)),
             ("D9 impact", any(item.affects_d9 for item in items)),
             ("pilot impact", any(item.affects_pilot for item in items)),
@@ -160,6 +161,26 @@ def main() -> int:
             (
                 "future partner peer path",
                 any((item.partner_focus or "").lower() == "future partner" or "future partner" in item.title.lower() for item in items),
+            ),
+            (
+                "forecast drives operating action",
+                any(
+                    item.category == "revenue forecast"
+                    and "future revenue" in item.readiness_impact
+                    and item.customer_or_account
+                    and item.source_type.startswith("revenue_forecast_")
+                    for item in items
+                ),
+            ),
+            (
+                "forecast remains internal-only",
+                any(
+                    item.category == "revenue forecast"
+                    and item.customer_safe_boundary
+                    and "internal-only" in item.customer_safe_boundary
+                    and not item.needs_staging_credentials
+                    for item in items
+                ),
             ),
             ("handling record created", handling.queue_item_id == target.id and handling.handling_status == "in_progress"),
             (

@@ -1787,6 +1787,279 @@ def build_customer_value_intelligence(db: Session, limit: int = 50) -> dict[str,
     }
 
 
+OPEN_OPPORTUNITY_STATUSES = {"open", "active", "qualified", "negotiating"}
+OPEN_QUOTE_STATUSES = {"ready_to_send", "sent", "revised"}
+ORDER_BACKLOG_STATUSES = {
+    "pending_customer_confirmation",
+    "confirmed",
+    "supplier_confirmation_pending",
+    "supplier_confirmed",
+    "production_pending",
+    "in_production",
+    "ready_to_ship",
+    "on_hold",
+}
+
+
+def _forecast_period(value: date | None) -> str:
+    return value.strftime("%Y-%m") if value else "unscheduled"
+
+
+def _forecast_risk_level(*values: str | None) -> str:
+    text = " ".join(value or "" for value in values).lower()
+    if any(term in text for term in ["blocked", "delayed", "high", "urgent", "risk", "complaint", "on_hold"]):
+        return "high"
+    if any(term in text for term in ["review", "pending", "medium", "follow", "open"]):
+        return "medium"
+    return "low"
+
+
+def _forecast_item(
+    *,
+    source_type: str,
+    source_id: object,
+    name: str,
+    customer_name: str,
+    partner_focus: str | None,
+    product_focus: list[str],
+    amount: Decimal,
+    probability: int,
+    forecast_date: date | None,
+    status: str,
+    risk_level: str,
+    risk_reason: str,
+    next_action: str,
+    path: str,
+) -> dict[str, object]:
+    weighted_amount = amount * Decimal(probability) / Decimal("100")
+    return {
+        "source_type": source_type,
+        "source_id": str(source_id),
+        "name": name,
+        "customer_name": customer_name,
+        "partner_focus": partner_focus,
+        "product_focus": product_focus,
+        "amount": _decimal_to_float(amount),
+        "probability": probability,
+        "weighted_amount": _decimal_to_float(weighted_amount),
+        "forecast_period": _forecast_period(forecast_date),
+        "forecast_date": forecast_date.isoformat() if forecast_date else None,
+        "status": status,
+        "risk_level": risk_level,
+        "risk_reason": risk_reason,
+        "next_action": next_action,
+        "path": path,
+        "safety": _safety_flags(),
+    }
+
+
+def _forecast_rollup(items: list[dict[str, object]], key: str) -> list[dict[str, object]]:
+    buckets: dict[str, dict[str, object]] = {}
+    for item in items:
+        raw_values = item.get(key)
+        values = raw_values if isinstance(raw_values, list) else [raw_values]
+        for raw_value in values:
+            label = str(raw_value or "unassigned")
+            bucket = buckets.setdefault(label, {"name": label, "weighted_amount": 0.0, "amount": 0.0, "item_count": 0})
+            bucket["weighted_amount"] = round(float(bucket["weighted_amount"]) + float(item.get("weighted_amount") or 0), 2)
+            bucket["amount"] = round(float(bucket["amount"]) + float(item.get("amount") or 0), 2)
+            bucket["item_count"] = int(bucket["item_count"]) + 1
+    return sorted(buckets.values(), key=lambda row: float(row["weighted_amount"]), reverse=True)[:12]
+
+
+def _opportunity_path(opportunity: SalesOpportunity) -> str:
+    if opportunity.quote_id:
+        return f"/quotes/{opportunity.quote_id}"
+    if opportunity.order_id:
+        return f"/orders/{opportunity.order_id}"
+    if opportunity.campaign_id:
+        return f"/growth-operations?campaign={opportunity.campaign_id}"
+    if opportunity.lead_id:
+        return f"/leads/{opportunity.lead_id}"
+    if opportunity.company_id:
+        return f"/companies/{opportunity.company_id}"
+    return "/growth-operations"
+
+
+def build_revenue_forecast_intelligence(db: Session, limit: int = 80) -> dict[str, object]:
+    items: list[dict[str, object]] = []
+
+    open_opportunities = (
+        db.query(SalesOpportunity)
+        .filter(SalesOpportunity.status.in_(OPEN_OPPORTUNITY_STATUSES))
+        .order_by(SalesOpportunity.probability.desc(), SalesOpportunity.updated_at.desc())
+        .limit(160)
+        .all()
+    )
+    for row in open_opportunities:
+        company = row.company
+        amount = row.estimated_value or Decimal("0")
+        risk_level = _forecast_risk_level(row.risk, row.blocker, row.status)
+        items.append(
+            _forecast_item(
+                source_type="opportunity",
+                source_id=row.id,
+                name=row.opportunity_name,
+                customer_name=_safe_company_name(company, row.customer_segment),
+                partner_focus=row.partner_focus,
+                product_focus=row.product_focus or [],
+                amount=amount,
+                probability=row.probability or 0,
+                forecast_date=row.expected_close_date,
+                status=row.status,
+                risk_level=risk_level,
+                risk_reason=row.blocker or row.risk or "Opportunity risk not recorded.",
+                next_action=row.next_action or "Confirm customer decision factors and expected close date.",
+                path=_opportunity_path(row),
+            )
+        )
+
+    open_quotes = (
+        db.query(Quote)
+        .filter(Quote.is_archived.is_(False), Quote.status.in_(OPEN_QUOTE_STATUSES))
+        .order_by(Quote.follow_up_date.asc().nullslast(), Quote.updated_at.desc())
+        .limit(160)
+        .all()
+    )
+    for quote in open_quotes:
+        company = db.get(Company, quote.company_id) if quote.company_id else None
+        product_focus = _quote_product_focus(quote)
+        partner_names = _quote_partner_names(db, quote)
+        risk_level = _forecast_risk_level(quote.status, "pending" if quote.follow_up_date else None)
+        items.append(
+            _forecast_item(
+                source_type="quote",
+                source_id=quote.id,
+                name=quote.quote_number,
+                customer_name=_safe_company_name(company, quote.bill_to_company),
+                partner_focus=", ".join(partner_names) or _partner_focus_from_text(*product_focus),
+                product_focus=product_focus,
+                amount=quote.grand_total or Decimal("0"),
+                probability=_probability(quote.status),
+                forecast_date=quote.follow_up_date or quote.valid_until,
+                status=quote.status,
+                risk_level=risk_level,
+                risk_reason="Quote is still open; follow-up timing drives forecast confidence.",
+                next_action="Follow up manually and capture win/loss learning when customer responds.",
+                path=f"/quotes/{quote.id}",
+            )
+        )
+
+    backlog_orders = (
+        db.query(CustomerOrder)
+        .filter(CustomerOrder.status.in_(ORDER_BACKLOG_STATUSES))
+        .order_by(CustomerOrder.order_date.desc(), CustomerOrder.updated_at.desc())
+        .limit(160)
+        .all()
+    )
+    for order in backlog_orders:
+        company = db.get(Company, order.company_id) if order.company_id else None
+        delayed_or_blocked = any(m.status in {"delayed", "blocked"} for m in order.production_milestones)
+        shipment_risk = any(plan.status in {"draft", "planned"} for plan in order.shipment_plans) and order.status in {"ready_to_ship", "in_production"}
+        risk_level = "high" if delayed_or_blocked else "medium" if shipment_risk or order.status == "on_hold" else "low"
+        product_focus = _merge_unique(
+            [
+                *_product_focus_from_text(*[line.product_name for line in order.line_items]),
+                *[line.product_category for line in order.line_items if line.product_category],
+            ],
+            limit=8,
+        )
+        partner_names = _order_partner_names(db, order)
+        items.append(
+            _forecast_item(
+                source_type="order_backlog",
+                source_id=order.id,
+                name=order.order_number,
+                customer_name=_safe_company_name(company, order.bill_to_company),
+                partner_focus=", ".join(partner_names) or _partner_focus_from_text(*product_focus),
+                product_focus=product_focus,
+                amount=order.grand_total or Decimal("0"),
+                probability=100,
+                forecast_date=order.order_date,
+                status=order.status,
+                risk_level=risk_level,
+                risk_reason=(
+                    "Production milestone is delayed or blocked."
+                    if delayed_or_blocked
+                    else "Shipment plan still needs operational follow-up."
+                    if shipment_risk
+                    else "Booked order is part of committed backlog."
+                ),
+                next_action=(
+                    "Resolve production/shipment risk before treating this revenue as clean delivery."
+                    if risk_level != "low"
+                    else "Keep delivery execution current and watch for feedback/repeat-business signal."
+                ),
+                path=f"/orders/{order.id}",
+            )
+        )
+
+    items = sorted(items, key=lambda item: (float(item.get("weighted_amount") or 0), int(item.get("probability") or 0)), reverse=True)[:limit]
+    high_probability = [item for item in items if int(item.get("probability") or 0) >= 60][:12]
+    high_risk = [item for item in items if item.get("risk_level") == "high"][:12]
+    total_weighted = round(sum(float(item.get("weighted_amount") or 0) for item in items), 2)
+    total_amount = round(sum(float(item.get("amount") or 0) for item in items), 2)
+    at_risk_amount = round(sum(float(item.get("weighted_amount") or 0) for item in high_risk), 2)
+    weighted_opportunity_amount = round(
+        sum(float(item.get("weighted_amount") or 0) for item in items if item.get("source_type") == "opportunity"),
+        2,
+    )
+    open_quote_amount = round(
+        sum(float(item.get("amount") or 0) for item in items if item.get("source_type") == "quote"),
+        2,
+    )
+    weighted_quote_amount = round(
+        sum(float(item.get("weighted_amount") or 0) for item in items if item.get("source_type") == "quote"),
+        2,
+    )
+    return {
+        "summary": {
+            "total_forecast_amount": total_amount,
+            "total_weighted_amount": total_weighted,
+            "weighted_opportunity_amount": weighted_opportunity_amount,
+            "open_quote_amount": open_quote_amount,
+            "weighted_quote_amount": weighted_quote_amount,
+            "booked_backlog_amount": round(
+                sum(float(item.get("amount") or 0) for item in items if item.get("source_type") == "order_backlog"),
+                2,
+            ),
+            "at_risk_weighted_amount": at_risk_amount,
+            "item_count": len(items),
+            "high_probability_count": len(high_probability),
+            "high_risk_count": len(high_risk),
+        },
+        "forecast_items": items,
+        "high_probability_projects": high_probability,
+        "high_risk_projects": high_risk,
+        "forecast_by_partner": _forecast_rollup(items, "partner_focus"),
+        "forecast_by_product": _forecast_rollup(items, "product_focus"),
+        "forecast_by_customer": _forecast_rollup(items, "customer_name"),
+        "future_revenue_sources": [
+            "open opportunities weighted by probability",
+            "sent/revised quotes still under manual follow-up",
+            "confirmed or active customer-order backlog",
+        ],
+        "management_questions": {
+            "future_revenue_from": [
+                {
+                    "name": item.get("name"),
+                    "customer_name": item.get("customer_name"),
+                    "source_type": item.get("source_type"),
+                    "weighted_amount": item.get("weighted_amount"),
+                    "probability": item.get("probability"),
+                    "risk_level": item.get("risk_level"),
+                    "next_action": item.get("next_action"),
+                }
+                for item in items[:8]
+            ],
+            "high_probability_projects": high_probability[:8],
+            "high_risk_revenue": high_risk[:8],
+        },
+        "next_action": "Review high-probability projects, quote follow-ups, and at-risk backlog before weekly revenue forecast.",
+        "safety": _safety_flags(),
+    }
+
+
 def _build_partner_performance_intelligence(db: Session) -> list[dict[str, object]]:
     partners = db.query(ManufacturingPartner).filter(ManufacturingPartner.is_active.is_(True)).order_by(ManufacturingPartner.updated_at.desc()).limit(24).all()
     items: list[dict[str, object]] = []
@@ -1892,51 +2165,12 @@ def _build_revenue_forecast_intelligence(
     quotations: list[QuotationIntelligenceItem],
     db: Session,
 ) -> dict[str, object]:
-    open_opportunities = [
-        row
-        for row in db.query(SalesOpportunity).filter(SalesOpportunity.status.in_(["open", "active", "qualified", "negotiating"])).all()
-    ]
-    forecast_amount = sum((row.estimated_value or Decimal("0")) * Decimal(row.probability) / Decimal("100") for row in open_opportunities)
-    open_quote_rows = db.query(Quote).filter(Quote.is_archived.is_(False), Quote.status.in_(["ready_to_send", "sent", "revised"])).all()
-    open_quote_amount = sum((quote.grand_total or Decimal("0")) for quote in open_quote_rows)
-    weighted_quote_amount = sum((quote.grand_total or Decimal("0")) * Decimal(_probability(quote.status)) / Decimal("100") for quote in open_quote_rows)
-    high_probability_projects = [
-        {
-            "name": row.opportunity_name,
-            "customer": row.customer_or_segment,
-            "partner_focus": row.partner_focus,
-            "product_focus": row.product_focus,
-            "probability": row.probability,
-            "path": row.path,
-        }
-        for row in opportunities
-        if row.probability >= 60
-    ][:8]
-    high_risk_projects = [
-        {
-            "name": row.opportunity_name,
-            "customer": row.customer_or_segment,
-            "risk": row.risk,
-            "next_action": row.next_action,
-            "path": row.path,
-        }
-        for row in opportunities
-        if row.risk and row.risk.lower() not in {"risk not recorded yet.", "unknown"}
-    ][:8]
-    return {
-        "weighted_opportunity_amount": _decimal_to_float(forecast_amount),
-        "open_quote_amount": _decimal_to_float(open_quote_amount),
-        "weighted_quote_amount": _decimal_to_float(weighted_quote_amount),
-        "high_probability_projects": high_probability_projects,
-        "high_risk_projects": high_risk_projects,
-        "future_revenue_sources": [
-            "open opportunities with estimated value and probability",
-            "sent/revised quotes still under customer review",
-            "repeat-business candidates from delivered orders and feedback resolution",
-        ],
-        "next_action": "Review high-probability projects, quote follow-ups, and high-risk opportunities before weekly revenue forecast.",
-        "safety": _safety_flags(),
-    }
+    forecast = build_revenue_forecast_intelligence(db, limit=80)
+    summary = forecast.get("summary", {})
+    forecast["weighted_opportunity_amount"] = summary.get("weighted_opportunity_amount", 0)
+    forecast["open_quote_amount"] = summary.get("open_quote_amount", 0)
+    forecast["weighted_quote_amount"] = summary.get("weighted_quote_amount", 0)
+    return forecast
 
 
 def _build_account_360_intelligence(

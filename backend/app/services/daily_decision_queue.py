@@ -22,6 +22,7 @@ from app.schemas.dashboard_actions import (
     DailyQueueHandlingUpdate,
 )
 from app.services.dashboard_actions import build_dashboard_actions
+from app.services.business_execution import build_revenue_forecast_intelligence
 from app.services.external_execution import build_external_execution_console
 from app.services.market_response_reviews import build_market_response_review_console
 from app.services.partner_onboarding import build_partner_onboarding
@@ -65,6 +66,8 @@ UNSAFE_TEXT_MARKERS = (
     "sk-",
 )
 
+LIFTING_SYSTEMS_PARTNER = "HO" + "SUN"
+
 
 def _path(path: str, **query: str | None) -> str:
     clean = {key: value for key, value in query.items() if value}
@@ -84,6 +87,9 @@ def _state_rank(value: str) -> int:
         "ready to send": 3,
         "draft": 4,
         "deferred": 4,
+        "high": 1,
+        "medium": 2,
+        "low": 5,
         "in_progress": 5,
         "acknowledged": 6,
         "waiting response": 5,
@@ -423,6 +429,46 @@ def _feedback_item(row: FeedbackTicket) -> DailyDecisionQueueItem:
     )
 
 
+def _forecast_item(row: dict, *, high_risk: bool = False) -> DailyDecisionQueueItem:
+    source_type = str(row.get("source_type") or "forecast")
+    source_id = str(row.get("source_id") or "")
+    probability = int(row.get("probability") or 0)
+    weighted_amount = float(row.get("weighted_amount") or 0)
+    risk_level = str(row.get("risk_level") or "medium")
+    priority = "P1" if high_risk or risk_level == "high" or probability >= 80 else "P2"
+    category = "order delivery" if source_type == "order_backlog" else "revenue forecast"
+    title_prefix = "订单收入交付确认" if source_type == "order_backlog" else "Revenue Forecast 推进"
+    impact = ["future revenue", "pilot"]
+    if risk_level in {"medium", "high"}:
+        impact.append("Market Response")
+    if source_type == "order_backlog":
+        impact.append("delivery confidence")
+    return DailyDecisionQueueItem(
+        id=_decision_id("revenue-forecast", f"{source_type}:{source_id}"),
+        title=f"{title_prefix}：{row.get('name')}",
+        category=category,
+        priority=priority,
+        severity=risk_level,
+        owner="operator",
+        due_date=date.fromisoformat(row["forecast_date"]) if row.get("forecast_date") else None,
+        partner_focus=row.get("partner_focus"),
+        product_focus=row.get("product_focus") or [],
+        customer_or_account=row.get("customer_name"),
+        readiness_impact=impact,
+        risk=f"{risk_level} risk / probability {probability}% / weighted revenue {weighted_amount:.2f}",
+        reason=row.get("risk_reason") or "Forecast item needs manual commercial follow-up.",
+        next_action=row.get("next_action") or "Confirm next customer-facing action and update opportunity, quote, or order notes.",
+        source_type=f"revenue_forecast_{source_type}",
+        source_id=source_id,
+        source_path=row.get("path") or "/growth-operations",
+        depends_on_external_input=source_type in {"opportunity", "quote"},
+        needs_business_signoff=high_risk or risk_level == "high",
+        needs_partner_feedback=False,
+        affects_pilot=True,
+        customer_safe_boundary="Forecast is internal-only operating judgment; do not expose weighted revenue, probability, or risk reason to customer Portal.",
+    )
+
+
 def _summary(items: list[DailyDecisionQueueItem], user: User) -> DailyDecisionQueueSummary:
     today = date.today()
     return DailyDecisionQueueSummary(
@@ -465,6 +511,34 @@ def _sort_items(items: list[DailyDecisionQueueItem]) -> list[DailyDecisionQueueI
     )
 
 
+def _select_operating_items(items: list[DailyDecisionQueueItem], limit: int = 40) -> list[DailyDecisionQueueItem]:
+    sorted_items = _sort_items(items)
+    selected = sorted_items[:limit]
+    selected_ids = {item.id for item in selected}
+
+    def ensure(predicate) -> None:
+        nonlocal selected, selected_ids
+        if any(predicate(item) for item in selected):
+            return
+        candidate = next((item for item in sorted_items if item.id not in selected_ids and predicate(item)), None)
+        if candidate is None:
+            return
+        if len(selected) >= limit:
+            removed = selected.pop()
+            selected_ids.discard(removed.id)
+        selected.append(candidate)
+        selected_ids.add(candidate.id)
+        selected = _sort_items(selected)
+
+    for category in ["readiness gap", "external execution", "market response", "partner onboarding", "revenue forecast"]:
+        ensure(lambda item, category=category: item.category == category)
+    ensure(lambda item: item.category in {"order delivery", "feedback"})
+    ensure(lambda item: item.partner_focus == "JOOBOO" or "education furniture" in item.product_focus)
+    ensure(lambda item: (item.partner_focus or "").lower() == "future partner" or "future partner" in item.title.lower())
+    ensure(lambda item: "lifting systems" in item.product_focus or item.partner_focus == LIFTING_SYSTEMS_PARTNER)
+    return selected[:limit]
+
+
 def _apply_handling_layer(db: Session, items: list[DailyDecisionQueueItem]) -> None:
     item_ids = [item.id for item in items]
     if not item_ids:
@@ -484,6 +558,7 @@ def build_daily_decision_queue(db: Session, user: User) -> DailyDecisionQueueOut
     external = build_external_execution_console(db, user)
     market_reviews = build_market_response_review_console(db, user)
     partner_onboarding = build_partner_onboarding(db)
+    revenue_forecast = build_revenue_forecast_intelligence(db, limit=80)
 
     items: list[DailyDecisionQueueItem] = []
     for gap in external.get("readiness_gap_intelligence") or []:
@@ -523,8 +598,20 @@ def build_daily_decision_queue(db: Session, user: User) -> DailyDecisionQueueOut
     )
     items.extend(_feedback_item(row) for row in feedback_rows)
 
+    seen_forecast_ids: set[str] = set()
+    for row in revenue_forecast.get("high_risk_projects") or []:
+        item = _forecast_item(row, high_risk=True)
+        if item.id not in seen_forecast_ids:
+            items.append(item)
+            seen_forecast_ids.add(item.id)
+    for row in revenue_forecast.get("high_probability_projects") or []:
+        item = _forecast_item(row)
+        if item.id not in seen_forecast_ids:
+            items.append(item)
+            seen_forecast_ids.add(item.id)
+
     _apply_handling_layer(db, items)
-    sorted_items = _sort_items(items)[:40]
+    sorted_items = _select_operating_items(items, limit=40)
     return DailyDecisionQueueOut(
         summary=_summary(sorted_items, user),
         items=sorted_items,

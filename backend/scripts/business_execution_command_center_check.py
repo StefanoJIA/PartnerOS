@@ -39,7 +39,11 @@ from fastapi.testclient import TestClient  # noqa: E402
 from app.core.database import SessionLocal  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.models import Company, Lead, User  # noqa: E402
-from app.services.business_execution import build_business_execution_center, build_customer_value_intelligence  # noqa: E402
+from app.services.business_execution import (  # noqa: E402
+    build_business_execution_center,
+    build_customer_value_intelligence,
+    build_revenue_forecast_intelligence,
+)
 
 
 def main() -> int:
@@ -62,6 +66,8 @@ def main() -> int:
         revenue_forecast = commercial.revenue_forecast or {}
         customer_value_payload = build_customer_value_intelligence(db, limit=20)
         customer_value_items = customer_value_payload.get("items", [])
+        revenue_forecast_payload = build_revenue_forecast_intelligence(db, limit=40)
+        revenue_forecast_items = revenue_forecast_payload.get("forecast_items", [])
         commercial_safety_items = [
             item.get("safety", {})
             for collection in [
@@ -198,6 +204,37 @@ def main() -> int:
                 and customer_value_payload.get("safety", {}).get("quote_status_changed") is False
                 and customer_value_payload.get("safety", {}).get("order_status_changed") is False
                 and all(item.get("safety", {}).get("customer_forbidden_fields_exposed") is False for item in customer_value_items),
+            ),
+            (
+                "revenue forecast intelligence profiles future revenue",
+                isinstance(revenue_forecast_items, list)
+                and isinstance(revenue_forecast_payload.get("summary"), dict)
+                and "total_weighted_amount" in revenue_forecast_payload["summary"]
+                and "at_risk_weighted_amount" in revenue_forecast_payload["summary"]
+                and all(
+                    item.get("source_type") in {"opportunity", "quote", "order_backlog"}
+                    and "weighted_amount" in item
+                    and "probability" in item
+                    and item.get("customer_name")
+                    and item.get("risk_level") in {"low", "medium", "high"}
+                    and item.get("next_action")
+                    for item in revenue_forecast_items
+                ),
+            ),
+            (
+                "revenue forecast answers management questions",
+                isinstance(revenue_forecast_payload.get("management_questions"), dict)
+                and "future_revenue_from" in revenue_forecast_payload["management_questions"]
+                and isinstance(revenue_forecast_payload.get("forecast_by_partner"), list)
+                and isinstance(revenue_forecast_payload.get("forecast_by_product"), list)
+                and isinstance(revenue_forecast_payload.get("forecast_by_customer"), list),
+            ),
+            (
+                "revenue forecast safe boundaries",
+                revenue_forecast_payload.get("safety", {}).get("external_message_sent") is False
+                and revenue_forecast_payload.get("safety", {}).get("quote_status_changed") is False
+                and revenue_forecast_payload.get("safety", {}).get("order_status_changed") is False
+                and all(item.get("safety", {}).get("customer_forbidden_fields_exposed") is False for item in revenue_forecast_items),
             ),
             (
                 "commercial intelligence safe boundaries",
@@ -640,6 +677,10 @@ def main() -> int:
                 "/api/dashboard/customer-value-intelligence",
                 headers={"Authorization": f"Bearer {token}"},
             )
+            revenue_forecast_route = client.get(
+                "/api/dashboard/revenue-forecast-intelligence",
+                headers={"Authorization": f"Bearer {token}"},
+            )
             company_workspace = (
                 client.get(f"/api/companies/{company_id}/workspace", headers={"Authorization": f"Bearer {token}"})
                 if company_id
@@ -671,6 +712,23 @@ def main() -> int:
                     and "weighted_pipeline_amount" in item
                     and item.get("safety", {}).get("external_message_sent") is False
                     for item in customer_value_route_data.get("items", [])
+                ),
+            )
+        )
+        revenue_forecast_route_data = revenue_forecast_route.json() if revenue_forecast_route.status_code == 200 else {}
+        checks.append(
+            (
+                "route revenue forecast intelligence",
+                revenue_forecast_route.status_code == 200
+                and isinstance(revenue_forecast_route_data.get("summary"), dict)
+                and "total_weighted_amount" in revenue_forecast_route_data["summary"]
+                and isinstance(revenue_forecast_route_data.get("forecast_items"), list)
+                and isinstance(revenue_forecast_route_data.get("forecast_by_product"), list)
+                and "future_revenue_from" in revenue_forecast_route_data.get("management_questions", {})
+                and all(
+                    item.get("source_type") in {"opportunity", "quote", "order_backlog"}
+                    and item.get("safety", {}).get("external_message_sent") is False
+                    for item in revenue_forecast_route_data.get("forecast_items", [])
                 ),
             )
         )

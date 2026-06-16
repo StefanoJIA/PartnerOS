@@ -580,3 +580,35 @@ export async function fetchCustomerValueIntelligence(limit = 50) {
   })
   return data
 }
+
+export interface RevenueForecastIntelligence {
+  summary: {
+    total_forecast_amount: number
+    total_weighted_amount: number
+    weighted_opportunity_amount: number
+    open_quote_amount: number
+    weighted_quote_amount: number
+    booked_backlog_amount: number
+    at_risk_weighted_amount: number
+    item_count: number
+    high_probability_count: number
+    high_risk_count: number
+  }
+  forecast_items: Array<Record<string, unknown>>
+  high_probability_projects: Array<Record<string, unknown>>
+  high_risk_projects: Array<Record<string, unknown>>
+  forecast_by_partner: Array<Record<string, unknown>>
+  forecast_by_product: Array<Record<string, unknown>>
+  forecast_by_customer: Array<Record<string, unknown>>
+  future_revenue_sources: string[]
+  management_questions: Record<string, unknown>
+  next_action: string
+  safety: Record<string, boolean>
+}
+
+export async function fetchRevenueForecastIntelligence(limit = 80) {
+  const { data } = await http.get<RevenueForecastIntelligence>('/dashboard/revenue-forecast-intelligence', {
+    params: { limit },
+  })
+  return data
+}
