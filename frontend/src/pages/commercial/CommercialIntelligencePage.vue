@@ -89,6 +89,97 @@
       </section>
 
       <section class="rounded border border-slate-200 bg-white p-4">
+        <div class="mb-3 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 class="font-semibold text-slate-900">商业经验库查询</h3>
+            <p class="mt-1 text-sm text-slate-600">
+              按 partner、产品线、购买因素或客户查看可复用经验：为什么赢输、哪些因素影响成交、哪些账户需要下一次商业动作。
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-1">
+            <el-tag type="primary" effect="plain">原因簇 {{ winLossReasonClusters.length }}</el-tag>
+            <el-tag type="success" effect="plain">购买因素 {{ pmfBuyingFactors.length }}</el-tag>
+            <el-tag type="warning" effect="plain">推荐账户 {{ accountRecommendations.length }}</el-tag>
+          </div>
+        </div>
+
+        <div class="mb-3 grid gap-2 md:grid-cols-4">
+          <el-select v-model="selectedPartner" clearable filterable placeholder="Partner">
+            <el-option v-for="item in partnerOptions" :key="item" :label="item" :value="item" />
+          </el-select>
+          <el-select v-model="selectedProduct" clearable filterable placeholder="产品线">
+            <el-option v-for="item in productOptions" :key="item" :label="item" :value="item" />
+          </el-select>
+          <el-select v-model="selectedFactor" clearable filterable placeholder="购买因素">
+            <el-option v-for="item in factorOptions" :key="item" :label="item" :value="item" />
+          </el-select>
+          <el-select v-model="selectedCustomer" clearable filterable placeholder="客户">
+            <el-option v-for="item in customerOptions" :key="item" :label="item" :value="item" />
+          </el-select>
+        </div>
+
+        <div class="grid gap-3 xl:grid-cols-4">
+          <div class="rounded border border-slate-100 bg-slate-50 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">为什么赢 / 输</h4>
+            <p class="mt-1 text-xs text-slate-500">来自 Win/Loss reason clusters 和客户决策因素。</p>
+            <div v-for="item in filteredReasonClusters.slice(0, 4)" :key="rowKey(item)" class="mt-2 rounded bg-white p-2">
+              <div class="flex flex-wrap items-center gap-1">
+                <el-tag size="small" type="info" effect="plain">{{ primaryText(item, ['reason_category', 'factor', 'partner_name', 'partner_focus', 'product_focus'], '原因') }}</el-tag>
+                <el-tag size="small" type="success" effect="plain">赢 {{ item.won ?? item.win_count ?? 0 }}</el-tag>
+                <el-tag size="small" type="danger" effect="plain">输 {{ item.lost ?? item.loss_count ?? 0 }}</el-tag>
+              </div>
+              <p class="mt-1 text-xs text-slate-600">{{ primaryText(item, ['next_quote_guidance', 'sample_lessons', 'reason'], '复盘原因后再复用到下一次报价。') }}</p>
+            </div>
+            <p v-if="!filteredReasonClusters.length" class="mt-2 text-sm text-slate-500">当前筛选下暂无赢输原因。</p>
+          </div>
+
+          <div class="rounded border border-slate-100 bg-slate-50 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">购买因素证据</h4>
+            <p class="mt-1 text-xs text-slate-500">来自 PMF validated buying factors 和产品线证据。</p>
+            <div v-for="item in filteredBuyingFactors.slice(0, 4)" :key="rowKey(item)" class="mt-2 rounded bg-white p-2">
+              <div class="flex flex-wrap items-center gap-1">
+                <el-tag size="small" type="primary" effect="plain">{{ primaryText(item, ['factor', 'dimension', 'buying_factor', 'product_focus'], '购买因素') }}</el-tag>
+                <el-tag size="small" effect="plain">{{ primaryText(item, ['partner_focus', 'partner', 'partner_name'], 'multi-partner') }}</el-tag>
+              </div>
+              <p class="mt-1 text-xs text-slate-600">
+                证据 {{ item.evidence_count ?? item.evidence ?? 0 }} / 赢 {{ item.wins ?? 0 }} / 输 {{ item.losses ?? 0 }} / 反馈 {{ item.feedback ?? 0 }}
+              </p>
+              <p class="mt-1 text-xs text-slate-500">{{ primaryText(item, ['next_action', 'management_answer'], '确认该因素是否应进入报价话术和客户可见材料。') }}</p>
+            </div>
+            <p v-if="!filteredBuyingFactors.length" class="mt-2 text-sm text-slate-500">当前筛选下暂无购买因素证据。</p>
+          </div>
+
+          <div class="rounded border border-slate-100 bg-slate-50 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">下一批客户动作</h4>
+            <p class="mt-1 text-xs text-slate-500">来自 Account 360 推荐账户和下一商业动作。</p>
+            <div v-for="item in filteredAccounts.slice(0, 4)" :key="rowKey(item)" class="mt-2 rounded bg-white p-2">
+              <div class="flex flex-wrap items-center gap-1">
+                <el-tag size="small" :type="priorityType(String(item.priority || 'P2'))" effect="plain">{{ item.priority || 'P2' }}</el-tag>
+                <el-tag size="small" effect="plain">{{ item.current_stage || item.relationship_depth || 'account' }}</el-tag>
+              </div>
+              <p class="mt-1 text-sm font-medium text-slate-800">{{ item.customer_name || item.account_key }}</p>
+              <p class="mt-1 text-xs text-slate-600">{{ nextMotion(item).next_action || item.next_action || '查看 Account 360 后选择下一步。' }}</p>
+              <el-button class="mt-1" size="small" link type="primary" @click="go(String(item.path || '/growth-operations'))">打开账户</el-button>
+            </div>
+            <p v-if="!filteredAccounts.length" class="mt-2 text-sm text-slate-500">当前筛选下暂无推荐账户。</p>
+          </div>
+
+          <div class="rounded border border-slate-100 bg-slate-50 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">下一次报价可复用</h4>
+            <p class="mt-1 text-xs text-slate-500">把赢输经验转成报价、Campaign 和产品话术输入。</p>
+            <div v-for="item in filteredDecisionFactors.slice(0, 4)" :key="rowKey(item)" class="mt-2 rounded bg-white p-2">
+              <div class="flex flex-wrap items-center gap-1">
+                <el-tag size="small" type="warning" effect="plain">{{ primaryText(item, ['factor', 'decision_factor', 'reason_category'], '决策因素') }}</el-tag>
+                <el-tag size="small" effect="plain">{{ primaryText(item, ['product_focus', 'product', 'product_family'], '产品线') }}</el-tag>
+              </div>
+              <p class="mt-1 text-xs text-slate-600">{{ primaryText(item, ['next_quote_guidance', 'management_answer', 'commercial_lesson'], '复用前先确认客户语境和产品证据。') }}</p>
+            </div>
+            <p v-if="!filteredDecisionFactors.length" class="mt-2 text-sm text-slate-500">当前筛选下暂无报价经验。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded border border-slate-200 bg-white p-4">
         <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 class="font-semibold text-slate-900">商业资产明细</h3>
@@ -133,7 +224,16 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { fetchBusinessExecution, type BusinessExecution } from '@/api/dashboard'
+import {
+  fetchAccount360Intelligence,
+  fetchBusinessExecution,
+  fetchProductMarketFitIntelligence,
+  fetchWinLossIntelligenceDashboard,
+  type Account360Intelligence,
+  type BusinessExecution,
+  type ProductMarketFitIntelligence,
+  type WinLossIntelligenceDashboard,
+} from '@/api/dashboard'
 
 type Row = Record<string, unknown>
 
@@ -141,13 +241,67 @@ const router = useRouter()
 const loading = ref(false)
 const error = ref('')
 const data = ref<BusinessExecution | null>(null)
+const winLossDashboard = ref<WinLossIntelligenceDashboard | null>(null)
+const productMarketFit = ref<ProductMarketFitIntelligence | null>(null)
+const account360 = ref<Account360Intelligence | null>(null)
 const activeAsset = ref('account360')
+const selectedPartner = ref('')
+const selectedProduct = ref('')
+const selectedFactor = ref('')
+const selectedCustomer = ref('')
 
 const commercial = computed(() => data.value?.commercial_intelligence)
 const executiveSummary = computed(() => asRecord(commercial.value?.executive_summary))
 const questions = computed(() => asRecord(executiveSummary.value.management_questions))
 const snapshot = computed(() => asRecord(executiveSummary.value.commercial_snapshot))
 const assetMap = computed(() => asList(executiveSummary.value.asset_map))
+const winLossReasonClusters = computed(() => [
+  ...asList(winLossDashboard.value?.reason_clusters),
+  ...asList(winLossDashboard.value?.partner_rollup),
+  ...asList(winLossDashboard.value?.product_rollup),
+])
+const winLossDecisionFactors = computed(() => asList(winLossDashboard.value?.decision_factor_rows))
+const pmfBuyingFactors = computed(() => [
+  ...asList(productMarketFit.value?.validated_buying_factors),
+  ...asList(productMarketFit.value?.top_product_lines).flatMap((item) => asList(item.buying_factors_ranked)),
+  ...asList(productMarketFit.value?.items).flatMap((item) => asList(item.buying_factors_ranked)),
+])
+const accountRecommendations = computed(() => [
+  ...asList(account360.value?.recommended_accounts),
+  ...asList(account360.value?.repeat_or_referral_accounts),
+  ...asList(account360.value?.reactivation_accounts),
+])
+const partnerOptions = computed(() =>
+  uniqueText([
+    ...asList(productMarketFit.value?.items).flatMap((item) => [item.partner_focus, item.partner, item.partner_name]),
+    ...asList(winLossDashboard.value?.partner_rollup).flatMap((item) => [item.partner_focus, item.partner, item.partner_name]),
+    ...asList(account360.value?.items).flatMap((item) => (Array.isArray(item.partner_focus) ? item.partner_focus : [item.partner_focus])),
+  ]),
+)
+const productOptions = computed(() =>
+  uniqueText([
+    ...asList(productMarketFit.value?.items).flatMap((item) => (Array.isArray(item.product_focus) ? item.product_focus : [item.product_focus, item.product_family, item.product])),
+    ...asList(winLossDashboard.value?.product_rollup).flatMap((item) => [item.product_focus, item.product_family, item.product]),
+    ...asList(account360.value?.items).flatMap((item) => (Array.isArray(item.product_focus) ? item.product_focus : [item.product_focus])),
+  ]),
+)
+const factorOptions = computed(() =>
+  uniqueText([
+    ...winLossDecisionFactors.value.flatMap((item) => [item.factor, item.decision_factor, item.reason_category]),
+    ...pmfBuyingFactors.value.flatMap((item) => [item.factor, item.dimension, item.buying_factor]),
+    ...asList(productMarketFit.value?.items).flatMap((item) => (Array.isArray(item.dimensions) ? item.dimensions : [])),
+  ]),
+)
+const customerOptions = computed(() =>
+  uniqueText([
+    ...asList(account360.value?.items).flatMap((item) => [item.customer_name, item.account_key]),
+    ...asList(winLossDashboard.value?.items).flatMap((item) => [item.customer, item.customer_name]),
+  ]),
+)
+const filteredReasonClusters = computed(() => filterExperienceRows(winLossReasonClusters.value))
+const filteredBuyingFactors = computed(() => filterExperienceRows(pmfBuyingFactors.value))
+const filteredAccounts = computed(() => filterExperienceRows(accountRecommendations.value))
+const filteredDecisionFactors = computed(() => filterExperienceRows(winLossDecisionFactors.value))
 
 const managementSections = computed(() => [
   {
@@ -269,7 +423,16 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    data.value = await fetchBusinessExecution()
+    const [businessExecution, winLoss, pmf, accounts] = await Promise.all([
+      fetchBusinessExecution(),
+      fetchWinLossIntelligenceDashboard(120),
+      fetchProductMarketFitIntelligence(80),
+      fetchAccount360Intelligence(80),
+    ])
+    data.value = businessExecution
+    winLossDashboard.value = winLoss
+    productMarketFit.value = pmf
+    account360.value = accounts
   } catch (err) {
     error.value = err instanceof Error ? err.message : '商业智能数据加载失败'
   } finally {
@@ -294,9 +457,44 @@ function firstText(value: unknown) {
   return value ? String(value) : ''
 }
 
+function primaryText(row: Row, keys: string[], fallback: string) {
+  for (const key of keys) {
+    const value = row[key]
+    if (Array.isArray(value) && value.length) return value.map((item) => String(item)).join(' / ')
+    if (value !== null && value !== undefined && String(value).trim()) return String(value)
+  }
+  return fallback
+}
+
 function textList(value: unknown) {
   const values = Array.isArray(value) ? value : [value]
   return values.filter((item) => item !== null && item !== undefined && String(item).trim()).map((item) => String(item))
+}
+
+function uniqueText(values: unknown[]) {
+  return [...new Set(textList(values))].sort((left, right) => left.localeCompare(right))
+}
+
+function rowSearchText(row: Row) {
+  return JSON.stringify(row).toLowerCase()
+}
+
+function includesFilter(row: Row, filter: string) {
+  return !filter || rowSearchText(row).includes(filter.toLowerCase())
+}
+
+function filterExperienceRows(rows: Row[]) {
+  return rows.filter(
+    (row) =>
+      includesFilter(row, selectedPartner.value) &&
+      includesFilter(row, selectedProduct.value) &&
+      includesFilter(row, selectedFactor.value) &&
+      includesFilter(row, selectedCustomer.value),
+  )
+}
+
+function nextMotion(item: Row) {
+  return asRecord(item.next_commercial_motion)
 }
 
 function asNumber(value: unknown) {
