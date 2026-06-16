@@ -32,18 +32,30 @@
     <template v-else>
       <div class="grid gap-3 lg:grid-cols-3">
         <div
-          v-for="item in data.executive_decisions"
-          :key="item.decision_id"
+          v-for="item in executiveBriefCards.slice(0, 6)"
+          :key="`top-${item.key}-${item.question}-${item.path}`"
           class="rounded border border-slate-100 bg-slate-50 p-3"
         >
           <div class="mb-2 flex items-start justify-between gap-2">
             <h4 class="font-semibold text-slate-900">{{ item.question }}</h4>
-            <el-tag :type="priorityType(item.priority)" effect="plain">{{ item.priority }}</el-tag>
+            <el-tag type="primary" effect="plain">{{ item.owner || 'business owner' }}</el-tag>
           </div>
-          <p class="text-sm text-slate-700">{{ item.answer }}</p>
-          <p class="mt-2 text-xs text-slate-500">Owner: {{ item.owner }}</p>
-          <p class="mt-1 text-xs text-slate-500">{{ item.next_action }}</p>
-          <el-button class="mt-2" size="small" type="primary" plain @click="go(item.path)">进入处理</el-button>
+          <p class="text-sm font-medium text-slate-800">{{ item.answer }}</p>
+          <p class="mt-2 text-xs text-slate-600">{{ item.evidence }}</p>
+          <p class="mt-1 text-xs text-slate-700">{{ item.recommended_action }}</p>
+          <div class="mt-2 flex flex-wrap gap-1">
+            <el-tag
+              v-for="asset in listLabel(item.source_assets).slice(0, 3)"
+              :key="asset"
+              size="small"
+              type="info"
+              effect="plain"
+            >
+              {{ asset }}
+            </el-tag>
+            <el-tag v-if="item.partner_focus" size="small" effect="plain">{{ item.partner_focus }}</el-tag>
+          </div>
+          <el-button class="mt-2" size="small" type="primary" plain @click="go(String(item.path || '/'))">进入处理</el-button>
         </div>
       </div>
 
@@ -83,21 +95,38 @@
           </div>
           <div class="grid gap-2 lg:grid-cols-3">
             <div
-              v-for="action in executiveActions.slice(0, 6)"
-              :key="`${action.source_asset}-${action.title}-${action.path}`"
+              v-for="brief in executiveBriefCards.slice(0, 6)"
+              :key="`${brief.key}-${brief.question}-${brief.path}`"
               class="rounded border border-slate-100 bg-slate-50 p-2"
             >
               <div class="mb-1 flex flex-wrap items-center gap-1">
-                <el-tag size="small" :type="priorityType(String(action.priority || 'P2'))" effect="plain">
-                  {{ action.priority || 'P2' }}
+                <el-tag size="small" type="primary" effect="plain">{{ brief.owner || 'business owner' }}</el-tag>
+                <el-tag
+                  v-for="asset in listLabel(brief.source_assets).slice(0, 2)"
+                  :key="asset"
+                  size="small"
+                  type="info"
+                  effect="plain"
+                >
+                  {{ asset }}
                 </el-tag>
-                <el-tag size="small" type="info" effect="plain">{{ action.source_asset }}</el-tag>
-                <el-tag v-if="action.partner_focus" size="small" effect="plain">{{ action.partner_focus }}</el-tag>
+                <el-tag v-if="brief.partner_focus" size="small" effect="plain">{{ brief.partner_focus }}</el-tag>
               </div>
-              <div class="text-sm font-medium text-slate-800">{{ action.title }}</div>
-              <p class="mt-1 text-xs text-slate-600">{{ action.reason }}</p>
-              <p class="mt-1 text-xs text-slate-700">{{ action.next_action }}</p>
-              <el-button class="mt-2" size="small" link type="primary" @click="go(String(action.path || '/'))">
+              <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ brief.question }}</div>
+              <div class="mt-1 text-sm font-medium text-slate-800">{{ brief.answer }}</div>
+              <p class="mt-1 text-xs text-slate-600">{{ brief.evidence }}</p>
+              <p class="mt-1 text-xs text-slate-700">{{ brief.recommended_action }}</p>
+              <div class="mt-1 flex flex-wrap gap-1">
+                <el-tag
+                  v-for="focus in listLabel(brief.product_focus).slice(0, 3)"
+                  :key="focus"
+                  size="small"
+                  effect="plain"
+                >
+                  {{ focus }}
+                </el-tag>
+              </div>
+              <el-button class="mt-2" size="small" link type="primary" @click="go(String(brief.path || '/'))">
                 进入对应资产
               </el-button>
             </div>
@@ -715,6 +744,7 @@ const router = useRouter()
 const defaultCommercial = {
   executive_summary: {
     management_questions: {},
+    management_brief: [] as Array<Record<string, unknown>>,
     executive_actions: [] as Array<Record<string, unknown>>,
     commercial_snapshot: {},
     asset_map: [] as Array<Record<string, unknown>>,
@@ -746,6 +776,26 @@ const executiveActions = computed(() =>
     ? (commercialExecutiveSummary.value.executive_actions as Array<Record<string, unknown>>)
     : [],
 )
+const managementBrief = computed(() =>
+  Array.isArray(commercialExecutiveSummary.value.management_brief)
+    ? (commercialExecutiveSummary.value.management_brief as Array<Record<string, unknown>>)
+    : [],
+)
+const executiveBriefCards = computed(() => {
+  if (managementBrief.value.length) return managementBrief.value
+  return executiveActions.value.map((action) => ({
+    key: action.decision_id || action.source_asset || action.title,
+    question: action.question || 'Commercial decision',
+    answer: action.title || action.answer || 'Commercial object',
+    evidence: action.reason || action.answer || 'Evidence pending.',
+    recommended_action: action.next_action || 'Review source object.',
+    source_assets: action.source_asset ? [action.source_asset] : [],
+    path: action.path || '/',
+    owner: action.owner || 'business owner',
+    partner_focus: action.partner_focus,
+    product_focus: Array.isArray(action.product_focus) ? action.product_focus : [],
+  }))
+})
 const executiveAssetMap = computed(() =>
   Array.isArray(commercialExecutiveSummary.value.asset_map)
     ? (commercialExecutiveSummary.value.asset_map as Array<Record<string, unknown>>)
