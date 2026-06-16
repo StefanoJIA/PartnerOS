@@ -3374,6 +3374,150 @@ def _account_360_next_action(
     return "Qualify product fit, project timing, stakeholder value, and partner fit before deeper investment."
 
 
+def _account_360_relationship_depth(
+    *,
+    leads: list[Lead],
+    opportunities: list[SalesOpportunity],
+    quotes: list[Quote],
+    orders: list[CustomerOrder],
+    feedback: list[FeedbackTicket],
+    learning_records: list[QuoteLearningRecord],
+) -> str:
+    if leads and opportunities and quotes and orders and feedback and learning_records:
+        return "full_commercial_history"
+    if quotes and orders and learning_records:
+        return "quote_to_order_learning"
+    if opportunities and quotes:
+        return "active_sales_motion"
+    if orders or feedback:
+        return "delivery_relationship"
+    if leads or opportunities:
+        return "early_commercial_relationship"
+    return "company_profile_only"
+
+
+def _account_360_next_commercial_motion(
+    *,
+    weighted_pipeline: Decimal,
+    open_quotes: list[Quote],
+    open_feedback: list[FeedbackTicket],
+    orders: list[CustomerOrder],
+    opportunities: list[SalesOpportunity],
+    won_learning: list[QuoteLearningRecord],
+    lost_learning: list[QuoteLearningRecord],
+    value_tier: str,
+    path: str,
+) -> dict[str, object]:
+    if open_feedback:
+        return {
+            "motion_type": "feedback_recovery_before_repeat",
+            "owner": "after-sales owner",
+            "reason": "Open feedback must be resolved before repeat business, referral, or customer-visible success story.",
+            "next_action": "Resolve feedback, record customer-safe outcome, then reassess repeat-business motion.",
+            "path": "/feedback-tickets",
+        }
+    if weighted_pipeline > 0 and opportunities:
+        return {
+            "motion_type": "advance_pipeline",
+            "owner": "sales owner",
+            "reason": "Open weighted pipeline exists and should be moved with customer decision factors captured.",
+            "next_action": "Advance the highest-probability opportunity and keep expected close timing current.",
+            "path": path,
+        }
+    if open_quotes:
+        return {
+            "motion_type": "manual_quote_follow_up",
+            "owner": "sales owner",
+            "reason": "Open quote value needs manual customer response before forecast confidence improves.",
+            "next_action": "Follow up manually and record win/loss learning when customer responds.",
+            "path": f"/quotes/{open_quotes[0].id}",
+        }
+    if orders and not open_feedback and (len(orders) > 1 or won_learning or value_tier in {"strategic_account", "growth_account"}):
+        return {
+            "motion_type": "repeat_or_referral_motion",
+            "owner": "account owner",
+            "reason": "Order history exists without open feedback; account can be reviewed for repeat business or referral.",
+            "next_action": "Review delivery outcome, product fit, and decision factors before creating repeat-business outreach.",
+            "path": f"/orders/{orders[0].id}",
+        }
+    if lost_learning:
+        return {
+            "motion_type": "reactivation_after_loss_learning",
+            "owner": "sales owner",
+            "reason": "Lost-decision learning exists and can guide a narrower reactivation or product-fit review.",
+            "next_action": "Review lost reasons before deciding whether to reactivate the account.",
+            "path": path,
+        }
+    return {
+        "motion_type": "qualification",
+        "owner": "sales owner",
+        "reason": "Commercial relationship is not deep enough to prioritize without product fit and project timing evidence.",
+        "next_action": "Qualify product fit, project timing, stakeholder value, and partner fit.",
+        "path": path,
+    }
+
+
+def _account_360_relationship_map(
+    *,
+    leads: list[Lead],
+    opportunities: list[SalesOpportunity],
+    quotes: list[Quote],
+    orders: list[CustomerOrder],
+    feedback: list[FeedbackTicket],
+    learning_records: list[QuoteLearningRecord],
+    partner_focus: list[str],
+    product_focus: list[str],
+    delayed_or_blocked_orders: int,
+    shipment_missing_orders: int,
+) -> dict[str, object]:
+    return {
+        "relationship_depth": _account_360_relationship_depth(
+            leads=leads,
+            opportunities=opportunities,
+            quotes=quotes,
+            orders=orders,
+            feedback=feedback,
+            learning_records=learning_records,
+        ),
+        "commercial_objects": {
+            "leads": len(leads),
+            "opportunities": len(opportunities),
+            "quotes": len(quotes),
+            "orders": len(orders),
+            "feedback": len(feedback),
+            "win_loss_records": len(learning_records),
+        },
+        "active_commercial_paths": _merge_unique(
+            [
+                *[f"/leads/{row.id}" for row in leads[:2]],
+                *[_opportunity_path(row) for row in opportunities[:3]],
+                *[f"/quotes/{row.id}" for row in quotes[:3]],
+                *[f"/orders/{row.id}" for row in orders[:3]],
+                "/feedback-tickets" if feedback else "",
+            ],
+            limit=10,
+        ),
+        "partner_focus": partner_focus,
+        "product_focus": product_focus,
+        "delivery_and_after_sales": {
+            "orders": len(orders),
+            "delayed_or_blocked_orders": delayed_or_blocked_orders,
+            "shipment_missing_orders": shipment_missing_orders,
+            "feedback_records": len(feedback),
+            "open_feedback": len([ticket for ticket in feedback if ticket.status not in {"resolved", "closed"}]),
+        },
+        "decision_learning": {
+            "won": len([record for record in learning_records if record.outcome_status == "won"]),
+            "lost": len([record for record in learning_records if record.outcome_status == "lost"]),
+            "lessons": _merge_unique(
+                [record.won_reason or record.lost_reason or record.customer_objection or "" for record in learning_records],
+                limit=6,
+            ),
+        },
+        "customer_safe_boundary": "Internal relationship map only; do not expose internal comments, feedback details, cost, margin, supplier notes, or raw IDs.",
+    }
+
+
 def _build_account_360_profile(db: Session, company_id: object) -> dict[str, object] | None:
     company = db.get(Company, company_id)
     if company is None:
@@ -3482,6 +3626,37 @@ def _build_account_360_profile(db: Session, company_id: object) -> dict[str, obj
         opportunities=open_opportunities,
         value_tier=value_tier,
     )
+    path = _account_360_path(
+        company_id=company.id,
+        leads=leads,
+        opportunities=opportunities,
+        quotes=quotes,
+        orders=orders,
+        feedback=feedback,
+    )
+    relationship_map = _account_360_relationship_map(
+        leads=leads,
+        opportunities=opportunities,
+        quotes=quotes,
+        orders=orders,
+        feedback=feedback,
+        learning_records=learning_records,
+        partner_focus=partner_focus,
+        product_focus=product_focus,
+        delayed_or_blocked_orders=delayed_or_blocked_orders,
+        shipment_missing_orders=shipment_missing_orders,
+    )
+    next_commercial_motion = _account_360_next_commercial_motion(
+        weighted_pipeline=weighted_pipeline,
+        open_quotes=open_quotes,
+        open_feedback=open_feedback,
+        orders=orders,
+        opportunities=open_opportunities,
+        won_learning=won_learning,
+        lost_learning=lost_learning,
+        value_tier=value_tier,
+        path=path,
+    )
     return {
         "account_key": f"company:{company.id}",
         "company_id": str(company.id),
@@ -3583,6 +3758,11 @@ def _build_account_360_profile(db: Session, company_id: object) -> dict[str, obj
             "shipment_missing_orders": shipment_missing_orders,
             "open_feedback_count": len(open_feedback),
         },
+        "relationship_map": relationship_map,
+        "relationship_depth": relationship_map.get("relationship_depth"),
+        "next_commercial_motion": next_commercial_motion,
+        "next_motion_type": next_commercial_motion.get("motion_type"),
+        "next_motion_owner": next_commercial_motion.get("owner"),
         "repeat_business_signal": (
             "repeat_ready"
             if len(orders) > 1 and not open_feedback
@@ -3615,14 +3795,7 @@ def _build_account_360_profile(db: Session, company_id: object) -> dict[str, obj
             else f"{stage}: quote {len(quotes)}, order {len(orders)}, pipeline {_decimal_to_float(weighted_pipeline)}."
         ),
         "next_action": next_action,
-        "path": _account_360_path(
-            company_id=company.id,
-            leads=leads,
-            opportunities=opportunities,
-            quotes=quotes,
-            orders=orders,
-            feedback=feedback,
-        ),
+        "path": path,
         "customer_safe_boundary": "Internal Account 360 profile; do not expose feedback details, internal notes, cost, margin, pricing breakdown, supplier private notes, or raw IDs to customer Portal.",
         "safety": _safety_flags(),
     }
@@ -3649,6 +3822,20 @@ def build_account_360_intelligence(db: Session, limit: int = 50) -> dict[str, ob
             -float(item.get("commercial_value", {}).get("won_order_amount") or 0),
         ),
     )[:limit]
+    full_relationship_accounts = [item for item in items if item.get("relationship_depth") == "full_commercial_history"]
+    quote_to_order_accounts = [item for item in items if item.get("relationship_depth") == "quote_to_order_learning"]
+    repeat_or_referral_accounts = [
+        item
+        for item in items
+        if isinstance(item.get("next_commercial_motion"), dict)
+        and item["next_commercial_motion"].get("motion_type") == "repeat_or_referral_motion"
+    ]
+    reactivation_accounts = [
+        item
+        for item in items
+        if isinstance(item.get("next_commercial_motion"), dict)
+        and item["next_commercial_motion"].get("motion_type") == "reactivation_after_loss_learning"
+    ]
     return {
         "summary": {
             "account_count": len(items),
@@ -3665,11 +3852,19 @@ def build_account_360_intelligence(db: Session, limit: int = 50) -> dict[str, ob
                 sum(float(item.get("commercial_value", {}).get("won_order_amount") or 0) for item in items),
                 2,
             ),
+            "full_relationship_count": len(full_relationship_accounts),
+            "quote_to_order_learning_count": len(quote_to_order_accounts),
+            "repeat_or_referral_motion_count": len(repeat_or_referral_accounts),
+            "reactivation_motion_count": len(reactivation_accounts),
         },
         "items": items,
         "recommended_accounts": items[:12],
         "accounts_with_open_feedback": [item for item in items if item.get("source_counts", {}).get("open_feedback")][:12],
         "repeat_business_candidates": [item for item in items if item.get("repeat_business_signal") == "repeat_ready"][:12],
+        "full_relationship_accounts": full_relationship_accounts[:12],
+        "quote_to_order_learning_accounts": quote_to_order_accounts[:12],
+        "repeat_or_referral_accounts": repeat_or_referral_accounts[:12],
+        "reactivation_accounts": reactivation_accounts[:12],
         "management_questions": {
             "who_to_follow": items[:8],
             "which_accounts_have_full_history": [
@@ -3682,8 +3877,25 @@ def build_account_360_intelligence(db: Session, limit: int = 50) -> dict[str, ob
             "which_accounts_need_feedback_before_repeat": [
                 item for item in items if item.get("repeat_business_signal") == "resolve_feedback_first"
             ][:8],
+            "which_accounts_have_quote_to_order_learning": quote_to_order_accounts[:8],
+            "which_accounts_are_ready_for_repeat_or_referral": repeat_or_referral_accounts[:8],
+            "which_accounts_can_be_reactivated_from_loss_learning": reactivation_accounts[:8],
+            "what_is_the_next_commercial_motion": [
+                {
+                    "customer_name": item.get("customer_name"),
+                    "relationship_depth": item.get("relationship_depth"),
+                    "next_commercial_motion": item.get("next_commercial_motion"),
+                    "commercial_value": item.get("commercial_value"),
+                    "path": item.get("path"),
+                }
+                for item in items[:10]
+            ],
         },
         "next_action": "Use Account 360 to choose the next customer follow-up, quote/order review, feedback resolution, or repeat-business motion.",
+        "customer_safe_boundary": (
+            "Internal Account 360 intelligence only. It connects leads, opportunities, quotes, orders, delivery, feedback, "
+            "and win/loss learning without exposing cost, margin, pricing breakdown, supplier private notes, raw IDs, or internal-only comments."
+        ),
         "safety": _safety_flags(),
     }
 

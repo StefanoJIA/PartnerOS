@@ -737,13 +737,22 @@ export interface Account360Intelligence {
     open_feedback_count: number
     weighted_pipeline_amount: number
     won_order_amount: number
+    full_relationship_count: number
+    quote_to_order_learning_count: number
+    repeat_or_referral_motion_count: number
+    reactivation_motion_count: number
   }
   items: Array<Record<string, unknown>>
   recommended_accounts: Array<Record<string, unknown>>
   accounts_with_open_feedback: Array<Record<string, unknown>>
   repeat_business_candidates: Array<Record<string, unknown>>
+  full_relationship_accounts: Array<Record<string, unknown>>
+  quote_to_order_learning_accounts: Array<Record<string, unknown>>
+  repeat_or_referral_accounts: Array<Record<string, unknown>>
+  reactivation_accounts: Array<Record<string, unknown>>
   management_questions: Record<string, unknown>
   next_action: string
+  customer_safe_boundary: string
   safety: Record<string, boolean>
 }
 

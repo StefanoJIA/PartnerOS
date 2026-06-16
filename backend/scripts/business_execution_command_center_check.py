@@ -370,6 +370,11 @@ def main() -> int:
                     and isinstance(item.get("object_timeline"), list)
                     and isinstance(item.get("win_loss_summary"), dict)
                     and isinstance(item.get("delivery_summary"), dict)
+                    and isinstance(item.get("relationship_map"), dict)
+                    and item.get("relationship_depth")
+                    and isinstance(item.get("next_commercial_motion"), dict)
+                    and item.get("next_motion_type")
+                    and item.get("next_motion_owner")
                     and item.get("repeat_business_signal")
                     and item.get("next_action")
                     for item in account_360_items
@@ -380,13 +385,23 @@ def main() -> int:
                 isinstance(account_360_payload.get("management_questions"), dict)
                 and "who_to_follow" in account_360_payload["management_questions"]
                 and "which_accounts_have_full_history" in account_360_payload["management_questions"]
-                and "which_accounts_need_feedback_before_repeat" in account_360_payload["management_questions"],
+                and "which_accounts_need_feedback_before_repeat" in account_360_payload["management_questions"]
+                and "which_accounts_have_quote_to_order_learning" in account_360_payload["management_questions"]
+                and "which_accounts_are_ready_for_repeat_or_referral" in account_360_payload["management_questions"]
+                and "which_accounts_can_be_reactivated_from_loss_learning" in account_360_payload["management_questions"]
+                and "what_is_the_next_commercial_motion" in account_360_payload["management_questions"]
+                and isinstance(account_360_payload.get("full_relationship_accounts"), list)
+                and isinstance(account_360_payload.get("quote_to_order_learning_accounts"), list)
+                and isinstance(account_360_payload.get("repeat_or_referral_accounts"), list)
+                and isinstance(account_360_payload.get("reactivation_accounts"), list)
+                and "full_relationship_count" in account_360_payload.get("summary", {}),
             ),
             (
                 "account 360 safe boundaries",
                 account_360_payload.get("safety", {}).get("external_message_sent") is False
                 and account_360_payload.get("safety", {}).get("quote_status_changed") is False
                 and account_360_payload.get("safety", {}).get("order_status_changed") is False
+                and account_360_payload.get("safety", {}).get("customer_forbidden_fields_exposed") is False
                 and all(item.get("safety", {}).get("customer_forbidden_fields_exposed") is False for item in account_360_items),
             ),
             (

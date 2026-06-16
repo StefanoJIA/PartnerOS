@@ -116,9 +116,14 @@
                     {{ account.priority || 'P3' }}
                   </el-tag>
                   <el-tag size="small" effect="plain">{{ account.current_stage }}</el-tag>
+                  <el-tag size="small" type="success" effect="plain">{{ account.relationship_depth || 'company_profile_only' }}</el-tag>
                 </div>
               </div>
               <p class="mt-1 text-xs text-slate-600">{{ account.next_action }}</p>
+              <p class="mt-1 text-xs text-slate-500">
+                下一经营动作：{{ nextCommercialMotion(account).motion_type || 'qualification' }} /
+                {{ nextCommercialMotion(account).owner || 'sales owner' }}
+              </p>
               <p class="mt-1 text-xs text-slate-500">
                 成交 {{ money(commercialValue(account).won_order_amount) }} /
                 Pipeline {{ money(commercialValue(account).weighted_pipeline_amount) }} /
@@ -700,6 +705,10 @@ function listLabel(value: unknown) {
 
 function commercialValue(account: Record<string, unknown>) {
   return (account.commercial_value || {}) as Record<string, unknown>
+}
+
+function nextCommercialMotion(account: Record<string, unknown>) {
+  return (account.next_commercial_motion || {}) as Record<string, unknown>
 }
 
 function commercialQuality(account: Record<string, unknown>) {
