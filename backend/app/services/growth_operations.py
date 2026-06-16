@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -1338,6 +1338,12 @@ def _serialize_opportunity(row: SalesOpportunity, db: Session | None = None) -> 
         "status": row.status,
         "status_label": OPPORTUNITY_STATUS_LABELS.get(row.status, row.status),
         "expected_close_date": row.expected_close_date.isoformat() if row.expected_close_date else None,
+        "outcome_status": row.outcome_status,
+        "outcome_reason_category": row.outcome_reason_category,
+        "customer_decision_factors": row.customer_decision_factors or [],
+        "product_factors": row.product_factors or [],
+        "partner_factors": row.partner_factors or [],
+        "outcome_recorded_at": row.outcome_recorded_at.isoformat() if row.outcome_recorded_at else None,
         "won_reason": row.won_reason,
         "lost_reason": row.lost_reason,
         "notes": row.notes,
@@ -1662,13 +1668,14 @@ def _win_loss_decision_factors(*values: str | None, labels: list[str] | None = N
 
 
 def _win_loss_record_from_opportunity(row: SalesOpportunity) -> dict[str, Any]:
-    outcome = "won" if row.status == "won" or row.decision_stage == "won" else "lost"
+    outcome = row.outcome_status or ("won" if row.status == "won" or row.decision_stage == "won" else "lost")
     reason = row.won_reason if outcome == "won" else row.lost_reason
     return {
         "id": f"opportunity:{row.id}",
         "source_type": "opportunity",
         "source_id": str(row.id),
         "outcome": outcome,
+        "reason_category": row.outcome_reason_category,
         "customer": row.company.company_name if row.company else row.customer_segment,
         "opportunity_name": row.opportunity_name,
         "quote_number": row.quote.quote_number if row.quote else None,
@@ -1676,7 +1683,14 @@ def _win_loss_record_from_opportunity(row: SalesOpportunity) -> dict[str, Any]:
         "product_focus": row.product_focus or [],
         "commercial_value": str(row.estimated_value) if row.estimated_value is not None else None,
         "competitor_signal": row.competition,
-        "customer_decision_factors": _win_loss_decision_factors(reason, row.risk, row.notes),
+        "customer_decision_factors": _win_loss_decision_factors(
+            reason,
+            row.risk,
+            row.notes,
+            labels=row.customer_decision_factors or [],
+        ),
+        "product_factors": row.product_factors or [],
+        "partner_factors": row.partner_factors or [],
         "won_reason": row.won_reason,
         "lost_reason": row.lost_reason,
         "commercial_lesson": reason or "Record concrete customer decision reason before reusing this as sales learning.",
@@ -1708,13 +1722,16 @@ def _win_loss_record_from_quote_learning(db: Session, row: QuoteLearningRecord) 
         "product_focus": _quote_product_focus_for_learning(quote),
         "commercial_value": str(quote.grand_total) if quote.grand_total is not None else None,
         "competitor_signal": row.competitor_signal,
+        "reason_category": row.reason_category,
         "customer_decision_factors": _win_loss_decision_factors(
             reason,
             row.customer_objection,
             row.price_feedback,
             row.delivery_feedback,
-            labels=row.product_dimensions or [],
+            labels=[*(row.customer_decision_factors or []), *(row.product_dimensions or [])],
         ),
+        "product_factors": row.product_factors or [],
+        "partner_factors": row.partner_factors or [],
         "won_reason": row.won_reason,
         "lost_reason": row.lost_reason,
         "commercial_lesson": reason or row.customer_feedback or "Record concrete quote outcome reason before reusing this as sales learning.",
@@ -1740,6 +1757,7 @@ def list_win_loss_intelligence(
         .filter(
             (SalesOpportunity.status.in_(["won", "lost"]))
             | (SalesOpportunity.decision_stage.in_(["won", "lost"]))
+            | (SalesOpportunity.outcome_status.isnot(None))
             | (SalesOpportunity.won_reason.isnot(None))
             | (SalesOpportunity.lost_reason.isnot(None))
         )
@@ -1751,7 +1769,11 @@ def list_win_loss_intelligence(
 
     learning_rows = (
         db.query(QuoteLearningRecord)
-        .filter(QuoteLearningRecord.outcome_status.in_(["won", "lost", "no_decision", "on_hold"]))
+        .filter(
+            QuoteLearningRecord.outcome_status.in_(
+                ["won", "lost", "no_response", "deferred", "still_active", "no_decision", "on_hold"]
+            )
+        )
         .order_by(QuoteLearningRecord.updated_at.desc(), QuoteLearningRecord.created_at.desc())
         .limit(160)
         .all()
@@ -1805,10 +1827,13 @@ def record_opportunity_win_loss(db: Session, opportunity_id: UUID, payload: Any,
         data.get("won_reason"),
         data.get("lost_reason"),
         data.get("competitor_signal"),
+        data.get("reason_category"),
         data.get("next_action"),
         data.get("notes"),
         " ".join(data.get("customer_decision_factors") or []),
         " ".join(data.get("product_dimensions") or []),
+        " ".join(data.get("product_factors") or []),
+        " ".join(data.get("partner_factors") or []),
     )
     outcome = data.get("outcome") or "won"
     if outcome == "won" and not data.get("won_reason"):
@@ -1816,9 +1841,12 @@ def record_opportunity_win_loss(db: Session, opportunity_id: UUID, payload: Any,
     if outcome == "lost" and not data.get("lost_reason"):
         raise ValueError("lost_reason is required when outcome is lost")
 
-    row.status = "won" if outcome == "won" else "lost" if outcome == "lost" else row.status
-    row.decision_stage = "won" if outcome == "won" else "lost" if outcome == "lost" else row.decision_stage
-    row.probability = 100 if outcome == "won" else 0 if outcome == "lost" else row.probability
+    row.outcome_status = outcome
+    row.outcome_reason_category = data.get("reason_category")
+    row.customer_decision_factors = data.get("customer_decision_factors") or []
+    row.product_factors = data.get("product_factors") or data.get("product_dimensions") or []
+    row.partner_factors = data.get("partner_factors") or []
+    row.outcome_recorded_at = datetime.now(timezone.utc)
     if data.get("won_reason") is not None:
         row.won_reason = data.get("won_reason")
     if data.get("lost_reason") is not None:
@@ -1836,11 +1864,18 @@ def record_opportunity_win_loss(db: Session, opportunity_id: UUID, payload: Any,
     notes = data.get("notes")
     factors = data.get("customer_decision_factors") or []
     dimensions = data.get("product_dimensions") or []
+    product_factors = data.get("product_factors") or []
+    partner_factors = data.get("partner_factors") or []
     learning_note_parts = []
+    learning_note_parts.append(f"Outcome: {outcome}; reason category: {data.get('reason_category') or 'unknown'}")
     if factors:
         learning_note_parts.append("Decision factors: " + ", ".join(factors))
     if dimensions:
         learning_note_parts.append("Product dimensions: " + ", ".join(dimensions))
+    if product_factors:
+        learning_note_parts.append("Product factors: " + ", ".join(product_factors))
+    if partner_factors:
+        learning_note_parts.append("Partner factors: " + ", ".join(partner_factors))
     if notes:
         learning_note_parts.append(notes)
     if learning_note_parts:

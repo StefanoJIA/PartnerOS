@@ -268,16 +268,31 @@ class SalesOpportunityUpdate(BaseModel):
         return value
 
 
-WIN_LOSS_OUTCOMES = {"won", "lost", "no_decision", "on_hold"}
+WIN_LOSS_OUTCOMES = {"won", "lost", "no_response", "deferred", "still_active", "no_decision", "on_hold"}
+WIN_LOSS_REASON_CATEGORIES = {
+    "price",
+    "delivery",
+    "certification",
+    "product_fit",
+    "partner_capacity",
+    "customer_budget",
+    "competitor",
+    "timing",
+    "relationship",
+    "unknown",
+}
 
 
 class OpportunityWinLossRecordIn(BaseModel):
     outcome: str = "won"
+    reason_category: str | None = None
     won_reason: str | None = None
     lost_reason: str | None = None
     competitor_signal: str | None = None
     customer_decision_factors: list[str] = Field(default_factory=list)
     product_dimensions: list[str] = Field(default_factory=list)
+    product_factors: list[str] = Field(default_factory=list)
+    partner_factors: list[str] = Field(default_factory=list)
     partner_focus: str | None = Field(default=None, max_length=128)
     product_focus: list[str] | None = None
     next_action: str | None = None
@@ -291,7 +306,14 @@ class OpportunityWinLossRecordIn(BaseModel):
             raise ValueError("unsupported win/loss outcome")
         return value
 
-    @field_validator("customer_decision_factors", "product_dimensions")
+    @field_validator("reason_category")
+    @classmethod
+    def validate_reason_category(cls, value: str | None) -> str | None:
+        if value is not None and value not in WIN_LOSS_REASON_CATEGORIES:
+            raise ValueError("unsupported win/loss reason category")
+        return value
+
+    @field_validator("customer_decision_factors", "product_dimensions", "product_factors", "partner_factors")
     @classmethod
     def normalize_labels(cls, value: list[str]) -> list[str]:
         seen: set[str] = set()

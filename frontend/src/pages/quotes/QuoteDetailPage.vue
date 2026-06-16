@@ -67,11 +67,15 @@ const learningForm = reactive({
   customer_feedback: '',
   customer_objection: '',
   competitor_signal: '',
+  reason_category: 'unknown',
+  customer_decision_factors_text: 'price, delivery, certification',
   won_reason: '',
   lost_reason: '',
   price_feedback: '',
   delivery_feedback: '',
   product_dimensions_text: 'load, stability, noise, delivery, installation, warranty, certification, project demand',
+  product_factors_text: 'load, stability, noise, packaging, warranty, certification',
+  partner_factors_text: 'partner capacity, delivery support, certification support',
   next_action: '',
   owner: '',
   follow_up_date: '',
@@ -112,13 +116,26 @@ const LEARNING_SAFETY =
   '报价学习只记录人工复盘：不自动发送消息、不改变报价/订单状态、不把客户不可见信息写入 Portal。'
 
 const outcomeOptions = [
-  { value: 'open', label: '仍在推进' },
+  { value: 'won', label: '赢单' },
+  { value: 'lost', label: '丢单' },
+  { value: 'no_response', label: '无回应' },
+  { value: 'deferred', label: '延期决策' },
+  { value: 'still_active', label: '仍在推进' },
   { value: 'customer_reviewing', label: '客户评估中' },
   { value: 'revision_requested', label: '需要修订报价' },
-  { value: 'won', label: '赢单信号' },
-  { value: 'lost', label: '丢单信号' },
-  { value: 'no_decision', label: '客户暂无决策' },
-  { value: 'on_hold', label: '暂停等待' },
+]
+
+const reasonCategoryOptions = [
+  { value: 'price', label: '价格 / 价值解释' },
+  { value: 'delivery', label: '交期 / 交付' },
+  { value: 'certification', label: '认证 / 技术资料' },
+  { value: 'product_fit', label: '产品匹配' },
+  { value: 'partner_capacity', label: 'Partner 承接能力' },
+  { value: 'customer_budget', label: '客户预算' },
+  { value: 'competitor', label: '竞争因素' },
+  { value: 'timing', label: '采购时机' },
+  { value: 'relationship', label: '客户关系' },
+  { value: 'unknown', label: '未知 / 待确认' },
 ]
 
 const warnings = computed(() => quote.value?.warnings ?? [])
@@ -314,16 +331,34 @@ function learningPayload() {
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean)
+  const customerDecisionFactors = learningForm.customer_decision_factors_text
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+  const productFactors = learningForm.product_factors_text
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+  const partnerFactors = learningForm.partner_factors_text
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
   return {
     outcome_status: learningForm.outcome_status,
     customer_feedback: learningForm.customer_feedback || null,
     customer_objection: learningForm.customer_objection || null,
     competitor_signal: learningForm.competitor_signal || null,
+    reason_category: learningForm.reason_category || 'unknown',
+    customer_decision_factors: customerDecisionFactors,
     won_reason: learningForm.won_reason || null,
     lost_reason: learningForm.lost_reason || null,
     price_feedback: learningForm.price_feedback || null,
     delivery_feedback: learningForm.delivery_feedback || null,
     product_dimensions: productDimensions,
+    product_factors: productFactors,
+    partner_factors: partnerFactors,
+    outcome_source_type: 'quote',
+    outcome_source_id: quote.value?.id || null,
     next_action: learningForm.next_action || null,
     owner: learningForm.owner || null,
     follow_up_date: learningForm.follow_up_date || null,
@@ -338,10 +373,14 @@ function resetLearningForm() {
   learningForm.customer_feedback = ''
   learningForm.customer_objection = ''
   learningForm.competitor_signal = ''
+  learningForm.reason_category = 'unknown'
+  learningForm.customer_decision_factors_text = 'price, delivery, certification'
   learningForm.won_reason = ''
   learningForm.lost_reason = ''
   learningForm.price_feedback = ''
   learningForm.delivery_feedback = ''
+  learningForm.product_factors_text = 'load, stability, noise, packaging, warranty, certification'
+  learningForm.partner_factors_text = 'partner capacity, delivery support, certification support'
   learningForm.next_action = ''
 }
 
@@ -637,18 +676,49 @@ onMounted(load)
           </div>
           <p v-if="latestLearning.customer_feedback">客户反馈：{{ latestLearning.customer_feedback }}</p>
           <p v-if="latestLearning.customer_objection">客户异议：{{ latestLearning.customer_objection }}</p>
+          <p v-if="latestLearning.reason_category">原因分类：{{ latestLearning.reason_category }}</p>
           <p v-if="latestLearning.won_reason">赢单原因：{{ latestLearning.won_reason }}</p>
           <p v-if="latestLearning.lost_reason">丢单原因：{{ latestLearning.lost_reason }}</p>
           <p v-if="latestLearning.next_action">下一步：{{ latestLearning.next_action }}</p>
           <div class="mt">
             <el-tag
+              v-for="factor in latestLearning.customer_decision_factors"
+              :key="`decision-${factor}`"
+              size="small"
+              type="success"
+              effect="plain"
+              class="mr"
+            >
+              {{ factor }}
+            </el-tag>
+            <el-tag
               v-for="dimension in latestLearning.product_dimensions"
-              :key="dimension"
+              :key="`dimension-${dimension}`"
               size="small"
               effect="plain"
               class="mr"
             >
               {{ dimension }}
+            </el-tag>
+            <el-tag
+              v-for="factor in latestLearning.product_factors"
+              :key="`product-${factor}`"
+              size="small"
+              type="warning"
+              effect="plain"
+              class="mr"
+            >
+              {{ factor }}
+            </el-tag>
+            <el-tag
+              v-for="factor in latestLearning.partner_factors"
+              :key="`partner-${factor}`"
+              size="small"
+              type="info"
+              effect="plain"
+              class="mr"
+            >
+              {{ factor }}
             </el-tag>
           </div>
           <el-button
@@ -670,6 +740,16 @@ onMounted(load)
               <el-option v-for="option in outcomeOptions" :key="option.value" :label="option.label" :value="option.value" />
             </el-select>
           </el-form-item>
+          <el-form-item label="原因分类">
+            <el-select v-model="learningForm.reason_category" style="width: 260px">
+              <el-option
+                v-for="option in reasonCategoryOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </el-select>
+          </el-form-item>
           <el-form-item label="客户反馈">
             <el-input v-model="learningForm.customer_feedback" type="textarea" :rows="2" placeholder="记录客户原始反馈摘要，不写成本/利润/供应商私密信息。" />
           </el-form-item>
@@ -678,6 +758,9 @@ onMounted(load)
           </el-form-item>
           <el-form-item label="竞争情况">
             <el-input v-model="learningForm.competitor_signal" type="textarea" :rows="2" placeholder="只记录人工确认过的竞争信号；未知则留空。" />
+          </el-form-item>
+          <el-form-item label="客户决策因素">
+            <el-input v-model="learningForm.customer_decision_factors_text" placeholder="price, delivery, certification, timing, relationship..." />
           </el-form-item>
           <el-form-item label="赢单 / 丢单原因">
             <div class="grid-two">
@@ -693,6 +776,12 @@ onMounted(load)
           </el-form-item>
           <el-form-item label="产品维度">
             <el-input v-model="learningForm.product_dimensions_text" placeholder="load, stability, noise, warranty, certification, delivery..." />
+          </el-form-item>
+          <el-form-item label="产品 / Partner 因素">
+            <div class="grid-two">
+              <el-input v-model="learningForm.product_factors_text" placeholder="HOSUN: load, stability, packaging; JOOBOO: durability, classroom deployment..." />
+              <el-input v-model="learningForm.partner_factors_text" placeholder="partner capacity, delivery support, certification support, after-sales..." />
+            </div>
           </el-form-item>
           <el-form-item label="下一步 / Owner">
             <div class="grid-two">
@@ -717,6 +806,7 @@ onMounted(load)
         <div v-if="learningLoading" v-loading="true" style="min-height: 80px" />
         <el-table v-else-if="learningRecords.length" :data="learningRecords" stripe class="mt">
           <el-table-column prop="outcome_status" label="结果" width="130" />
+          <el-table-column prop="reason_category" label="原因分类" width="140" />
           <el-table-column prop="customer_objection" label="异议 / 反馈" />
           <el-table-column prop="next_action" label="下一步" />
           <el-table-column prop="owner" label="Owner" width="140" />

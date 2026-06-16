@@ -157,12 +157,18 @@ def test_quote_learning_records_manual_outcome_without_status_change(quote_clien
             "customer_feedback": "Customer asked for clearer load and warranty wording.",
             "customer_objection": "Needs validation before customer-visible use.",
             "competitor_signal": None,
+            "reason_category": "certification",
+            "customer_decision_factors": ["certification", "warranty"],
             "won_reason": None,
             "lost_reason": None,
             "price_feedback": None,
             "delivery_feedback": None,
             "product_feedback": {},
             "product_dimensions": ["load", "noise", "warranty", "certification"],
+            "product_factors": ["load", "noise", "certification"],
+            "partner_factors": ["certification support"],
+            "outcome_source_type": "quote",
+            "outcome_source_id": str(quote_id),
             "next_action": "Update quote wording manually.",
             "owner": "sales",
             "follow_up_date": None,
@@ -189,7 +195,13 @@ def test_quote_learning_records_manual_outcome_without_status_change(quote_clien
         json={
             "outcome_status": "revision_requested",
             "customer_feedback": "Customer asked for clearer load and warranty wording.",
+            "reason_category": "certification",
+            "customer_decision_factors": ["certification", "warranty"],
             "product_dimensions": ["load", "noise", "warranty", "certification"],
+            "product_factors": ["load", "noise", "certification"],
+            "partner_factors": ["certification support"],
+            "outcome_source_type": "quote",
+            "outcome_source_id": str(quote_id),
             "affects_product_intelligence": True,
             "affects_market_response": True,
         },
@@ -198,6 +210,10 @@ def test_quote_learning_records_manual_outcome_without_status_change(quote_clien
     assert r.status_code == 201
     body = r.json()["data"]
     assert body["outcome_status"] == "revision_requested"
+    assert body["reason_category"] == "certification"
+    assert body["customer_decision_factors"] == ["certification", "warranty"]
+    assert body["product_factors"] == ["load", "noise", "certification"]
+    assert body["partner_factors"] == ["certification support"]
     assert body["safety"]["external_message_sent"] is False
     assert body["safety"]["quote_status_changed"] is False
     assert body["safety"]["order_status_changed"] is False

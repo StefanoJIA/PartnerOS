@@ -140,7 +140,7 @@ def _visibility_class(row: QuoteLearningRecord) -> str:
 
 
 def _priority(row: QuoteLearningRecord) -> str:
-    dimensions = {item.lower() for item in row.product_dimensions or []}
+    dimensions = {item.lower() for item in [*(row.product_dimensions or []), *(row.product_factors or [])]}
     if row.outcome_status == "lost":
         return "P1"
     if {"load", "noise", "warranty", "certification", "delivery consistency"} & dimensions:
@@ -344,12 +344,18 @@ def quote_learning_to_dict(row: QuoteLearningRecord) -> dict[str, Any]:
         "customer_feedback": row.customer_feedback,
         "customer_objection": row.customer_objection,
         "competitor_signal": row.competitor_signal,
+        "reason_category": row.reason_category,
+        "customer_decision_factors": row.customer_decision_factors or [],
         "won_reason": row.won_reason,
         "lost_reason": row.lost_reason,
         "price_feedback": row.price_feedback,
         "delivery_feedback": row.delivery_feedback,
         "product_feedback": row.product_feedback or {},
         "product_dimensions": row.product_dimensions or [],
+        "product_factors": row.product_factors or [],
+        "partner_factors": row.partner_factors or [],
+        "outcome_source_type": row.outcome_source_type,
+        "outcome_source_id": str(row.outcome_source_id) if row.outcome_source_id else None,
         "next_action": row.next_action,
         "owner": row.owner,
         "follow_up_date": str(row.follow_up_date) if row.follow_up_date else None,
@@ -396,11 +402,15 @@ def create_quote_learning(
         body.customer_feedback,
         body.customer_objection,
         body.competitor_signal,
+        body.reason_category,
         body.won_reason,
         body.lost_reason,
         body.price_feedback,
         body.delivery_feedback,
         body.next_action,
+        " ".join(body.customer_decision_factors or []),
+        " ".join(body.product_factors or []),
+        " ".join(body.partner_factors or []),
     )
     row = QuoteLearningRecord(
         quote_id=quote_id,
@@ -409,12 +419,18 @@ def create_quote_learning(
         customer_feedback=body.customer_feedback,
         customer_objection=body.customer_objection,
         competitor_signal=body.competitor_signal,
+        reason_category=body.reason_category,
+        customer_decision_factors=body.customer_decision_factors,
         won_reason=body.won_reason,
         lost_reason=body.lost_reason,
         price_feedback=body.price_feedback,
         delivery_feedback=body.delivery_feedback,
         product_feedback=body.product_feedback,
         product_dimensions=body.product_dimensions,
+        product_factors=body.product_factors,
+        partner_factors=body.partner_factors,
+        outcome_source_type=body.outcome_source_type,
+        outcome_source_id=body.outcome_source_id,
         next_action=body.next_action,
         owner=body.owner,
         follow_up_date=body.follow_up_date,
@@ -454,11 +470,15 @@ def update_quote_learning(
         values.get("customer_feedback"),
         values.get("customer_objection"),
         values.get("competitor_signal"),
+        values.get("reason_category"),
         values.get("won_reason"),
         values.get("lost_reason"),
         values.get("price_feedback"),
         values.get("delivery_feedback"),
         values.get("next_action"),
+        " ".join(values.get("customer_decision_factors") or []),
+        " ".join(values.get("product_factors") or []),
+        " ".join(values.get("partner_factors") or []),
     )
     for key, value in values.items():
         setattr(row, key, value)

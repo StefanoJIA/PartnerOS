@@ -34,12 +34,18 @@ export interface QuoteLearningRecord {
   customer_feedback: string | null
   customer_objection: string | null
   competitor_signal: string | null
+  reason_category: string | null
+  customer_decision_factors: string[]
   won_reason: string | null
   lost_reason: string | null
   price_feedback: string | null
   delivery_feedback: string | null
   product_feedback: Record<string, unknown>
   product_dimensions: string[]
+  product_factors: string[]
+  partner_factors: string[]
+  outcome_source_type: string
+  outcome_source_id: string | null
   next_action: string | null
   owner: string | null
   follow_up_date: string | null
@@ -58,12 +64,18 @@ export interface QuoteLearningPayload {
   customer_feedback?: string | null
   customer_objection?: string | null
   competitor_signal?: string | null
+  reason_category?: string | null
+  customer_decision_factors?: string[]
   won_reason?: string | null
   lost_reason?: string | null
   price_feedback?: string | null
   delivery_feedback?: string | null
   product_feedback?: Record<string, unknown> | null
   product_dimensions?: string[]
+  product_factors?: string[]
+  partner_factors?: string[]
+  outcome_source_type?: string
+  outcome_source_id?: string | null
   next_action?: string | null
   owner?: string | null
   follow_up_date?: string | null

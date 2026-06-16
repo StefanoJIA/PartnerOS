@@ -340,6 +340,12 @@ export interface GrowthOpportunityRow {
   status: string
   status_label: string
   expected_close_date: string | null
+  outcome_status: string | null
+  outcome_reason_category: string | null
+  customer_decision_factors: string[]
+  product_factors: string[]
+  partner_factors: string[]
+  outcome_recorded_at: string | null
   won_reason: string | null
   lost_reason: string | null
   notes: string | null
@@ -393,6 +399,7 @@ export interface WinLossRecord {
   source_type: string
   source_id: string
   outcome: string
+  reason_category?: string | null
   customer: string | null
   opportunity_name: string | null
   quote_number?: string | null
@@ -401,6 +408,8 @@ export interface WinLossRecord {
   commercial_value: string | null
   competitor_signal: string | null
   customer_decision_factors: string[]
+  product_factors?: string[]
+  partner_factors?: string[]
   won_reason: string | null
   lost_reason: string | null
   commercial_lesson: string
@@ -428,11 +437,14 @@ export interface WinLossIntelligence {
 
 export interface OpportunityWinLossPayload {
   outcome: string
+  reason_category?: string | null
   won_reason?: string | null
   lost_reason?: string | null
   competitor_signal?: string | null
   customer_decision_factors?: string[]
   product_dimensions?: string[]
+  product_factors?: string[]
+  partner_factors?: string[]
   partner_focus?: string | null
   product_focus?: string[] | null
   next_action?: string | null

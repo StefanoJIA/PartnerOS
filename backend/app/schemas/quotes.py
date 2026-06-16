@@ -127,9 +127,37 @@ QUOTE_LEARNING_OUTCOMES = {
     "revision_requested",
     "won",
     "lost",
+    "no_response",
+    "deferred",
+    "still_active",
     "no_decision",
     "on_hold",
 }
+
+WIN_LOSS_REASON_CATEGORIES = {
+    "price",
+    "delivery",
+    "certification",
+    "product_fit",
+    "partner_capacity",
+    "customer_budget",
+    "competitor",
+    "timing",
+    "relationship",
+    "unknown",
+}
+
+
+def _normalize_labels(value: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for item in value or []:
+        label = item.strip()
+        key = label.lower()
+        if label and key not in seen:
+            seen.add(key)
+            result.append(label)
+    return result[:20]
 
 
 class QuoteLearningRecordIn(BaseModel):
@@ -138,12 +166,18 @@ class QuoteLearningRecordIn(BaseModel):
     customer_feedback: str | None = None
     customer_objection: str | None = None
     competitor_signal: str | None = None
+    reason_category: str | None = None
+    customer_decision_factors: list[str] = Field(default_factory=list)
     won_reason: str | None = None
     lost_reason: str | None = None
     price_feedback: str | None = None
     delivery_feedback: str | None = None
     product_feedback: dict[str, Any] | None = None
     product_dimensions: list[str] = Field(default_factory=list)
+    product_factors: list[str] = Field(default_factory=list)
+    partner_factors: list[str] = Field(default_factory=list)
+    outcome_source_type: str = "quote"
+    outcome_source_id: UUID | None = None
     next_action: str | None = None
     owner: str | None = None
     follow_up_date: date | None = None
@@ -159,18 +193,17 @@ class QuoteLearningRecordIn(BaseModel):
             raise ValueError(f"outcome_status must be one of {sorted(QUOTE_LEARNING_OUTCOMES)}")
         return value
 
-    @field_validator("product_dimensions")
+    @field_validator("reason_category")
+    @classmethod
+    def valid_reason_category(cls, value: str | None) -> str | None:
+        if value is not None and value not in WIN_LOSS_REASON_CATEGORIES:
+            raise ValueError(f"reason_category must be one of {sorted(WIN_LOSS_REASON_CATEGORIES)}")
+        return value
+
+    @field_validator("product_dimensions", "customer_decision_factors", "product_factors", "partner_factors")
     @classmethod
     def normalize_dimensions(cls, value: list[str]) -> list[str]:
-        seen: set[str] = set()
-        result: list[str] = []
-        for item in value:
-            label = item.strip()
-            key = label.lower()
-            if label and key not in seen:
-                seen.add(key)
-                result.append(label)
-        return result[:20]
+        return _normalize_labels(value)
 
 
 class QuoteLearningRecordUpdate(BaseModel):
@@ -179,12 +212,18 @@ class QuoteLearningRecordUpdate(BaseModel):
     customer_feedback: str | None = None
     customer_objection: str | None = None
     competitor_signal: str | None = None
+    reason_category: str | None = None
+    customer_decision_factors: list[str] | None = None
     won_reason: str | None = None
     lost_reason: str | None = None
     price_feedback: str | None = None
     delivery_feedback: str | None = None
     product_feedback: dict[str, Any] | None = None
     product_dimensions: list[str] | None = None
+    product_factors: list[str] | None = None
+    partner_factors: list[str] | None = None
+    outcome_source_type: str | None = None
+    outcome_source_id: UUID | None = None
     next_action: str | None = None
     owner: str | None = None
     follow_up_date: date | None = None
@@ -199,3 +238,17 @@ class QuoteLearningRecordUpdate(BaseModel):
         if value is not None and value not in QUOTE_LEARNING_OUTCOMES:
             raise ValueError(f"outcome_status must be one of {sorted(QUOTE_LEARNING_OUTCOMES)}")
         return value
+
+    @field_validator("reason_category")
+    @classmethod
+    def valid_update_reason_category(cls, value: str | None) -> str | None:
+        if value is not None and value not in WIN_LOSS_REASON_CATEGORIES:
+            raise ValueError(f"reason_category must be one of {sorted(WIN_LOSS_REASON_CATEGORIES)}")
+        return value
+
+    @field_validator("product_dimensions", "customer_decision_factors", "product_factors", "partner_factors")
+    @classmethod
+    def normalize_update_dimensions(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            return None
+        return _normalize_labels(value)

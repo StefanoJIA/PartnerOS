@@ -380,18 +380,30 @@
             </el-select>
             <div class="grid gap-2 sm:grid-cols-2">
               <el-select v-model="winLossForm.outcome" placeholder="结果">
-                <el-option label="已成交" value="won" />
-                <el-option label="已丢单" value="lost" />
-                <el-option label="无决策" value="no_decision" />
-                <el-option label="暂停" value="on_hold" />
+                <el-option
+                  v-for="option in winLossOutcomeOptions"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
+                />
               </el-select>
-              <el-input v-model="winLossForm.owner" placeholder="Owner" />
+              <el-select v-model="winLossForm.reason_category" placeholder="原因分类">
+                <el-option
+                  v-for="option in winLossReasonCategoryOptions"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
+                />
+              </el-select>
             </div>
+            <el-input v-model="winLossForm.owner" placeholder="Owner" />
             <el-input v-model="winLossForm.won_reason" type="textarea" :rows="2" placeholder="成交原因：客户为什么选择我们" />
             <el-input v-model="winLossForm.lost_reason" type="textarea" :rows="2" placeholder="丢单原因：客户为什么没有选择我们" />
             <el-input v-model="winLossForm.competitor_signal" type="textarea" :rows="2" placeholder="竞争对手 / 替代方案 / 客户比较方式" />
             <el-input v-model="winLossForm.customer_decision_factors_text" placeholder="客户决策因素，逗号分隔：价格、交期、认证、安装、质保..." />
             <el-input v-model="winLossForm.product_dimensions_text" placeholder="产品维度，逗号分隔：load, noise, warranty, delivery consistency..." />
+            <el-input v-model="winLossForm.product_factors_text" placeholder="产品因素：HOSUN load/noise/certification；JOOBOO durability/procurement cycle..." />
+            <el-input v-model="winLossForm.partner_factors_text" placeholder="Partner 因素：partner capacity, delivery support, after-sales, certification support..." />
             <el-input v-model="winLossForm.next_action" type="textarea" :rows="2" placeholder="下一步：复盘报价、更新产品话术、沉淀 Partner 经验等" />
             <el-button type="primary" :loading="savingWinLoss" :disabled="!winLossForm.opportunity_id" @click="saveWinLoss">
               保存 Win/Loss 记录
@@ -413,6 +425,7 @@
                   </div>
                   <div class="mt-1 font-medium text-slate-800">{{ row.customer || row.opportunity_name || row.quote_number }}</div>
                   <div class="mt-1 text-xs text-slate-500">{{ row.partner_focus || 'future partner' }}</div>
+                  <div class="mt-1 text-xs text-slate-500">原因分类：{{ row.reason_category || 'unknown' }}</div>
                 </template>
               </el-table-column>
               <el-table-column label="商业经验" min-width="340">
@@ -421,6 +434,12 @@
                   <p class="mt-1 text-xs text-slate-600">竞争：{{ row.competitor_signal || '未记录' }}</p>
                   <div class="mt-1 flex flex-wrap gap-1">
                     <el-tag v-for="item in row.customer_decision_factors.slice(0, 5)" :key="item" size="small" effect="plain">
+                      {{ item }}
+                    </el-tag>
+                    <el-tag v-for="item in (row.product_factors || []).slice(0, 4)" :key="`product-${item}`" size="small" type="warning" effect="plain">
+                      {{ item }}
+                    </el-tag>
+                    <el-tag v-for="item in (row.partner_factors || []).slice(0, 4)" :key="`partner-${item}`" size="small" type="info" effect="plain">
                       {{ item }}
                     </el-tag>
                   </div>
@@ -724,14 +743,38 @@ const opportunityForm = ref({
 const winLossForm = ref({
   opportunity_id: '',
   outcome: 'won',
+  reason_category: 'unknown',
   won_reason: '',
   lost_reason: '',
   competitor_signal: '',
   customer_decision_factors_text: 'price, delivery, certification',
   product_dimensions_text: 'load, stability, noise, warranty, delivery',
+  product_factors_text: 'load, stability, noise, packaging, warranty, certification',
+  partner_factors_text: 'partner capacity, delivery support, certification support',
   next_action: '把本次结果沉淀到报价话术、产品维度和 Partner 选择判断。',
   owner: '业务负责人',
 })
+
+const winLossOutcomeOptions = [
+  { value: 'won', label: '已成交' },
+  { value: 'lost', label: '已丢单' },
+  { value: 'no_response', label: '无回应' },
+  { value: 'deferred', label: '延期决策' },
+  { value: 'still_active', label: '仍在推进' },
+]
+
+const winLossReasonCategoryOptions = [
+  { value: 'price', label: '价格 / 价值解释' },
+  { value: 'delivery', label: '交期 / 交付' },
+  { value: 'certification', label: '认证 / 技术资料' },
+  { value: 'product_fit', label: '产品匹配' },
+  { value: 'partner_capacity', label: 'Partner 承接能力' },
+  { value: 'customer_budget', label: '客户预算' },
+  { value: 'competitor', label: '竞争因素' },
+  { value: 'timing', label: '采购时机' },
+  { value: 'relationship', label: '客户关系' },
+  { value: 'unknown', label: '未知 / 待确认' },
+]
 
 const selectedSequence = computed<GrowthOutreachSequence | null>(() => {
   if (!data.value) return null
@@ -992,11 +1035,14 @@ async function saveWinLoss() {
     const selected = opportunities.value.find((row) => row.id === winLossForm.value.opportunity_id)
     await recordOpportunityWinLoss(winLossForm.value.opportunity_id, {
       outcome: winLossForm.value.outcome,
+      reason_category: winLossForm.value.reason_category || 'unknown',
       won_reason: winLossForm.value.won_reason || null,
       lost_reason: winLossForm.value.lost_reason || null,
       competitor_signal: winLossForm.value.competitor_signal || null,
       customer_decision_factors: splitLabels(winLossForm.value.customer_decision_factors_text),
       product_dimensions: splitLabels(winLossForm.value.product_dimensions_text),
+      product_factors: splitLabels(winLossForm.value.product_factors_text),
+      partner_factors: splitLabels(winLossForm.value.partner_factors_text),
       partner_focus: selected?.partner_focus || null,
       product_focus: selected?.product_focus || null,
       next_action: winLossForm.value.next_action || null,
@@ -1053,6 +1099,9 @@ function sourceLabel(sourceType: string) {
 function outcomeLabel(outcome: string) {
   if (outcome === 'won') return '赢单'
   if (outcome === 'lost') return '丢单'
+  if (outcome === 'no_response') return '无回应'
+  if (outcome === 'deferred') return '延期'
+  if (outcome === 'still_active') return '仍在推进'
   if (outcome === 'no_decision') return '无决策'
   if (outcome === 'on_hold') return '暂停'
   return outcome

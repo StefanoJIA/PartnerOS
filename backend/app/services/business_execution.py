@@ -826,7 +826,27 @@ def build_company_execution_context(db: Session, company_id: str, user: User | N
 
 def _build_opportunities(db: Session) -> list[OpportunityPipelineItem]:
     items: list[OpportunityPipelineItem] = []
-    opportunity_rows = db.query(SalesOpportunity).order_by(SalesOpportunity.probability.desc(), SalesOpportunity.updated_at.desc()).limit(20).all()
+    high_probability_rows = (
+        db.query(SalesOpportunity)
+        .order_by(SalesOpportunity.probability.desc(), SalesOpportunity.updated_at.desc())
+        .limit(20)
+        .all()
+    )
+    recent_outcome_rows = (
+        db.query(SalesOpportunity)
+        .filter(SalesOpportunity.outcome_status.isnot(None))
+        .order_by(SalesOpportunity.outcome_recorded_at.desc().nullslast(), SalesOpportunity.updated_at.desc())
+        .limit(20)
+        .all()
+    )
+    opportunity_rows: list[SalesOpportunity] = []
+    seen_opportunity_ids: set[str] = set()
+    for row in [*recent_outcome_rows, *high_probability_rows]:
+        row_id = str(row.id)
+        if row_id in seen_opportunity_ids:
+            continue
+        seen_opportunity_ids.add(row_id)
+        opportunity_rows.append(row)
     for row in opportunity_rows:
         company = row.company
         partner_fit_recommendations = build_opportunity_partner_fit_recommendations(db, row, limit=1)
@@ -1571,6 +1591,7 @@ def build_win_loss_intelligence(db: Session, limit: int = 80) -> dict[str, objec
         .filter(
             (SalesOpportunity.status.in_(["won", "lost", "closed_won", "closed_lost"]))
             | (SalesOpportunity.decision_stage.in_(["won", "lost"]))
+            | (SalesOpportunity.outcome_status.isnot(None))
             | (SalesOpportunity.won_reason.isnot(None))
             | (SalesOpportunity.lost_reason.isnot(None))
         )
@@ -1579,17 +1600,20 @@ def build_win_loss_intelligence(db: Session, limit: int = 80) -> dict[str, objec
         .all()
     )
     for row in opportunities:
-        outcome = "won" if "won" in row.status or row.decision_stage == "won" else "lost"
+        outcome = row.outcome_status or ("won" if "won" in row.status or row.decision_stage == "won" else "lost")
         reason = row.won_reason if outcome == "won" else row.lost_reason
         company = row.company
         product_focus = row.product_focus or _product_focus_from_text(row.opportunity_name, row.risk, row.notes)
-        reason_category = _win_loss_reason_category(reason, row.risk, row.notes, row.competition)
+        reason_category = row.outcome_reason_category or _win_loss_reason_category(reason, row.risk, row.notes, row.competition)
         decision_factors = _merge_unique(
             [
                 reason or "reason not recorded",
                 row.competition or "",
                 row.risk or "",
                 row.notes or "",
+                *(row.customer_decision_factors or []),
+                *(row.product_factors or []),
+                *(row.partner_factors or []),
                 *product_focus,
             ],
             limit=10,
@@ -1608,6 +1632,9 @@ def build_win_loss_intelligence(db: Session, limit: int = 80) -> dict[str, objec
                 "commercial_amount": _decimal_to_float(row.estimated_value),
                 "reason_category": reason_category,
                 "decision_factors": decision_factors,
+                "customer_decision_factors": row.customer_decision_factors or [],
+                "product_factors": row.product_factors or [],
+                "partner_factors": row.partner_factors or [],
                 "competitor_signal": row.competition or "competitor not recorded",
                 "commercial_lesson": reason or "Record why this opportunity was won or lost.",
                 "next_quote_guidance": _win_loss_next_quote_guidance(outcome, reason_category, product_focus),
@@ -1620,7 +1647,11 @@ def build_win_loss_intelligence(db: Session, limit: int = 80) -> dict[str, objec
 
     learning_rows = (
         db.query(QuoteLearningRecord)
-        .filter(QuoteLearningRecord.outcome_status.in_(["won", "lost", "no_decision", "on_hold"]))
+        .filter(
+            QuoteLearningRecord.outcome_status.in_(
+                ["won", "lost", "no_response", "deferred", "still_active", "no_decision", "on_hold"]
+            )
+        )
         .order_by(QuoteLearningRecord.updated_at.desc(), QuoteLearningRecord.created_at.desc())
         .limit(200)
         .all()
@@ -1633,7 +1664,7 @@ def build_win_loss_intelligence(db: Session, limit: int = 80) -> dict[str, objec
         reason = learning.won_reason if learning.outcome_status == "won" else learning.lost_reason
         product_focus = _quote_product_focus(quote)
         partner_focus = ", ".join(_quote_partner_names(db, quote)) or _partner_focus_from_text(*product_focus)
-        reason_category = _win_loss_reason_category(
+        reason_category = learning.reason_category or _win_loss_reason_category(
             reason,
             learning.customer_objection,
             learning.competitor_signal,
@@ -1649,6 +1680,9 @@ def build_win_loss_intelligence(db: Session, limit: int = 80) -> dict[str, objec
                 learning.price_feedback or "",
                 learning.delivery_feedback or "",
                 *(learning.product_dimensions or []),
+                *(learning.customer_decision_factors or []),
+                *(learning.product_factors or []),
+                *(learning.partner_factors or []),
                 *product_focus,
             ],
             limit=10,
@@ -1668,6 +1702,9 @@ def build_win_loss_intelligence(db: Session, limit: int = 80) -> dict[str, objec
                 "commercial_amount": _decimal_to_float(quote.grand_total),
                 "reason_category": reason_category,
                 "decision_factors": decision_factors,
+                "customer_decision_factors": learning.customer_decision_factors or [],
+                "product_factors": learning.product_factors or [],
+                "partner_factors": learning.partner_factors or [],
                 "competitor_signal": learning.competitor_signal or "competitor not recorded",
                 "commercial_lesson": reason or "Record customer decision reason before using this as commercial learning.",
                 "next_quote_guidance": _win_loss_next_quote_guidance(learning.outcome_status, reason_category, product_focus),
@@ -2370,6 +2407,11 @@ def build_customer_value_detail(db: Session, company_id: str) -> dict[str, objec
             ),
             "partner_focus": opportunity.partner_focus,
             "product_focus": opportunity.product_focus or [],
+            "outcome_status": opportunity.outcome_status,
+            "reason_category": opportunity.outcome_reason_category,
+            "customer_decision_factors": opportunity.customer_decision_factors or [],
+            "product_factors": opportunity.product_factors or [],
+            "partner_factors": opportunity.partner_factors or [],
             "risk": opportunity.risk,
             "blocker": opportunity.blocker,
             "next_action": opportunity.next_action,
@@ -2394,9 +2436,28 @@ def build_customer_value_detail(db: Session, company_id: str) -> dict[str, objec
             *[record.won_reason or "" for record in learning_records if record.outcome_status == "won"],
             *[record.lost_reason or "" for record in learning_records if record.outcome_status == "lost"],
             *[record.customer_objection or "" for record in learning_records],
+            *[", ".join(record.customer_decision_factors or []) for record in learning_records],
+            *[", ".join(record.product_factors or []) for record in learning_records],
+            *[", ".join(record.partner_factors or []) for record in learning_records],
             *[record.next_action or "" for record in learning_records],
         ],
         limit=10,
+    )
+    structured_factors = _merge_unique(
+        [
+            *[factor for record in learning_records for factor in (record.customer_decision_factors or [])],
+            *[factor for record in learning_records for factor in (record.product_factors or [])],
+            *[factor for opportunity in opportunities for factor in (opportunity.customer_decision_factors or [])],
+            *[factor for opportunity in opportunities for factor in (opportunity.product_factors or [])],
+        ],
+        limit=16,
+    )
+    partner_factors = _merge_unique(
+        [
+            *[factor for record in learning_records for factor in (record.partner_factors or [])],
+            *[factor for opportunity in opportunities for factor in (opportunity.partner_factors or [])],
+        ],
+        limit=16,
     )
     detail_summary = {
         "value_tier": profile.get("value_tier"),
@@ -2432,6 +2493,12 @@ def build_customer_value_detail(db: Session, company_id: str) -> dict[str, objec
         "win_loss_learning": {
             "won": len([record for record in learning_records if record.outcome_status == "won"]),
             "lost": len([record for record in learning_records if record.outcome_status == "lost"]),
+            "no_response": len([record for record in learning_records if record.outcome_status in {"no_response", "no_decision"}]),
+            "deferred": len([record for record in learning_records if record.outcome_status in {"deferred", "on_hold"}]),
+            "still_active": len([record for record in learning_records if record.outcome_status == "still_active"]),
+            "reason_categories": _merge_unique([record.reason_category or "" for record in learning_records], limit=12),
+            "decision_factors": structured_factors,
+            "partner_factors": partner_factors,
             "lessons": lessons,
         },
         "related_account": {

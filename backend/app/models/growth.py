@@ -1,9 +1,9 @@
 import uuid
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import Date, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -94,6 +94,12 @@ class SalesOpportunity(Base, TimestampMixin, UserAuditMixin):
     blocker: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="open", index=True)
     expected_close_date: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
+    outcome_status: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
+    outcome_reason_category: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    customer_decision_factors: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
+    product_factors: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
+    partner_factors: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
+    outcome_recorded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     won_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     lost_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
