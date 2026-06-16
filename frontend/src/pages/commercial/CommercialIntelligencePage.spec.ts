@@ -10,6 +10,7 @@ import {
   fetchAccount360Intelligence,
   fetchBusinessExecution,
   fetchCustomerValueIntelligence,
+  fetchPartnerPerformanceDetail,
   fetchPartnerPerformanceIntelligence,
   fetchProductMarketFitFactorDetail,
   fetchProductMarketFitIntelligence,
@@ -19,6 +20,7 @@ import {
   type Account360Intelligence,
   type BusinessExecution,
   type CustomerValueIntelligence,
+  type PartnerPerformanceDetail,
   type PartnerPerformanceIntelligence,
   type ProductMarketFitFactorDetail,
   type ProductMarketFitIntelligence,
@@ -37,6 +39,7 @@ vi.mock('@/api/dashboard', () => ({
   fetchAccount360Intelligence: vi.fn(),
   fetchBusinessExecution: vi.fn(),
   fetchCustomerValueIntelligence: vi.fn(),
+  fetchPartnerPerformanceDetail: vi.fn(),
   fetchPartnerPerformanceIntelligence: vi.fn(),
   fetchProductMarketFitFactorDetail: vi.fn(),
   fetchProductMarketFitIntelligence: vi.fn(),
@@ -421,6 +424,85 @@ const partnerPerformancePayload = {
   safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
 } as unknown as PartnerPerformanceIntelligence
 
+const partnerPerformanceDetailPayload = {
+  partner_id: 'partner-jooboo',
+  partner_name: 'JOOBOO',
+  summary: {
+    quote_support_count: 3,
+    quote_support_amount: 100000,
+    won_quote_count: 2,
+    win_rate: 0.66,
+    order_count: 1,
+    order_amount: 90000,
+    on_time_delivery_rate: 1,
+    feedback_issue_count: 1,
+    allocation_fit: 'allocate_next_quotes',
+    pilot_fit: 'pilot_candidate',
+    investment_priority: 'P1',
+    health: 'proven_commercial_partner',
+    uses_cost_or_margin: false,
+  },
+  product_focus: ['education furniture', 'project furniture'],
+  product_line_contribution: [
+    {
+      partner_name: 'JOOBOO',
+      product_focus: 'education furniture',
+      allocation_fit: 'allocate_next_quotes',
+      pilot_fit: 'pilot_candidate',
+      win_rate: 0.66,
+      feedback_issue_count: 1,
+      next_action: 'Allocate the next matching school furniture quote.',
+    },
+  ],
+  allocation_profile: { allocation_fit: 'allocate_next_quotes', uses_cost_or_margin: false },
+  cooperation_history: { quote_lines: 4, order_lines: 2, delayed_or_blocked_orders: 0 },
+  quote_samples: [
+    {
+      quote_id: 'q-jooboo',
+      quote_number: 'Q-JOOBOO-001',
+      status: 'converted_to_order',
+      commercial_amount: 100000,
+      product_focus: ['school desks', 'school chairs'],
+      commercial_lessons: ['School procurement timing converted after delivery plan was clear.'],
+      path: '/quotes/q-jooboo',
+    },
+  ],
+  order_samples: [
+    {
+      order_id: 'o-jooboo',
+      order_number: 'SO-JOOBOO-001',
+      status: 'confirmed',
+      commercial_amount: 90000,
+      delivery_signal: 'no_delay_signal',
+      feedback_count: 1,
+      shipment_plan_count: 1,
+      path: '/orders/o-jooboo',
+    },
+  ],
+  feedback_samples: [
+    {
+      ticket_id: 'fb-jooboo',
+      subject: 'Resource pack requested after classroom deployment',
+      status: 'open',
+      priority: 'medium',
+      feedback_type: 'resource_need',
+      path: '/feedback-tickets',
+    },
+  ],
+  source_paths: ['/quotes/q-jooboo', '/orders/o-jooboo'],
+  risk_signals: ['resource pack needs review'],
+  missing_inputs: [],
+  management_questions: {
+    should_this_partner_get_next_quote: {
+      answer: 'allocate_next_quotes',
+      reason: 'Use this partner for the next matching quote allocation.',
+    },
+  },
+  next_action: 'Use this partner for the next matching quote allocation.',
+  customer_safe_boundary: 'Internal Partner Performance detail only. Do not expose cost, margin, pricing breakdown, supplier private notes, raw IDs, token values, internal scoring, internal owner notes, or unreviewed risk notes to customer Portal.',
+  safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
+} as unknown as PartnerPerformanceDetail
+
 const revenueForecastPayload = {
   summary: {
     total_forecast_amount: 220000,
@@ -480,6 +562,7 @@ describe('CommercialIntelligencePage', () => {
     vi.mocked(fetchAccount360Intelligence).mockReset()
     vi.mocked(fetchBusinessExecution).mockReset()
     vi.mocked(fetchCustomerValueIntelligence).mockReset()
+    vi.mocked(fetchPartnerPerformanceDetail).mockReset()
     vi.mocked(fetchPartnerPerformanceIntelligence).mockReset()
     vi.mocked(fetchProductMarketFitFactorDetail).mockReset()
     vi.mocked(fetchProductMarketFitIntelligence).mockReset()
@@ -491,6 +574,7 @@ describe('CommercialIntelligencePage', () => {
     vi.mocked(fetchProductMarketFitIntelligence).mockResolvedValue(pmfPayload)
     vi.mocked(fetchAccount360Intelligence).mockResolvedValue(accountPayload)
     vi.mocked(fetchCustomerValueIntelligence).mockResolvedValue(customerValuePayload)
+    vi.mocked(fetchPartnerPerformanceDetail).mockResolvedValue(partnerPerformanceDetailPayload)
     vi.mocked(fetchPartnerPerformanceIntelligence).mockResolvedValue(partnerPerformancePayload)
     vi.mocked(fetchProductMarketFitFactorDetail).mockResolvedValue(pmfFactorDetailPayload)
     vi.mocked(fetchRevenueForecastIntelligence).mockResolvedValue(revenueForecastPayload)
@@ -587,5 +671,24 @@ describe('CommercialIntelligencePage', () => {
     expect(wrapper.text()).toContain('load range after business approval')
     expect(wrapper.text()).toContain('raw test notes')
     expect(wrapper.text()).toContain('Internal Product-Market Fit factor detail only')
+  })
+
+  it('opens Partner Performance detail for allocation evidence', async () => {
+    const wrapper = mount(CommercialIntelligencePage, { global: { plugins: [ElementPlus] } })
+    await flushPromises()
+
+    await wrapper.findAll('.el-tabs__item').find((tab) => tab.text() === 'Partner Performance')?.trigger('click')
+    await flushPromises()
+    await wrapper.findAll('button').find((button) => button.text() === 'Partner performance detail')?.trigger('click')
+    await flushPromises()
+
+    expect(fetchPartnerPerformanceDetail).toHaveBeenCalledWith('JOOBOO')
+    expect(wrapper.text()).toContain('Partner Performance detail')
+    expect(wrapper.text()).toContain('Use this partner for the next matching quote allocation.')
+    expect(wrapper.text()).toContain('Product-line contribution')
+    expect(wrapper.text()).toContain('Q-JOOBOO-001')
+    expect(wrapper.text()).toContain('SO-JOOBOO-001')
+    expect(wrapper.text()).toContain('Resource pack requested after classroom deployment')
+    expect(wrapper.text()).toContain('Do not expose cost, margin, pricing breakdown, supplier private notes')
   })
 })

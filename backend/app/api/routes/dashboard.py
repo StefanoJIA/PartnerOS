@@ -30,6 +30,7 @@ from app.services.business_execution import (
     build_account_360_intelligence,
     build_business_execution_center,
     build_customer_value_intelligence,
+    build_partner_performance_detail,
     build_partner_performance_intelligence,
     build_product_market_fit_factor_detail,
     build_product_market_fit_intelligence,
@@ -117,6 +118,19 @@ def dashboard_partner_performance_intelligence(
     _: User = Depends(get_current_user),
 ):
     return build_partner_performance_intelligence(db, limit=limit)
+
+
+@router.get("/partner-performance-intelligence/detail")
+def dashboard_partner_performance_detail(
+    partner: str = Query(..., min_length=1),
+    limit: int = Query(50, ge=1, le=100),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    data = build_partner_performance_detail(db, partner=partner, limit=limit)
+    if data is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Partner Performance detail not found")
+    return data
 
 
 @router.get("/product-market-fit-intelligence")

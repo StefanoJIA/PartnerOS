@@ -743,6 +743,33 @@ export async function fetchPartnerPerformanceIntelligence(limit = 50) {
   return data
 }
 
+export interface PartnerPerformanceDetail extends Record<string, unknown> {
+  partner_id: string
+  partner_name: string
+  summary: Record<string, number | string | boolean | null>
+  product_focus: string[]
+  product_line_contribution: Array<Record<string, unknown>>
+  allocation_profile: Record<string, unknown>
+  cooperation_history: Record<string, unknown>
+  quote_samples: Array<Record<string, unknown>>
+  order_samples: Array<Record<string, unknown>>
+  feedback_samples: Array<Record<string, unknown>>
+  source_paths: string[]
+  risk_signals: string[]
+  missing_inputs: string[]
+  management_questions: Record<string, unknown>
+  next_action: string
+  customer_safe_boundary: string
+  safety: Record<string, boolean>
+}
+
+export async function fetchPartnerPerformanceDetail(partner: string, limit = 50) {
+  const { data } = await http.get<PartnerPerformanceDetail>('/dashboard/partner-performance-intelligence/detail', {
+    params: { partner, limit },
+  })
+  return data
+}
+
 export interface ProductMarketFitIntelligence {
   summary: {
     product_line_count: number

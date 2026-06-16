@@ -2950,6 +2950,227 @@ def build_partner_performance_intelligence(db: Session, limit: int = 50) -> dict
     }
 
 
+def _find_partner_performance_item(db: Session, partner: str) -> tuple[ManufacturingPartner | None, dict[str, object] | None]:
+    normalized = unquote(partner or "").strip()
+    if not normalized:
+        return None, None
+    partner_obj: ManufacturingPartner | None = None
+    try:
+        partner_obj = db.get(ManufacturingPartner, UUID(normalized))
+    except ValueError:
+        partner_obj = None
+    if partner_obj is None:
+        partner_obj = (
+            db.query(ManufacturingPartner)
+            .filter(func.lower(ManufacturingPartner.partner_name) == normalized.lower())
+            .first()
+        )
+    performance = build_partner_performance_intelligence(db, limit=200)
+    items = [item for item in performance.get("items", []) if isinstance(item, dict)]
+    if partner_obj is not None:
+        for item in items:
+            if item.get("partner_id") == str(partner_obj.id):
+                return partner_obj, item
+    for item in items:
+        name = str(item.get("partner_name") or "")
+        if normalized.lower() == name.lower() or normalized.lower() in name.lower():
+            if partner_obj is None and item.get("partner_id"):
+                try:
+                    partner_obj = db.get(ManufacturingPartner, UUID(str(item.get("partner_id"))))
+                except ValueError:
+                    partner_obj = None
+            return partner_obj, item
+    return partner_obj, None
+
+
+def build_partner_performance_detail(db: Session, partner: str, limit: int = 50) -> dict[str, object] | None:
+    partner_obj, item = _find_partner_performance_item(db, partner)
+    if item is None:
+        return None
+    partner_id = str(item.get("partner_id") or (partner_obj.id if partner_obj else ""))
+
+    quote_samples: list[dict[str, object]] = []
+    order_samples: list[dict[str, object]] = []
+    feedback_samples: list[dict[str, object]] = []
+    source_paths: list[str] = []
+
+    if partner_obj is not None:
+        quote_lines = (
+            db.query(QuoteLineItem)
+            .filter(QuoteLineItem.partner_id == partner_obj.id)
+            .order_by(QuoteLineItem.updated_at.desc())
+            .limit(300)
+            .all()
+        )
+        quotes_seen: set[object] = set()
+        for line in quote_lines:
+            quote = line.quote
+            if quote is None or quote.is_archived or quote.id in quotes_seen:
+                continue
+            company = db.get(Company, quote.company_id) if quote.company_id else None
+            learning_records = quote.learning_records or []
+            quote_samples.append(
+                {
+                    "quote_id": str(quote.id),
+                    "quote_number": quote.quote_number,
+                    "status": quote.status,
+                    "customer_name": _safe_company_name(company, quote.bill_to_company),
+                    "commercial_amount": _decimal_to_float(quote.grand_total),
+                    "product_focus": _merge_unique(
+                        [
+                            *_quote_product_focus(quote),
+                            line.product_category or "",
+                            line.product_name or "",
+                        ],
+                        limit=8,
+                    ),
+                    "learning_outcomes": _merge_unique(
+                        [
+                            learning.outcome_status
+                            for learning in learning_records
+                            if learning.outcome_status
+                        ],
+                        limit=6,
+                    ),
+                    "commercial_lessons": _merge_unique(
+                        [
+                            learning.won_reason or learning.lost_reason or learning.customer_feedback or ""
+                            for learning in learning_records
+                        ],
+                        limit=4,
+                    ),
+                    "path": f"/quotes/{quote.id}",
+                }
+            )
+            source_paths = _merge_unique([*source_paths, f"/quotes/{quote.id}"], limit=16)
+            quotes_seen.add(quote.id)
+            if len(quote_samples) >= limit:
+                break
+
+        orders = (
+            db.query(CustomerOrder)
+            .order_by(CustomerOrder.updated_at.desc())
+            .limit(300)
+            .all()
+        )
+        for order in orders:
+            partner_lines = [line for line in order.line_items if line.partner_id == partner_obj.id]
+            if not partner_lines:
+                continue
+            delayed_or_blocked = any(milestone.status in {"delayed", "blocked"} for milestone in order.production_milestones)
+            feedback_count = int(db.query(func.count(FeedbackTicket.id)).filter(FeedbackTicket.order_id == order.id).scalar() or 0)
+            order_samples.append(
+                {
+                    "order_id": str(order.id),
+                    "order_number": order.order_number,
+                    "status": order.status,
+                    "commercial_amount": _decimal_to_float(order.grand_total),
+                    "product_focus": _merge_unique(
+                        [
+                            *[line.product_category for line in partner_lines if line.product_category],
+                            *[line.product_name for line in partner_lines if line.product_name],
+                        ],
+                        limit=8,
+                    ),
+                    "delivery_signal": "delayed_or_blocked" if delayed_or_blocked else "no_delay_signal",
+                    "feedback_count": feedback_count,
+                    "shipment_plan_count": len(order.shipment_plans),
+                    "path": f"/orders/{order.id}",
+                }
+            )
+            source_paths = _merge_unique([*source_paths, f"/orders/{order.id}"], limit=16)
+            for ticket in (
+                db.query(FeedbackTicket)
+                .filter(FeedbackTicket.order_id == order.id)
+                .order_by(FeedbackTicket.updated_at.desc(), FeedbackTicket.created_at.desc())
+                .limit(6)
+                .all()
+            ):
+                feedback_samples.append(
+                    {
+                        "ticket_id": str(ticket.id),
+                        "subject": ticket.subject,
+                        "status": ticket.status,
+                        "priority": ticket.priority,
+                        "feedback_type": ticket.feedback_type,
+                        "order_number": order.order_number,
+                        "path": "/feedback-tickets",
+                    }
+                )
+            if len(order_samples) >= limit:
+                break
+
+    allocation_profile = item.get("allocation_profile") if isinstance(item.get("allocation_profile"), dict) else {}
+    cooperation_history = item.get("cooperation_history") if isinstance(item.get("cooperation_history"), dict) else {}
+    product_line_contribution = (
+        item.get("product_line_contribution")
+        if isinstance(item.get("product_line_contribution"), list)
+        else []
+    )
+    quote_support_count = int(item.get("quote_support_count") or 0)
+    order_count = int(item.get("order_count") or 0)
+    feedback_issue_count = int(item.get("feedback_issue_count") or 0)
+    win_rate = float(item.get("win_rate") or 0)
+    if item.get("allocation_fit") == "allocate_next_quotes":
+        next_action = "Use this partner for the next matching quote allocation, with manual review of delivery and feedback context."
+    elif item.get("allocation_fit") == "selective_quote_allocation":
+        next_action = "Use this partner selectively and capture quote outcome learning before expanding allocation."
+    elif feedback_issue_count or item.get("risk_signals"):
+        next_action = "Review delivery, feedback, and risk context before allocating more high-value projects."
+    else:
+        next_action = str(item.get("next_action") or item.get("recommended_action") or "Capture more quote, order, delivery, and feedback evidence.")
+
+    return {
+        "partner_id": partner_id,
+        "partner_name": item.get("partner_name") or (partner_obj.partner_name if partner_obj else partner),
+        "summary": {
+            "quote_support_count": quote_support_count,
+            "quote_support_amount": item.get("quote_support_amount") or 0,
+            "won_quote_count": item.get("won_quote_count") or 0,
+            "win_rate": win_rate,
+            "order_count": order_count,
+            "order_amount": item.get("order_amount") or 0,
+            "on_time_delivery_rate": item.get("on_time_delivery_rate"),
+            "feedback_issue_count": feedback_issue_count,
+            "allocation_fit": item.get("allocation_fit"),
+            "pilot_fit": item.get("pilot_fit"),
+            "investment_priority": item.get("investment_priority"),
+            "health": item.get("health"),
+            "uses_cost_or_margin": False,
+        },
+        "product_focus": item.get("product_focus") or [],
+        "product_line_contribution": product_line_contribution,
+        "allocation_profile": allocation_profile,
+        "cooperation_history": cooperation_history,
+        "quote_samples": quote_samples,
+        "order_samples": order_samples,
+        "feedback_samples": feedback_samples[:limit],
+        "source_paths": source_paths or [str(item.get("path") or "/partner-onboarding")],
+        "risk_signals": item.get("risk_signals") or [],
+        "missing_inputs": item.get("missing_inputs") or [],
+        "management_questions": {
+            "should_this_partner_get_next_quote": {
+                "answer": item.get("allocation_fit"),
+                "reason": next_action,
+            },
+            "where_this_partner_converts": product_line_contribution[:8],
+            "what_risk_blocks_more_allocation": item.get("risk_signals") or [],
+            "what_history_supports_decision": {
+                "quotes": quote_support_count,
+                "orders": order_count,
+                "win_rate": win_rate,
+                "feedback_issue_count": feedback_issue_count,
+            },
+        },
+        "next_action": next_action,
+        "customer_safe_boundary": (
+            "Internal Partner Performance detail only. Do not expose cost, margin, pricing breakdown, supplier private notes, "
+            "raw IDs, token values, internal scoring, internal owner notes, or unreviewed risk notes to customer Portal."
+        ),
+        "safety": _safety_flags(),
+    }
+
+
 def _build_partner_performance_intelligence(db: Session) -> list[dict[str, object]]:
     return list(build_partner_performance_intelligence(db, limit=16).get("items", []))
 

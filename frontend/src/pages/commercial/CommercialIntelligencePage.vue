@@ -273,6 +273,15 @@
               <el-table-column label="入口" width="120">
                 <template #default="{ row }">
                   <el-button size="small" link type="primary" @click="go(row.path)">打开</el-button>
+                  <el-button
+                    v-if="activeAsset === 'partner' && row.partnerKey"
+                    size="small"
+                    link
+                    type="primary"
+                    @click="openPartnerPerformance(row)"
+                  >
+                    Partner performance detail
+                  </el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -348,6 +357,101 @@
           </section>
 
           <el-alert type="warning" :closable="false" show-icon :title="accountDetail.customer_safe_boundary" />
+        </template>
+      </div>
+    </el-drawer>
+
+    <el-drawer v-model="partnerDetailVisible" title="Partner Performance detail" size="580px">
+      <div v-loading="partnerDetailLoading" class="space-y-4">
+        <el-alert v-if="partnerDetailError" type="error" :closable="false" :title="partnerDetailError" />
+        <template v-if="partnerDetail">
+          <section>
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h3 class="text-base font-semibold text-slate-900">{{ partnerDetail.partner_name }}</h3>
+                <p class="mt-1 text-sm text-slate-600">{{ partnerDetail.next_action }}</p>
+              </div>
+              <el-tag :type="priorityType(String(asRecord(partnerDetail.summary).investment_priority || 'P3'))" effect="plain">
+                {{ asRecord(partnerDetail.summary).investment_priority || 'P3' }}
+              </el-tag>
+            </div>
+          </section>
+
+          <section class="grid gap-2 sm:grid-cols-3">
+            <div class="rounded border border-slate-100 bg-slate-50 p-3">
+              <p class="text-xs text-slate-500">Quote support</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ asRecord(partnerDetail.summary).quote_support_count ?? 0 }}</p>
+            </div>
+            <div class="rounded border border-slate-100 bg-slate-50 p-3">
+              <p class="text-xs text-slate-500">Win rate</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ percent(asRecord(partnerDetail.summary).win_rate) }}</p>
+            </div>
+            <div class="rounded border border-slate-100 bg-slate-50 p-3">
+              <p class="text-xs text-slate-500">Order amount</p>
+              <p class="mt-1 text-lg font-semibold text-slate-900">{{ money(asRecord(partnerDetail.summary).order_amount) }}</p>
+            </div>
+          </section>
+
+          <section class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Allocation judgment</h4>
+            <div class="mt-2 flex flex-wrap gap-1">
+              <el-tag size="small" type="primary" effect="plain">{{ asRecord(partnerDetail.summary).allocation_fit }}</el-tag>
+              <el-tag size="small" effect="plain">{{ asRecord(partnerDetail.summary).pilot_fit }}</el-tag>
+              <el-tag size="small" type="info" effect="plain">delivery {{ asRecord(partnerDetail.summary).on_time_delivery_rate ?? 'n/a' }}</el-tag>
+              <el-tag size="small" type="warning" effect="plain">feedback {{ asRecord(partnerDetail.summary).feedback_issue_count ?? 0 }}</el-tag>
+            </div>
+            <p class="mt-2 text-sm text-slate-700">{{ String(asRecord(partnerQuestions.should_this_partner_get_next_quote).reason || partnerDetail.next_action) }}</p>
+          </section>
+
+          <section class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Product-line contribution</h4>
+            <div v-for="item in partnerProductRows.slice(0, 6)" :key="rowKey(item)" class="mt-2 rounded bg-slate-50 p-2">
+              <div class="flex flex-wrap items-center gap-1">
+                <el-tag size="small" type="success" effect="plain">{{ item.product_focus }}</el-tag>
+                <el-tag size="small" effect="plain">{{ item.allocation_fit }}</el-tag>
+                <el-tag size="small" type="info" effect="plain">win {{ percent(item.win_rate) }}</el-tag>
+              </div>
+              <p class="mt-1 text-xs text-slate-600">{{ item.next_action }}</p>
+            </div>
+          </section>
+
+          <section class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Quote / order evidence</h4>
+            <div v-for="item in partnerQuoteRows.slice(0, 4)" :key="rowKey(item)" class="mt-2 rounded bg-slate-50 p-2">
+              <div class="flex flex-wrap items-center gap-1">
+                <el-tag size="small" effect="plain">{{ item.quote_number }}</el-tag>
+                <el-tag size="small" type="info" effect="plain">{{ item.status }}</el-tag>
+                <el-tag size="small" type="success" effect="plain">{{ money(item.commercial_amount) }}</el-tag>
+              </div>
+              <p class="mt-1 text-xs text-slate-600">{{ textList(item.commercial_lessons).join(' / ') || textList(item.product_focus).join(' / ') }}</p>
+              <el-button v-if="item.path" class="mt-1" size="small" link type="primary" @click="go(String(item.path))">Open quote</el-button>
+            </div>
+            <div v-for="item in partnerOrderRows.slice(0, 4)" :key="rowKey(item)" class="mt-2 rounded bg-slate-50 p-2">
+              <div class="flex flex-wrap items-center gap-1">
+                <el-tag size="small" effect="plain">{{ item.order_number }}</el-tag>
+                <el-tag size="small" type="info" effect="plain">{{ item.status }}</el-tag>
+                <el-tag size="small" type="warning" effect="plain">{{ item.delivery_signal }}</el-tag>
+              </div>
+              <p class="mt-1 text-xs text-slate-600">Feedback {{ item.feedback_count ?? 0 }} / shipment plans {{ item.shipment_plan_count ?? 0 }}</p>
+              <el-button v-if="item.path" class="mt-1" size="small" link type="primary" @click="go(String(item.path))">Open order</el-button>
+            </div>
+          </section>
+
+          <section v-if="partnerFeedbackRows.length || partnerRiskSignals.length" class="rounded border border-slate-100 p-3">
+            <h4 class="text-sm font-semibold text-slate-900">Feedback / risk evidence</h4>
+            <div v-for="item in partnerFeedbackRows.slice(0, 5)" :key="rowKey(item)" class="mt-2 rounded bg-slate-50 p-2">
+              <div class="flex flex-wrap items-center gap-1">
+                <el-tag size="small" type="warning" effect="plain">{{ item.priority }}</el-tag>
+                <el-tag size="small" effect="plain">{{ item.status }}</el-tag>
+              </div>
+              <p class="mt-1 text-sm text-slate-800">{{ item.subject }}</p>
+            </div>
+            <ul v-if="partnerRiskSignals.length" class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+              <li v-for="item in partnerRiskSignals" :key="item">{{ item }}</li>
+            </ul>
+          </section>
+
+          <el-alert type="warning" :closable="false" show-icon :title="partnerDetail.customer_safe_boundary" />
         </template>
       </div>
     </el-drawer>
@@ -515,6 +619,7 @@ import {
   fetchAccount360Intelligence,
   fetchBusinessExecution,
   fetchCustomerValueIntelligence,
+  fetchPartnerPerformanceDetail,
   fetchPartnerPerformanceIntelligence,
   fetchProductMarketFitFactorDetail,
   fetchProductMarketFitIntelligence,
@@ -525,6 +630,7 @@ import {
   type Account360Intelligence,
   type BusinessExecution,
   type CustomerValueIntelligence,
+  type PartnerPerformanceDetail,
   type PartnerPerformanceIntelligence,
   type ProductMarketFitFactorDetail,
   type ProductMarketFitIntelligence,
@@ -556,6 +662,10 @@ const factorDetailLoading = ref(false)
 const factorDetailError = ref('')
 const customerValue = ref<CustomerValueIntelligence | null>(null)
 const partnerPerformance = ref<PartnerPerformanceIntelligence | null>(null)
+const partnerDetail = ref<PartnerPerformanceDetail | null>(null)
+const partnerDetailVisible = ref(false)
+const partnerDetailLoading = ref(false)
+const partnerDetailError = ref('')
 const revenueForecast = ref<RevenueForecastIntelligence | null>(null)
 const activeAsset = ref('account360')
 const selectedPartner = ref('')
@@ -588,6 +698,12 @@ const pmfPartnerTags = computed(() =>
 const pmfProductTags = computed(() =>
   uniqueText(asList(pmfDetail.value?.product_rollup).flatMap((item) => [item.name, item.product_focus, item.product_family])),
 )
+const partnerQuestions = computed(() => asRecord(partnerDetail.value?.management_questions))
+const partnerProductRows = computed(() => asList(partnerDetail.value?.product_line_contribution))
+const partnerQuoteRows = computed(() => asList(partnerDetail.value?.quote_samples))
+const partnerOrderRows = computed(() => asList(partnerDetail.value?.order_samples))
+const partnerFeedbackRows = computed(() => asList(partnerDetail.value?.feedback_samples))
+const partnerRiskSignals = computed(() => textList(partnerDetail.value?.risk_signals))
 const coverageTags = computed(() => {
   const coverage = asRecord(accountDetail.value?.commercial_asset_coverage)
   return [
@@ -749,6 +865,7 @@ const assetSections = computed(() => [
     label: 'Partner Performance',
     items: uniqueRows([...partnerPerformanceRows.value, ...asList(commercial.value?.partner_performance)]).map((item) => ({
       title: String(item.partner_name || item.partner_focus || 'Partner'),
+      partnerKey: String(item.partner_id || item.partner_name || item.partner_focus || ''),
       tags: textList([item.investment_priority, item.allocation_fit, item.pilot_fit, ...(Array.isArray(item.product_coverage) ? item.product_coverage : [])]),
       reason: `报价支持 ${item.quote_support_count ?? 0}，赢单率 ${percent(item.win_rate)}，订单额 ${money(item.order_amount)}。`,
       nextAction: String(item.next_allocation_action || item.next_action || '查看 Partner 绩效证据。'),
@@ -886,6 +1003,27 @@ async function openProductMarketFitFactor(item: Row) {
     pmfDetailError.value = err instanceof Error ? err.message : 'Product-Market Fit factor detail failed to load.'
   } finally {
     pmfDetailLoading.value = false
+  }
+}
+
+async function openPartnerPerformance(item: Row) {
+  const partner = String(item.partnerKey || item.partner_id || item.partner_name || item.title || '').trim()
+  if (!partner) {
+    partnerDetailError.value = 'Partner Performance key is missing.'
+    partnerDetail.value = null
+    partnerDetailVisible.value = true
+    return
+  }
+  partnerDetailVisible.value = true
+  partnerDetailLoading.value = true
+  partnerDetailError.value = ''
+  try {
+    partnerDetail.value = await fetchPartnerPerformanceDetail(partner)
+  } catch (err) {
+    partnerDetail.value = null
+    partnerDetailError.value = err instanceof Error ? err.message : 'Partner Performance detail failed to load.'
+  } finally {
+    partnerDetailLoading.value = false
   }
 }
 

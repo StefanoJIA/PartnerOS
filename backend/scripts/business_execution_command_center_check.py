@@ -972,6 +972,24 @@ def main() -> int:
                 "/api/dashboard/partner-performance-intelligence",
                 headers={"Authorization": f"Bearer {token}"},
             )
+            partner_performance_preview = (
+                partner_performance_route.json() if partner_performance_route.status_code == 200 else {}
+            )
+            first_partner_key = (
+                partner_performance_preview.get("items", [{}])[0].get("partner_id")
+                or partner_performance_preview.get("items", [{}])[0].get("partner_name")
+                if partner_performance_preview.get("items")
+                else None
+            )
+            partner_performance_detail_route = (
+                client.get(
+                    "/api/dashboard/partner-performance-intelligence/detail",
+                    params={"partner": first_partner_key},
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+                if first_partner_key
+                else None
+            )
             product_market_fit_route = client.get(
                 "/api/dashboard/product-market-fit-intelligence",
                 headers={"Authorization": f"Bearer {token}"},
@@ -1103,6 +1121,11 @@ def main() -> int:
             )
         )
         partner_performance_route_data = partner_performance_route.json() if partner_performance_route.status_code == 200 else {}
+        partner_performance_detail_data = (
+            partner_performance_detail_route.json()
+            if partner_performance_detail_route is not None and partner_performance_detail_route.status_code == 200
+            else {}
+        )
         checks.append(
             (
                 "route partner performance intelligence",
@@ -1116,6 +1139,24 @@ def main() -> int:
                     and item.get("safety", {}).get("customer_forbidden_fields_exposed") is False
                     for item in partner_performance_route_data.get("items", [])
                 ),
+            )
+        )
+        checks.append(
+            (
+                "route partner performance detail",
+                partner_performance_detail_route is not None
+                and partner_performance_detail_route.status_code == 200
+                and partner_performance_detail_data.get("partner_name")
+                and isinstance(partner_performance_detail_data.get("summary"), dict)
+                and isinstance(partner_performance_detail_data.get("allocation_profile"), dict)
+                and isinstance(partner_performance_detail_data.get("product_line_contribution"), list)
+                and isinstance(partner_performance_detail_data.get("quote_samples"), list)
+                and isinstance(partner_performance_detail_data.get("order_samples"), list)
+                and isinstance(partner_performance_detail_data.get("feedback_samples"), list)
+                and "should_this_partner_get_next_quote" in partner_performance_detail_data.get("management_questions", {})
+                and partner_performance_detail_data.get("summary", {}).get("uses_cost_or_margin") is False
+                and partner_performance_detail_data.get("safety", {}).get("external_message_sent") is False
+                and partner_performance_detail_data.get("safety", {}).get("customer_forbidden_fields_exposed") is False,
             )
         )
         product_market_fit_route_data = product_market_fit_route.json() if product_market_fit_route.status_code == 200 else {}
