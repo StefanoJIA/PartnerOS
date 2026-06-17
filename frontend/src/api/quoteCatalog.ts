@@ -42,6 +42,18 @@ export interface QuoteModelStage {
   [key: string]: unknown
 }
 
+export interface IntervalQuoteRow {
+  min_qty: number
+  max_qty: number | null
+  quantity_label: string
+  currency: string
+  fob_unit_price: string | null
+  ddp_unit_price: string | null
+  incoterms_available: string[]
+  pricing_strategies?: string[]
+  customer_visible?: boolean
+}
+
 export interface QuoteModelSnapshot {
   workflow: Array<{ step: string; workbook_sheet: string; status: string }>
   product: { id: string; name: string; category: string; family: string | null }

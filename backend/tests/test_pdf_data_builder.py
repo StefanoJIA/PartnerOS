@@ -34,7 +34,35 @@ def _quote_with_internal():
         size_dimension="48in",
         internal_cost=Decimal("50"),
         estimated_margin=Decimal("50"),
-        pricing_breakdown_json={"secret": True},
+        pricing_breakdown_json={
+            "quote_model": {
+                "final_quote_stage": {
+                    "interval_quote_table": [
+                        {
+                            "quantity_label": "1-49",
+                            "min_qty": 1,
+                            "max_qty": 49,
+                            "currency": "USD",
+                            "fob_unit_price": None,
+                            "ddp_unit_price": "180.00",
+                            "incoterms_available": ["DDP"],
+                            "tier_ids": ["internal-tier-id"],
+                            "source": "internal",
+                        },
+                        {
+                            "quantity_label": "50-99",
+                            "min_qty": 50,
+                            "max_qty": 99,
+                            "currency": "USD",
+                            "fob_unit_price": "120.00",
+                            "ddp_unit_price": "158.00",
+                            "incoterms_available": ["FOB", "DDP"],
+                        },
+                    ]
+                },
+                "internal_cost_snapshot": {"secret_cost": "50"},
+            }
+        },
     )
     quote = SimpleNamespace(
         id=quote_id,
@@ -80,6 +108,10 @@ def test_build_quote_pdf_data_excludes_internal_fields(monkeypatch):
     assert "pricing_breakdown_json" not in blob
     assert "cost_snapshot_json" not in blob
     assert data["line_items"][0]["partner"] == "Partner A"
+    assert data["line_items"][0]["interval_quote_table"][0]["quantity_label"] == "1-49"
+    assert data["line_items"][0]["interval_quote_table"][0]["ddp_unit_price"] == "180.00"
+    assert "internal-tier-id" not in json.dumps(data).lower()
+    assert "secret_cost" not in json.dumps(data).lower()
     assert data["safety"] == PDF_SAFETY
 
 

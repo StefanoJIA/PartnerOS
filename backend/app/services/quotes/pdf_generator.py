@@ -162,6 +162,35 @@ def _render_pdf_file(data: dict[str, Any], output_path: Path) -> None:
     story.append(items_table)
     story.append(Spacer(1, 16))
 
+    range_rows: list[list[Any]] = [["Product", "Quantity Range", "FOB Unit Price", "DDP Unit Price"]]
+    for li in data["line_items"]:
+        for row in li.get("interval_quote_table") or []:
+            range_rows.append(
+                [
+                    Paragraph(str(li.get("product_name") or ""), small),
+                    str(row.get("quantity_label") or ""),
+                    _money(row.get("currency") or currency, str(row.get("fob_unit_price") or "N/A")),
+                    _money(row.get("currency") or currency, str(row.get("ddp_unit_price") or "N/A")),
+                ]
+            )
+    if len(range_rows) > 1:
+        story.append(Paragraph("<b>Quantity Range Pricing</b>", title_style))
+        range_table = Table(range_rows, colWidths=[2.8 * inch, 1.2 * inch, 1.5 * inch, 1.5 * inch], repeatRows=1)
+        range_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#EEEEEE")),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 8),
+                    ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
+                ]
+            )
+        )
+        story.append(range_table)
+        story.append(Spacer(1, 16))
+
     totals = data["totals"]
     totals_rows = [
         ["Subtotal", _money(currency, totals.get("subtotal", "0"))],

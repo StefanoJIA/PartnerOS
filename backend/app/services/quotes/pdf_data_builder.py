@@ -78,7 +78,32 @@ def _line_description(line: dict[str, Any]) -> str:
     return " | ".join(parts)
 
 
+def _sanitize_interval_quote_table(line: dict[str, Any]) -> list[dict[str, Any]]:
+    pricing = line.get("pricing_breakdown_json") or {}
+    quote_model = pricing.get("quote_model") or {}
+    raw_rows = (
+        quote_model.get("final_quote_stage", {}).get("interval_quote_table")
+        or quote_model.get("pricing_stage", {}).get("interval_quote_table")
+        or []
+    )
+    safe_rows: list[dict[str, Any]] = []
+    for row in raw_rows:
+        safe_rows.append(
+            {
+                "quantity_label": row.get("quantity_label") or "",
+                "min_qty": row.get("min_qty"),
+                "max_qty": row.get("max_qty"),
+                "currency": row.get("currency") or line.get("currency") or "USD",
+                "fob_unit_price": row.get("fob_unit_price"),
+                "ddp_unit_price": row.get("ddp_unit_price"),
+                "incoterms_available": row.get("incoterms_available") or [],
+            }
+        )
+    return safe_rows
+
+
 def _sanitize_line(line: dict[str, Any], *, partner_name: str | None, export_type: str) -> dict[str, Any]:
+    interval_quote_table = _sanitize_interval_quote_table(line)
     clean = {k: v for k, v in line.items() if k not in INTERNAL_LINE_KEYS}
     if export_type != "internal_pdf":
         clean.pop("internal_notes", None)
@@ -95,6 +120,7 @@ def _sanitize_line(line: dict[str, Any], *, partner_name: str | None, export_typ
         "incoterm": clean.get("incoterm") or "",
         "color_finish": clean.get("color_finish") or "",
         "size_dimension": clean.get("size_dimension") or "",
+        "interval_quote_table": interval_quote_table,
     }
 
 

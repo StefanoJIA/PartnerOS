@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { fetchCatalogProducts, postPricingPreview, type CatalogProduct, type PricingPreviewResult } from '@/api/quoteCatalog'
+import {
+  fetchCatalogProducts,
+  postPricingPreview,
+  type CatalogProduct,
+  type IntervalQuoteRow,
+  type PricingPreviewResult,
+} from '@/api/quoteCatalog'
 
 const SAFETY =
-  '价格预览只做内部测算：不会创建报价、不会自动发送消息、不会承诺库存、认证或交期。成本、利润、物流测算只供内部使用。'
+  '价格预览只做内部测算：不会创建报价、不会自动发送消息、不会承诺库存、认证或交期。区间报价可用于客户报价输出；成本、利润、物流测算只供内部使用。'
 
 const loading = ref(false)
 const products = ref<CatalogProduct[]>([])
@@ -19,7 +25,7 @@ const flowLabels: Record<string, string> = {
   cost: '成本测算',
   logistics: '物流运输',
   fx: '汇率换算',
-  price_tier: '价目表/策略',
+  price_tier: '区间价目表',
   profit_check: '利润校验',
   customer_quote: '客户报价',
 }
@@ -33,12 +39,22 @@ const sheetLabels: Record<string, string> = {
 
 const strategyLabels: Record<string, string> = {
   traffic: '引流',
-  volume: '销量',
+  volume: '销售',
   profit: '利润',
 }
 
 const selectedProduct = computed(() => products.value.find((item) => item.id === productId.value) ?? null)
 const model = computed(() => result.value?.quote_model ?? null)
+const intervalRows = computed<IntervalQuoteRow[]>(() => {
+  const stage = model.value?.final_quote_stage as { interval_quote_table?: IntervalQuoteRow[] } | undefined
+  return stage?.interval_quote_table ?? []
+})
+const selectedInterval = computed(() => {
+  return intervalRows.value.find((row) => {
+    const max = row.max_qty ?? Number.POSITIVE_INFINITY
+    return quantity.value >= row.min_qty && quantity.value <= max
+  })
+})
 
 onMounted(async () => {
   try {
@@ -51,7 +67,10 @@ onMounted(async () => {
 })
 
 async function preview() {
-  if (!productId.value) return
+  if (!productId.value) {
+    error.value = '请选择产品后再生成区间报价。'
+    return
+  }
   loading.value = true
   error.value = null
   result.value = null
@@ -64,7 +83,7 @@ async function preview() {
       discount: discountPct.value ? { type: 'percentage', value: discountPct.value } : undefined,
     })
   } catch {
-    error.value = '价格预览失败，请检查产品成本、价目表、汇率和数量档。'
+    error.value = '价格预览失败，请检查产品价目表、汇率、成本模型和贸易条款。'
   } finally {
     loading.value = false
   }
@@ -75,6 +94,10 @@ function valueOf(stage: Record<string, unknown> | undefined, key: string, fallba
   if (value === null || value === undefined || value === '') return fallback
   return String(value)
 }
+
+function price(value: string | null | undefined, currency = 'USD') {
+  return value ? `${value} ${currency}` : 'N/A'
+}
 </script>
 
 <template>
@@ -82,16 +105,16 @@ function valueOf(stage: Record<string, unknown> | undefined, key: string, fallba
     <div class="page-head">
       <div>
         <h1>报价流程预览</h1>
-        <p>按 Excel 报价模型形成固定流程：成本 → 物流 → 汇率 → 价目/利润 → 最终报价 → PDF 安全输出。</p>
+        <p>按 Excel 报价模型形成固定流程：成本 → 物流 → 汇率 → 产品区间价目表 → 利润校验 → PDF 安全输出。</p>
       </div>
       <el-tag type="warning" effect="plain">内部测算</el-tag>
     </div>
 
     <el-alert type="info" :closable="false" show-icon class="mb" :title="SAFETY" />
 
-    <el-form label-width="120px" class="quote-form">
+    <el-form label-width="140px" class="quote-form">
       <el-form-item label="产品">
-        <el-select v-model="productId" filterable style="width: 100%">
+        <el-select v-model="productId" filterable placeholder="请选择产品" style="width: 100%">
           <el-option
             v-for="p in products"
             :key="p.id"
@@ -100,8 +123,9 @@ function valueOf(stage: Record<string, unknown> | undefined, key: string, fallba
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="数量">
+      <el-form-item label="参考数量">
         <el-input-number v-model="quantity" :min="1" />
+        <span class="hint">用于选中当前校验区间；正式输出仍是完整产品区间价表。</span>
       </el-form-item>
       <el-form-item label="贸易条款">
         <el-select v-model="incoterm">
@@ -114,7 +138,7 @@ function valueOf(stage: Record<string, unknown> | undefined, key: string, fallba
       <el-form-item label="报价策略">
         <el-select v-model="strategy">
           <el-option label="引流" value="traffic" />
-          <el-option label="销量" value="volume" />
+          <el-option label="销售" value="volume" />
           <el-option label="利润" value="profit" />
         </el-select>
       </el-form-item>
@@ -122,7 +146,7 @@ function valueOf(stage: Record<string, unknown> | undefined, key: string, fallba
         <el-input-number v-model="discountPct" :min="0" :max="100" :precision="1" />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" :loading="loading" @click="preview">生成报价预览</el-button>
+        <el-button type="primary" :loading="loading" @click="preview">生成区间报价预览</el-button>
       </el-form-item>
     </el-form>
 
@@ -132,7 +156,7 @@ function valueOf(stage: Record<string, unknown> | undefined, key: string, fallba
       <el-card shadow="never" class="summary-card">
         <template #header>
           <div class="card-title">
-            <span>最终报价</span>
+            <span>产品区间报价</span>
             <el-tag effect="plain">{{ result.source }}</el-tag>
           </div>
         </template>
@@ -142,15 +166,15 @@ function valueOf(stage: Record<string, unknown> | undefined, key: string, fallba
             <strong>{{ selectedProduct?.product_name || result.product_id }}</strong>
           </div>
           <div>
-            <span>单价</span>
+            <span>参考数量单价</span>
             <strong>{{ result.price_breakdown?.final_unit_price_after_discount }} {{ result.currency }}</strong>
           </div>
           <div>
-            <span>行项目小计</span>
+            <span>参考数量小计</span>
             <strong>{{ result.price_breakdown?.line_subtotal }} {{ result.currency }}</strong>
           </div>
           <div>
-            <span>预估毛利</span>
+            <span>预计毛利</span>
             <strong>{{ result.profit_breakdown?.estimated_margin }}%</strong>
           </div>
         </div>
@@ -162,6 +186,25 @@ function valueOf(stage: Record<string, unknown> | undefined, key: string, fallba
           show-icon
           :title="model.customer_safe_boundary"
         />
+      </el-card>
+
+      <el-card v-if="intervalRows.length" shadow="never">
+        <template #header>价目表区间报价</template>
+        <el-table :data="intervalRows" size="small" border>
+          <el-table-column prop="quantity_label" label="数量区间" width="140" />
+          <el-table-column label="FOB 单价">
+            <template #default="{ row }">{{ price(row.fob_unit_price, row.currency) }}</template>
+          </el-table-column>
+          <el-table-column label="DDP 单价">
+            <template #default="{ row }">{{ price(row.ddp_unit_price, row.currency) }}</template>
+          </el-table-column>
+          <el-table-column label="可用条款">
+            <template #default="{ row }">{{ row.incoterms_available.join(' / ') || '-' }}</template>
+          </el-table-column>
+        </el-table>
+        <p v-if="selectedInterval" class="selected-range">
+          当前参考数量 {{ quantity }} 落在 {{ selectedInterval.quantity_label }} 区间。
+        </p>
       </el-card>
 
       <el-card v-if="model" shadow="never" class="flow-card">
@@ -207,12 +250,12 @@ function valueOf(stage: Record<string, unknown> | undefined, key: string, fallba
       </el-card>
 
       <el-card v-if="model" shadow="never">
-        <template #header>价目与利润校验</template>
+        <template #header>利润校验</template>
         <el-descriptions :column="2" border size="small">
           <el-descriptions-item label="报价策略">
             {{ strategyLabels[result.pricing_strategy] || result.pricing_strategy }}
           </el-descriptions-item>
-          <el-descriptions-item label="成本来源">
+          <el-descriptions-item label="价格来源">
             {{ result.source }}
           </el-descriptions-item>
           <el-descriptions-item label="折扣金额">
@@ -221,10 +264,10 @@ function valueOf(stage: Record<string, unknown> | undefined, key: string, fallba
           <el-descriptions-item label="折扣后单价">
             {{ valueOf(model.discount_stage, 'final_unit_price_after_discount') }}
           </el-descriptions-item>
-          <el-descriptions-item label="预估单位利润">
+          <el-descriptions-item label="预计单位利润">
             {{ valueOf(model.profit_stage, 'estimated_unit_profit') }}
           </el-descriptions-item>
-          <el-descriptions-item label="预估总利润">
+          <el-descriptions-item label="预计总利润">
             {{ valueOf(model.profit_stage, 'estimated_total_profit') }}
           </el-descriptions-item>
         </el-descriptions>
@@ -248,7 +291,8 @@ function valueOf(stage: Record<string, unknown> | undefined, key: string, fallba
 .page-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 16px; }
 .page-head h1 { margin: 0 0 6px; font-size: 22px; }
 .page-head p { margin: 0; color: var(--el-text-color-secondary); }
-.quote-form { max-width: 680px; }
+.quote-form { max-width: 760px; }
+.hint { margin-left: 12px; color: var(--el-text-color-secondary); font-size: 12px; }
 .mb { margin-bottom: 16px; }
 .mt { margin-top: 12px; }
 .result-layout { display: grid; gap: 14px; margin-top: 16px; }
@@ -257,6 +301,7 @@ function valueOf(stage: Record<string, unknown> | undefined, key: string, fallba
 .metric-grid div { border: 1px solid var(--el-border-color); border-radius: 6px; padding: 10px; }
 .metric-grid span { display: block; color: var(--el-text-color-secondary); font-size: 12px; margin-bottom: 4px; }
 .metric-grid strong { color: var(--el-text-color-primary); }
+.selected-range { margin: 12px 0 0; color: var(--el-text-color-secondary); }
 .flow-card :deep(.el-step__description) { font-size: 12px; }
 .safety-line { margin: 0; color: var(--el-text-color-secondary); font-size: 12px; }
 @media (max-width: 860px) {

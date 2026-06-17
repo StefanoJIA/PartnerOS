@@ -1,8 +1,8 @@
 /**
  * @vitest-environment happy-dom
  */
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
 import ElementPlus from 'element-plus'
 import PricingPreviewPage from '@/pages/quotes/PricingPreviewPage.vue'
 import * as api from '@/api/quoteCatalog'
@@ -65,7 +65,30 @@ describe('PricingPreviewPage', () => {
         logistics_stage: { freight_cost_usd: '49.00' },
         pricing_stage: { source: 'price_tier' },
         discount_stage: { discount_amount: '0.00', final_unit_price_after_discount: '158.00' },
-        final_quote_stage: { unit_price: '158.00', line_subtotal: '15800.00' },
+        final_quote_stage: {
+          unit_price: '158.00',
+          line_subtotal: '15800.00',
+          interval_quote_table: [
+            {
+              min_qty: 1,
+              max_qty: 49,
+              quantity_label: '1-49',
+              currency: 'USD',
+              fob_unit_price: null,
+              ddp_unit_price: '180.00',
+              incoterms_available: ['DDP'],
+            },
+            {
+              min_qty: 50,
+              max_qty: 99,
+              quantity_label: '50-99',
+              currency: 'USD',
+              fob_unit_price: '120.00',
+              ddp_unit_price: '158.00',
+              incoterms_available: ['FOB', 'DDP'],
+            },
+          ],
+        },
         profit_stage: { estimated_margin: '25.00' },
         customer_safe_boundary: 'PDF/customer output may show final price only.',
         warnings: [],
@@ -94,13 +117,15 @@ describe('PricingPreviewPage', () => {
     expect(wrapper.text()).toContain('不会创建报价')
   })
 
-  it('calls preview API and renders quote model flow', async () => {
+  it('calls preview API and renders product interval quote table', async () => {
     const wrapper = mount(PricingPreviewPage, { global: { plugins: [ElementPlus] } })
     await flushPromises()
     await wrapper.find('button').trigger('click')
     await flushPromises()
     expect(api.postPricingPreview).toHaveBeenCalled()
     expect(wrapper.text()).toContain('15800.00')
-    expect(wrapper.text()).toContain('固定报价流程')
+    expect(wrapper.text()).toContain('价目表区间报价')
+    expect(wrapper.text()).toContain('1-49')
+    expect(wrapper.text()).toContain('50-99')
   })
 })

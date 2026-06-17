@@ -108,6 +108,96 @@ def _select_margin_multiplier(
     return Decimal("1"), warnings
 
 
+def _quantity_range_label(min_qty: int, max_qty: int | None) -> str:
+    if max_qty is None or max_qty >= 99999999:
+        return f">={min_qty}"
+    if min_qty == max_qty:
+        return str(min_qty)
+    return f"{min_qty}-{max_qty}"
+
+
+def _tier_customer_unit_price(tier: ProductPriceTier) -> Decimal | None:
+    if tier.final_unit_price is None and tier.base_unit_price is None and tier.adjustment_value is None:
+        return None
+    return tier_unit_price(
+        base_unit_price=tier.base_unit_price,
+        adjustment_value=tier.adjustment_value,
+        final_unit_price=tier.final_unit_price,
+    )
+
+
+def build_product_interval_quote_table(
+    db: Session,
+    *,
+    product_id: UUID,
+    pricing_strategy: str | None = None,
+    ref: date | None = None,
+) -> list[dict[str, Any]]:
+    """Build the customer-safe product quantity range price table.
+
+    The source quote workbook prices each product as a range table, not as a
+    single quantity point. Ranges must be derived from ProductPriceTier rows so
+    each product can keep its own interval structure and FOB/DDP availability.
+    """
+    effective_ref = ref or date.today()
+    tiers = (
+        db.query(ProductPriceTier)
+        .filter(ProductPriceTier.product_id == product_id)
+        .order_by(ProductPriceTier.min_qty.asc(), ProductPriceTier.max_qty.asc().nullslast(), ProductPriceTier.incoterm.asc())
+        .all()
+    )
+    active = [row for row in tiers if _effective_on(effective_ref, row.effective_from, row.effective_to)]
+    if pricing_strategy:
+        matching = [row for row in active if not row.pricing_strategy or row.pricing_strategy == pricing_strategy]
+        if matching:
+            active = matching
+
+    grouped: dict[tuple[int, int | None], dict[str, Any]] = {}
+    for tier in active:
+        price = _tier_customer_unit_price(tier)
+        if price is None:
+            continue
+        key = (tier.min_qty, tier.max_qty)
+        row = grouped.setdefault(
+            key,
+            {
+                "min_qty": tier.min_qty,
+                "max_qty": tier.max_qty,
+                "quantity_label": _quantity_range_label(tier.min_qty, tier.max_qty),
+                "currency": tier.currency or "USD",
+                "fob_unit_price": None,
+                "ddp_unit_price": None,
+                "incoterms_available": [],
+                "pricing_strategies": [],
+                "customer_visible": True,
+            },
+        )
+        incoterm = (tier.incoterm or "").upper()
+        if incoterm == "FOB":
+            row["fob_unit_price"] = money(price)
+        elif incoterm == "DDP":
+            row["ddp_unit_price"] = money(price)
+        else:
+            row[f"{incoterm.lower()}_unit_price"] = money(price)
+        if incoterm and incoterm not in row["incoterms_available"]:
+            row["incoterms_available"].append(incoterm)
+        if tier.pricing_strategy and tier.pricing_strategy not in row["pricing_strategies"]:
+            row["pricing_strategies"].append(tier.pricing_strategy)
+
+    return [grouped[key] for key in sorted(grouped, key=lambda item: (item[0], item[1] or 99999999))]
+
+
+def _selected_interval_row(
+    interval_quote_table: list[dict[str, Any]],
+    *,
+    quantity: int,
+) -> dict[str, Any] | None:
+    for row in interval_quote_table:
+        if qty_in_tier(quantity, int(row["min_qty"]), row.get("max_qty")):
+            return row
+    return None
+
+
 def _quote_model_snapshot(
     *,
     source: str,
@@ -122,6 +212,8 @@ def _quote_model_snapshot(
     profit_breakdown: dict[str, str],
     tier_snapshot: dict[str, Any] | None,
     margin_snapshot: dict[str, str] | None,
+    interval_quote_table: list[dict[str, Any]],
+    selected_interval: dict[str, Any] | None,
     warnings: list[str],
 ) -> dict[str, Any]:
     """Internal fixed quote-model flow based on the Excel workbook pages."""
@@ -144,7 +236,7 @@ def _quote_model_snapshot(
             {"step": "cost", "workbook_sheet": "cost", "status": "calculated"},
             {"step": "logistics", "workbook_sheet": "cost", "status": "calculated"},
             {"step": "fx", "workbook_sheet": "cost", "status": "latest_stored_rate" if fx_payload else "missing_or_not_required"},
-            {"step": "price_tier", "workbook_sheet": "price_list", "status": "selected" if tier_snapshot else "cost_model_fallback"},
+            {"step": "price_tier", "workbook_sheet": "price_list", "status": "interval_table_ready" if interval_quote_table else ("selected" if tier_snapshot else "cost_model_fallback")},
             {"step": "profit_check", "workbook_sheet": "profit_calculator", "status": "calculated"},
             {"step": "customer_quote", "workbook_sheet": "Quote", "status": "customer_safe_output"},
         ],
@@ -188,6 +280,8 @@ def _quote_model_snapshot(
         "pricing_stage": {
             "source": source,
             "tier": tier_snapshot,
+            "interval_quote_table": interval_quote_table,
+            "selected_interval": selected_interval,
             "margin": margin_snapshot,
             "base_unit_price": price_breakdown.get("base_unit_price"),
             "final_unit_price_before_discount": price_breakdown.get("final_unit_price"),
@@ -200,8 +294,18 @@ def _quote_model_snapshot(
             "currency": "USD",
             "unit_price": price_breakdown.get("final_unit_price_after_discount"),
             "line_subtotal": price_breakdown.get("line_subtotal"),
+            "interval_quote_table": interval_quote_table,
+            "selected_interval": selected_interval,
             "customer_visible": True,
-            "pdf_ready_fields": ["product_name", "quantity", "incoterm", "unit_price", "line_subtotal"],
+            "pdf_ready_fields": [
+                "product_name",
+                "quantity_ranges",
+                "fob_unit_price",
+                "ddp_unit_price",
+                "incoterm",
+                "unit_price",
+                "line_subtotal",
+            ],
         },
         "profit_stage": {
             "estimated_unit_profit": profit_breakdown.get("estimated_unit_profit"),
@@ -210,7 +314,7 @@ def _quote_model_snapshot(
             "internal_only": True,
         },
         "customer_safe_boundary": (
-            "PDF/customer output may show product, quantity, incoterm, final unit price and totals only. "
+            "PDF/customer output may show product, quantity ranges, FOB/DDP unit prices, selected incoterm, final unit price and totals only. "
             "Cost, margin, pricing breakdown, supplier private notes and internal calculations remain internal."
         ),
         "internal_cost_snapshot": internal_snapshot,
@@ -249,6 +353,16 @@ def calculate_line_price(
     fx_rate_usd_cny = fx.rate if fx else None
     if fx and fx.rate_date < date.today():
         warnings.append("fx_rate_stale")
+
+    interval_quote_table = build_product_interval_quote_table(
+        db,
+        product_id=product_id,
+        pricing_strategy=pricing_strategy,
+        ref=ref,
+    )
+    selected_interval = _selected_interval_row(interval_quote_table, quantity=quantity)
+    if not interval_quote_table:
+        warnings.append("interval_quote_table_missing")
 
     source = "price_tier"
     base_unit = Decimal("0")
@@ -293,6 +407,16 @@ def calculate_line_price(
                 "final_unit_price": str(tier.final_unit_price) if tier.final_unit_price is not None else None,
                 "source": tier.source,
             }
+        elif selected_interval and inc not in selected_interval.get("incoterms_available", []):
+            raise ApiError(
+                VALIDATION_ERROR,
+                f"{inc} is not available for quantity range {selected_interval.get('quantity_label')} on this product",
+                status_code=400,
+                details={
+                    "quantity_range": selected_interval.get("quantity_label"),
+                    "available_incoterms": selected_interval.get("incoterms_available", []),
+                },
+            )
         else:
             cost = _select_cost_model(db, product_id, ref)
             if not cost:
@@ -397,6 +521,8 @@ def calculate_line_price(
         profit_breakdown=profit_breakdown,
         tier_snapshot=tier_snapshot,
         margin_snapshot=margin_snapshot,
+        interval_quote_table=interval_quote_table,
+        selected_interval=selected_interval,
         warnings=warnings,
     )
 
