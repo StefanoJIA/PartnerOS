@@ -99,6 +99,7 @@ def _serialize_line(line: QuoteLineItem, *, include_internal: bool = True) -> di
         "incoterm": line.incoterm,
         "pricing_source": line.pricing_source,
         "pricing_strategy": line.pricing_strategy,
+        "interval_quote_table": _line_interval_quote_table(line),
         "color_finish": line.color_finish,
         "size_dimension": line.size_dimension,
         "customer_visible": line.customer_visible,
@@ -128,6 +129,32 @@ def _serialize_adjustment(adj: QuoteAdjustment) -> dict[str, Any]:
         "customer_visible": adj.customer_visible,
         "notes": adj.notes,
     }
+
+
+def _line_interval_quote_table(line: QuoteLineItem) -> list[dict[str, Any]]:
+    pricing = line.pricing_breakdown_json or {}
+    quote_model = pricing.get("quote_model") or {}
+    rows = (
+        quote_model.get("final_quote_stage", {}).get("interval_quote_table")
+        or quote_model.get("pricing_stage", {}).get("interval_quote_table")
+        or []
+    )
+    safe_rows: list[dict[str, Any]] = []
+    for row in rows:
+        safe_rows.append(
+            {
+                "quantity_label": row.get("quantity_label") or "",
+                "min_qty": row.get("min_qty"),
+                "max_qty": row.get("max_qty"),
+                "currency": row.get("currency") or line.currency or "USD",
+                "fob_unit_price": row.get("fob_unit_price"),
+                "ddp_unit_price": row.get("ddp_unit_price"),
+                "incoterms_available": row.get("incoterms_available") or [],
+                "pricing_strategies": row.get("pricing_strategies") or [],
+                "customer_visible": True,
+            }
+        )
+    return safe_rows
 
 
 def build_quote_snapshot(quote: Quote) -> dict[str, Any]:

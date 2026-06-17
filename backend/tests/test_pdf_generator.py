@@ -113,3 +113,53 @@ def test_generate_quote_pdf_no_forbidden_phrases(tmp_path, monkeypatch):
             text += (page.extract_text() or "").lower()
     assert not any(p in text for p in FORBIDDEN)
     assert "intellioffice" in text or "intelliopus" in text
+
+
+def test_generate_quote_pdf_renders_interval_rows_as_quote_body(tmp_path, monkeypatch):
+    quote, partner_id = _quote()
+    quote.line_items[0].pricing_breakdown_json = {
+        "quote_model": {
+            "final_quote_stage": {
+                "interval_quote_table": [
+                    {
+                        "quantity_label": "1-49",
+                        "min_qty": 1,
+                        "max_qty": 49,
+                        "currency": "USD",
+                        "fob_unit_price": "138.00",
+                        "ddp_unit_price": "168.00",
+                        "incoterms_available": ["FOB", "DDP"],
+                        "tier_ids": ["internal-tier-id"],
+                    },
+                    {
+                        "quantity_label": "50-99",
+                        "min_qty": 50,
+                        "max_qty": 99,
+                        "currency": "USD",
+                        "fob_unit_price": "128.00",
+                        "ddp_unit_price": "156.00",
+                        "incoterms_available": ["FOB", "DDP"],
+                    },
+                ]
+            }
+        }
+    }
+    db = MagicMock()
+    db.query.return_value.filter.return_value.first.return_value = None
+    db.query.return_value.filter.return_value.all.return_value = [
+        SimpleNamespace(id=partner_id, partner_name="Partner X")
+    ]
+    monkeypatch.setattr("app.services.quotes.pdf_generator.get_quote", lambda db_, qid: quote)
+    monkeypatch.setattr("app.services.quotes.pdf_data_builder.get_quote", lambda db_, qid: quote)
+
+    result = generate_quote_pdf(db, quote.id, output_dir=tmp_path)
+    text = ""
+    with pdfplumber.open(Path(result["file_path"])) as pdf:
+        for page in pdf.pages:
+            text += page.extract_text() or ""
+
+    assert "Customer Quantity Range Pricing" in text
+    assert "1-49" in text
+    assert "50-99" in text
+    assert "Grand Total" not in text
+    assert "internal-tier-id" not in text

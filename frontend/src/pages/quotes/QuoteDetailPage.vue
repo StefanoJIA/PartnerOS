@@ -162,6 +162,13 @@ const quotePartnerFocus = computed(() => quoteCommercial.value?.partner_focus ||
 const productPartnerPlaybookRefs = computed(() => quoteCommercial.value?.product_partner_playbook_refs ?? null)
 const quoteProductPlaybooks = computed(() => productPartnerPlaybookRefs.value?.product_playbooks ?? [])
 const quotePartnerPlaybooks = computed(() => productPartnerPlaybookRefs.value?.partner_playbooks ?? [])
+const quoteIntervalLines = computed(() =>
+  (quote.value?.line_items ?? []).filter((line) => (line.interval_quote_table ?? []).length > 0),
+)
+
+function formatIntervalPrice(value: string | null | undefined, currency = 'USD') {
+  return value ? `${value} ${currency}` : 'N/A'
+}
 
 async function loadActiveOrder() {
   if (!quote.value) return
@@ -703,15 +710,54 @@ onMounted(load)
         context-label="当前报价会影响账户成交、报价学习和 Market Response"
       />
 
-      <h3>Line Items</h3>
-      <el-table :data="quote.line_items" stripe class="mb">
-        <el-table-column prop="line_number" label="#" width="50" />
-        <el-table-column prop="product_name" label="Product" />
-        <el-table-column prop="quantity" label="Qty" width="80" />
-        <el-table-column prop="final_unit_price" label="Unit Price" width="120" />
-        <el-table-column prop="total_price" label="Total" width="120" />
-        <el-table-column prop="pricing_source" label="Source" width="140" />
-      </el-table>
+      <section v-if="quoteIntervalLines.length" class="section mb">
+        <h3>客户报价区间表</h3>
+        <el-alert
+          type="info"
+          :closable="false"
+          show-icon
+          title="每个产品的每个数量区间都需要报价；参考数量只用于内部利润校验，不代表最终客户总价。"
+          class="mb"
+        />
+        <div v-for="line in quoteIntervalLines" :key="line.id" class="interval-product">
+          <div class="interval-product__head">
+            <strong>{{ line.product_name }}</strong>
+            <el-tag effect="plain">{{ line.pricing_source }}</el-tag>
+          </div>
+          <el-table :data="line.interval_quote_table ?? []" size="small" border>
+            <el-table-column prop="quantity_label" label="数量区间" width="140" />
+            <el-table-column label="FOB 单价">
+              <template #default="{ row }">{{ formatIntervalPrice(row.fob_unit_price, row.currency) }}</template>
+            </el-table-column>
+            <el-table-column label="DDP 单价">
+              <template #default="{ row }">{{ formatIntervalPrice(row.ddp_unit_price, row.currency) }}</template>
+            </el-table-column>
+            <el-table-column label="可用条款">
+              <template #default="{ row }">{{ (row.incoterms_available ?? []).join(' / ') || '-' }}</template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </section>
+
+      <section class="section mb">
+        <h3>内部参考数量校验</h3>
+        <el-alert
+          v-if="quoteIntervalLines.length"
+          type="warning"
+          :closable="false"
+          show-icon
+          title="以下数量、小计和 Grand Total 用于内部成本/利润校验，不是客户区间报价主体。"
+          class="mb"
+        />
+        <el-table :data="quote.line_items" stripe>
+          <el-table-column prop="line_number" label="#" width="50" />
+          <el-table-column prop="product_name" label="Product" />
+          <el-table-column prop="quantity" label="Reference Qty" width="130" />
+          <el-table-column prop="final_unit_price" label="Reference Unit" width="140" />
+          <el-table-column prop="total_price" label="Reference Total" width="150" />
+          <el-table-column prop="pricing_source" label="Source" width="140" />
+        </el-table>
+      </section>
 
       <section class="section mb">
         <h3>Quote PDF Exports</h3>
@@ -1158,6 +1204,9 @@ onMounted(load)
 .quote-commercial__label { margin-bottom: 6px; color: var(--el-text-color-secondary); font-size: 12px; }
 .quote-commercial__empty { color: var(--el-text-color-placeholder); font-size: 12px; }
 .quote-playbook { border: 1px solid var(--el-color-primary-light-7); border-radius: 8px; background: var(--el-color-primary-light-9); padding: 12px; }
+.interval-product { border: 1px solid var(--el-border-color); border-radius: 8px; padding: 12px; margin-top: 12px; background: var(--el-fill-color-lighter); }
+.interval-product__head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 10px; color: var(--el-text-color-secondary); }
+.interval-product__head strong { color: var(--el-text-color-primary); }
 .learning-summary { border: 1px solid var(--el-border-color); border-radius: 8px; background: var(--el-fill-color-light); padding: 12px; }
 .learning-summary__head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 8px; color: var(--el-text-color-secondary); font-size: 13px; }
 .learning-form { max-width: 960px; background: var(--el-fill-color-lighter); padding: 16px; border-radius: 8px; }

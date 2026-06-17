@@ -60,6 +60,35 @@ def quote_client(monkeypatch):
         total_price=Decimal("1000"),
         pricing_source="price_tier",
         requires_review=False,
+        pricing_breakdown_json={
+            "quote_model": {
+                "final_quote_stage": {
+                    "interval_quote_table": [
+                        {
+                            "quantity_label": "1-49",
+                            "min_qty": 1,
+                            "max_qty": 49,
+                            "currency": "USD",
+                            "fob_unit_price": "118.00",
+                            "ddp_unit_price": "148.00",
+                            "incoterms_available": ["FOB", "DDP"],
+                            "tier_ids": ["internal-tier"],
+                            "source": "price_tier",
+                        },
+                        {
+                            "quantity_label": "50-99",
+                            "min_qty": 50,
+                            "max_qty": 99,
+                            "currency": "USD",
+                            "fob_unit_price": "108.00",
+                            "ddp_unit_price": "136.00",
+                            "incoterms_available": ["FOB", "DDP"],
+                        },
+                    ]
+                },
+                "internal_cost_snapshot": {"cost": "secret"},
+            }
+        },
     )
     quote.line_items = [line]
     quote.adjustments = []
@@ -122,6 +151,12 @@ def test_create_quote_envelope(quote_client):
     assert body["data"]["quote_number"] == "Q-2026-0001"
     assert body["data"]["safety"]["quote_created"] is True
     assert body["data"]["safety"]["automatic_sending_enabled"] is False
+    rows = body["data"]["line_items"][0]["interval_quote_table"]
+    assert [row["quantity_label"] for row in rows] == ["1-49", "50-99"]
+    assert rows[0]["fob_unit_price"] == "118.00"
+    assert rows[0]["ddp_unit_price"] == "148.00"
+    assert "tier_ids" not in rows[0]
+    assert "source" not in rows[0]
 
 
 def test_mark_sent_envelope(quote_client):

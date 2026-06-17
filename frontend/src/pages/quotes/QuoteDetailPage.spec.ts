@@ -30,7 +30,51 @@ vi.mock('@/api/quotes', () => ({
     currency: 'USD',
     subtotal: '1000',
     grand_total: '1000',
-    line_items: [],
+    line_items: [
+      {
+        id: 'li1',
+        line_number: 1,
+        product_name: 'HOSUN Heavy-duty Lifting System',
+        description: 'Desk frame / lifting column system',
+        quantity: 50,
+        unit_price: '128.00',
+        total_price: '6400.00',
+        incoterm: 'FOB',
+        partner: 'HOSUN',
+        interval_quote_table: [
+          {
+            min_qty: 1,
+            max_qty: 49,
+            quantity_label: '1-49',
+            currency: 'USD',
+            fob_unit_price: '138.00',
+            ddp_unit_price: '168.00',
+            incoterms_available: ['FOB', 'DDP'],
+            customer_visible: true,
+          },
+          {
+            min_qty: 50,
+            max_qty: 99,
+            quantity_label: '50-99',
+            currency: 'USD',
+            fob_unit_price: '128.00',
+            ddp_unit_price: '156.00',
+            incoterms_available: ['FOB', 'DDP'],
+            customer_visible: true,
+          },
+          {
+            min_qty: 500,
+            max_qty: null,
+            quantity_label: '>=500',
+            currency: 'USD',
+            fob_unit_price: '109.00',
+            ddp_unit_price: '132.00',
+            incoterms_available: ['FOB', 'DDP'],
+            customer_visible: true,
+          },
+        ],
+      },
+    ],
     warnings: [],
     follow_up_date: null,
     sent_at: null,
@@ -185,6 +229,12 @@ describe('QuoteDetailPage', () => {
     expect(wrapper.text()).toContain('Partner 承接判断')
     expect(wrapper.text()).toContain('HOSUN')
     expect(wrapper.text()).toContain('Product / Partner Playbook Reference')
+    expect(wrapper.text()).toContain('客户报价区间表')
+    expect(wrapper.text()).toContain('每个产品的每个数量区间都需要报价')
+    expect(wrapper.text()).toContain('1-49')
+    expect(wrapper.text()).toContain('50-99')
+    expect(wrapper.text()).toContain('>=500')
+    expect(wrapper.text()).toContain('内部参考数量校验')
     expect(wrapper.text()).toContain('Use product-family learning before this quote.')
     expect(wrapper.text()).toContain('certification support')
     expect(wrapper.text()).toContain('Order Readiness')

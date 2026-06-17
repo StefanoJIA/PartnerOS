@@ -335,6 +335,18 @@ export interface QuoteVersionSummary {
   created_at: string | null
 }
 
+export interface QuoteIntervalPriceRow {
+  min_qty: number
+  max_qty: number | null
+  quantity_label: string
+  currency: string
+  fob_unit_price: string | null
+  ddp_unit_price: string | null
+  incoterms_available: string[]
+  pricing_strategies?: string[]
+  customer_visible: boolean
+}
+
 export interface QuoteLineItem {
   id: string
   line_number: number
@@ -345,6 +357,7 @@ export interface QuoteLineItem {
   pricing_source: string
   requires_review: boolean
   warnings: string[]
+  interval_quote_table?: QuoteIntervalPriceRow[]
 }
 
 export interface QuoteSummary {

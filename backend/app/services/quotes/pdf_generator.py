@@ -39,6 +39,8 @@ def quote_pdf_storage_dir(settings: Settings | None = None) -> Path:
 
 
 def _money(currency: str, value: str) -> str:
+    if str(value or "").upper() == "N/A":
+        return "N/A"
     try:
         num = float(value)
         return f"{currency} {num:,.2f}"
@@ -129,36 +131,46 @@ def _render_pdf_file(data: dict[str, Any], output_path: Path) -> None:
     story.append(Spacer(1, 12))
 
     currency = data["totals"].get("currency") or quote.get("currency") or "USD"
-    table_header = ["#", "Partner", "Product", "Description", "Qty", "Incoterm", "Unit Price", "Total"]
+    has_interval_pricing = any(li.get("interval_quote_table") for li in data["line_items"])
+    if has_interval_pricing:
+        table_header = ["#", "Partner", "Product", "Description", "Reference Qty", "Reference Incoterm"]
+    else:
+        table_header = ["#", "Partner", "Product", "Description", "Qty", "Incoterm", "Unit Price", "Total"]
     table_data: list[list[Any]] = [table_header]
     for li in data["line_items"]:
-        table_data.append(
-            [
-                str(li.get("line_number") or ""),
-                li.get("partner") or "",
-                Paragraph(str(li.get("product_name") or ""), small),
-                Paragraph(str(li.get("description") or ""), small),
-                str(li.get("quantity") or ""),
-                li.get("incoterm") or "",
-                _money(currency, str(li.get("unit_price") or "0")),
-                _money(currency, str(li.get("total_price") or "0")),
-            ]
-        )
-    col_widths = [0.3 * inch, 0.75 * inch, 1.2 * inch, 1.35 * inch, 0.4 * inch, 0.65 * inch, 0.95 * inch, 0.95 * inch]
-    items_table = Table(table_data, colWidths=col_widths, repeatRows=1)
-    items_table.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#EEEEEE")),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, -1), 8),
-                ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("ALIGN", (4, 1), (5, -1), "CENTER"),
-                ("ALIGN", (6, 1), (-1, -1), "RIGHT"),
-            ]
-        )
+        base_cells: list[Any] = [
+            str(li.get("line_number") or ""),
+            li.get("partner") or "",
+            Paragraph(str(li.get("product_name") or ""), small),
+            Paragraph(str(li.get("description") or ""), small),
+            str(li.get("quantity") or ""),
+            li.get("incoterm") or "",
+        ]
+        if not has_interval_pricing:
+            base_cells.extend(
+                [
+                    _money(currency, str(li.get("unit_price") or "0")),
+                    _money(currency, str(li.get("total_price") or "0")),
+                ]
+            )
+        table_data.append(base_cells)
+    col_widths = (
+        [0.35 * inch, 0.85 * inch, 1.7 * inch, 2.0 * inch, 0.8 * inch, 1.3 * inch]
+        if has_interval_pricing
+        else [0.3 * inch, 0.75 * inch, 1.2 * inch, 1.35 * inch, 0.4 * inch, 0.65 * inch, 0.95 * inch, 0.95 * inch]
     )
+    items_table = Table(table_data, colWidths=col_widths, repeatRows=1)
+    item_style_commands: list[tuple[Any, ...]] = [
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#EEEEEE")),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("ALIGN", (4, 1), (5, -1), "CENTER"),
+    ]
+    if not has_interval_pricing:
+        item_style_commands.append(("ALIGN", (6, 1), (-1, -1), "RIGHT"))
+    items_table.setStyle(TableStyle(item_style_commands))
     story.append(items_table)
     story.append(Spacer(1, 16))
 
@@ -174,7 +186,7 @@ def _render_pdf_file(data: dict[str, Any], output_path: Path) -> None:
                 ]
             )
     if len(range_rows) > 1:
-        story.append(Paragraph("<b>Quantity Range Pricing</b>", title_style))
+        story.append(Paragraph("<b>Customer Quantity Range Pricing</b>", title_style))
         range_table = Table(range_rows, colWidths=[2.8 * inch, 1.2 * inch, 1.5 * inch, 1.5 * inch], repeatRows=1)
         range_table.setStyle(
             TableStyle(
@@ -192,28 +204,37 @@ def _render_pdf_file(data: dict[str, Any], output_path: Path) -> None:
         story.append(Spacer(1, 16))
 
     totals = data["totals"]
-    totals_rows = [
-        ["Subtotal", _money(currency, totals.get("subtotal", "0"))],
-        ["Discount", _money(currency, totals.get("discount", "0"))],
-        ["Shipping", _money(currency, totals.get("shipping", "0"))],
-        ["Sample Fee", _money(currency, totals.get("sample_fee", "0"))],
-        ["Tax", _money(currency, totals.get("tax", "0"))],
-        ["Grand Total", _money(currency, totals.get("grand_total", "0"))],
-    ]
-    totals_table = Table(totals_rows, colWidths=[1.5 * inch, 1.2 * inch], hAlign="RIGHT")
-    totals_table.setStyle(
-        TableStyle(
-            [
-                ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, -1), 9),
-                ("ALIGN", (1, 0), (1, -1), "RIGHT"),
-                ("BOX", (0, 0), (-1, -1), 0.5, colors.grey),
-                ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#F5F5F5")),
-            ]
+    if has_interval_pricing:
+        story.append(
+            Paragraph(
+                "Final order total depends on the confirmed quantity range, selected Incoterm, and any manually approved adjustments.",
+                small,
+            )
         )
-    )
-    story.append(totals_table)
-    story.append(Spacer(1, 16))
+        story.append(Spacer(1, 16))
+    else:
+        totals_rows = [
+            ["Subtotal", _money(currency, totals.get("subtotal", "0"))],
+            ["Discount", _money(currency, totals.get("discount", "0"))],
+            ["Shipping", _money(currency, totals.get("shipping", "0"))],
+            ["Sample Fee", _money(currency, totals.get("sample_fee", "0"))],
+            ["Tax", _money(currency, totals.get("tax", "0"))],
+            ["Grand Total", _money(currency, totals.get("grand_total", "0"))],
+        ]
+        totals_table = Table(totals_rows, colWidths=[1.5 * inch, 1.2 * inch], hAlign="RIGHT")
+        totals_table.setStyle(
+            TableStyle(
+                [
+                    ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                    ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+                    ("BOX", (0, 0), (-1, -1), 0.5, colors.grey),
+                    ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#F5F5F5")),
+                ]
+            )
+        )
+        story.append(totals_table)
+        story.append(Spacer(1, 16))
 
     terms = data["terms"]
     story.append(Paragraph("<b>Terms &amp; Notes</b>", title_style))
