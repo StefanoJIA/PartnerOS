@@ -44,7 +44,10 @@ def test_compute_cost_breakdown_cny():
         stored_ddp_cost_usd=None,
     )
     assert fob is not None
-    assert breakdown["fob_cost_usd"] != "0.00"
+    assert breakdown["unit_material_cost_after_domestic_profit_rmb"] == "792.00"
+    assert breakdown["freight_cost_usd"] == "5.56"
+    assert breakdown["fob_cost_usd"] == "110.00"
+    assert breakdown["ddp_cost_usd"] == "115.56"
 
 
 def test_compute_cost_breakdown_missing_fx():

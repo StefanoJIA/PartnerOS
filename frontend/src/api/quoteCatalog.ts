@@ -34,6 +34,34 @@ export interface PricingPreviewRequest {
   incoterm: string
   pricing_strategy: string
   discount?: { type: string; value: number }
+  fx_rate_date?: string
+  manual_unit_price?: number
+}
+
+export interface QuoteModelStage {
+  [key: string]: unknown
+}
+
+export interface QuoteModelSnapshot {
+  workflow: Array<{ step: string; workbook_sheet: string; status: string }>
+  product: { id: string; name: string; category: string; family: string | null }
+  inputs: QuoteModelStage
+  fx_stage: QuoteModelStage
+  cost_stage: QuoteModelStage
+  logistics_stage: QuoteModelStage
+  pricing_stage: QuoteModelStage
+  discount_stage: QuoteModelStage
+  final_quote_stage: QuoteModelStage
+  profit_stage: QuoteModelStage
+  customer_safe_boundary: string
+  warnings: string[]
+  safety: {
+    quote_created: boolean
+    automatic_sending_enabled: boolean
+    inventory_promised: boolean
+    certification_promised: boolean
+    lead_time_promised: boolean
+  }
 }
 
 export interface PricingPreviewResult {
@@ -44,8 +72,11 @@ export interface PricingPreviewResult {
   currency: string
   source: string
   warnings: string[]
+  fx_rate_used?: QuoteModelStage | null
+  cost_breakdown: Record<string, string>
   price_breakdown: Record<string, string>
   profit_breakdown: Record<string, string>
+  quote_model?: QuoteModelSnapshot
   safety: {
     quote_created: boolean
     automatic_sending_enabled: boolean

@@ -41,8 +41,42 @@ describe('PricingPreviewPage', () => {
       currency: 'USD',
       source: 'price_tier',
       warnings: [],
-      price_breakdown: { line_subtotal: '15800.00' },
+      cost_breakdown: {
+        unit_material_cost_rmb: '720.00',
+        unit_material_cost_after_domestic_profit_rmb: '784.80',
+        unit_material_cost_usd: '100.00',
+        fob_cost_usd: '109.00',
+        ddp_cost_usd: '158.00',
+      },
+      price_breakdown: {
+        final_unit_price_after_discount: '158.00',
+        line_subtotal: '15800.00',
+      },
       profit_breakdown: { estimated_margin: '25.00' },
+      quote_model: {
+        workflow: [
+          { step: 'cost', workbook_sheet: 'cost', status: 'calculated' },
+          { step: 'customer_quote', workbook_sheet: 'Quote', status: 'customer_safe_output' },
+        ],
+        product: { id: 'p1', name: 'Frame', category: 'lifting_frame', family: null },
+        inputs: {},
+        fx_stage: { rate: '7.2', source: 'demo' },
+        cost_stage: { material_cost_rmb: '720.00', fob_cost_usd: '109.00', ddp_cost_usd: '158.00' },
+        logistics_stage: { freight_cost_usd: '49.00' },
+        pricing_stage: { source: 'price_tier' },
+        discount_stage: { discount_amount: '0.00', final_unit_price_after_discount: '158.00' },
+        final_quote_stage: { unit_price: '158.00', line_subtotal: '15800.00' },
+        profit_stage: { estimated_margin: '25.00' },
+        customer_safe_boundary: 'PDF/customer output may show final price only.',
+        warnings: [],
+        safety: {
+          quote_created: false,
+          automatic_sending_enabled: false,
+          inventory_promised: false,
+          certification_promised: false,
+          lead_time_promised: false,
+        },
+      },
       safety: {
         quote_created: false,
         automatic_sending_enabled: false,
@@ -56,16 +90,17 @@ describe('PricingPreviewPage', () => {
   it('renders form and safety note', async () => {
     const wrapper = mount(PricingPreviewPage, { global: { plugins: [ElementPlus] } })
     await flushPromises()
-    expect(wrapper.text()).toContain('价格预览')
+    expect(wrapper.text()).toContain('报价流程预览')
     expect(wrapper.text()).toContain('不会创建报价')
   })
 
-  it('calls preview API', async () => {
+  it('calls preview API and renders quote model flow', async () => {
     const wrapper = mount(PricingPreviewPage, { global: { plugins: [ElementPlus] } })
     await flushPromises()
     await wrapper.find('button').trigger('click')
     await flushPromises()
     expect(api.postPricingPreview).toHaveBeenCalled()
     expect(wrapper.text()).toContain('15800.00')
+    expect(wrapper.text()).toContain('固定报价流程')
   })
 })

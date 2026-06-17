@@ -129,7 +129,7 @@ def _render_pdf_file(data: dict[str, Any], output_path: Path) -> None:
     story.append(Spacer(1, 12))
 
     currency = data["totals"].get("currency") or quote.get("currency") or "USD"
-    table_header = ["#", "Partner", "Product", "Description", "Qty", "Unit Price", "Total"]
+    table_header = ["#", "Partner", "Product", "Description", "Qty", "Incoterm", "Unit Price", "Total"]
     table_data: list[list[Any]] = [table_header]
     for li in data["line_items"]:
         table_data.append(
@@ -139,11 +139,12 @@ def _render_pdf_file(data: dict[str, Any], output_path: Path) -> None:
                 Paragraph(str(li.get("product_name") or ""), small),
                 Paragraph(str(li.get("description") or ""), small),
                 str(li.get("quantity") or ""),
+                li.get("incoterm") or "",
                 _money(currency, str(li.get("unit_price") or "0")),
                 _money(currency, str(li.get("total_price") or "0")),
             ]
         )
-    col_widths = [0.35 * inch, 0.85 * inch, 1.3 * inch, 1.5 * inch, 0.45 * inch, 1.0 * inch, 1.0 * inch]
+    col_widths = [0.3 * inch, 0.75 * inch, 1.2 * inch, 1.35 * inch, 0.4 * inch, 0.65 * inch, 0.95 * inch, 0.95 * inch]
     items_table = Table(table_data, colWidths=col_widths, repeatRows=1)
     items_table.setStyle(
         TableStyle(
@@ -153,8 +154,8 @@ def _render_pdf_file(data: dict[str, Any], output_path: Path) -> None:
                 ("FONTSIZE", (0, 0), (-1, -1), 8),
                 ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("ALIGN", (4, 1), (4, -1), "CENTER"),
-                ("ALIGN", (5, 1), (-1, -1), "RIGHT"),
+                ("ALIGN", (4, 1), (5, -1), "CENTER"),
+                ("ALIGN", (6, 1), (-1, -1), "RIGHT"),
             ]
         )
     )

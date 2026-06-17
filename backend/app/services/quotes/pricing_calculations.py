@@ -59,40 +59,69 @@ def compute_cost_breakdown(
     stored_fob_cost_usd: Decimal | None,
     stored_ddp_cost_usd: Decimal | None,
 ) -> tuple[dict[str, str], Decimal | None]:
-    """Return cost breakdown dict and relevant unit cost USD for margin."""
+    """Return workbook-aligned cost breakdown and FOB unit cost.
+
+    The source workbook's cost sheet calculates:
+    - transport cost = weight * ocean freight unit price
+    - transport USD = transport cost / FX
+    - FOB cost USD = material cost / FX
+    - DDP cost USD = (material cost + transport cost) / FX
+
+    When stored FOB/DDP costs exist, they remain the source of truth. Otherwise
+    the same workbook calculation is used, with domestic_profit_rate applied to
+    material cost before currency conversion.
+    """
     material_rmb = unit_material_cost or ZERO
-    transport_rmb = domestic_transport_cost or ZERO
     weight = unit_weight or ZERO
-    freight_usd = (weight * (ocean_freight_unit_price or ZERO)).quantize(FOUR, rounding=ROUND_HALF_UP)
+    calculated_transport = (weight * (ocean_freight_unit_price or ZERO)).quantize(
+        FOUR, rounding=ROUND_HALF_UP
+    )
+    transport_rmb = domestic_transport_cost if domestic_transport_cost is not None else calculated_transport
+    weight = unit_weight or ZERO
+    profit_rate = domestic_profit_rate or ZERO
+    material_after_domestic_profit = (material_rmb * (Decimal("1") + profit_rate)).quantize(
+        FOUR, rounding=ROUND_HALF_UP
+    )
 
     material_usd = ZERO
     transport_usd = ZERO
+    material_after_profit_usd = ZERO
     if cost_currency.upper() == "CNY":
         if fx_rate_usd_cny is None or fx_rate_usd_cny <= ZERO:
             raise ValueError("FX_RATE_MISSING")
         material_usd = (material_rmb / fx_rate_usd_cny).quantize(FOUR, rounding=ROUND_HALF_UP)
+        material_after_profit_usd = (material_after_domestic_profit / fx_rate_usd_cny).quantize(
+            FOUR, rounding=ROUND_HALF_UP
+        )
         transport_usd = (transport_rmb / fx_rate_usd_cny).quantize(FOUR, rounding=ROUND_HALF_UP)
     elif cost_currency.upper() == "USD":
         material_usd = material_rmb
+        material_after_profit_usd = material_after_domestic_profit
         transport_usd = transport_rmb
     else:
         material_usd = material_rmb
+        material_after_profit_usd = material_after_domestic_profit
         transport_usd = transport_rmb
 
-    profit_rate = domestic_profit_rate or ZERO
-    domestic_component = ((material_usd + transport_usd) * profit_rate).quantize(FOUR, rounding=ROUND_HALF_UP)
     fob_cost = stored_fob_cost_usd
     if fob_cost is None:
-        fob_cost = (material_usd + transport_usd + domestic_component).quantize(FOUR, rounding=ROUND_HALF_UP)
+        fob_cost = material_after_profit_usd.quantize(FOUR, rounding=ROUND_HALF_UP)
     ddp_cost = stored_ddp_cost_usd
     if ddp_cost is None:
-        ddp_cost = (fob_cost + freight_usd).quantize(FOUR, rounding=ROUND_HALF_UP)
+        ddp_cost = (fob_cost + transport_usd).quantize(FOUR, rounding=ROUND_HALF_UP)
 
     breakdown = {
+        "cost_currency": cost_currency.upper(),
         "unit_material_cost_rmb": money(material_rmb if cost_currency.upper() == "CNY" else ZERO),
+        "unit_material_cost_after_domestic_profit_rmb": money(
+            material_after_domestic_profit if cost_currency.upper() == "CNY" else ZERO
+        ),
         "unit_material_cost_usd": money(material_usd),
+        "unit_material_cost_after_domestic_profit_usd": money(material_after_profit_usd),
         "unit_weight": money(weight),
-        "freight_cost_usd": money(freight_usd),
+        "ocean_freight_unit_price": money(ocean_freight_unit_price or ZERO),
+        "domestic_transport_cost": money(transport_rmb),
+        "freight_cost_usd": money(transport_usd),
         "fob_cost_usd": money(fob_cost),
         "ddp_cost_usd": money(ddp_cost),
     }

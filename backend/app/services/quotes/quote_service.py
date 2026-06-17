@@ -112,6 +112,7 @@ def _serialize_line(line: QuoteLineItem, *, include_internal: bool = True) -> di
     if include_internal:
         data["internal_cost"] = str(line.internal_cost) if line.internal_cost is not None else None
         data["estimated_margin"] = str(line.estimated_margin) if line.estimated_margin is not None else None
+        data["cost_snapshot_json"] = line.cost_snapshot_json
         data["pricing_breakdown_json"] = line.pricing_breakdown_json
     return data
 
@@ -384,6 +385,9 @@ def _build_line_from_pricing(
         color_finish=color_finish,
         size_dimension=size_dimension,
         attributes_snapshot_json=product.attributes_json if product else None,
+        cost_snapshot_json=(pricing_breakdown or {}).get("quote_model", {}).get("internal_cost_snapshot")
+        if pricing_breakdown
+        else None,
         pricing_breakdown_json=pricing_breakdown,
         internal_cost=internal_cost,
         estimated_margin=estimated_margin,

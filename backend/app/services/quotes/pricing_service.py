@@ -108,6 +108,117 @@ def _select_margin_multiplier(
     return Decimal("1"), warnings
 
 
+def _quote_model_snapshot(
+    *,
+    source: str,
+    product: ProductCatalog,
+    quantity: int,
+    incoterm: str,
+    pricing_strategy: str,
+    discount: dict | None,
+    fx_payload: dict[str, str] | None,
+    cost_breakdown: dict[str, str],
+    price_breakdown: dict[str, str],
+    profit_breakdown: dict[str, str],
+    tier_snapshot: dict[str, Any] | None,
+    margin_snapshot: dict[str, str] | None,
+    warnings: list[str],
+) -> dict[str, Any]:
+    """Internal fixed quote-model flow based on the Excel workbook pages."""
+    cost_basis = cost_breakdown.get("ddp_cost_usd") if incoterm == "DDP" else cost_breakdown.get("fob_cost_usd")
+    logistics_basis = (
+        "DDP uses FOB cost plus freight/transport converted by FX."
+        if incoterm == "DDP"
+        else "FOB uses material/domestic-profit cost converted by FX; freight remains visible for comparison."
+    )
+    internal_snapshot = {
+        "cost_breakdown": dict(cost_breakdown),
+        "profit_breakdown": dict(profit_breakdown),
+        "pricing_source": source,
+        "margin_strategy": pricing_strategy,
+        "tier": tier_snapshot,
+        "warnings": list(warnings),
+    }
+    return {
+        "workflow": [
+            {"step": "cost", "workbook_sheet": "cost", "status": "calculated"},
+            {"step": "logistics", "workbook_sheet": "cost", "status": "calculated"},
+            {"step": "fx", "workbook_sheet": "cost", "status": "latest_stored_rate" if fx_payload else "missing_or_not_required"},
+            {"step": "price_tier", "workbook_sheet": "price_list", "status": "selected" if tier_snapshot else "cost_model_fallback"},
+            {"step": "profit_check", "workbook_sheet": "profit_calculator", "status": "calculated"},
+            {"step": "customer_quote", "workbook_sheet": "Quote", "status": "customer_safe_output"},
+        ],
+        "product": {
+            "id": str(product.id),
+            "name": product.product_name,
+            "category": product.product_category,
+            "family": product.product_family,
+        },
+        "inputs": {
+            "quantity": quantity,
+            "incoterm": incoterm,
+            "pricing_strategy": pricing_strategy,
+            "discount": discount,
+        },
+        "fx_stage": fx_payload
+        or {
+            "base_currency": "USD",
+            "quote_currency": "CNY",
+            "rate": None,
+            "source": "not_available",
+        },
+        "cost_stage": {
+            "material_cost_rmb": cost_breakdown.get("unit_material_cost_rmb"),
+            "material_cost_after_domestic_profit_rmb": cost_breakdown.get(
+                "unit_material_cost_after_domestic_profit_rmb"
+            ),
+            "fob_cost_usd": cost_breakdown.get("fob_cost_usd"),
+            "ddp_cost_usd": cost_breakdown.get("ddp_cost_usd"),
+            "selected_cost_basis_usd": cost_basis,
+            "internal_only": True,
+        },
+        "logistics_stage": {
+            "unit_weight": cost_breakdown.get("unit_weight"),
+            "ocean_freight_unit_price": cost_breakdown.get("ocean_freight_unit_price"),
+            "domestic_transport_cost": cost_breakdown.get("domestic_transport_cost"),
+            "freight_cost_usd": cost_breakdown.get("freight_cost_usd"),
+            "basis": logistics_basis,
+            "internal_only": True,
+        },
+        "pricing_stage": {
+            "source": source,
+            "tier": tier_snapshot,
+            "margin": margin_snapshot,
+            "base_unit_price": price_breakdown.get("base_unit_price"),
+            "final_unit_price_before_discount": price_breakdown.get("final_unit_price"),
+        },
+        "discount_stage": {
+            "discount_amount": price_breakdown.get("discount_amount"),
+            "final_unit_price_after_discount": price_breakdown.get("final_unit_price_after_discount"),
+        },
+        "final_quote_stage": {
+            "currency": "USD",
+            "unit_price": price_breakdown.get("final_unit_price_after_discount"),
+            "line_subtotal": price_breakdown.get("line_subtotal"),
+            "customer_visible": True,
+            "pdf_ready_fields": ["product_name", "quantity", "incoterm", "unit_price", "line_subtotal"],
+        },
+        "profit_stage": {
+            "estimated_unit_profit": profit_breakdown.get("estimated_unit_profit"),
+            "estimated_total_profit": profit_breakdown.get("estimated_total_profit"),
+            "estimated_margin": profit_breakdown.get("estimated_margin"),
+            "internal_only": True,
+        },
+        "customer_safe_boundary": (
+            "PDF/customer output may show product, quantity, incoterm, final unit price and totals only. "
+            "Cost, margin, pricing breakdown, supplier private notes and internal calculations remain internal."
+        ),
+        "internal_cost_snapshot": internal_snapshot,
+        "warnings": list(warnings),
+        "safety": dict(PRICING_SAFETY),
+    }
+
+
 def calculate_line_price(
     db: Session,
     *,
@@ -136,14 +247,23 @@ def calculate_line_price(
     ref = fx_rate_date or date.today()
     fx = get_latest_fx(db, base="USD", quote="CNY", rate_date=ref)
     fx_rate_usd_cny = fx.rate if fx else None
+    if fx and fx.rate_date < date.today():
+        warnings.append("fx_rate_stale")
 
     source = "price_tier"
     base_unit = Decimal("0")
     unit_cost_for_margin: Decimal | None = None
+    tier_snapshot: dict[str, Any] | None = None
+    margin_snapshot: dict[str, str] | None = None
     cost_breakdown: dict[str, str] = {
+        "cost_currency": "CNY",
         "unit_material_cost_rmb": "0.00",
+        "unit_material_cost_after_domestic_profit_rmb": "0.00",
         "unit_material_cost_usd": "0.00",
+        "unit_material_cost_after_domestic_profit_usd": "0.00",
         "unit_weight": "0.00",
+        "ocean_freight_unit_price": "0.00",
+        "domestic_transport_cost": "0.00",
         "freight_cost_usd": "0.00",
         "fob_cost_usd": "0.00",
         "ddp_cost_usd": "0.00",
@@ -161,6 +281,18 @@ def calculate_line_price(
                 adjustment_value=tier.adjustment_value,
                 final_unit_price=tier.final_unit_price,
             )
+            tier_snapshot = {
+                "id": str(tier.id),
+                "min_qty": tier.min_qty,
+                "max_qty": tier.max_qty,
+                "incoterm": tier.incoterm,
+                "currency": tier.currency,
+                "pricing_strategy": tier.pricing_strategy,
+                "base_unit_price": str(tier.base_unit_price) if tier.base_unit_price is not None else None,
+                "adjustment_value": str(tier.adjustment_value) if tier.adjustment_value is not None else None,
+                "final_unit_price": str(tier.final_unit_price) if tier.final_unit_price is not None else None,
+                "source": tier.source,
+            }
         else:
             cost = _select_cost_model(db, product_id, ref)
             if not cost:
@@ -200,6 +332,7 @@ def calculate_line_price(
 
             mult, w = _select_margin_multiplier(db, pricing_strategy, quantity)
             warnings.extend(w)
+            margin_snapshot = {"strategy": pricing_strategy, "multiplier": str(mult)}
             base_unit = (base_unit * mult).quantize(Decimal("0.0001"))
 
     if unit_cost_for_margin is None and source == "price_tier":
@@ -219,6 +352,8 @@ def calculate_line_price(
                 )
             except ValueError:
                 unit_cost_for_margin = None
+        if unit_cost_for_margin is not None and inc == "DDP" and cost_breakdown.get("ddp_cost_usd"):
+            unit_cost_for_margin = Decimal(cost_breakdown["ddp_cost_usd"])
 
     final_unit, discount_amount = apply_discount(base_unit, quantity, discount)
     line_subtotal = (final_unit * quantity).quantize(Decimal("0.01"))
@@ -234,6 +369,37 @@ def calculate_line_price(
             "source": fx.source or "manual",
         }
 
+    price_breakdown = {
+        "base_unit_price": money(base_unit),
+        "adjustment_value": "0.00",
+        "final_unit_price": money(base_unit),
+        "discount_amount": money(discount_amount),
+        "final_unit_price_after_discount": money(final_unit),
+        "line_subtotal": money(line_subtotal),
+    }
+    profit_breakdown = {
+        "estimated_unit_profit": money(
+            (final_unit - (unit_cost_for_margin or Decimal("0"))).quantize(Decimal("0.0001"))
+        ),
+        "estimated_total_profit": profit_total,
+        "estimated_margin": margin_pct,
+    }
+    quote_model = _quote_model_snapshot(
+        source=source,
+        product=product,
+        quantity=quantity,
+        incoterm=inc,
+        pricing_strategy=pricing_strategy,
+        discount=discount,
+        fx_payload=fx_payload,
+        cost_breakdown=cost_breakdown,
+        price_breakdown=price_breakdown,
+        profit_breakdown=profit_breakdown,
+        tier_snapshot=tier_snapshot,
+        margin_snapshot=margin_snapshot,
+        warnings=warnings,
+    )
+
     return {
         "product_id": str(product_id),
         "quantity": quantity,
@@ -242,21 +408,9 @@ def calculate_line_price(
         "currency": "USD",
         "fx_rate_used": fx_payload,
         "cost_breakdown": cost_breakdown,
-        "price_breakdown": {
-            "base_unit_price": money(base_unit),
-            "adjustment_value": "0.00",
-            "final_unit_price": money(base_unit),
-            "discount_amount": money(discount_amount),
-            "final_unit_price_after_discount": money(final_unit),
-            "line_subtotal": money(line_subtotal),
-        },
-        "profit_breakdown": {
-            "estimated_unit_profit": money(
-                (final_unit - (unit_cost_for_margin or Decimal("0"))).quantize(Decimal("0.0001"))
-            ),
-            "estimated_total_profit": profit_total,
-            "estimated_margin": margin_pct,
-        },
+        "price_breakdown": price_breakdown,
+        "profit_breakdown": profit_breakdown,
+        "quote_model": quote_model,
         "warnings": warnings,
         "source": source,
         "safety": dict(PRICING_SAFETY),
