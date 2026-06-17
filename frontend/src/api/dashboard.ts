@@ -793,6 +793,7 @@ export interface PartnerPerformanceIntelligence {
   product_line_allocation: Array<Record<string, unknown>>
   delivery_or_feedback_risks: Array<Record<string, unknown>>
   partner_scoreboard: Array<Record<string, unknown>>
+  partner_commercial_playbooks?: Array<Record<string, unknown>>
   management_questions: Record<string, unknown>
   next_action: string
   customer_safe_boundary: string
@@ -847,6 +848,7 @@ export interface ProductMarketFitIntelligence {
   top_product_lines: Array<Record<string, unknown>>
   pilot_risk_product_lines: Array<Record<string, unknown>>
   validated_buying_factors: Array<Record<string, unknown>>
+  product_commercial_playbooks?: Array<Record<string, unknown>>
   management_questions: Record<string, unknown>
   next_action: string
   safety: Record<string, boolean>

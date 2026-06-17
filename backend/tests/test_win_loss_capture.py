@@ -177,3 +177,111 @@ def test_repeat_business_recommendation_is_internal_manual_action():
     assert recommendation["safety"]["external_message_sent"] is False
     assert "delivery support" in recommendation["quote_playbook_inputs"]["partner_factors_to_validate"]
     assert "Procurement cycle moved to next semester." in recommendation["quote_playbook_inputs"]["loss_factors_to_avoid"]
+
+
+def test_product_commercial_playbook_promotes_product_family_learning_without_external_action():
+    playbook = business_execution._product_commercial_playbook(
+        {
+            "partner_focus": "HOSUN",
+            "product_focus": ["lifting systems", "desk frames", "heavy-duty supply"],
+            "fit_status": "order_validated",
+            "purchase_factors": ["load", "stability", "noise", "warranty"],
+            "buying_factors_ranked": [{"factor": "certification", "losses": 1}],
+            "customer_objections": ["packaging proof needed"],
+            "validated_buying_factors": ["project demand"],
+            "evidence_counts": {"wins": 2, "losses": 1, "orders": 1, "feedback": 1},
+            "next_action": "Reuse load and stability proof before the next HOSUN quote.",
+        }
+    )
+
+    assert playbook["recommendation_type"] == "internal_product_commercial_playbook"
+    assert playbook["partner_focus"] == "HOSUN"
+    assert "heavy-duty supply" in playbook["product_family"]
+    assert "load" in playbook["quote_emphasis_suggestions"]
+    assert "certification" in playbook["risk_before_next_quote"]
+    assert playbook["repeat_business_potential"] == "strong_repeat_candidate"
+    assert playbook["manual_only"] is True
+    assert playbook["safety"]["external_message_sent"] is False
+    assert "Internal product commercial playbook only" in playbook["customer_safe_boundary"]
+
+
+def test_partner_commercial_playbook_keeps_partners_parallel_and_manual():
+    playbook = business_execution._partner_commercial_playbook(
+        {
+            "partner_id": "partner-jooboo",
+            "partner_name": "JOOBOO",
+            "product_focus": ["education furniture", "school desks/chairs", "project furniture"],
+            "risk_signals": ["resource needs"],
+            "missing_inputs": ["procurement cycle wording"],
+            "quote_support_count": 3,
+            "order_count": 1,
+            "win_rate": 0.66,
+            "pilot_fit": "pilot_candidate",
+            "allocation_fit": "allocate_next_quotes",
+            "next_allocation_action": "Use JOOBOO for the next education furniture project quote.",
+        }
+    )
+
+    assert playbook["recommendation_type"] == "internal_partner_commercial_playbook"
+    assert playbook["partner_name"] == "JOOBOO"
+    assert "school desks/chairs" in playbook["supported_product_families"]
+    assert "education furniture" in playbook["common_win_contribution"]
+    assert "resource needs" in playbook["common_risk_factors"]
+    assert playbook["pilot_suitability"] == "pilot_risk_review_needed"
+    assert playbook["manual_only"] is True
+    assert playbook["safety"]["quote_status_changed"] is False
+
+
+def test_product_partner_playbook_refs_match_quote_or_opportunity_context(monkeypatch):
+    monkeypatch.setattr(
+        business_execution,
+        "build_product_market_fit_intelligence",
+        lambda db, limit=80: {
+            "items": [
+                {
+                    "partner_focus": "HOSUN",
+                    "product_focus": ["lifting systems", "desk legs"],
+                    "commercial_playbook": {
+                        "recommendation_type": "internal_product_commercial_playbook",
+                        "partner_focus": "HOSUN",
+                        "product_family": ["lifting systems", "desk legs"],
+                        "quote_emphasis_suggestions": ["load", "stability"],
+                        "risk_before_next_quote": ["noise", "certification"],
+                        "manual_only": True,
+                    },
+                }
+            ]
+        },
+    )
+    monkeypatch.setattr(
+        business_execution,
+        "build_partner_performance_intelligence",
+        lambda db, limit=80: {
+            "items": [
+                {
+                    "partner_name": "HOSUN",
+                    "product_coverage": ["lifting systems", "heavy-duty supply"],
+                    "commercial_playbook": {
+                        "recommendation_type": "internal_partner_commercial_playbook",
+                        "partner_name": "HOSUN",
+                        "common_win_contribution": ["delivery support"],
+                        "common_risk_factors": ["certification support"],
+                        "manual_only": True,
+                    },
+                }
+            ]
+        },
+    )
+
+    refs = business_execution.build_product_partner_playbook_refs(
+        MagicMock(),
+        partner_focus="HOSUN",
+        product_focus=["lifting systems"],
+    )
+
+    assert refs["recommendation_type"] == "internal_product_partner_playbook_refs"
+    assert refs["product_playbooks"][0]["quote_emphasis_suggestions"] == ["load", "stability"]
+    assert refs["partner_playbooks"][0]["common_risk_factors"] == ["certification support"]
+    assert refs["manual_only"] is True
+    assert refs["safety"]["external_message_sent"] is False
+    assert "Internal playbook references only" in refs["customer_safe_boundary"]

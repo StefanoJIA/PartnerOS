@@ -127,6 +127,105 @@
       </section>
 
       <section class="rounded border border-slate-200 bg-white p-4">
+        <div class="mb-3 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 class="font-semibold text-slate-900">Product / Partner Commercial Playbook</h3>
+            <p class="mt-1 text-sm text-slate-600">
+              Internal recommendations reuse win/loss, quote learning, repeat signals, delivery evidence, feedback, and partner readiness at product-family and partner level.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-1">
+            <el-tag type="success" effect="plain">Products {{ productCommercialPlaybooks.length }}</el-tag>
+            <el-tag type="primary" effect="plain">Partners {{ partnerCommercialPlaybooks.length }}</el-tag>
+          </div>
+        </div>
+
+        <div class="grid gap-3 xl:grid-cols-2">
+          <div class="rounded border border-emerald-100 bg-emerald-50 p-3">
+            <div class="mb-2 flex items-center justify-between gap-2">
+              <h4 class="text-sm font-semibold text-slate-900">Product Commercial Playbook</h4>
+              <el-tag size="small" type="success" effect="plain">internal recommendation</el-tag>
+            </div>
+            <div v-for="item in filteredProductCommercialPlaybooks.slice(0, 5)" :key="rowKey(item)" class="mt-2 rounded bg-white p-2">
+              <div class="flex flex-wrap items-center gap-1">
+                <el-tag size="small" type="success" effect="plain">{{ primaryText(item, ['partner_focus'], 'multi-partner') }}</el-tag>
+                <el-tag size="small" effect="plain">{{ primaryText(item, ['product_family'], 'product family') }}</el-tag>
+                <el-tag size="small" type="info" effect="plain">evidence {{ item.evidence_count ?? 0 }}</el-tag>
+                <el-tag size="small" :type="String(item.repeat_business_potential) === 'high' ? 'success' : 'info'" effect="plain">
+                  repeat {{ item.repeat_business_potential || 'needs review' }}
+                </el-tag>
+              </div>
+              <p class="mt-1 text-xs font-medium text-slate-800">{{ item.next_commercial_action || 'Review product-line commercial evidence before the next quote.' }}</p>
+              <div class="mt-1 flex flex-wrap gap-1">
+                <el-tag
+                  v-for="factor in textList(item.quote_emphasis_suggestions).slice(0, 5)"
+                  :key="`product-win-${factor}`"
+                  size="small"
+                  type="success"
+                  effect="plain"
+                >
+                  emphasize {{ factor }}
+                </el-tag>
+                <el-tag
+                  v-for="factor in textList(item.risk_before_next_quote).slice(0, 5)"
+                  :key="`product-risk-${factor}`"
+                  size="small"
+                  type="warning"
+                  effect="plain"
+                >
+                  validate {{ factor }}
+                </el-tag>
+              </div>
+              <p class="mt-1 text-[11px] text-emerald-700">{{ item.customer_safe_boundary }}</p>
+            </div>
+            <p v-if="!filteredProductCommercialPlaybooks.length" class="text-sm text-slate-500">
+              No product-family playbook evidence under current filters.
+            </p>
+          </div>
+
+          <div class="rounded border border-blue-100 bg-blue-50 p-3">
+            <div class="mb-2 flex items-center justify-between gap-2">
+              <h4 class="text-sm font-semibold text-slate-900">Partner Commercial Playbook</h4>
+              <el-tag size="small" type="primary" effect="plain">manual confirmation</el-tag>
+            </div>
+            <div v-for="item in filteredPartnerCommercialPlaybooks.slice(0, 5)" :key="rowKey(item)" class="mt-2 rounded bg-white p-2">
+              <div class="flex flex-wrap items-center gap-1">
+                <el-tag size="small" type="primary" effect="plain">{{ item.partner_name || 'future partner' }}</el-tag>
+                <el-tag size="small" effect="plain">{{ item.pilot_suitability || 'pilot review' }}</el-tag>
+                <el-tag size="small" type="info" effect="plain">quotes {{ item.quote_support_count ?? 0 }}</el-tag>
+                <el-tag size="small" type="success" effect="plain">orders {{ item.order_count ?? 0 }}</el-tag>
+              </div>
+              <p class="mt-1 text-xs font-medium text-slate-800">{{ item.next_partner_action || 'Review partner evidence before quote allocation or pilot planning.' }}</p>
+              <div class="mt-1 flex flex-wrap gap-1">
+                <el-tag
+                  v-for="factor in textList(item.common_win_contribution).slice(0, 4)"
+                  :key="`partner-win-${factor}`"
+                  size="small"
+                  type="success"
+                  effect="plain"
+                >
+                  helps {{ factor }}
+                </el-tag>
+                <el-tag
+                  v-for="factor in textList(item.common_risk_factors).slice(0, 4)"
+                  :key="`partner-risk-${factor}`"
+                  size="small"
+                  type="warning"
+                  effect="plain"
+                >
+                  risk {{ factor }}
+                </el-tag>
+              </div>
+              <p class="mt-1 text-[11px] text-blue-700">{{ item.customer_safe_boundary }}</p>
+            </div>
+            <p v-if="!filteredPartnerCommercialPlaybooks.length" class="text-sm text-slate-500">
+              No partner playbook evidence under current filters.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded border border-slate-200 bg-white p-4">
         <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 class="font-semibold text-slate-900">六类商业资产覆盖</h3>
@@ -1019,6 +1118,18 @@ const pmfBuyingFactors = computed(() => [
   ...asList(productMarketFit.value?.top_product_lines).flatMap((item) => expandPmfFactorRows(item)),
   ...asList(productMarketFit.value?.items).flatMap((item) => expandPmfFactorRows(item)),
 ])
+const productCommercialPlaybooks = computed(() =>
+  uniqueRows([
+    ...asList(productMarketFit.value?.product_commercial_playbooks),
+    ...asList(commercial.value?.product_market_fit).map((item) => asRecord(item.commercial_playbook)),
+  ]).filter((item) => Object.keys(item).length > 0),
+)
+const partnerCommercialPlaybooks = computed(() =>
+  uniqueRows([
+    ...asList(partnerPerformance.value?.partner_commercial_playbooks),
+    ...asList(commercial.value?.partner_performance).map((item) => asRecord(item.commercial_playbook)),
+  ]).filter((item) => Object.keys(item).length > 0),
+)
 const accountRecommendations = computed(() => [
   ...asList(account360.value?.recommended_accounts),
   ...asList(account360.value?.repeat_or_referral_accounts),
@@ -1078,6 +1189,8 @@ const filteredReasonClusters = computed(() => filterExperienceRows(winLossReason
 const filteredBuyingFactors = computed(() => filterExperienceRows(pmfBuyingFactors.value))
 const filteredAccounts = computed(() => filterExperienceRows(accountRecommendations.value))
 const filteredDecisionFactors = computed(() => filterExperienceRows(winLossDecisionFactors.value))
+const filteredProductCommercialPlaybooks = computed(() => filterExperienceRows(productCommercialPlaybooks.value))
+const filteredPartnerCommercialPlaybooks = computed(() => filterExperienceRows(partnerCommercialPlaybooks.value))
 
 const managementSections = computed(() => [
   {

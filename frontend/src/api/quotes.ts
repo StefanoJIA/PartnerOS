@@ -102,7 +102,56 @@ export interface QuoteCommercialIntelligence {
   quote_learning_impacts: string[]
   readiness_impact: string[]
   quote_playbook?: QuotePlaybook
+  product_partner_playbook_refs?: ProductPartnerPlaybookRefs
   next_best_action: string
+  customer_safe_boundary: string
+  safety: QuoteLearningSafety
+}
+
+export interface ProductCommercialPlaybook {
+  recommendation_type: string
+  partner_focus: string
+  product_family: string[]
+  fit_status: string
+  common_win_factors: string[]
+  common_loss_factors: string[]
+  customer_decision_factors: string[]
+  quote_emphasis_suggestions: string[]
+  risk_before_next_quote: string[]
+  repeat_business_potential: string
+  evidence_count: number
+  next_commercial_action: string
+  manual_only: boolean
+  customer_safe_boundary: string
+  safety: QuoteLearningSafety
+}
+
+export interface PartnerCommercialPlaybook {
+  recommendation_type: string
+  partner_id?: string | null
+  partner_name?: string | null
+  product_coverage: string[]
+  supported_product_families: string[]
+  common_win_contribution: string[]
+  common_risk_factors: string[]
+  quote_support_issues: string[]
+  delivery_certification_after_sales_issues: string[]
+  pilot_suitability: string
+  allocation_fit?: string | null
+  next_partner_action: string
+  manual_only: boolean
+  customer_safe_boundary: string
+  safety: QuoteLearningSafety
+}
+
+export interface ProductPartnerPlaybookRefs {
+  recommendation_type: string
+  partner_focus: string
+  product_focus: string[]
+  product_playbooks: ProductCommercialPlaybook[]
+  partner_playbooks: PartnerCommercialPlaybook[]
+  next_action: string
+  manual_only: boolean
   customer_safe_boundary: string
   safety: QuoteLearningSafety
 }

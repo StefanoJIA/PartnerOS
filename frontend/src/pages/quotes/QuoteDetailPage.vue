@@ -159,6 +159,9 @@ const quoteProductKeywords = computed(() => {
   return executionKeywords(...lineProducts, ...(quoteCommercial.value?.product_focus ?? []))
 })
 const quotePartnerFocus = computed(() => quoteCommercial.value?.partner_focus || quotePartnerReadiness.value?.partners?.[0]?.partner_name || null)
+const productPartnerPlaybookRefs = computed(() => quoteCommercial.value?.product_partner_playbook_refs ?? null)
+const quoteProductPlaybooks = computed(() => productPartnerPlaybookRefs.value?.product_playbooks ?? [])
+const quotePartnerPlaybooks = computed(() => productPartnerPlaybookRefs.value?.partner_playbooks ?? [])
 
 async function loadActiveOrder() {
   if (!quote.value) return
@@ -616,6 +619,73 @@ onMounted(load)
               </div>
             </div>
           </div>
+        </div>
+        <div v-if="productPartnerPlaybookRefs" class="quote-playbook mt">
+          <div class="quote-commercial__head">
+            <div>
+              <h4>Product / Partner Playbook Reference</h4>
+              <p>Product-family and partner-level commercial recommendations for this quote. Internal only; manual confirmation required.</p>
+            </div>
+            <div class="quote-commercial__tags">
+              <el-tag type="success" effect="plain">products {{ quoteProductPlaybooks.length }}</el-tag>
+              <el-tag type="primary" effect="plain">partners {{ quotePartnerPlaybooks.length }}</el-tag>
+            </div>
+          </div>
+          <p class="quote-commercial__action">{{ productPartnerPlaybookRefs.next_action }}</p>
+          <div class="quote-commercial__grid">
+            <div>
+              <div class="quote-commercial__label">Quote should emphasize</div>
+              <div class="quote-commercial__chips">
+                <template v-for="playbook in quoteProductPlaybooks" :key="`qp-product-${playbook.partner_focus}-${playbook.product_family.join('|')}`">
+                  <el-tag
+                    v-for="item in playbook.quote_emphasis_suggestions.slice(0, 5)"
+                    :key="`qp-emphasis-${item}`"
+                    size="small"
+                    type="success"
+                    effect="plain"
+                  >
+                    {{ item }}
+                  </el-tag>
+                </template>
+                <span v-if="!quoteProductPlaybooks.length" class="quote-commercial__empty">No product playbook match yet</span>
+              </div>
+            </div>
+            <div>
+              <div class="quote-commercial__label">Validate before sending</div>
+              <div class="quote-commercial__chips">
+                <template v-for="playbook in quoteProductPlaybooks" :key="`qp-risk-${playbook.partner_focus}-${playbook.product_family.join('|')}`">
+                  <el-tag
+                    v-for="item in playbook.risk_before_next_quote.slice(0, 5)"
+                    :key="`qp-risk-item-${item}`"
+                    size="small"
+                    type="warning"
+                    effect="plain"
+                  >
+                    {{ item }}
+                  </el-tag>
+                </template>
+                <span v-if="!quoteProductPlaybooks.length" class="quote-commercial__empty">No product risk evidence yet</span>
+              </div>
+            </div>
+            <div>
+              <div class="quote-commercial__label">Partner capacity context</div>
+              <div class="quote-commercial__chips">
+                <template v-for="playbook in quotePartnerPlaybooks" :key="`qp-partner-${playbook.partner_name}`">
+                  <el-tag
+                    v-for="item in playbook.common_risk_factors.slice(0, 5)"
+                    :key="`qp-partner-risk-${item}`"
+                    size="small"
+                    type="info"
+                    effect="plain"
+                  >
+                    {{ playbook.partner_name || 'partner' }} / {{ item }}
+                  </el-tag>
+                </template>
+                <span v-if="!quotePartnerPlaybooks.length" class="quote-commercial__empty">No partner playbook match yet</span>
+              </div>
+            </div>
+          </div>
+          <el-alert class="mt" type="warning" :closable="false" show-icon :title="productPartnerPlaybookRefs.customer_safe_boundary" />
         </div>
         <el-alert class="mt" type="warning" :closable="false" show-icon :title="quoteCommercial.customer_safe_boundary" />
       </section>

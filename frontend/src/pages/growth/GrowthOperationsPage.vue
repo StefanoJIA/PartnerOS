@@ -339,6 +339,57 @@
                     </div>
                     <p class="mt-1 text-[11px] text-purple-700">仅内部人工建议，不自动改机会/报价/订单状态，不作为客户真实反馈。</p>
                   </div>
+                  <div
+                    v-if="row.product_partner_playbook_refs && (row.product_partner_playbook_refs.product_playbooks.length || row.product_partner_playbook_refs.partner_playbooks.length)"
+                    class="mt-3 rounded border border-emerald-100 bg-emerald-50 p-2"
+                  >
+                    <div class="flex flex-wrap items-center gap-1">
+                      <el-tag size="small" type="success" effect="plain">Product / Partner Playbook</el-tag>
+                      <el-tag size="small" effect="plain">products {{ row.product_partner_playbook_refs.product_playbooks.length }}</el-tag>
+                      <el-tag size="small" type="info" effect="plain">partners {{ row.product_partner_playbook_refs.partner_playbooks.length }}</el-tag>
+                    </div>
+                    <p class="mt-1 text-xs font-medium text-slate-800">{{ row.product_partner_playbook_refs.next_action }}</p>
+                    <div class="mt-1 flex flex-wrap gap-1">
+                      <template
+                        v-for="playbook in row.product_partner_playbook_refs.product_playbooks.slice(0, 2)"
+                        :key="`opp-product-playbook-${playbook.partner_focus}-${playbook.product_family.join('|')}`"
+                      >
+                        <el-tag
+                          v-for="item in playbook.quote_emphasis_suggestions.slice(0, 3)"
+                          :key="`opp-product-emphasis-${item}`"
+                          size="small"
+                          type="success"
+                          effect="plain"
+                        >
+                          emphasize {{ item }}
+                        </el-tag>
+                        <el-tag
+                          v-for="item in playbook.risk_before_next_quote.slice(0, 3)"
+                          :key="`opp-product-risk-${item}`"
+                          size="small"
+                          type="warning"
+                          effect="plain"
+                        >
+                          validate {{ item }}
+                        </el-tag>
+                      </template>
+                      <template
+                        v-for="playbook in row.product_partner_playbook_refs.partner_playbooks.slice(0, 2)"
+                        :key="`opp-partner-playbook-${playbook.partner_name}`"
+                      >
+                        <el-tag
+                          v-for="item in playbook.common_risk_factors.slice(0, 3)"
+                          :key="`opp-partner-risk-${item}`"
+                          size="small"
+                          type="info"
+                          effect="plain"
+                        >
+                          {{ playbook.partner_name || 'partner' }} / {{ item }}
+                        </el-tag>
+                      </template>
+                    </div>
+                    <p class="mt-1 text-[11px] text-emerald-700">{{ row.product_partner_playbook_refs.customer_safe_boundary }}</p>
+                  </div>
                   <div v-if="row.recommendations?.length" class="mt-3 space-y-2">
                     <div
                       v-for="rec in row.recommendations.slice(0, 2)"

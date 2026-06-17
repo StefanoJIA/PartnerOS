@@ -1308,7 +1308,25 @@ def _opportunity_recommendations(db: Session | None, row: SalesOpportunity) -> l
     )[:5]
 
 
-def _serialize_opportunity(row: SalesOpportunity, db: Session | None = None) -> dict[str, Any]:
+def _build_product_partner_playbook_context(db: Session) -> dict[str, list[dict[str, Any]]]:
+    from app.services.business_execution import (
+        build_partner_performance_intelligence,
+        build_product_market_fit_intelligence,
+    )
+
+    product_payload = build_product_market_fit_intelligence(db, limit=80)
+    partner_payload = build_partner_performance_intelligence(db, limit=80)
+    return {
+        "product_items": [item for item in product_payload.get("items", []) if isinstance(item, dict)],
+        "partner_items": [item for item in partner_payload.get("items", []) if isinstance(item, dict)],
+    }
+
+
+def _serialize_opportunity(
+    row: SalesOpportunity,
+    db: Session | None = None,
+    playbook_context: dict[str, list[dict[str, Any]]] | None = None,
+) -> dict[str, Any]:
     recommendations = _opportunity_recommendations(db, row)
     stage_gate = derive_opportunity_stage_gate(row, recommendations)
     execution_context = build_opportunity_execution_context(db, row, recommendations, stage_gate)
@@ -1327,6 +1345,27 @@ def _serialize_opportunity(row: SalesOpportunity, db: Session | None = None) -> 
             *([row.blocker] if row.blocker else []),
         ]
     )[:8]
+    product_partner_playbook_refs: dict[str, Any] | None = None
+    if db is not None:
+        if playbook_context is None:
+            from app.services.business_execution import build_product_partner_playbook_refs
+
+            product_partner_playbook_refs = build_product_partner_playbook_refs(
+                db,
+                partner_focus=row.partner_focus,
+                product_focus=[str(value) for value in (row.product_focus or []) if value],
+                limit=3,
+            )
+        else:
+            from app.services.business_execution import build_product_partner_playbook_refs_from_items
+
+            product_partner_playbook_refs = build_product_partner_playbook_refs_from_items(
+                product_items=playbook_context["product_items"],
+                partner_items=playbook_context["partner_items"],
+                partner_focus=row.partner_focus,
+                product_focus=[str(value) for value in (row.product_focus or []) if value],
+                limit=3,
+            )
     return {
         "id": str(row.id),
         "opportunity_name": row.opportunity_name,
@@ -1388,6 +1427,7 @@ def _serialize_opportunity(row: SalesOpportunity, db: Session | None = None) -> 
             ),
             "safety": dict(OPPORTUNITY_EXECUTION_SAFETY),
         },
+        "product_partner_playbook_refs": product_partner_playbook_refs,
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "updated_at": row.updated_at.isoformat() if row.updated_at else None,
     }
@@ -1534,10 +1574,11 @@ def get_growth_campaign_detail(db: Session, campaign_id: UUID) -> dict[str, Any]
         .order_by(SalesOpportunity.probability.desc(), SalesOpportunity.updated_at.desc())
         .all()
     )
+    playbook_context = _build_product_partner_playbook_context(db)
     return {
         "campaign": _serialize_campaign(campaign),
         "tasks": [_serialize_task(task) for task in campaign.tasks],
-        "opportunities": [_serialize_opportunity(row, db=db) for row in opportunities],
+        "opportunities": [_serialize_opportunity(row, db=db, playbook_context=playbook_context) for row in opportunities],
         "summary": _campaign_summary(db, campaign),
         "manual_status_options": [
             {"value": value, "label": label} for value, label in CAMPAIGN_TASK_STATUS_LABELS.items()
@@ -1931,8 +1972,9 @@ def list_sales_opportunities(db: Session) -> dict[str, Any]:
         .limit(200)
         .all()
     )
+    playbook_context = _build_product_partner_playbook_context(db)
     return {
-        "opportunities": [_serialize_opportunity(row, db=db) for row in rows],
+        "opportunities": [_serialize_opportunity(row, db=db, playbook_context=playbook_context) for row in rows],
         "stage_options": [{"value": value, "label": label} for value, label in OPPORTUNITY_STAGE_LABELS.items()],
         "status_options": [{"value": value, "label": label} for value, label in OPPORTUNITY_STATUS_LABELS.items()],
         "safety": {

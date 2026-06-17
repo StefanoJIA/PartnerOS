@@ -329,6 +329,51 @@ export interface GrowthOpportunityPlaybookInput {
   safety: Record<string, boolean>
 }
 
+export interface GrowthProductCommercialPlaybook {
+  recommendation_type: string
+  partner_focus: string
+  product_family: string[]
+  common_win_factors: string[]
+  common_loss_factors: string[]
+  customer_decision_factors: string[]
+  quote_emphasis_suggestions: string[]
+  risk_before_next_quote: string[]
+  repeat_business_potential: string
+  evidence_count: number
+  next_commercial_action: string
+  manual_only: boolean
+  customer_safe_boundary: string
+  safety: Record<string, boolean>
+}
+
+export interface GrowthPartnerCommercialPlaybook {
+  recommendation_type: string
+  partner_name?: string | null
+  product_coverage: string[]
+  supported_product_families: string[]
+  common_win_contribution: string[]
+  common_risk_factors: string[]
+  quote_support_issues: string[]
+  delivery_certification_after_sales_issues: string[]
+  pilot_suitability: string
+  next_partner_action: string
+  manual_only: boolean
+  customer_safe_boundary: string
+  safety: Record<string, boolean>
+}
+
+export interface GrowthProductPartnerPlaybookRefs {
+  recommendation_type: string
+  partner_focus: string
+  product_focus: string[]
+  product_playbooks: GrowthProductCommercialPlaybook[]
+  partner_playbooks: GrowthPartnerCommercialPlaybook[]
+  next_action: string
+  manual_only: boolean
+  customer_safe_boundary: string
+  safety: Record<string, boolean>
+}
+
 export interface GrowthOpportunityRow {
   id: string
   opportunity_name: string
@@ -370,6 +415,7 @@ export interface GrowthOpportunityRow {
   stage_gate: GrowthOpportunityStageGate
   execution_context: GrowthOpportunityExecutionContext
   opportunity_playbook_input?: GrowthOpportunityPlaybookInput
+  product_partner_playbook_refs?: GrowthProductPartnerPlaybookRefs | null
   created_at: string
   updated_at: string
 }

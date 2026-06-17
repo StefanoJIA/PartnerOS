@@ -159,8 +159,51 @@ const payload = {
       safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
     },
     account_360: [{ customer_name: 'HOSUN demo account', current_stage: 'After-Sales', priority: 'P1', next_action: 'Resolve feedback', path: '/companies/demo' }],
-    product_market_fit: [{ partner_focus: 'HOSUN', product_focus: ['lifting systems'], fit_status: 'order_validated', commercial_question: 'Which factors convert?', next_action: 'Review load evidence', path: '/market-response' }],
-    partner_performance: [{ partner_name: 'JOOBOO', investment_priority: 'P2', quote_support_count: 2, win_rate: 0.5, order_amount: 50000, next_action: 'Review allocation', path: '/partner-onboarding' }],
+    product_market_fit: [
+      {
+        partner_focus: 'HOSUN',
+        product_focus: ['lifting systems'],
+        fit_status: 'order_validated',
+        commercial_question: 'Which factors convert?',
+        next_action: 'Review load evidence',
+        path: '/market-response',
+        commercial_playbook: {
+          recommendation_type: 'internal_product_commercial_playbook',
+          partner_focus: 'HOSUN',
+          product_family: ['lifting systems', 'heavy-duty supply'],
+          quote_emphasis_suggestions: ['load', 'stability'],
+          risk_before_next_quote: ['certification', 'noise'],
+          repeat_business_potential: 'strong_repeat_candidate',
+          evidence_count: 6,
+          next_commercial_action: 'Use load and stability proof before the next lifting systems quote.',
+          customer_safe_boundary: 'Internal product commercial playbook only.',
+        },
+      },
+    ],
+    partner_performance: [
+      {
+        partner_name: 'JOOBOO',
+        investment_priority: 'P2',
+        quote_support_count: 2,
+        win_rate: 0.5,
+        order_amount: 50000,
+        next_action: 'Review allocation',
+        path: '/partner-onboarding',
+        commercial_playbook: {
+          recommendation_type: 'internal_partner_commercial_playbook',
+          partner_name: 'JOOBOO',
+          product_coverage: ['education furniture', 'project furniture'],
+          supported_product_families: ['education furniture', 'project furniture'],
+          common_win_contribution: ['delivery consistency'],
+          common_risk_factors: ['resource needs'],
+          quote_support_count: 2,
+          order_count: 1,
+          pilot_suitability: 'selective_candidate',
+          next_partner_action: 'Use JOOBOO selectively for school furniture project quotes.',
+          customer_safe_boundary: 'Internal partner commercial playbook only.',
+        },
+      },
+    ],
     win_loss: [{ customer: 'Won account', outcome: 'won', reason_category: 'delivery', commercial_lesson: 'Delivery consistency won.', next_quote_guidance: 'Use proof.', path: '/quotes/q1' }],
     customer_value: [{ customer_name: 'Growth account', value_tier: 'growth_account', priority: 'P1', historical_quote_amount: 100000, won_order_amount: 50000, weighted_pipeline_amount: 25000, next_action: 'Follow up', path: '/companies/c1' }],
     revenue_forecast: { high_probability_projects: [{ name: 'JOOBOO pilot', probability: 80, weighted_amount: 80000, path: '/growth-operations' }] },
@@ -187,6 +230,19 @@ const pmfPayload = {
   top_product_lines: [{ partner_focus: 'HOSUN', product_focus: ['lifting systems'], buying_factors_ranked: [{ factor: 'load', evidence_count: 4, wins: 1, losses: 0, feedback: 0 }] }],
   pilot_risk_product_lines: [],
   validated_buying_factors: [{ factor: 'load', partner_focus: 'HOSUN', evidence_count: 4, wins: 1, losses: 0, feedback: 0 }],
+  product_commercial_playbooks: [
+    {
+      recommendation_type: 'internal_product_commercial_playbook',
+      partner_focus: 'HOSUN',
+      product_family: ['lifting systems', 'heavy-duty supply'],
+      quote_emphasis_suggestions: ['load', 'stability'],
+      risk_before_next_quote: ['certification', 'noise'],
+      repeat_business_potential: 'strong_repeat_candidate',
+      evidence_count: 6,
+      next_commercial_action: 'Use load and stability proof before the next lifting systems quote.',
+      customer_safe_boundary: 'Internal product commercial playbook only.',
+    },
+  ],
   management_questions: {},
   next_action: 'Review PMF.',
   safety: { external_message_sent: false, customer_forbidden_fields_exposed: false },
@@ -525,6 +581,21 @@ const partnerPerformancePayload = {
   product_line_allocation: [],
   delivery_or_feedback_risks: [],
   partner_scoreboard: [],
+  partner_commercial_playbooks: [
+    {
+      recommendation_type: 'internal_partner_commercial_playbook',
+      partner_name: 'JOOBOO',
+      product_coverage: ['education furniture', 'project furniture'],
+      supported_product_families: ['education furniture', 'project furniture'],
+      common_win_contribution: ['delivery consistency'],
+      common_risk_factors: ['resource needs'],
+      quote_support_count: 3,
+      order_count: 1,
+      pilot_suitability: 'pilot_candidate',
+      next_partner_action: 'Use JOOBOO for the next education furniture project quote.',
+      customer_safe_boundary: 'Internal partner commercial playbook only.',
+    },
+  ],
   management_questions: {},
   next_action: 'Review partner performance.',
   customer_safe_boundary: 'internal only',
@@ -791,6 +862,11 @@ describe('CommercialIntelligencePage', () => {
     expect(wrapper.text()).toContain('Strategic school buyer')
     expect(wrapper.text()).toContain('Use JOOBOO for school desk/chair project quote allocation.')
     expect(wrapper.text()).toContain('HOSUN heavy-duty lifting project')
+    expect(wrapper.text()).toContain('Product / Partner Commercial Playbook')
+    expect(wrapper.text()).toContain('Product Commercial Playbook')
+    expect(wrapper.text()).toContain('Partner Commercial Playbook')
+    expect(wrapper.text()).toContain('Use load and stability proof before the next lifting systems quote.')
+    expect(wrapper.text()).toContain('Use JOOBOO for the next education furniture project quote.')
   })
 
   it('keeps navigation as manual operator action', async () => {

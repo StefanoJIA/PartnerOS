@@ -18,6 +18,7 @@ vi.mock('@/api/orders', () => ({
 
 vi.mock('@/api/quotes', () => ({
   SENT_CHANNELS: [{ value: 'email', label: 'Email (manual)' }],
+  createQuoteLearning: vi.fn(),
   fetchQuote: vi.fn().mockResolvedValue({
     id: 'q1',
     quote_number: 'Q-2026-0001',
@@ -33,6 +34,95 @@ vi.mock('@/api/quotes', () => ({
     warnings: [],
     follow_up_date: null,
     sent_at: null,
+    commercial_intelligence: {
+      health: 'quote_learning_ready',
+      score: 78,
+      priority: 'P1',
+      business_focus: 'HOSUN lifting systems',
+      partner_focus: 'HOSUN',
+      product_focus: ['lifting systems', 'heavy-duty supply'],
+      version_count: 1,
+      latest_outcome_status: 'won',
+      follow_up_state: 'manual_follow_up',
+      missing_inputs: [],
+      captured_dimensions: ['load', 'stability'],
+      dimension_review_needs: ['certification'],
+      market_response_review_needed: true,
+      quote_learning_impacts: [],
+      readiness_impact: [],
+      quote_playbook: {
+        recommendation_type: 'internal_quote_playbook',
+        status: 'ready',
+        partner_focus: 'HOSUN',
+        product_focus: ['lifting systems'],
+        evidence_count: 2,
+        won_count: 1,
+        lost_count: 1,
+        no_response_count: 0,
+        deferred_count: 0,
+        common_winning_factors: ['load'],
+        common_loss_factors: ['certification'],
+        quote_emphasis: ['load', 'stability'],
+        avoid_or_validate_before_sending: ['certification', 'noise'],
+        customer_safe_wording_needed: ['warranty'],
+        customer_decision_factors: ['project demand'],
+        product_factors: ['load', 'stability'],
+        partner_factors: ['delivery support'],
+        delivery_certification_service_factors: ['certification'],
+        next_quote_guidance: 'Use load and stability proof before sending.',
+        manual_only: true,
+        customer_safe_boundary: 'Internal recommendation only.',
+        safety: { external_message_sent: false, customer_notified: false, quote_status_changed: false, order_status_changed: false },
+      },
+      product_partner_playbook_refs: {
+        recommendation_type: 'internal_product_partner_playbook_refs',
+        partner_focus: 'HOSUN',
+        product_focus: ['lifting systems'],
+        product_playbooks: [
+          {
+            recommendation_type: 'internal_product_commercial_playbook',
+            partner_focus: 'HOSUN',
+            product_family: ['lifting systems', 'heavy-duty supply'],
+            fit_status: 'order_validated',
+            common_win_factors: ['load'],
+            common_loss_factors: ['certification'],
+            customer_decision_factors: ['project demand'],
+            quote_emphasis_suggestions: ['load', 'stability'],
+            risk_before_next_quote: ['certification', 'noise'],
+            repeat_business_potential: 'strong_repeat_candidate',
+            evidence_count: 6,
+            next_commercial_action: 'Use product-family learning before this quote.',
+            manual_only: true,
+            customer_safe_boundary: 'Internal product commercial playbook only.',
+            safety: { external_message_sent: false, customer_notified: false, quote_status_changed: false, order_status_changed: false },
+          },
+        ],
+        partner_playbooks: [
+          {
+            recommendation_type: 'internal_partner_commercial_playbook',
+            partner_name: 'HOSUN',
+            product_coverage: ['lifting systems'],
+            supported_product_families: ['lifting systems'],
+            common_win_contribution: ['delivery support'],
+            common_risk_factors: ['certification support'],
+            quote_support_issues: ['customer-safe delivery wording'],
+            delivery_certification_after_sales_issues: ['certification support'],
+            pilot_suitability: 'selective_candidate',
+            next_partner_action: 'Validate HOSUN certification support before quote send.',
+            manual_only: true,
+            customer_safe_boundary: 'Internal partner commercial playbook only.',
+            safety: { external_message_sent: false, customer_notified: false, quote_status_changed: false, order_status_changed: false },
+          },
+        ],
+        next_action: 'Use product-family learning before this quote.',
+        manual_only: true,
+        customer_safe_boundary: 'Internal playbook references only.',
+        safety: { external_message_sent: false, customer_notified: false, quote_status_changed: false, order_status_changed: false },
+      },
+      next_best_action: 'Review playbook before manual quote send.',
+      customer_safe_boundary: 'Internal only.',
+      safety: { external_message_sent: false, customer_notified: false, quote_status_changed: false, order_status_changed: false },
+    },
     partner_readiness: {
       health: 'partner_quote_gap',
       priority: 'P1',
@@ -64,6 +154,7 @@ vi.mock('@/api/quotes', () => ({
     },
   }),
   fetchQuotePdfExports: vi.fn().mockResolvedValue({ items: [], total: 0 }),
+  fetchQuoteLearning: vi.fn().mockResolvedValue({ items: [], total: 0 }),
   fetchDeliveryLogs: vi.fn().mockResolvedValue({ items: [], total: 0 }),
   fetchQuoteTimeline: vi.fn().mockResolvedValue({ items: [], total: 0 }),
   fetchOrderReadiness: vi.fn().mockResolvedValue({
@@ -82,6 +173,7 @@ vi.mock('@/api/quotes', () => ({
   fetchQuoteVersions: vi.fn().mockResolvedValue({ items: [], total: 0 }),
   markQuoteReady: vi.fn(),
   markQuoteSent: vi.fn(),
+  promoteQuoteLearningToMarketResponse: vi.fn(),
   quotePdfDownloadUrl: (qid: string, eid: string) => `/api/v1/quotes/${qid}/pdf-exports/${eid}/download`,
 }))
 
@@ -92,6 +184,9 @@ describe('QuoteDetailPage', () => {
     expect(wrapper.text()).toContain('Quote Delivery')
     expect(wrapper.text()).toContain('Partner 承接判断')
     expect(wrapper.text()).toContain('HOSUN')
+    expect(wrapper.text()).toContain('Product / Partner Playbook Reference')
+    expect(wrapper.text()).toContain('Use product-family learning before this quote.')
+    expect(wrapper.text()).toContain('certification support')
     expect(wrapper.text()).toContain('Order Readiness')
     expect(wrapper.text()).toContain('Refresh Readiness')
     expect(wrapper.text()).toContain('does not create an order')

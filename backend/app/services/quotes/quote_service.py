@@ -218,6 +218,16 @@ def quote_to_dict(quote: Quote, *, include_internal: bool = True) -> dict[str, A
 
     expired = derived_expired(quote)
     db = object_session(quote)
+    commercial_intelligence = build_quote_commercial_intelligence(quote, db)
+    if db is not None:
+        from app.services.business_execution import build_product_partner_playbook_refs
+
+        commercial_intelligence["product_partner_playbook_refs"] = build_product_partner_playbook_refs(
+            db,
+            partner_focus=str(commercial_intelligence.get("partner_focus") or ""),
+            product_focus=[str(value) for value in commercial_intelligence.get("product_focus", []) or []],
+            limit=3,
+        )
     warnings: list[str] = []
     if expired:
         warnings.append("quote_validity_expired")
@@ -258,7 +268,7 @@ def quote_to_dict(quote: Quote, *, include_internal: bool = True) -> dict[str, A
         "adjustments": [_serialize_adjustment(a) for a in quote.adjustments],
         "versions_count": len(quote.versions),
         "latest_learning": latest_quote_learning(quote),
-        "commercial_intelligence": build_quote_commercial_intelligence(quote, db),
+        "commercial_intelligence": commercial_intelligence,
         "partner_readiness": build_quote_partner_readiness(quote),
         "warnings": warnings,
         "safety": dict(QUOTE_SAFETY),

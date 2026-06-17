@@ -122,6 +122,7 @@ def _product_focus_from_text(*values: object) -> list[str]:
         "desk frames",
         "desk legs",
         "lifting columns",
+        "heavy-duty supply",
         "heavy-duty solutions",
         "education furniture",
         "school desks",
@@ -3253,6 +3254,98 @@ def _partner_performance_health(
     )
 
 
+def _playbook_evidence_count(counts: dict[str, object]) -> int:
+    return sum(
+        int(counts.get(key) or 0)
+        for key in ["opportunities", "quotes", "quote_learning", "orders", "feedback", "market_reviews"]
+    )
+
+
+def _product_commercial_playbook(item: dict[str, object]) -> dict[str, object]:
+    counts = item.get("evidence_counts", {}) if isinstance(item.get("evidence_counts"), dict) else {}
+    factor_rows = item.get("buying_factors_ranked", []) if isinstance(item.get("buying_factors_ranked"), list) else []
+    commercial_value = item.get("commercial_value", {}) if isinstance(item.get("commercial_value"), dict) else {}
+    win_factors = _merge_unique(
+        [
+            *[str(row.get("factor") or "") for row in factor_rows if isinstance(row, dict) and int(row.get("wins") or 0) > 0],
+            *[str(value) for value in item.get("dimensions", []) or []],
+            *[str(value) for value in item.get("purchase_factors", []) or []],
+        ],
+        limit=8,
+    )
+    loss_factors = _merge_unique(
+        [
+            *[str(row.get("factor") or "") for row in factor_rows if isinstance(row, dict) and int(row.get("losses") or 0) > 0],
+            *[str(value) for value in item.get("customer_objections", []) or []],
+            *["delivery risk" if int(counts.get("delivery_risks") or 0) else ""],
+            *["open feedback" if int(counts.get("open_feedback") or 0) else ""],
+        ],
+        limit=8,
+    )
+    decision_factors = _merge_unique(
+        [
+            *win_factors,
+            *[str(row.get("factor") or "") for row in factor_rows if isinstance(row, dict)],
+            *[str(value) for value in item.get("product_focus", []) or []],
+        ],
+        limit=10,
+    )
+    evidence_count = _playbook_evidence_count(counts)
+    orders = int(counts.get("orders") or 0)
+    wins = int(counts.get("wins") or 0)
+    feedback = int(counts.get("feedback") or 0)
+    losses = int(counts.get("losses") or 0)
+    open_feedback = int(counts.get("open_feedback") or 0)
+    delivery_risks = int(counts.get("delivery_risks") or 0)
+    if open_feedback or delivery_risks:
+        repeat_potential = "hold_until_delivery_or_feedback_review"
+    elif orders and (wins or feedback):
+        repeat_potential = "strong_repeat_candidate"
+    elif orders or wins:
+        repeat_potential = "selective_repeat_candidate"
+    elif evidence_count:
+        repeat_potential = "needs_conversion_proof"
+    else:
+        repeat_potential = "baseline_only"
+    quote_emphasis = _merge_unique([*win_factors, *[str(value) for value in item.get("product_focus", []) or []]], limit=8)
+    risk_before_next_quote = _merge_unique([*loss_factors, *[str(value) for value in item.get("competitor_signals", []) or []]], limit=8)
+    if quote_emphasis and risk_before_next_quote:
+        next_action = (
+            f"Reuse {', '.join(quote_emphasis[:3])} in the next quote; validate {', '.join(risk_before_next_quote[:3])} before sending."
+        )
+    elif quote_emphasis:
+        next_action = f"Use {', '.join(quote_emphasis[:3])} as internal quote emphasis and keep customer-safe wording review attached."
+    elif risk_before_next_quote:
+        next_action = f"Resolve {', '.join(risk_before_next_quote[:3])} before expanding sales motion for this product line."
+    else:
+        next_action = "Capture win/loss, quote, order, and feedback evidence before treating this product line as a reusable playbook."
+    return {
+        "recommendation_type": "internal_product_commercial_playbook",
+        "partner_focus": item.get("partner_focus") or "future partner",
+        "product_family": item.get("product_focus") or [],
+        "fit_status": item.get("fit_status") or "baseline_only",
+        "common_win_factors": win_factors,
+        "common_loss_factors": loss_factors,
+        "customer_decision_factors": decision_factors,
+        "quote_emphasis_suggestions": quote_emphasis,
+        "risk_before_next_quote": risk_before_next_quote,
+        "repeat_business_potential": repeat_potential,
+        "evidence_count": evidence_count,
+        "wins": wins,
+        "losses": losses,
+        "orders": orders,
+        "feedback": feedback,
+        "order_amount": commercial_value.get("order_amount") or 0,
+        "next_commercial_action": next_action,
+        "manual_only": True,
+        "customer_safe_boundary": (
+            "Internal product commercial playbook only. Customer-visible claims require business owner approval; "
+            "do not expose cost, margin, supplier private notes, raw IDs, internal scoring, or unreviewed risk notes."
+        ),
+        "safety": _safety_flags(),
+    }
+
+
 def _partner_allocation_profile(
     *,
     quote_support_amount: Decimal,
@@ -3343,6 +3436,73 @@ def _partner_product_contribution(
     return rows
 
 
+def _partner_commercial_playbook(item: dict[str, object]) -> dict[str, object]:
+    allocation_profile = item.get("allocation_profile", {}) if isinstance(item.get("allocation_profile"), dict) else {}
+    product_focus = [str(value) for value in item.get("product_focus", []) or [] if value]
+    risk_signals = [str(value) for value in item.get("risk_signals", []) or [] if value]
+    missing_inputs = [str(value) for value in item.get("missing_inputs", []) or [] if value]
+    feedback_issue_count = int(item.get("feedback_issue_count") or 0)
+    quote_support_count = int(item.get("quote_support_count") or 0)
+    order_count = int(item.get("order_count") or 0)
+    win_rate = float(item.get("win_rate") or 0)
+    common_win_contribution = _merge_unique(
+        [
+            "converted quote support" if win_rate > 0 else "",
+            "order delivery evidence" if order_count else "",
+            "product coverage" if product_focus else "",
+            *product_focus[:5],
+        ],
+        limit=8,
+    )
+    quote_support_issues = _merge_unique([*missing_inputs, *risk_signals], limit=8)
+    delivery_issues = _merge_unique(
+        [
+            *[signal for signal in risk_signals if any(term in signal.lower() for term in ["delivery", "certification", "after-sales", "warranty", "capacity"])],
+            "feedback issue review" if feedback_issue_count else "",
+            "delivery confidence review" if item.get("on_time_delivery_rate") is not None and float(item.get("on_time_delivery_rate") or 0) < 0.8 else "",
+        ],
+        limit=8,
+    )
+    common_risks = _merge_unique([*quote_support_issues, *delivery_issues], limit=10)
+    if allocation_profile.get("pilot_fit") == "pilot_candidate":
+        pilot_suitability = "pilot_candidate"
+    elif common_risks:
+        pilot_suitability = "pilot_risk_review_needed"
+    elif quote_support_count or order_count:
+        pilot_suitability = "selective_candidate"
+    else:
+        pilot_suitability = "needs_partner_evidence"
+    if common_risks:
+        next_action = f"Validate {', '.join(common_risks[:3])} before assigning the next quote or pilot demand."
+    elif quote_support_count or order_count:
+        next_action = str(item.get("next_allocation_action") or "Use this partner selectively where product coverage matches quote needs.")
+    else:
+        next_action = "Complete partner product coverage, delivery, certification, and resource inputs before commercial allocation."
+    return {
+        "recommendation_type": "internal_partner_commercial_playbook",
+        "partner_id": item.get("partner_id"),
+        "partner_name": item.get("partner_name"),
+        "product_coverage": product_focus,
+        "supported_product_families": product_focus,
+        "common_win_contribution": common_win_contribution,
+        "common_risk_factors": common_risks,
+        "quote_support_issues": quote_support_issues,
+        "delivery_certification_after_sales_issues": delivery_issues,
+        "quote_support_count": quote_support_count,
+        "order_count": order_count,
+        "win_rate": win_rate,
+        "pilot_suitability": pilot_suitability,
+        "allocation_fit": item.get("allocation_fit"),
+        "next_partner_action": next_action,
+        "manual_only": True,
+        "customer_safe_boundary": (
+            "Internal partner commercial playbook only. It does not auto-rank partner quality, expose supplier private notes, "
+            "cost, margin, internal scoring, raw IDs, or unreviewed risk notes."
+        ),
+        "safety": _safety_flags(),
+    }
+
+
 def build_partner_performance_intelligence(db: Session, limit: int = 50) -> dict[str, object]:
     partners = db.query(ManufacturingPartner).filter(ManufacturingPartner.is_active.is_(True)).order_by(ManufacturingPartner.updated_at.desc()).limit(24).all()
     items: list[dict[str, object]] = []
@@ -3406,53 +3566,53 @@ def build_partner_performance_intelligence(db: Session, limit: int = 50) -> dict
             risk_signals=risk_signals,
             product_focus=product_focus,
         )
-        items.append(
-            {
-                "partner_id": str(partner.id),
-                "partner_name": partner.partner_name,
-                "product_focus": product_focus,
-                "quote_support_count": len(quotes),
-                "quote_support_amount": _decimal_to_float(quote_support_amount),
-                "won_quote_count": won_quote_count,
-                "win_rate": win_rate,
-                "order_amount": _decimal_to_float(order_amount),
-                "order_count": len(orders),
-                "on_time_delivery_rate": on_time_delivery_rate,
-                "feedback_issue_count": feedback_issue_count,
-                "health": health,
-                "investment_priority": investment_priority,
-                "cooperation_history": {
-                    "quote_lines": len(quote_lines),
-                    "order_lines": len(order_lines),
-                    "delayed_or_blocked_orders": delayed_or_blocked_orders,
-                    "active_order_statuses": sorted({order.status for order in orders}),
-                },
-                "capability_score": capability.get("score"),
-                "capability_health": capability.get("health"),
-                "missing_inputs": missing_inputs,
-                "risk_signals": risk_signals,
-                "readiness_impact": capability.get("readiness_impact") or [],
-                "risk_assessment": partner.risk_level or partner.ai_risk_summary or "risk not assessed",
-                "commercial_question": "Which partner deserves the next quote or pilot allocation?",
-                "recommended_action": recommended_action,
-                "allocation_profile": allocation_profile,
-                "allocation_fit": allocation_profile.get("allocation_fit"),
-                "pilot_fit": allocation_profile.get("pilot_fit"),
-                "allocation_score": allocation_profile.get("allocation_score"),
-                "product_line_contribution": _partner_product_contribution(
-                    partner.partner_name,
-                    product_focus,
-                    allocation_profile,
-                    win_rate,
-                    feedback_issue_count,
-                ),
-                "next_allocation_action": allocation_profile.get("next_allocation_action"),
-                "next_action": allocation_profile.get("next_allocation_action") or recommended_action,
-                "path": "/partner-onboarding",
-                "customer_safe_boundary": "Internal partner performance judgment only; do not expose supplier private notes, internal scoring, cost, margin, or unreviewed risk notes.",
-                "safety": _safety_flags(),
-            }
-        )
+        item_data = {
+            "partner_id": str(partner.id),
+            "partner_name": partner.partner_name,
+            "product_focus": product_focus,
+            "quote_support_count": len(quotes),
+            "quote_support_amount": _decimal_to_float(quote_support_amount),
+            "won_quote_count": won_quote_count,
+            "win_rate": win_rate,
+            "order_amount": _decimal_to_float(order_amount),
+            "order_count": len(orders),
+            "on_time_delivery_rate": on_time_delivery_rate,
+            "feedback_issue_count": feedback_issue_count,
+            "health": health,
+            "investment_priority": investment_priority,
+            "cooperation_history": {
+                "quote_lines": len(quote_lines),
+                "order_lines": len(order_lines),
+                "delayed_or_blocked_orders": delayed_or_blocked_orders,
+                "active_order_statuses": sorted({order.status for order in orders}),
+            },
+            "capability_score": capability.get("score"),
+            "capability_health": capability.get("health"),
+            "missing_inputs": missing_inputs,
+            "risk_signals": risk_signals,
+            "readiness_impact": capability.get("readiness_impact") or [],
+            "risk_assessment": partner.risk_level or partner.ai_risk_summary or "risk not assessed",
+            "commercial_question": "Which partner deserves the next quote or pilot allocation?",
+            "recommended_action": recommended_action,
+            "allocation_profile": allocation_profile,
+            "allocation_fit": allocation_profile.get("allocation_fit"),
+            "pilot_fit": allocation_profile.get("pilot_fit"),
+            "allocation_score": allocation_profile.get("allocation_score"),
+            "product_line_contribution": _partner_product_contribution(
+                partner.partner_name,
+                product_focus,
+                allocation_profile,
+                win_rate,
+                feedback_issue_count,
+            ),
+            "next_allocation_action": allocation_profile.get("next_allocation_action"),
+            "next_action": allocation_profile.get("next_allocation_action") or recommended_action,
+            "path": "/partner-onboarding",
+            "customer_safe_boundary": "Internal partner performance judgment only; do not expose supplier private notes, internal scoring, cost, margin, or unreviewed risk notes.",
+            "safety": _safety_flags(),
+        }
+        item_data["commercial_playbook"] = _partner_commercial_playbook(item_data)
+        items.append(item_data)
     items = sorted(
         items,
         key=lambda item: (
@@ -3533,12 +3693,22 @@ def build_partner_performance_intelligence(db: Session, limit: int = 50) -> dict
             }
             for item in items
         ],
+        "partner_commercial_playbooks": [
+            item.get("commercial_playbook")
+            for item in items
+            if isinstance(item.get("commercial_playbook"), dict)
+        ],
         "management_questions": {
             "which_partner_to_invest": top_investment,
             "who_gets_next_quote_allocation": quote_allocation_candidates,
             "who_is_ready_for_pilot": pilot_candidates,
             "who_should_not_get_expanded_allocation_yet": allocation_risks,
             "which_partner_has_delivery_or_feedback_risk": risk_partners[:8],
+            "which_partner_playbooks_are_reusable": [
+                item.get("commercial_playbook")
+                for item in items
+                if isinstance(item.get("commercial_playbook"), dict)
+            ][:12],
             "which_product_lines_are_supported": [
                 {
                     "partner_name": item.get("partner_name"),
@@ -4049,7 +4219,7 @@ def build_product_market_fit_intelligence(db: Session, limit: int = 50) -> dict[
         )
 
     baseline_items = [
-        (_brand("HO", "SUN"), ["lifting systems", "desk frames", "desk legs", "lifting columns", "heavy-duty solutions"]),
+        (_brand("HO", "SUN"), ["lifting systems", "desk frames", "desk legs", "lifting columns", "heavy-duty supply", "heavy-duty solutions"]),
         (_brand("JOO", "BOO"), ["education furniture", "school desks", "school chairs", "project furniture"]),
         ("future partner", ["onboarding data", "product family", "quote logic", "delivery requirement", "resource taxonomy"]),
     ]
@@ -4102,6 +4272,7 @@ def build_product_market_fit_intelligence(db: Session, limit: int = 50) -> dict[
                 "safety": _safety_flags(),
             }
         )
+        item["commercial_playbook"] = _product_commercial_playbook(item)
         items.append(item)
 
     items = sorted(
@@ -4135,8 +4306,18 @@ def build_product_market_fit_intelligence(db: Session, limit: int = 50) -> dict[
             for item in items
             if item.get("buying_factors_ranked")
         ][:12],
+        "product_commercial_playbooks": [
+            item.get("commercial_playbook")
+            for item in items
+            if isinstance(item.get("commercial_playbook"), dict)
+        ],
         "management_questions": {
             "what_converts": [item for item in items if item.get("fit_status") == "order_validated"][:8],
+            "which_product_playbooks_are_reusable": [
+                item.get("commercial_playbook")
+                for item in items
+                if isinstance(item.get("commercial_playbook"), dict)
+            ][:12],
             "why_customers_buy_or_decline": [
                 {
                     "partner_focus": item.get("partner_focus"),
@@ -4152,6 +4333,101 @@ def build_product_market_fit_intelligence(db: Session, limit: int = 50) -> dict[
             ][:8],
         },
         "next_action": "Review P1 PMF lines before campaign expansion, quote wording, customer-safe claims, or pilot allocation.",
+        "safety": _safety_flags(),
+    }
+
+
+def _matches_playbook_focus(item: dict[str, object], partner_focus: str | None, product_focus: list[str]) -> bool:
+    partner_text = str(partner_focus or "").lower()
+    product_terms = {str(value or "").lower() for value in product_focus if value}
+    item_partner = str(item.get("partner_focus") or item.get("partner_name") or "").lower()
+    item_products = {
+        str(value or "").lower()
+        for value in (
+            item.get("product_focus")
+            or item.get("product_family")
+            or item.get("supported_product_families")
+            or item.get("product_coverage")
+            or []
+        )
+        if value
+    }
+    if partner_text and item_partner and (partner_text == item_partner or partner_text in item_partner or item_partner in partner_text):
+        return True
+    return bool(product_terms & item_products)
+
+
+def build_product_partner_playbook_refs(
+    db: Session,
+    *,
+    partner_focus: str | None = None,
+    product_focus: list[str] | None = None,
+    limit: int = 3,
+) -> dict[str, object]:
+    product_focus = _merge_unique([str(value) for value in (product_focus or []) if value], limit=10)
+    product_payload = build_product_market_fit_intelligence(db, limit=80)
+    partner_payload = build_partner_performance_intelligence(db, limit=80)
+    return build_product_partner_playbook_refs_from_items(
+        product_items=[item for item in product_payload.get("items", []) if isinstance(item, dict)],
+        partner_items=[item for item in partner_payload.get("items", []) if isinstance(item, dict)],
+        partner_focus=partner_focus,
+        product_focus=product_focus,
+        limit=limit,
+    )
+
+
+def build_product_partner_playbook_refs_from_items(
+    *,
+    product_items: list[dict[str, object]],
+    partner_items: list[dict[str, object]],
+    partner_focus: str | None = None,
+    product_focus: list[str] | None = None,
+    limit: int = 3,
+) -> dict[str, object]:
+    product_focus = _merge_unique([str(value) for value in (product_focus or []) if value], limit=10)
+    product_matches: list[dict[str, object]] = []
+    for item in product_items:
+        if not isinstance(item, dict) or not isinstance(item.get("commercial_playbook"), dict):
+            continue
+        if _matches_playbook_focus(item, partner_focus, product_focus):
+            product_matches.append(item.get("commercial_playbook"))  # type: ignore[arg-type]
+    partner_matches: list[dict[str, object]] = []
+    for item in partner_items:
+        if not isinstance(item, dict) or not isinstance(item.get("commercial_playbook"), dict):
+            continue
+        if _matches_playbook_focus(item, partner_focus, product_focus):
+            partner_matches.append(item.get("commercial_playbook"))  # type: ignore[arg-type]
+    product_matches = product_matches[:limit]
+    partner_matches = partner_matches[:limit]
+    product_actions = [
+        str(item.get("next_commercial_action") or "")
+        for item in product_matches
+        if isinstance(item, dict) and item.get("next_commercial_action")
+    ]
+    partner_actions = [
+        str(item.get("next_partner_action") or "")
+        for item in partner_matches
+        if isinstance(item, dict) and item.get("next_partner_action")
+    ]
+    next_action = (
+        product_actions[0]
+        if product_actions
+        else partner_actions[0]
+        if partner_actions
+        else "Capture product/partner win-loss and delivery evidence before using aggregate commercial playbooks."
+    )
+    return {
+        "recommendation_type": "internal_product_partner_playbook_refs",
+        "partner_focus": partner_focus or "future partner",
+        "product_focus": product_focus,
+        "product_playbooks": product_matches,
+        "partner_playbooks": partner_matches,
+        "next_action": next_action,
+        "manual_only": True,
+        "customer_safe_boundary": (
+            "Internal playbook references only. They do not auto-send, auto-change quote/order/opportunity status, "
+            "or expose customer-unsafe fields."
+        ),
         "safety": _safety_flags(),
     }
 

@@ -63,6 +63,7 @@ def _quote_product_focus(quote: Quote) -> list[str]:
         "desk frames",
         "desk legs",
         "lifting columns",
+        "heavy-duty supply",
         "heavy-duty solutions",
         "education furniture",
         "school desks",
