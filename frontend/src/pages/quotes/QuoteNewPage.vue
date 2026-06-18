@@ -529,9 +529,9 @@ onMounted(loadProducts)
 
 <style scoped>
 .quote-editor-page {
-  --quote-accent: #2563eb;
-  --quote-accent-dark: #1d4ed8;
-  --quote-accent-soft: #dbeafe;
+  --quote-accent: #3b82f6;
+  --quote-accent-dark: #2563eb;
+  --quote-accent-soft: #e8f1ff;
   min-height: 100%;
   padding: 18px 28px 48px;
   background: #f4f6fa;
@@ -603,7 +603,7 @@ onMounted(loadProducts)
 .brand-block a {
   display: inline-block;
   margin: 8px 0;
-  color: #2563eb;
+  color: var(--quote-accent-dark);
   font-size: 19px;
 }
 
@@ -879,8 +879,15 @@ onMounted(loadProducts)
 
 .thank-you-input {
   display: block;
-  width: 360px;
+  width: min(620px, 72%);
   margin: 28px auto 30px;
+}
+
+.thank-you-input :deep(.el-input__wrapper) {
+  min-height: 44px;
+  border-radius: 2px;
+  box-shadow: none;
+  background: transparent;
 }
 
 .thank-you-input :deep(.el-input__inner) {
@@ -935,7 +942,7 @@ onMounted(loadProducts)
 
 .terms-editor h4 {
   margin: 0 0 12px;
-  color: #1d4ed8;
+  color: var(--quote-accent-dark);
   font-size: 15px;
 }
 
