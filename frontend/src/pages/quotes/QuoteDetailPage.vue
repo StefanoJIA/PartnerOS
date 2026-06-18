@@ -507,8 +507,8 @@ onMounted(load)
         <el-descriptions-item label="Sent At">{{ quote.sent_at || '—' }}</el-descriptions-item>
         <el-descriptions-item label="Payment Terms">{{ quote.payment_terms }}</el-descriptions-item>
         <el-descriptions-item label="Shipping Terms">{{ quote.shipping_terms }}</el-descriptions-item>
-        <el-descriptions-item label="Subtotal">{{ quote.currency }} {{ quote.subtotal }}</el-descriptions-item>
-        <el-descriptions-item label="Grand Total">{{ quote.currency }} {{ quote.grand_total }}</el-descriptions-item>
+        <el-descriptions-item label="内部参考小计">{{ quote.currency }} {{ quote.subtotal }}</el-descriptions-item>
+        <el-descriptions-item label="内部参考总额">{{ quote.currency }} {{ quote.grand_total }}</el-descriptions-item>
       </el-descriptions>
 
       <section v-if="quoteCommercial" class="section mb quote-commercial">
@@ -746,7 +746,7 @@ onMounted(load)
           type="warning"
           :closable="false"
           show-icon
-          title="以下数量、小计和 Grand Total 用于内部成本/利润校验，不是客户区间报价主体。"
+          title="以下数量、小计和内部参考总额用于内部成本/利润校验，不是客户区间报价主体。"
           class="mb"
         />
         <el-table :data="quote.line_items" stripe>

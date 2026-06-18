@@ -9,7 +9,7 @@ import {
 } from '@/api/quoteCatalog'
 
 const SAFETY =
-  '价格预览只做内部测算：不会创建报价、不会自动发送消息、不会承诺库存、认证或交期。区间报价可用于客户报价输出；成本、利润、物流测算只供内部使用。'
+  '价格预览只做内部测算：不会创建报价、不会自动发送消息、不会承诺库存、认证或交期。客户报价输出是产品完整区间价表；参考数量小计只做内部校验。成本、利润、物流测算只供内部使用。'
 
 const loading = ref(false)
 const products = ref<CatalogProduct[]>([])
@@ -125,7 +125,7 @@ function price(value: string | null | undefined, currency = 'USD') {
       </el-form-item>
       <el-form-item label="参考数量">
         <el-input-number v-model="quantity" :min="1" />
-        <span class="hint">用于选中当前校验区间；正式输出仍是完整产品区间价表。</span>
+        <span class="hint">仅用于选中当前校验区间；正式输出仍是完整产品区间价表，订单确认后才计算准确总价。</span>
       </el-form-item>
       <el-form-item label="贸易条款">
         <el-select v-model="incoterm">
@@ -166,11 +166,11 @@ function price(value: string | null | undefined, currency = 'USD') {
             <strong>{{ selectedProduct?.product_name || result.product_id }}</strong>
           </div>
           <div>
-            <span>参考数量单价</span>
+            <span>内部参考单价</span>
             <strong>{{ result.price_breakdown?.final_unit_price_after_discount }} {{ result.currency }}</strong>
           </div>
           <div>
-            <span>参考数量小计</span>
+            <span>内部参考小计</span>
             <strong>{{ result.price_breakdown?.line_subtotal }} {{ result.currency }}</strong>
           </div>
           <div>

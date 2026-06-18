@@ -136,7 +136,7 @@ onMounted(async () => {
       </el-form-item>
       <el-form-item label="参考数量">
         <el-input-number v-model="quantity" :min="1" />
-        <span class="hint">用于快速校验当前落在哪个价格区间；正式报价会保存该产品完整区间价表。</span>
+        <span class="hint">仅用于内部校验当前落在哪个价格区间；客户报价会呈现该产品完整区间价表，下单后才计算准确总价。</span>
       </el-form-item>
       <el-form-item label="贸易条款">
         <el-select v-model="incoterm">
@@ -165,7 +165,7 @@ onMounted(async () => {
         </div>
       </template>
       <p class="summary">
-        {{ selectedProduct?.product_name || preview.product_id }}：每个产品按自己的数量区间报价，FOB/DDP 不可用时显示 N/A。
+        {{ selectedProduct?.product_name || preview.product_id }}：每个产品按自己的完整数量区间报价，FOB/DDP 不可用时显示 N/A；客户选择下单数量后才形成订单总价。
       </p>
       <el-table v-if="intervalRows.length" :data="intervalRows" size="small" border>
         <el-table-column prop="quantity_label" label="数量区间" width="140" />
@@ -186,7 +186,7 @@ onMounted(async () => {
         {{ price(incoterm === 'DDP' ? selectedInterval.ddp_unit_price : selectedInterval.fob_unit_price, selectedInterval.currency) }}
       </div>
       <p v-if="preview.quote_model?.final_quote_stage" class="summary">
-        当前参考数量小计：{{ preview.quote_model.final_quote_stage.line_subtotal }}
+        内部参考校验小计（非客户最终总价）：{{ preview.quote_model.final_quote_stage.line_subtotal }}
       </p>
       <el-alert
         v-if="preview.quote_model"

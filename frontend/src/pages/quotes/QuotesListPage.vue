@@ -75,7 +75,7 @@ onMounted(load)
       <el-table-column label="状态" width="140">
         <template #default="{ row }">{{ zhLabel(QUOTE_STATUS_LABELS, row.status) }}</template>
       </el-table-column>
-      <el-table-column prop="grand_total" label="金额" width="120">
+      <el-table-column prop="grand_total" label="参考金额" width="120">
         <template #default="{ row }">{{ row.currency }} {{ row.grand_total }}</template>
       </el-table-column>
       <el-table-column prop="valid_until" label="有效期至" width="120" />

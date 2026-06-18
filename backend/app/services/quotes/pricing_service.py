@@ -22,6 +22,28 @@ from app.services.quotes.pricing_calculations import (
     tier_unit_price,
 )
 
+PRODUCT_QUANTITY_RANGES: tuple[tuple[int, int | None], ...] = (
+    (1, 49),
+    (50, 99),
+    (100, 299),
+    (300, 499),
+    (500, None),
+)
+
+DEFAULT_STRATEGY_MULTIPLIERS: dict[str, Decimal] = {
+    "traffic": Decimal("1.10"),
+    "volume": Decimal("1.20"),
+    "profit": Decimal("1.30"),
+}
+
+DEFAULT_RANGE_CONCESSIONS: dict[int, Decimal] = {
+    1: Decimal("1.00"),
+    50: Decimal("0.97"),
+    100: Decimal("0.94"),
+    300: Decimal("0.92"),
+    500: Decimal("0.90"),
+}
+
 PRICING_SAFETY: dict[str, bool] = {
     "quote_created": False,
     "automatic_sending_enabled": False,
@@ -89,6 +111,26 @@ def _select_cost_model(db: Session, product_id: UUID, ref: date) -> ProductCostM
     return rows[0] if rows else None
 
 
+def _product_markup_multiplier(product: ProductCatalog, pricing_strategy: str) -> Decimal | None:
+    attrs = product.attributes_json or {}
+    raw = attrs.get("quote_markup_multiplier") or attrs.get(f"{pricing_strategy}_markup_multiplier")
+    if raw is not None:
+        try:
+            value = Decimal(str(raw))
+            return value if value > 0 else None
+        except Exception:
+            return None
+    raw_margin = attrs.get("target_margin") or attrs.get("sales_margin_rate")
+    if raw_margin is not None:
+        try:
+            value = Decimal(str(raw_margin))
+            if value > 0:
+                return Decimal("1") + value
+        except Exception:
+            return None
+    return None
+
+
 def _select_margin_multiplier(
     db: Session, strategy: str, quantity: int
 ) -> tuple[Decimal, list[str]]:
@@ -105,7 +147,29 @@ def _select_margin_multiplier(
     if rows:
         warnings.append("margin_strategy_tier_fallback")
         return rows[0].multiplier, warnings
-    return Decimal("1"), warnings
+    return Decimal("1"), ["margin_strategy_missing"]
+
+
+def _range_margin_multiplier(
+    db: Session,
+    *,
+    product: ProductCatalog,
+    pricing_strategy: str,
+    min_qty: int,
+    max_qty: int | None,
+) -> tuple[Decimal, str]:
+    representative_qty = min_qty if max_qty is None else max(min_qty, min(max_qty, min_qty))
+    product_multiplier = _product_markup_multiplier(product, pricing_strategy)
+    if product_multiplier is not None:
+        concession = DEFAULT_RANGE_CONCESSIONS.get(min_qty, Decimal("1"))
+        return (product_multiplier * concession).quantize(Decimal("0.0001")), "product_markup_with_range_concession"
+    tier_multiplier, warnings = _select_margin_multiplier(db, pricing_strategy, representative_qty)
+    if "margin_strategy_missing" not in warnings:
+        return tier_multiplier, "margin_strategy_tier"
+
+    base = DEFAULT_STRATEGY_MULTIPLIERS.get(pricing_strategy, Decimal("1.20"))
+    concession = DEFAULT_RANGE_CONCESSIONS.get(min_qty, Decimal("1"))
+    return (base * concession).quantize(Decimal("0.0001")), "default_strategy_with_range_concession"
 
 
 def _quantity_range_label(min_qty: int, max_qty: int | None) -> str:
@@ -126,12 +190,79 @@ def _tier_customer_unit_price(tier: ProductPriceTier) -> Decimal | None:
     )
 
 
+def _compute_cost_model_breakdown(
+    cost: ProductCostModel,
+    *,
+    fx_rate_usd_cny: Decimal | None,
+) -> tuple[dict[str, str], Decimal | None]:
+    return compute_cost_breakdown(
+        unit_material_cost=cost.unit_material_cost,
+        cost_currency=cost.cost_currency or "CNY",
+        unit_weight=cost.unit_weight,
+        ocean_freight_unit_price=cost.ocean_freight_unit_price,
+        domestic_transport_cost=cost.domestic_transport_cost,
+        domestic_profit_rate=cost.domestic_profit_rate,
+        fx_rate_usd_cny=fx_rate_usd_cny,
+        stored_fob_cost_usd=cost.fob_cost_usd,
+        stored_ddp_cost_usd=cost.ddp_cost_usd,
+    )
+
+
+def _build_cost_model_interval_quote_table(
+    db: Session,
+    *,
+    product: ProductCatalog,
+    cost: ProductCostModel,
+    pricing_strategy: str,
+    fx_rate_usd_cny: Decimal | None,
+) -> tuple[list[dict[str, Any]], dict[str, str], Decimal | None]:
+    cost_breakdown, unit_cost_for_margin = _compute_cost_model_breakdown(cost, fx_rate_usd_cny=fx_rate_usd_cny)
+    fob_cost = Decimal(cost_breakdown["fob_cost_usd"])
+    ddp_cost = Decimal(cost_breakdown["ddp_cost_usd"])
+    rows: list[dict[str, Any]] = []
+    for min_qty, max_qty in PRODUCT_QUANTITY_RANGES:
+        multiplier, source = _range_margin_multiplier(
+            db,
+            product=product,
+            pricing_strategy=pricing_strategy,
+            min_qty=min_qty,
+            max_qty=max_qty,
+        )
+        fob_price = (fob_cost * multiplier).quantize(Decimal("0.0001"))
+        ddp_price = (ddp_cost * multiplier).quantize(Decimal("0.0001"))
+        rows.append(
+            {
+                "min_qty": min_qty,
+                "max_qty": max_qty,
+                "quantity_label": _quantity_range_label(min_qty, max_qty),
+                "currency": "USD",
+                "fob_unit_price": money(fob_price),
+                "ddp_unit_price": money(ddp_price),
+                "incoterms_available": ["FOB", "DDP"],
+                "pricing_strategies": [pricing_strategy],
+                "customer_visible": True,
+                "pricing_basis": "cost_plus_landed_cost",
+                "internal_pricing_basis": {
+                    "source": source,
+                    "markup_multiplier": str(multiplier),
+                    "fob_cost_usd": cost_breakdown["fob_cost_usd"],
+                    "ddp_cost_usd": cost_breakdown["ddp_cost_usd"],
+                    "internal_only": True,
+                },
+            }
+        )
+    return rows, cost_breakdown, unit_cost_for_margin
+
+
 def build_product_interval_quote_table(
     db: Session,
     *,
     product_id: UUID,
     pricing_strategy: str | None = None,
     ref: date | None = None,
+    product: ProductCatalog | None = None,
+    cost_model: ProductCostModel | None = None,
+    fx_rate_usd_cny: Decimal | None = None,
 ) -> list[dict[str, Any]]:
     """Build the customer-safe product quantity range price table.
 
@@ -140,6 +271,7 @@ def build_product_interval_quote_table(
     each product can keep its own interval structure and FOB/DDP availability.
     """
     effective_ref = ref or date.today()
+    product = product or db.query(ProductCatalog).filter(ProductCatalog.id == product_id).first()
     tiers = (
         db.query(ProductPriceTier)
         .filter(ProductPriceTier.product_id == product_id)
@@ -184,7 +316,26 @@ def build_product_interval_quote_table(
         if tier.pricing_strategy and tier.pricing_strategy not in row["pricing_strategies"]:
             row["pricing_strategies"].append(tier.pricing_strategy)
 
-    return [grouped[key] for key in sorted(grouped, key=lambda item: (item[0], item[1] or 99999999))]
+    tier_rows = [grouped[key] for key in sorted(grouped, key=lambda item: (item[0], item[1] or 99999999))]
+    if tier_rows:
+        return tier_rows
+
+    if product is None:
+        return []
+    cost = cost_model or _select_cost_model(db, product_id, effective_ref)
+    if not cost:
+        return []
+    try:
+        generated_rows, _, _ = _build_cost_model_interval_quote_table(
+            db,
+            product=product,
+            cost=cost,
+            pricing_strategy=pricing_strategy or "volume",
+            fx_rate_usd_cny=fx_rate_usd_cny,
+        )
+    except ValueError:
+        return []
+    return generated_rows
 
 
 def _selected_interval_row(
@@ -291,9 +442,12 @@ def _quote_model_snapshot(
             "final_unit_price_after_discount": price_breakdown.get("final_unit_price_after_discount"),
         },
         "final_quote_stage": {
+            "quote_output_mode": "product_interval_table",
             "currency": "USD",
             "unit_price": price_breakdown.get("final_unit_price_after_discount"),
             "line_subtotal": price_breakdown.get("line_subtotal"),
+            "reference_quantity_only": True,
+            "line_subtotal_customer_visible": False,
             "interval_quote_table": interval_quote_table,
             "selected_interval": selected_interval,
             "customer_visible": True,
@@ -303,8 +457,6 @@ def _quote_model_snapshot(
                 "fob_unit_price",
                 "ddp_unit_price",
                 "incoterm",
-                "unit_price",
-                "line_subtotal",
             ],
         },
         "profit_stage": {
@@ -314,7 +466,8 @@ def _quote_model_snapshot(
             "internal_only": True,
         },
         "customer_safe_boundary": (
-            "PDF/customer output may show product, quantity ranges, FOB/DDP unit prices, selected incoterm, final unit price and totals only. "
+            "PDF/customer output may show product and full quantity-range FOB/DDP unit prices only. "
+            "Reference quantity unit price and subtotal are internal checks; final order total is calculated only after the customer confirms quantity and incoterm. "
             "Cost, margin, pricing breakdown, supplier private notes and internal calculations remain internal."
         ),
         "internal_cost_snapshot": internal_snapshot,
@@ -354,11 +507,15 @@ def calculate_line_price(
     if fx and fx.rate_date < date.today():
         warnings.append("fx_rate_stale")
 
+    cost_for_product = _select_cost_model(db, product_id, ref)
     interval_quote_table = build_product_interval_quote_table(
         db,
         product_id=product_id,
         pricing_strategy=pricing_strategy,
         ref=ref,
+        product=product,
+        cost_model=cost_for_product,
+        fx_rate_usd_cny=fx_rate_usd_cny,
     )
     selected_interval = _selected_interval_row(interval_quote_table, quantity=quantity)
     if not interval_quote_table:
@@ -417,8 +574,54 @@ def calculate_line_price(
                     "available_incoterms": selected_interval.get("incoterms_available", []),
                 },
             )
+        elif selected_interval:
+            price_key = "ddp_unit_price" if inc == "DDP" else "fob_unit_price"
+            selected_unit_price = selected_interval.get(price_key)
+            if selected_unit_price in (None, "", "N/A"):
+                raise ApiError(
+                    VALIDATION_ERROR,
+                    f"{inc} is not available for quantity range {selected_interval.get('quantity_label')} on this product",
+                    status_code=400,
+                    details={
+                        "quantity_range": selected_interval.get("quantity_label"),
+                        "available_incoterms": selected_interval.get("incoterms_available", []),
+                    },
+                )
+            base_unit = Decimal(str(selected_unit_price))
+            source = (
+                "cost_model_interval"
+                if selected_interval.get("pricing_basis") == "cost_plus_landed_cost"
+                else "price_interval"
+            )
+            warnings.append("reference_quantity_uses_selected_interval_price")
+            tier_snapshot = {
+                "min_qty": selected_interval.get("min_qty"),
+                "max_qty": selected_interval.get("max_qty"),
+                "quantity_label": selected_interval.get("quantity_label"),
+                "incoterm": inc,
+                "currency": selected_interval.get("currency") or "USD",
+                "final_unit_price": selected_unit_price,
+                "source": source,
+            }
+            internal_basis = selected_interval.get("internal_pricing_basis") or {}
+            if internal_basis:
+                margin_snapshot = {
+                    "strategy": pricing_strategy,
+                    "multiplier": str(internal_basis.get("markup_multiplier") or ""),
+                    "source": str(internal_basis.get("source") or ""),
+                }
+            if cost_for_product and fx_rate_usd_cny:
+                try:
+                    cost_breakdown, unit_cost_for_margin = _compute_cost_model_breakdown(
+                        cost_for_product,
+                        fx_rate_usd_cny=fx_rate_usd_cny,
+                    )
+                except ValueError:
+                    unit_cost_for_margin = None
+            if unit_cost_for_margin is not None and inc == "DDP" and cost_breakdown.get("ddp_cost_usd"):
+                unit_cost_for_margin = Decimal(cost_breakdown["ddp_cost_usd"])
         else:
-            cost = _select_cost_model(db, product_id, ref)
+            cost = cost_for_product
             if not cost:
                 raise ApiError(
                     VALIDATION_ERROR,
@@ -426,16 +629,9 @@ def calculate_line_price(
                     status_code=400,
                 )
             try:
-                cost_breakdown, unit_cost_for_margin = compute_cost_breakdown(
-                    unit_material_cost=cost.unit_material_cost,
-                    cost_currency=cost.cost_currency or "CNY",
-                    unit_weight=cost.unit_weight,
-                    ocean_freight_unit_price=cost.ocean_freight_unit_price,
-                    domestic_transport_cost=cost.domestic_transport_cost,
-                    domestic_profit_rate=cost.domestic_profit_rate,
+                cost_breakdown, unit_cost_for_margin = _compute_cost_model_breakdown(
+                    cost,
                     fx_rate_usd_cny=fx_rate_usd_cny,
-                    stored_fob_cost_usd=cost.fob_cost_usd,
-                    stored_ddp_cost_usd=cost.ddp_cost_usd,
                 )
             except ValueError as e:
                 if str(e) == "FX_RATE_MISSING":
@@ -460,19 +656,12 @@ def calculate_line_price(
             base_unit = (base_unit * mult).quantize(Decimal("0.0001"))
 
     if unit_cost_for_margin is None and source == "price_tier":
-        cost = _select_cost_model(db, product_id, ref)
+        cost = cost_for_product
         if cost and fx_rate_usd_cny:
             try:
-                cost_breakdown, unit_cost_for_margin = compute_cost_breakdown(
-                    unit_material_cost=cost.unit_material_cost,
-                    cost_currency=cost.cost_currency or "CNY",
-                    unit_weight=cost.unit_weight,
-                    ocean_freight_unit_price=cost.ocean_freight_unit_price,
-                    domestic_transport_cost=cost.domestic_transport_cost,
-                    domestic_profit_rate=cost.domestic_profit_rate,
+                cost_breakdown, unit_cost_for_margin = _compute_cost_model_breakdown(
+                    cost,
                     fx_rate_usd_cny=fx_rate_usd_cny,
-                    stored_fob_cost_usd=cost.fob_cost_usd,
-                    stored_ddp_cost_usd=cost.ddp_cost_usd,
                 )
             except ValueError:
                 unit_cost_for_margin = None
