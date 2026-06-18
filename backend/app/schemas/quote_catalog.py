@@ -92,6 +92,28 @@ class FxRateOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class PricingAssumptionOut(BaseModel):
+    assumption_key: str
+    numeric_value: Decimal
+    unit: str | None
+    source: str | None
+    effective_from: date | None
+    fallback_used: bool = False
+    internal_only: bool = True
+
+
+class PricingAssumptionUpdate(BaseModel):
+    ocean_freight_unit_price: Decimal = Field(gt=0)
+    effective_from: date | None = None
+    source: str = "manual_provider_quote"
+    notes: str | None = None
+
+
+class PricingAssumptionSnapshotOut(BaseModel):
+    ocean_freight: PricingAssumptionOut
+    safety: dict
+
+
 class PricingDiscountIn(BaseModel):
     type: str = Field(description="percentage or amount")
     value: Decimal

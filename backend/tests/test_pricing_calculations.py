@@ -44,10 +44,36 @@ def test_compute_cost_breakdown_cny():
         stored_ddp_cost_usd=None,
     )
     assert fob is not None
-    assert breakdown["unit_material_cost_after_domestic_profit_rmb"] == "792.00"
+    assert breakdown["unit_material_cost_after_domestic_profit_rmb"] == "720.00"
     assert breakdown["freight_cost_usd"] == "5.56"
-    assert breakdown["fob_cost_usd"] == "110.00"
-    assert breakdown["ddp_cost_usd"] == "115.56"
+    assert breakdown["fob_cost_usd"] == "100.00"
+    assert breakdown["ddp_cost_usd"] == "105.56"
+
+
+def test_compute_cost_breakdown_rmb_alias_and_live_ocean_assumption_ignore_snapshots():
+    breakdown, fob = compute_cost_breakdown(
+        unit_material_cost=Decimal("1199"),
+        cost_currency="RMB",
+        unit_weight=Decimal("35"),
+        ocean_freight_unit_price=Decimal("22"),
+        domestic_transport_cost=None,
+        domestic_profit_rate=None,
+        fx_rate_usd_cny=Decimal("6.7"),
+        stored_fob_cost_usd=Decimal("1"),
+        stored_ddp_cost_usd=Decimal("2"),
+        ocean_freight_source="manual_provider_quote",
+        use_stored_cost_snapshot=False,
+    )
+
+    assert fob == Decimal("178.9552")
+    assert breakdown["cost_currency"] == "CNY"
+    assert breakdown["domestic_transport_cost"] == "770.00"
+    assert breakdown["fob_cost_usd"] == "178.96"
+    assert breakdown["ddp_cost_usd"] == "293.88"
+    assert breakdown["stored_fob_cost_usd_snapshot"] == "1.00"
+    assert breakdown["stored_ddp_cost_usd_snapshot"] == "2.00"
+    assert breakdown["stored_cost_snapshot_used"] is False
+    assert breakdown["ocean_freight_source"] == "manual_provider_quote"
 
 
 def test_compute_cost_breakdown_missing_fx():

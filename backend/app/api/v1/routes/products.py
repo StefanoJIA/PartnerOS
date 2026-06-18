@@ -17,6 +17,8 @@ from app.core.request_id import get_request_id
 from app.core.responses import success_envelope
 from app.models import FxRate, ManufacturingPartner, ProductCatalog, ProductCostModel, ProductPriceTier, User
 from app.schemas.quote_catalog import ProductCatalogCreate, ProductCatalogOut, ProductCatalogUpdate
+from app.services.quotes.pricing_assumptions import PricingAssumptionSnapshot, get_current_pricing_assumptions
+from app.services.quotes.pricing_calculations import compute_cost_breakdown
 
 router = APIRouter(prefix="/products", tags=["v1-products"])
 
@@ -81,11 +83,29 @@ def _pricing_model_summary(
     cost_model: ProductCostModel | None,
     latest_fx: FxRate | None,
     quote_interval_count: int,
+    assumptions: PricingAssumptionSnapshot | None = None,
 ) -> dict:
     attrs = product.attributes_json or {}
     fx_age_days: int | None = None
     if latest_fx:
         fx_age_days = (date.today() - latest_fx.rate_date).days
+    calculated_cost: dict[str, str | bool | None] = {}
+    if cost_model and latest_fx:
+        calculated_cost, _ = compute_cost_breakdown(
+            unit_material_cost=cost_model.unit_material_cost,
+            cost_currency=cost_model.cost_currency or "CNY",
+            unit_weight=cost_model.unit_weight,
+            ocean_freight_unit_price=assumptions.ocean_freight_unit_price
+            if assumptions
+            else cost_model.ocean_freight_unit_price,
+            domestic_transport_cost=None if assumptions else cost_model.domestic_transport_cost,
+            domestic_profit_rate=cost_model.domestic_profit_rate,
+            fx_rate_usd_cny=latest_fx.rate,
+            stored_fob_cost_usd=cost_model.fob_cost_usd,
+            stored_ddp_cost_usd=cost_model.ddp_cost_usd,
+            ocean_freight_source=assumptions.ocean_freight_source if assumptions else "product_cost_model",
+            use_stored_cost_snapshot=assumptions is None,
+        )
     return {
         "internal_only": True,
         "has_cost_model": cost_model is not None,
@@ -94,15 +114,24 @@ def _pricing_model_summary(
         "cost_currency": cost_model.cost_currency if cost_model else None,
         "factory_cost_rmb": _decimal_text(cost_model.unit_material_cost) if cost_model else None,
         "unit_weight_kg": _decimal_text(cost_model.unit_weight, "0.0001") if cost_model else None,
-        "ocean_freight_unit_price": _decimal_text(cost_model.ocean_freight_unit_price, "0.0001")
-        if cost_model
+        "ocean_freight_unit_price": _decimal_text(assumptions.ocean_freight_unit_price, "0.0001")
+        if assumptions
+        else (_decimal_text(cost_model.ocean_freight_unit_price, "0.0001") if cost_model else None),
+        "ocean_freight_unit": assumptions.ocean_freight_unit if assumptions else "RMB/kg",
+        "ocean_freight_source": assumptions.ocean_freight_source if assumptions else "product_cost_model",
+        "ocean_freight_effective_from": assumptions.ocean_freight_effective_from.isoformat()
+        if assumptions and assumptions.ocean_freight_effective_from
         else None,
-        "domestic_transport_cost_rmb": _decimal_text(cost_model.domestic_transport_cost) if cost_model else None,
+        "domestic_transport_cost_rmb": calculated_cost.get("domestic_transport_cost")
+        or (_decimal_text(cost_model.domestic_transport_cost) if cost_model else None),
         "domestic_profit_rate_percent": str((Decimal(str(cost_model.domestic_profit_rate)) * Decimal("100")).quantize(Decimal("0.01")))
         if cost_model and cost_model.domestic_profit_rate is not None
         else None,
-        "fob_cost_usd": _decimal_text(cost_model.fob_cost_usd) if cost_model else None,
-        "ddp_cost_usd": _decimal_text(cost_model.ddp_cost_usd) if cost_model else None,
+        "fob_cost_usd": calculated_cost.get("fob_cost_usd") or (_decimal_text(cost_model.fob_cost_usd) if cost_model else None),
+        "ddp_cost_usd": calculated_cost.get("ddp_cost_usd") or (_decimal_text(cost_model.ddp_cost_usd) if cost_model else None),
+        "stored_fob_cost_usd_snapshot": _decimal_text(cost_model.fob_cost_usd) if cost_model else None,
+        "stored_ddp_cost_usd_snapshot": _decimal_text(cost_model.ddp_cost_usd) if cost_model else None,
+        "stored_cost_snapshot_used": bool(calculated_cost.get("stored_cost_snapshot_used", assumptions is None)),
         "product_target_margin_percent": _target_margin(attrs),
         "fx_rate_usd_cny": _decimal_text(latest_fx.rate, "0.0001") if latest_fx else None,
         "fx_rate_date": latest_fx.rate_date.isoformat() if latest_fx else None,
@@ -150,6 +179,7 @@ def _product_payload(
     quote_interval_count: int,
     cost_model: ProductCostModel | None = None,
     latest_fx: FxRate | None = None,
+    assumptions: PricingAssumptionSnapshot | None = None,
 ) -> dict:
     payload = ProductCatalogOut.model_validate(row).model_dump(mode="json")
     payload["partner_code"] = partner.partner_code if partner else None
@@ -162,6 +192,7 @@ def _product_payload(
         cost_model=cost_model,
         latest_fx=latest_fx,
         quote_interval_count=quote_interval_count,
+        assumptions=assumptions,
     )
     return payload
 
@@ -229,6 +260,7 @@ def list_products(
     }
     cost_models = _latest_cost_models(db, product_ids)
     latest_fx = _latest_fx(db)
+    assumptions = get_current_pricing_assumptions(db)
     items = [
         _product_payload(
             r,
@@ -236,6 +268,7 @@ def list_products(
             quote_interval_count=int(tier_counts.get(r.id, 0)),
             cost_model=cost_models.get(r.id),
             latest_fx=latest_fx,
+            assumptions=assumptions,
         )
         for r in rows
     ]
@@ -263,6 +296,7 @@ def get_product(
     )
     cost_model = _latest_cost_models(db, [row.id]).get(row.id)
     latest_fx = _latest_fx(db)
+    assumptions = get_current_pricing_assumptions(db)
     rid = get_request_id(request)
     return success_envelope(
         _product_payload(
@@ -271,6 +305,7 @@ def get_product(
             quote_interval_count=int(quote_interval_count),
             cost_model=cost_model,
             latest_fx=latest_fx,
+            assumptions=assumptions,
         ),
         request_id=rid,
     )

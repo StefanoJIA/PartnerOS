@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import ApiError, NOT_FOUND, VALIDATION_ERROR
 from app.models import FxRate, MarginStrategyTier, ProductCatalog, ProductCostModel, ProductPriceTier
+from app.services.quotes.pricing_assumptions import PricingAssumptionSnapshot, get_current_pricing_assumptions
 from app.services.quotes.pricing_calculations import (
     VALID_INCOTERMS,
     VALID_STRATEGIES,
@@ -194,17 +195,21 @@ def _compute_cost_model_breakdown(
     cost: ProductCostModel,
     *,
     fx_rate_usd_cny: Decimal | None,
+    assumptions: PricingAssumptionSnapshot | None = None,
 ) -> tuple[dict[str, str], Decimal | None]:
+    ocean_price = assumptions.ocean_freight_unit_price if assumptions else cost.ocean_freight_unit_price
     return compute_cost_breakdown(
         unit_material_cost=cost.unit_material_cost,
         cost_currency=cost.cost_currency or "CNY",
         unit_weight=cost.unit_weight,
-        ocean_freight_unit_price=cost.ocean_freight_unit_price,
-        domestic_transport_cost=cost.domestic_transport_cost,
+        ocean_freight_unit_price=ocean_price,
+        domestic_transport_cost=None if assumptions else cost.domestic_transport_cost,
         domestic_profit_rate=cost.domestic_profit_rate,
         fx_rate_usd_cny=fx_rate_usd_cny,
         stored_fob_cost_usd=cost.fob_cost_usd,
         stored_ddp_cost_usd=cost.ddp_cost_usd,
+        ocean_freight_source=assumptions.ocean_freight_source if assumptions else "product_cost_model",
+        use_stored_cost_snapshot=assumptions is None,
     )
 
 
@@ -215,8 +220,13 @@ def _build_cost_model_interval_quote_table(
     cost: ProductCostModel,
     pricing_strategy: str,
     fx_rate_usd_cny: Decimal | None,
+    assumptions: PricingAssumptionSnapshot | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, str], Decimal | None]:
-    cost_breakdown, unit_cost_for_margin = _compute_cost_model_breakdown(cost, fx_rate_usd_cny=fx_rate_usd_cny)
+    cost_breakdown, unit_cost_for_margin = _compute_cost_model_breakdown(
+        cost,
+        fx_rate_usd_cny=fx_rate_usd_cny,
+        assumptions=assumptions,
+    )
     fob_cost = Decimal(cost_breakdown["fob_cost_usd"])
     ddp_cost = Decimal(cost_breakdown["ddp_cost_usd"])
     rows: list[dict[str, Any]] = []
@@ -263,6 +273,7 @@ def build_product_interval_quote_table(
     product: ProductCatalog | None = None,
     cost_model: ProductCostModel | None = None,
     fx_rate_usd_cny: Decimal | None = None,
+    assumptions: PricingAssumptionSnapshot | None = None,
 ) -> list[dict[str, Any]]:
     """Build the customer-safe product quantity range price table.
 
@@ -332,6 +343,7 @@ def build_product_interval_quote_table(
             cost=cost,
             pricing_strategy=pricing_strategy or "volume",
             fx_rate_usd_cny=fx_rate_usd_cny,
+            assumptions=assumptions,
         )
     except ValueError:
         return []
@@ -504,6 +516,7 @@ def calculate_line_price(
     ref = fx_rate_date or date.today()
     fx = get_latest_fx(db, base="USD", quote="CNY", rate_date=ref)
     fx_rate_usd_cny = fx.rate if fx else None
+    assumptions = get_current_pricing_assumptions(db, ref=ref)
     if fx and fx.rate_date < date.today():
         warnings.append("fx_rate_stale")
 
@@ -516,6 +529,7 @@ def calculate_line_price(
         product=product,
         cost_model=cost_for_product,
         fx_rate_usd_cny=fx_rate_usd_cny,
+        assumptions=assumptions,
     )
     selected_interval = _selected_interval_row(interval_quote_table, quantity=quantity)
     if not interval_quote_table:
@@ -615,6 +629,7 @@ def calculate_line_price(
                     cost_breakdown, unit_cost_for_margin = _compute_cost_model_breakdown(
                         cost_for_product,
                         fx_rate_usd_cny=fx_rate_usd_cny,
+                        assumptions=assumptions,
                     )
                 except ValueError:
                     unit_cost_for_margin = None
@@ -632,6 +647,7 @@ def calculate_line_price(
                 cost_breakdown, unit_cost_for_margin = _compute_cost_model_breakdown(
                     cost,
                     fx_rate_usd_cny=fx_rate_usd_cny,
+                    assumptions=assumptions,
                 )
             except ValueError as e:
                 if str(e) == "FX_RATE_MISSING":
@@ -662,6 +678,7 @@ def calculate_line_price(
                 cost_breakdown, unit_cost_for_margin = _compute_cost_model_breakdown(
                     cost,
                     fx_rate_usd_cny=fx_rate_usd_cny,
+                    assumptions=assumptions,
                 )
             except ValueError:
                 unit_cost_for_margin = None

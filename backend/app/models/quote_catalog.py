@@ -119,6 +119,23 @@ class MarginStrategyTier(Base, TimestampMixin, UserAuditMixin):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
+class PricingAssumption(Base, TimestampMixin, UserAuditMixin):
+    __tablename__ = "pricing_assumptions"
+    __table_args__ = (
+        UniqueConstraint("assumption_key", "effective_from", name="uq_pricing_assumption_key_effective_from"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    assumption_key: Mapped[str] = mapped_column(String(96), nullable=False, index=True)
+    numeric_value: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    unit: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    source: Mapped[str | None] = mapped_column(String(96), nullable=True)
+    effective_from: Mapped[date] = mapped_column(Date, nullable=False, default=date.today, index=True)
+    effective_to: Mapped[date | None] = mapped_column(Date, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
 class FxRate(Base):
     __tablename__ = "fx_rates"
     __table_args__ = (

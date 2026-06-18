@@ -8,6 +8,7 @@ from uuid import uuid4
 
 from app.api.v1.routes.products import _product_payload
 from app.models import FxRate, ProductCatalog, ProductCostModel
+from app.services.quotes.pricing_assumptions import PricingAssumptionSnapshot
 from scripts.backfill_hosun_cost_mappings import HOSUN_COST_MAPPINGS
 
 
@@ -73,10 +74,10 @@ def test_product_payload_exposes_internal_pricing_model_summary():
         cost_currency="RMB",
         unit_material_cost=Decimal("1199"),
         unit_weight=Decimal("35"),
-        ocean_freight_unit_price=Decimal("22"),
-        domestic_transport_cost=Decimal("770"),
-        fob_cost_usd=Decimal("178.96"),
-        ddp_cost_usd=Decimal("293.88"),
+        ocean_freight_unit_price=Decimal("18"),
+        domestic_transport_cost=Decimal("999"),
+        fob_cost_usd=Decimal("1.00"),
+        ddp_cost_usd=Decimal("2.00"),
     )
     fx = FxRate(
         base_currency="USD",
@@ -85,8 +86,22 @@ def test_product_payload_exposes_internal_pricing_model_summary():
         rate_date=date.today(),
         source="manual",
     )
+    assumptions = PricingAssumptionSnapshot(
+        ocean_freight_unit_price=Decimal("22"),
+        ocean_freight_unit="RMB/kg",
+        ocean_freight_source="manual_provider_quote",
+        ocean_freight_effective_from=date.today(),
+        fallback_used=False,
+    )
 
-    payload = _product_payload(product, partner=None, quote_interval_count=9, cost_model=cost_model, latest_fx=fx)
+    payload = _product_payload(
+        product,
+        partner=None,
+        quote_interval_count=9,
+        cost_model=cost_model,
+        latest_fx=fx,
+        assumptions=assumptions,
+    )
     summary = payload["pricing_model_summary"]
 
     assert payload["quote_interval_count"] == 9
@@ -95,6 +110,10 @@ def test_product_payload_exposes_internal_pricing_model_summary():
     assert summary["factory_cost_rmb"] == "1199.00"
     assert summary["unit_weight_kg"] == "35.0000"
     assert summary["ocean_freight_unit_price"] == "22.0000"
+    assert summary["domestic_transport_cost_rmb"] == "770.00"
     assert summary["fob_cost_usd"] == "178.96"
     assert summary["ddp_cost_usd"] == "293.88"
+    assert summary["stored_fob_cost_usd_snapshot"] == "1.00"
+    assert summary["stored_ddp_cost_usd_snapshot"] == "2.00"
+    assert summary["stored_cost_snapshot_used"] is False
     assert summary["product_target_margin_percent"] == "25.00"

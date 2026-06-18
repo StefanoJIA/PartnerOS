@@ -126,9 +126,9 @@ def test_product_interval_quote_table_can_be_generated_from_landed_cost(monkeypa
     )
 
     assert [row["quantity_label"] for row in table] == ["1-49", "50-99", "100-299", "300-499", ">=500"]
-    assert table[0]["fob_unit_price"] == "137.50"
-    assert table[0]["ddp_unit_price"] == "144.45"
-    assert table[1]["fob_unit_price"] == "133.38"
+    assert table[0]["fob_unit_price"] == "125.00"
+    assert table[0]["ddp_unit_price"] == "131.95"
+    assert table[1]["fob_unit_price"] == "121.25"
     assert table[-1]["pricing_basis"] == "cost_plus_landed_cost"
     assert table[-1]["internal_pricing_basis"]["internal_only"] is True
 

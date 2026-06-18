@@ -17,6 +17,7 @@ from app.api.v1.routes import (
     portal_customer,
     portal_operations,
     pricing,
+    pricing_assumptions,
     products,
     quote_delivery,
     quote_order_readiness,
@@ -37,6 +38,7 @@ v1_router.include_router(fx_rates.router)
 v1_router.include_router(growth_operations.router)
 v1_router.include_router(market_response.router)
 v1_router.include_router(pricing.router)
+v1_router.include_router(pricing_assumptions.router)
 v1_router.include_router(quote_delivery.router)
 v1_router.include_router(quote_order_readiness.router)
 v1_router.include_router(orders.router)

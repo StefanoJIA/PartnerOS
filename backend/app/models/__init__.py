@@ -41,6 +41,7 @@ from app.models.daily_queue import DailyQueueHandlingRecord
 from app.models.quote_catalog import (
     FxRate,
     MarginStrategyTier,
+    PricingAssumption,
     ProductCatalog,
     ProductCostModel,
     ProductPriceTier,
@@ -91,6 +92,7 @@ __all__ = [
     "ProductionMilestone",
     "Product",
     "ProductCatalog",
+    "PricingAssumption",
     "ProductCategory",
     "ProductCostModel",
     "ProductPriceTier",
