@@ -3,10 +3,13 @@ import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   fetchCatalogProducts,
+  fetchPricingAssumptions,
   postPricingPreview,
+  updateOceanFreightAssumption,
   updateCatalogProduct,
   type CatalogProduct,
   type IntervalQuoteRow,
+  type PricingAssumptionSnapshot,
 } from '@/api/quoteCatalog'
 
 const loading = ref(false)
@@ -21,6 +24,10 @@ const selected = ref<CatalogProduct | null>(null)
 const tableDrawer = ref(false)
 const intervalRows = ref<IntervalQuoteRow[]>([])
 const marginPercentDraft = ref<number | null>(null)
+const assumptions = ref<PricingAssumptionSnapshot | null>(null)
+const assumptionLoading = ref(false)
+const assumptionSaving = ref(false)
+const oceanFreightDraft = ref(22)
 
 const partnerOptions = [
   { label: '全部 Partner', value: '' },
@@ -66,6 +73,19 @@ function summary(product: CatalogProduct) {
 function pricing(product: CatalogProduct | null) {
   return product?.pricing_model_summary || {}
 }
+
+const fxSummary = computed(() => {
+  const withFx = products.value.find((item) => pricing(item).fx_rate_usd_cny)
+  if (!withFx) return null
+  return {
+    rate: pricing(withFx).fx_rate_usd_cny,
+    date: pricing(withFx).fx_rate_date,
+    source: pricing(withFx).fx_source,
+    stale: pricing(withFx).fx_is_stale,
+  }
+})
+
+const oceanFreightDisplay = computed(() => assumptions.value?.ocean_freight || null)
 
 function productImage(product: CatalogProduct) {
   return product.image_url || '/favicon.svg'
@@ -135,6 +155,41 @@ async function load() {
   }
 }
 
+async function loadAssumptions() {
+  assumptionLoading.value = true
+  try {
+    const data = await fetchPricingAssumptions()
+    assumptions.value = data
+    const numeric = Number(data.ocean_freight.numeric_value)
+    oceanFreightDraft.value = Number.isFinite(numeric) ? numeric : 22
+  } catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : '计价假设加载失败')
+  } finally {
+    assumptionLoading.value = false
+  }
+}
+
+async function saveOceanFreightAssumption() {
+  if (!Number.isFinite(Number(oceanFreightDraft.value)) || Number(oceanFreightDraft.value) <= 0) {
+    ElMessage.error('海运单价必须大于 0')
+    return
+  }
+  assumptionSaving.value = true
+  try {
+    assumptions.value = await updateOceanFreightAssumption({
+      ocean_freight_unit_price: Number(oceanFreightDraft.value),
+      source: 'manual_provider_quote',
+      notes: 'Updated from internal quote catalog assumptions panel.',
+    })
+    ElMessage.success('海运单价已保存，产品成本与区间报价会按最新假设重新计算。')
+    await load()
+  } catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : '海运单价保存失败')
+  } finally {
+    assumptionSaving.value = false
+  }
+}
+
 async function openIntervalTable(product: CatalogProduct) {
   selected.value = product
   marginPercentDraft.value = marginValue(product)
@@ -185,7 +240,10 @@ function clearFilters() {
   load()
 }
 
-onMounted(load)
+onMounted(() => {
+  loadAssumptions()
+  load()
+})
 </script>
 
 <template>
@@ -222,6 +280,41 @@ onMounted(load)
       class="mb-4"
       title="安全边界：报价目录只用于内部选品、成本模型和区间价维护；不会自动创建报价、不会自动发送、不会承诺库存。"
     />
+
+    <section class="assumption-panel">
+      <div>
+        <p class="eyebrow">Pricing Assumptions / 内部计价假设</p>
+        <h2>汇率与海运单价</h2>
+        <p>
+          海运单价和汇率在这里作为独立假设维护。产品成本按“固定人民币成本 + 重量 × 海运单价”计算到美国 DDP 成本；
+          利润率只在报价区间阶段使用，不会写入客户可见成本。
+        </p>
+      </div>
+      <div class="assumption-cards">
+        <div class="assumption-card">
+          <span>海运单价</span>
+          <strong>{{ oceanFreightDisplay ? numberText(oceanFreightDisplay.numeric_value, ` ${oceanFreightDisplay.unit || 'RMB/kg'}`) : '22.00 RMB/kg' }}</strong>
+          <small>来源：{{ oceanFreightDisplay?.source || 'manual_provider_quote' }}</small>
+          <div class="assumption-edit">
+            <el-input-number v-model="oceanFreightDraft" :min="0.01" :precision="2" :step="1" :disabled="assumptionLoading" />
+            <el-button type="primary" :loading="assumptionSaving" @click="saveOceanFreightAssumption">保存</el-button>
+          </div>
+        </div>
+        <div class="assumption-card">
+          <span>实时汇率 USD/CNY</span>
+          <strong>{{ fxSummary ? numberText(fxSummary.rate) : '未加载' }}</strong>
+          <small>
+            {{ fxSummary ? `${fxSummary.date || '无日期'} / ${fxSummary.source || 'unknown'}` : '来自后台 fx_rates 最新记录' }}
+          </small>
+          <el-tag v-if="fxSummary?.stale" type="warning" effect="plain">汇率可能过期</el-tag>
+        </div>
+        <div class="assumption-card safety">
+          <span>安全边界</span>
+          <strong>Internal Only</strong>
+          <small>不自动发送，不改变 quote/order 状态，不记录 raw token，不向客户暴露成本/利润。</small>
+        </div>
+      </div>
+    </section>
 
     <section class="toolbar">
       <el-segmented v-model="partnerCode" :options="partnerOptions" @change="load" />
@@ -423,6 +516,72 @@ onMounted(load)
 
 .hero-metrics small {
   color: #64748b;
+}
+
+.assumption-panel {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(520px, 1.5fr);
+  gap: 18px;
+  margin-bottom: 16px;
+  padding: 18px;
+  border: 1px solid #bfdbfe;
+  background: #f8fbff;
+}
+
+.assumption-panel h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 20px;
+  font-weight: 740;
+}
+
+.assumption-panel p {
+  margin: 8px 0 0;
+  color: #526174;
+  line-height: 1.65;
+}
+
+.assumption-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.assumption-card {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  min-height: 126px;
+  padding: 12px;
+  border: 1px solid #dbeafe;
+  background: #fff;
+}
+
+.assumption-card span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.assumption-card strong {
+  color: #1d4ed8;
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.assumption-card small {
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.assumption-card.safety strong {
+  color: #0f172a;
+}
+
+.assumption-edit {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 .toolbar {

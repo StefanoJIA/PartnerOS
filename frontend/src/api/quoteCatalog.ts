@@ -105,6 +105,27 @@ export interface PricingPreviewResult {
   }
 }
 
+export interface PricingAssumptionItem {
+  assumption_key: string
+  numeric_value: string
+  unit: string | null
+  source: string | null
+  effective_from: string | null
+  fallback_used: boolean
+  internal_only: boolean
+}
+
+export interface PricingAssumptionSnapshot {
+  ocean_freight: PricingAssumptionItem
+  safety: {
+    internal_only: boolean
+    customer_visible: boolean
+    automatic_sending_enabled: boolean
+    quote_status_auto_change: boolean
+    raw_token_recorded: boolean
+  }
+}
+
 export async function fetchCatalogProducts(params?: {
   partner_id?: string
   partner_code?: string
@@ -118,6 +139,23 @@ export async function fetchCatalogProducts(params?: {
 
 export async function postPricingPreview(body: PricingPreviewRequest) {
   const { data } = await http.post<V1Envelope<PricingPreviewResult>>('/v1/quotes/pricing/preview', body)
+  return data.data
+}
+
+export async function fetchPricingAssumptions() {
+  const { data } = await http.get<V1Envelope<PricingAssumptionSnapshot>>('/v1/quotes/pricing/assumptions')
+  return data.data
+}
+
+export async function updateOceanFreightAssumption(body: {
+  ocean_freight_unit_price: number
+  source?: string
+  notes?: string
+}) {
+  const { data } = await http.put<V1Envelope<PricingAssumptionSnapshot>>(
+    '/v1/quotes/pricing/assumptions/ocean-freight',
+    body,
+  )
   return data.data
 }
 
