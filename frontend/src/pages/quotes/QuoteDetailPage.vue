@@ -25,28 +25,31 @@ import {
   type QuoteVersionSummary,
   type TimelineItem,
 } from '@/api/quotes'
-import AccountExecutionCard from '@/components/business/AccountExecutionCard.vue'
-import QuoteWinLossIntelligenceCard from '@/components/business/QuoteWinLossIntelligenceCard.vue'
 
 const route = useRoute()
 const router = useRouter()
+
 const loading = ref(true)
 const error = ref('')
 const successMsg = ref('')
 const quote = ref<QuoteDetail | null>(null)
 const actionLoading = ref(false)
+
 const pdfExports = ref<PdfExportRecord[]>([])
 const pdfLoading = ref(false)
 const pdfError = ref('')
 const pdfExporting = ref(false)
+
 const deliveryLogs = ref<DeliveryLog[]>([])
 const deliveryLoading = ref(false)
 const deliveryError = ref('')
 const deliverySubmitting = ref(false)
 const showDeliveryForm = ref(false)
+
 const timelineItems = ref<TimelineItem[]>([])
 const timelineLoading = ref(false)
 const versions = ref<QuoteVersionSummary[]>([])
+
 const readiness = ref<OrderReadiness | null>(null)
 const readinessLoading = ref(false)
 const readinessError = ref('')
@@ -56,11 +59,24 @@ const createOrderLoading = ref(false)
 const showCreateOrderModal = ref(false)
 const createWithConfirmation = ref(false)
 const createOrderNote = ref('')
+
 const learningRecords = ref<QuoteLearningRecord[]>([])
 const learningLoading = ref(false)
 const learningSaving = ref(false)
 const learningPromotingId = ref('')
 const learningError = ref('')
+
+const deliveryForm = reactive({
+  sent_channel: 'email',
+  sent_to_name: '',
+  sent_to_email: '',
+  sent_to_company: '',
+  pdf_export_id: '',
+  quote_version_id: '',
+  sent_at: '',
+  follow_up_date: '',
+  note: '',
+})
 
 const learningForm = reactive({
   outcome_status: 'customer_reviewing',
@@ -85,35 +101,17 @@ const learningForm = reactive({
   internal_only: true,
 })
 
-const CREATE_ORDER_SAFETY =
-  'Creating an order does not start production, notify suppliers, create shipments, or confirm inventory, certifications, or lead times.'
-
-const READINESS_SAFETY =
-  'This readiness check does not create an order, start production, create shipment, or confirm customer acceptance. Conversion to order must be a separate manual action in a future stage.'
-
-const deliveryForm = reactive({
-  sent_channel: 'email',
-  sent_to_name: '',
-  sent_to_email: '',
-  sent_to_company: '',
-  pdf_export_id: '',
-  quote_version_id: '',
-  sent_at: '',
-  follow_up_date: '',
-  note: '',
-})
-
 const SAFETY =
-  'Quote records are manually prepared. intelliOffice does not send quotes automatically, does not promise inventory, certifications, or lead times.'
-
-const PDF_SAFETY =
-  'Exporting a PDF does not send the quote, promise inventory, confirm certifications, or commit to lead times.'
-
+  '报价记录只保存内部报价和报价模型快照；系统不会自动发送邮件、通知客户、承诺库存、认证或交期。'
+const PDF_SAFETY = '导出 PDF 只生成客户报价文件，不会自动发送，也不会自动承诺库存、认证或交期。'
 const DELIVERY_SAFETY =
-  'Recording a sent quote only documents a manual external action. intelliOffice does not send emails, LinkedIn messages, or attachments automatically.'
-
+  '人工发送记录只用于留档；系统不会自动发送邮件、LinkedIn、附件或客户通知。'
+const READINESS_SAFETY =
+  '转订单检查只用于人工判断，不会自动创建订单、启动生产、创建物流或确认客户接受。'
+const CREATE_ORDER_SAFETY =
+  '从报价创建订单不会自动启动生产、通知供应商、创建物流、承诺库存、认证或交期。'
 const LEARNING_SAFETY =
-  '报价学习只记录人工复盘：不自动发送消息、不改变报价/订单状态、不把客户不可见信息写入 Portal。'
+  '报价复盘只记录内部人工判断；不自动发送消息，不改变报价/订单状态，不写入客户 Portal。'
 
 const outcomeOptions = [
   { value: 'won', label: '赢单' },
@@ -139,6 +137,10 @@ const reasonCategoryOptions = [
 ]
 
 const warnings = computed(() => quote.value?.warnings ?? [])
+const quoteIntervalLines = computed(() =>
+  (quote.value?.line_items ?? []).filter((line) => (line.interval_quote_table ?? []).length > 0),
+)
+const latestLearning = computed(() => quote.value?.latest_learning || learningRecords.value[0] || null)
 const canMarkSent = computed(
   () => quote.value && (quote.value.status === 'ready_to_send' || quote.value.status === 'sent') && !quote.value.derived_expired,
 )
@@ -150,24 +152,46 @@ const canCreateOrder = computed(
     readiness.value &&
     readiness.value.blocking_items.length === 0,
 )
-const latestLearning = computed(() => quote.value?.latest_learning || learningRecords.value[0] || null)
-const quoteCompanyId = computed(() => quote.value?.company_id ?? null)
-const quoteCommercial = computed(() => quote.value?.commercial_intelligence ?? null)
-const quotePartnerReadiness = computed(() => quote.value?.partner_readiness ?? null)
-const quoteProductKeywords = computed(() => {
-  const lineProducts = quote.value?.line_items.flatMap((line) => [line.product_name, line.pricing_source]) ?? []
-  return executionKeywords(...lineProducts, ...(quoteCommercial.value?.product_focus ?? []))
-})
-const quotePartnerFocus = computed(() => quoteCommercial.value?.partner_focus || quotePartnerReadiness.value?.partners?.[0]?.partner_name || null)
-const productPartnerPlaybookRefs = computed(() => quoteCommercial.value?.product_partner_playbook_refs ?? null)
-const quoteProductPlaybooks = computed(() => productPartnerPlaybookRefs.value?.product_playbooks ?? [])
-const quotePartnerPlaybooks = computed(() => productPartnerPlaybookRefs.value?.partner_playbooks ?? [])
-const quoteIntervalLines = computed(() =>
-  (quote.value?.line_items ?? []).filter((line) => (line.interval_quote_table ?? []).length > 0),
-)
+
+function quoteStatusLabel(status: string) {
+  const labels: Record<string, string> = {
+    draft: '草稿',
+    internal_review: '内部审核',
+    ready_to_send: '待人工发送',
+    sent: '已人工发送',
+    accepted: '客户接受',
+    expired: '已过期',
+    cancelled: '已取消',
+  }
+  return labels[status] || status
+}
+
+function readinessStatusLabel(status: string) {
+  const labels: Record<string, string> = {
+    ready_for_order_review: '可进入订单人工复核',
+    needs_customer_confirmation: '需要客户确认',
+    needs_internal_review: '需要内部复核',
+    not_ready: '暂不可转订单',
+  }
+  return labels[status] || status
+}
+
+function statusTagType(status: string) {
+  if (status === 'ready_for_order_review') return 'success'
+  if (status === 'needs_customer_confirmation') return 'warning'
+  if (status === 'needs_internal_review') return 'danger'
+  return 'info'
+}
 
 function formatIntervalPrice(value: string | null | undefined, currency = 'USD') {
-  return value ? `${value} ${currency}` : 'N/A'
+  return value ? `${currency} ${value}` : 'N/A'
+}
+
+function splitLabels(value: string) {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
 }
 
 async function loadActiveOrder() {
@@ -177,28 +201,6 @@ async function loadActiveOrder() {
     activeOrder.value = data.items.find((o) => o.status !== 'cancelled') ?? null
   } catch {
     activeOrder.value = null
-  }
-}
-
-async function onCreateOrder() {
-  if (!quote.value) return
-  createOrderLoading.value = true
-  readinessError.value = ''
-  try {
-    const payload: Parameters<typeof createOrderFromQuote>[0] = { quote_id: quote.value.id }
-    if (createWithConfirmation.value) {
-      payload.customer_confirmation = {
-        type: 'email',
-        note: createOrderNote.value || 'Customer confirmed by email.',
-      }
-    }
-    const result = await createOrderFromQuote(payload)
-    showCreateOrderModal.value = false
-    router.push({ name: 'order-detail', params: { orderId: result.id } })
-  } catch (e: unknown) {
-    readinessError.value = e instanceof Error ? e.message : 'Create order failed'
-  } finally {
-    createOrderLoading.value = false
   }
 }
 
@@ -213,7 +215,7 @@ async function loadPdfExports() {
       deliveryForm.pdf_export_id = data.items[0].export_id
     }
   } catch (e: unknown) {
-    pdfError.value = e instanceof Error ? e.message : 'Failed to load PDF exports'
+    pdfError.value = e instanceof Error ? e.message : 'PDF 记录加载失败'
   } finally {
     pdfLoading.value = false
   }
@@ -227,7 +229,7 @@ async function loadDeliveryLogs() {
     const data = await fetchDeliveryLogs(quote.value.id)
     deliveryLogs.value = data.items
   } catch (e: unknown) {
-    deliveryError.value = e instanceof Error ? e.message : 'Failed to load delivery logs'
+    deliveryError.value = e instanceof Error ? e.message : '人工发送记录加载失败'
   } finally {
     deliveryLoading.value = false
   }
@@ -241,7 +243,7 @@ async function loadLearning() {
     const data = await fetchQuoteLearning(quote.value.id)
     learningRecords.value = data.items
   } catch (e: unknown) {
-    learningError.value = e instanceof Error ? e.message : '报价学习记录加载失败'
+    learningError.value = e instanceof Error ? e.message : '报价复盘记录加载失败'
   } finally {
     learningLoading.value = false
   }
@@ -260,40 +262,6 @@ async function loadTimeline() {
   }
 }
 
-async function loadReadiness() {
-  if (!quote.value) return
-  readinessLoading.value = true
-  readinessError.value = ''
-  try {
-    readiness.value = await fetchOrderReadiness(quote.value.id)
-  } catch (e: unknown) {
-    readinessError.value = e instanceof Error ? e.message : 'Failed to load order readiness'
-  } finally {
-    readinessLoading.value = false
-  }
-}
-
-function statusTagType(status: string) {
-  if (status === 'needs_customer_confirmation') return 'warning'
-  if (status === 'needs_internal_review') return 'danger'
-  if (status === 'ready_for_order_review') return 'success'
-  return 'info'
-}
-
-async function copyOrderSummary() {
-  if (!readiness.value) return
-  const text = JSON.stringify(readiness.value.order_input_contract, null, 2)
-  await navigator.clipboard.writeText(text)
-  copyMsg.value = 'Order input summary copied'
-}
-
-async function copyMissingItems() {
-  if (!readiness.value) return
-  const items = [...readiness.value.blocking_items, ...readiness.value.warning_items]
-  await navigator.clipboard.writeText(items.join('\n'))
-  copyMsg.value = 'Missing / warning items copied'
-}
-
 async function loadVersions() {
   if (!quote.value) return
   try {
@@ -304,6 +272,19 @@ async function loadVersions() {
     }
   } catch {
     versions.value = []
+  }
+}
+
+async function loadReadiness() {
+  if (!quote.value) return
+  readinessLoading.value = true
+  readinessError.value = ''
+  try {
+    readiness.value = await fetchOrderReadiness(quote.value.id)
+  } catch (e: unknown) {
+    readinessError.value = e instanceof Error ? e.message : '转订单检查加载失败'
+  } finally {
+    readinessLoading.value = false
   }
 }
 
@@ -320,53 +301,97 @@ async function load() {
   try {
     quote.value = await fetchQuote(String(route.params.id))
     prefillDeliveryForm()
-    await Promise.all([loadPdfExports(), loadDeliveryLogs(), loadLearning(), loadTimeline(), loadVersions(), loadReadiness(), loadActiveOrder()])
+    await Promise.all([
+      loadPdfExports(),
+      loadDeliveryLogs(),
+      loadLearning(),
+      loadTimeline(),
+      loadVersions(),
+      loadReadiness(),
+      loadActiveOrder(),
+    ])
   } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Failed to load quote'
+    error.value = e instanceof Error ? e.message : '报价详情加载失败'
   } finally {
     loading.value = false
   }
 }
 
-function executionKeywords(...values: unknown[]) {
-  const tokens = values
-    .flatMap((value) => String(value ?? '').split(/[;,/|，、\s]+/))
-    .map((value) => value.trim())
-    .filter((value) => value.length >= 3)
-  return [...new Set(tokens)].slice(0, 16)
+async function onExportPdf() {
+  if (!quote.value) return
+  pdfExporting.value = true
+  pdfError.value = ''
+  try {
+    await exportQuotePdf(quote.value.id)
+    await loadPdfExports()
+    await loadTimeline()
+    successMsg.value = '客户报价 PDF 已生成，可手动下载或人工发送。'
+  } catch (e: unknown) {
+    pdfError.value = e instanceof Error ? e.message : 'PDF 导出失败'
+  } finally {
+    pdfExporting.value = false
+  }
+}
+
+async function onMarkReady() {
+  if (!quote.value) return
+  actionLoading.value = true
+  error.value = ''
+  try {
+    quote.value = await markQuoteReady(quote.value.id)
+    successMsg.value = '报价已标记为待人工发送。'
+  } catch (e: unknown) {
+    error.value = e instanceof Error ? e.message : '状态更新失败'
+  } finally {
+    actionLoading.value = false
+  }
+}
+
+async function onSubmitDelivery() {
+  if (!quote.value) return
+  deliverySubmitting.value = true
+  deliveryError.value = ''
+  successMsg.value = ''
+  try {
+    const result = await markQuoteSent(quote.value.id, {
+      sent_channel: deliveryForm.sent_channel,
+      sent_to_name: deliveryForm.sent_to_name || undefined,
+      sent_to_email: deliveryForm.sent_to_email || undefined,
+      sent_to_company: deliveryForm.sent_to_company || undefined,
+      pdf_export_id: deliveryForm.pdf_export_id || undefined,
+      quote_version_id: deliveryForm.quote_version_id || undefined,
+      sent_at: deliveryForm.sent_at || undefined,
+      follow_up_date: deliveryForm.follow_up_date || undefined,
+      note: deliveryForm.note || undefined,
+    })
+    quote.value = await fetchQuote(quote.value.id)
+    successMsg.value = result.warnings?.length
+      ? `人工发送已记录。${result.warnings.join(' ')}`
+      : '人工发送已记录，报价状态已更新为已发送。'
+    showDeliveryForm.value = false
+    await Promise.all([loadDeliveryLogs(), loadTimeline(), loadReadiness()])
+  } catch (e: unknown) {
+    deliveryError.value = e instanceof Error ? e.message : '人工发送记录保存失败'
+  } finally {
+    deliverySubmitting.value = false
+  }
 }
 
 function learningPayload() {
-  const productDimensions = learningForm.product_dimensions_text
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean)
-  const customerDecisionFactors = learningForm.customer_decision_factors_text
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean)
-  const productFactors = learningForm.product_factors_text
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean)
-  const partnerFactors = learningForm.partner_factors_text
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean)
   return {
     outcome_status: learningForm.outcome_status,
     customer_feedback: learningForm.customer_feedback || null,
     customer_objection: learningForm.customer_objection || null,
     competitor_signal: learningForm.competitor_signal || null,
     reason_category: learningForm.reason_category || 'unknown',
-    customer_decision_factors: customerDecisionFactors,
+    customer_decision_factors: splitLabels(learningForm.customer_decision_factors_text),
     won_reason: learningForm.won_reason || null,
     lost_reason: learningForm.lost_reason || null,
     price_feedback: learningForm.price_feedback || null,
     delivery_feedback: learningForm.delivery_feedback || null,
-    product_dimensions: productDimensions,
-    product_factors: productFactors,
-    partner_factors: partnerFactors,
+    product_dimensions: splitLabels(learningForm.product_dimensions_text),
+    product_factors: splitLabels(learningForm.product_factors_text),
+    partner_factors: splitLabels(learningForm.partner_factors_text),
     outcome_source_type: 'quote',
     outcome_source_id: quote.value?.id || null,
     next_action: learningForm.next_action || null,
@@ -404,9 +429,9 @@ async function onSaveLearning() {
     quote.value = await fetchQuote(quote.value.id)
     await Promise.all([loadLearning(), loadTimeline(), loadReadiness()])
     resetLearningForm()
-    successMsg.value = '报价学习记录已保存；报价状态和订单状态未自动改变。'
+    successMsg.value = '报价复盘已保存；报价状态和订单状态未自动改变。'
   } catch (e: unknown) {
-    learningError.value = e instanceof Error ? e.message : '保存报价学习记录失败'
+    learningError.value = e instanceof Error ? e.message : '报价复盘保存失败'
   } finally {
     learningSaving.value = false
   }
@@ -429,60 +454,38 @@ async function onPromoteLearning(row: QuoteLearningRecord) {
   }
 }
 
-async function onExportPdf() {
-  if (!quote.value) return
-  pdfExporting.value = true
-  pdfError.value = ''
-  try {
-    await exportQuotePdf(quote.value.id)
-    await loadPdfExports()
-    await loadTimeline()
-  } catch (e: unknown) {
-    pdfError.value = e instanceof Error ? e.message : 'PDF export failed'
-  } finally {
-    pdfExporting.value = false
-  }
+async function copyOrderSummary() {
+  if (!readiness.value) return
+  await navigator.clipboard.writeText(JSON.stringify(readiness.value.order_input_contract, null, 2))
+  copyMsg.value = '订单输入摘要已复制'
 }
 
-async function onMarkReady() {
-  if (!quote.value) return
-  actionLoading.value = true
-  try {
-    quote.value = await markQuoteReady(quote.value.id)
-  } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Mark ready failed'
-  } finally {
-    actionLoading.value = false
-  }
+async function copyMissingItems() {
+  if (!readiness.value) return
+  const items = [...readiness.value.blocking_items, ...readiness.value.warning_items]
+  await navigator.clipboard.writeText(items.join('\n'))
+  copyMsg.value = '阻塞/提醒项已复制'
 }
 
-async function onSubmitDelivery() {
+async function onCreateOrder() {
   if (!quote.value) return
-  deliverySubmitting.value = true
-  deliveryError.value = ''
-  successMsg.value = ''
+  createOrderLoading.value = true
+  readinessError.value = ''
   try {
-    const result = await markQuoteSent(quote.value.id, {
-      sent_channel: deliveryForm.sent_channel,
-      sent_to_name: deliveryForm.sent_to_name || undefined,
-      sent_to_email: deliveryForm.sent_to_email || undefined,
-      sent_to_company: deliveryForm.sent_to_company || undefined,
-      pdf_export_id: deliveryForm.pdf_export_id || undefined,
-      quote_version_id: deliveryForm.quote_version_id || undefined,
-      sent_at: deliveryForm.sent_at || undefined,
-      follow_up_date: deliveryForm.follow_up_date || undefined,
-      note: deliveryForm.note || undefined,
-    })
-    quote.value = await fetchQuote(quote.value.id)
-    successMsg.value = result.warnings?.length
-      ? `Delivery recorded. ${result.warnings.join(' ')}`
-      : 'Delivery recorded — quote marked as sent.'
-    showDeliveryForm.value = false
-    await Promise.all([loadDeliveryLogs(), loadTimeline(), loadReadiness()])
+    const payload: Parameters<typeof createOrderFromQuote>[0] = { quote_id: quote.value.id }
+    if (createWithConfirmation.value) {
+      payload.customer_confirmation = {
+        type: 'email',
+        note: createOrderNote.value || 'Customer confirmed by email.',
+      }
+    }
+    const result = await createOrderFromQuote(payload)
+    showCreateOrderModal.value = false
+    router.push({ name: 'order-detail', params: { orderId: result.id } })
   } catch (e: unknown) {
-    deliveryError.value = e instanceof Error ? e.message : 'Mark sent failed'
+    readinessError.value = e instanceof Error ? e.message : '创建订单失败'
   } finally {
-    deliverySubmitting.value = false
+    createOrderLoading.value = false
   }
 }
 
@@ -490,627 +493,210 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="page">
-    <el-button link @click="$router.push({ name: 'quotes' })">← Back to Quotes</el-button>
-    <h1 v-if="quote">{{ quote.quote_number }}</h1>
-    <el-alert type="warning" :closable="false" show-icon title="Safety" :description="SAFETY" class="mb" />
+  <div class="quote-detail-page">
+    <div class="page-head">
+      <div>
+        <el-button link class="back-link" @click="$router.push({ name: 'quotes' })">返回报价列表</el-button>
+        <h1 v-if="quote">报价详情 {{ quote.quote_number }}</h1>
+        <p>这里仅处理该报价本身：客户报价、区间价格、PDF、人工发送记录和转订单检查。</p>
+      </div>
+      <div v-if="quote" class="head-actions">
+        <el-tag :type="quote.status === 'sent' ? 'success' : 'info'" size="large">{{ quoteStatusLabel(quote.status) }}</el-tag>
+        <el-button v-if="quote.status === 'internal_review'" type="primary" :loading="actionLoading" @click="onMarkReady">
+          标记为待人工发送
+        </el-button>
+      </div>
+    </div>
+
+    <el-alert type="warning" :closable="false" show-icon title="安全边界" :description="SAFETY" class="mb" />
     <el-alert v-if="error" type="error" :title="error" show-icon class="mb" />
     <el-alert v-if="successMsg" type="success" :title="successMsg" show-icon class="mb" />
     <el-alert v-for="(w, i) in warnings" :key="i" type="warning" :title="w" show-icon class="mb" />
 
-    <div v-if="loading" v-loading="true" style="min-height: 160px" />
+    <div v-if="loading" v-loading="true" class="loading-block" />
     <template v-else-if="quote">
-      <el-descriptions :column="2" border class="mb">
-        <el-descriptions-item label="Status">{{ quote.status }}</el-descriptions-item>
-        <el-descriptions-item label="Valid Until">{{ quote.valid_until }}</el-descriptions-item>
-        <el-descriptions-item label="Follow-up">{{ quote.follow_up_date || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="Sent At">{{ quote.sent_at || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="Payment Terms">{{ quote.payment_terms }}</el-descriptions-item>
-        <el-descriptions-item label="Shipping Terms">{{ quote.shipping_terms }}</el-descriptions-item>
-        <el-descriptions-item label="内部参考小计">{{ quote.currency }} {{ quote.subtotal }}</el-descriptions-item>
-        <el-descriptions-item label="内部参考总额">{{ quote.currency }} {{ quote.grand_total }}</el-descriptions-item>
-      </el-descriptions>
-
-      <section v-if="quoteCommercial" class="section mb quote-commercial">
-        <div class="quote-commercial__head">
-          <div>
-            <h3>报价商业判断</h3>
-            <p>把报价版本、客户反馈、产品维度和 Market Response 影响合并为下一步人工动作。</p>
-          </div>
-          <div class="quote-commercial__tags">
-            <el-tag :type="quoteCommercial.priority === 'P1' ? 'warning' : 'info'" effect="plain">
-              {{ quoteCommercial.priority }}
-            </el-tag>
-            <el-tag type="primary" effect="plain">{{ quoteCommercial.business_focus }}</el-tag>
-            <el-tag effect="plain">{{ quoteCommercial.score }}/100</el-tag>
-            <el-tag type="info" effect="plain">{{ quoteCommercial.partner_focus }}</el-tag>
-          </div>
+      <section class="section quote-summary">
+        <div class="section-title">
+          <h2>报价基本信息</h2>
+          <span>内部操作为中文；客户报价文件保持英文。</span>
         </div>
-        <p class="quote-commercial__action">{{ quoteCommercial.next_best_action }}</p>
-        <div class="quote-commercial__grid">
-          <div>
-            <div class="quote-commercial__label">缺失输入</div>
-            <div class="quote-commercial__chips">
-              <el-tag v-for="item in quoteCommercial.missing_inputs" :key="item" size="small" type="warning" effect="plain">
-                {{ item }}
-              </el-tag>
-              <span v-if="!quoteCommercial.missing_inputs.length" class="quote-commercial__empty">暂无关键缺口</span>
-            </div>
-          </div>
-          <div>
-            <div class="quote-commercial__label">待复核产品维度</div>
-            <div class="quote-commercial__chips">
-              <el-tag v-for="item in quoteCommercial.dimension_review_needs.slice(0, 8)" :key="item" size="small" effect="plain">
-                {{ item }}
-              </el-tag>
-              <span v-if="!quoteCommercial.dimension_review_needs.length" class="quote-commercial__empty">已覆盖核心维度</span>
-            </div>
-          </div>
-          <div>
-            <div class="quote-commercial__label">Readiness / Market Response 影响</div>
-            <div class="quote-commercial__chips">
-              <el-tag v-for="item in quoteCommercial.readiness_impact" :key="item" size="small" type="danger" effect="plain">
-                {{ item }}
-              </el-tag>
-              <el-tag v-if="quoteCommercial.market_response_review_needed" size="small" type="success" effect="plain">
-                需要 Market Response 复核
-              </el-tag>
-              <span v-if="!quoteCommercial.readiness_impact.length && !quoteCommercial.market_response_review_needed" class="quote-commercial__empty">
-                暂无 readiness 风险
-              </span>
-            </div>
-          </div>
-        </div>
-        <div v-if="quoteCommercial.quote_playbook" class="quote-playbook mt">
-          <div class="quote-commercial__head">
-            <div>
-              <h4>Quote Playbook / 内部报价复用建议</h4>
-              <p>基于人工记录的 win/loss、客户决策因素、产品因素和 Partner 因素生成；不自动发送，不客户可见。</p>
-            </div>
-            <div class="quote-commercial__tags">
-              <el-tag type="primary" effect="plain">{{ quoteCommercial.quote_playbook.status }}</el-tag>
-              <el-tag effect="plain">evidence {{ quoteCommercial.quote_playbook.evidence_count }}</el-tag>
-              <el-tag type="success" effect="plain">won {{ quoteCommercial.quote_playbook.won_count }}</el-tag>
-              <el-tag type="danger" effect="plain">lost {{ quoteCommercial.quote_playbook.lost_count }}</el-tag>
-            </div>
-          </div>
-          <p class="quote-commercial__action">{{ quoteCommercial.quote_playbook.next_quote_guidance }}</p>
-          <div class="quote-commercial__grid">
-            <div>
-              <div class="quote-commercial__label">本次报价应强调</div>
-              <div class="quote-commercial__chips">
-                <el-tag v-for="item in quoteCommercial.quote_playbook.quote_emphasis" :key="item" size="small" type="success" effect="plain">
-                  {{ item }}
-                </el-tag>
-                <span v-if="!quoteCommercial.quote_playbook.quote_emphasis.length" class="quote-commercial__empty">等待更多赢单证据</span>
-              </div>
-            </div>
-            <div>
-              <div class="quote-commercial__label">发送前需避免 / 验证</div>
-              <div class="quote-commercial__chips">
-                <el-tag v-for="item in quoteCommercial.quote_playbook.avoid_or_validate_before_sending" :key="item" size="small" type="warning" effect="plain">
-                  {{ item }}
-                </el-tag>
-                <span v-if="!quoteCommercial.quote_playbook.avoid_or_validate_before_sending.length" class="quote-commercial__empty">暂无明确丢单风险</span>
-              </div>
-            </div>
-            <div>
-              <div class="quote-commercial__label">需业务确认的话术</div>
-              <div class="quote-commercial__chips">
-                <el-tag v-for="item in quoteCommercial.quote_playbook.customer_safe_wording_needed" :key="item" size="small" type="danger" effect="plain">
-                  {{ item }}
-                </el-tag>
-                <span v-if="!quoteCommercial.quote_playbook.customer_safe_wording_needed.length" class="quote-commercial__empty">暂无高风险客户可见话术</span>
-              </div>
-            </div>
-          </div>
-          <div class="quote-commercial__grid mt">
-            <div>
-              <div class="quote-commercial__label">产品因素</div>
-              <div class="quote-commercial__chips">
-                <el-tag v-for="item in quoteCommercial.quote_playbook.product_factors.slice(0, 8)" :key="item" size="small" effect="plain">{{ item }}</el-tag>
-              </div>
-            </div>
-            <div>
-              <div class="quote-commercial__label">Partner 因素</div>
-              <div class="quote-commercial__chips">
-                <el-tag v-for="item in quoteCommercial.quote_playbook.partner_factors.slice(0, 8)" :key="item" size="small" type="info" effect="plain">{{ item }}</el-tag>
-              </div>
-            </div>
-            <div>
-              <div class="quote-commercial__label">交付 / 认证 / 售后</div>
-              <div class="quote-commercial__chips">
-                <el-tag v-for="item in quoteCommercial.quote_playbook.delivery_certification_service_factors.slice(0, 8)" :key="item" size="small" type="warning" effect="plain">
-                  {{ item }}
-                </el-tag>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div v-if="productPartnerPlaybookRefs" class="quote-playbook mt">
-          <div class="quote-commercial__head">
-            <div>
-              <h4>Product / Partner Playbook Reference</h4>
-              <p>Product-family and partner-level commercial recommendations for this quote. Internal only; manual confirmation required.</p>
-            </div>
-            <div class="quote-commercial__tags">
-              <el-tag type="success" effect="plain">products {{ quoteProductPlaybooks.length }}</el-tag>
-              <el-tag type="primary" effect="plain">partners {{ quotePartnerPlaybooks.length }}</el-tag>
-            </div>
-          </div>
-          <p class="quote-commercial__action">{{ productPartnerPlaybookRefs.next_action }}</p>
-          <div class="quote-commercial__grid">
-            <div>
-              <div class="quote-commercial__label">Quote should emphasize</div>
-              <div class="quote-commercial__chips">
-                <template v-for="playbook in quoteProductPlaybooks" :key="`qp-product-${playbook.partner_focus}-${playbook.product_family.join('|')}`">
-                  <el-tag
-                    v-for="item in playbook.quote_emphasis_suggestions.slice(0, 5)"
-                    :key="`qp-emphasis-${item}`"
-                    size="small"
-                    type="success"
-                    effect="plain"
-                  >
-                    {{ item }}
-                  </el-tag>
-                </template>
-                <span v-if="!quoteProductPlaybooks.length" class="quote-commercial__empty">No product playbook match yet</span>
-              </div>
-            </div>
-            <div>
-              <div class="quote-commercial__label">Validate before sending</div>
-              <div class="quote-commercial__chips">
-                <template v-for="playbook in quoteProductPlaybooks" :key="`qp-risk-${playbook.partner_focus}-${playbook.product_family.join('|')}`">
-                  <el-tag
-                    v-for="item in playbook.risk_before_next_quote.slice(0, 5)"
-                    :key="`qp-risk-item-${item}`"
-                    size="small"
-                    type="warning"
-                    effect="plain"
-                  >
-                    {{ item }}
-                  </el-tag>
-                </template>
-                <span v-if="!quoteProductPlaybooks.length" class="quote-commercial__empty">No product risk evidence yet</span>
-              </div>
-            </div>
-            <div>
-              <div class="quote-commercial__label">Partner capacity context</div>
-              <div class="quote-commercial__chips">
-                <template v-for="playbook in quotePartnerPlaybooks" :key="`qp-partner-${playbook.partner_name}`">
-                  <el-tag
-                    v-for="item in playbook.common_risk_factors.slice(0, 5)"
-                    :key="`qp-partner-risk-${item}`"
-                    size="small"
-                    type="info"
-                    effect="plain"
-                  >
-                    {{ playbook.partner_name || 'partner' }} / {{ item }}
-                  </el-tag>
-                </template>
-                <span v-if="!quotePartnerPlaybooks.length" class="quote-commercial__empty">No partner playbook match yet</span>
-              </div>
-            </div>
-          </div>
-          <el-alert class="mt" type="warning" :closable="false" show-icon :title="productPartnerPlaybookRefs.customer_safe_boundary" />
-        </div>
-        <el-alert class="mt" type="warning" :closable="false" show-icon :title="quoteCommercial.customer_safe_boundary" />
+        <el-descriptions :column="3" border>
+          <el-descriptions-item label="报价状态">{{ quoteStatusLabel(quote.status) }}</el-descriptions-item>
+          <el-descriptions-item label="报价日期">{{ quote.quote_date || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="有效至">{{ quote.valid_until }}</el-descriptions-item>
+          <el-descriptions-item label="客户公司">{{ quote.bill_to_company || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="跟进日期">{{ quote.follow_up_date || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="人工发送时间">{{ quote.sent_at || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="付款条款">{{ quote.payment_terms || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="贸易条款">{{ quote.shipping_terms || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="内部参考总额">{{ quote.currency }} {{ quote.grand_total }}</el-descriptions-item>
+        </el-descriptions>
       </section>
 
-      <QuoteWinLossIntelligenceCard
-        :quote-id="quote.id"
-        :quote-number="quote.quote_number"
-        :customer-name="quote.bill_to_company"
-        :partner-focus="quotePartnerFocus"
-        :product-keywords="quoteProductKeywords"
-      />
-
-      <AccountExecutionCard
-        :company-id="quoteCompanyId"
-        context-label="当前报价会影响账户成交、报价学习和 Market Response"
-      />
-
-      <section v-if="quoteIntervalLines.length" class="section mb">
-        <h3>客户报价区间表</h3>
-        <el-alert
-          type="info"
-          :closable="false"
-          show-icon
-          title="每个产品的每个数量区间都需要报价；参考数量只用于内部利润校验，不代表最终客户总价。"
-          class="mb"
-        />
+      <section v-if="quoteIntervalLines.length" class="section">
+        <div class="section-title">
+          <h2>客户报价区间表</h2>
+          <span>每个产品完整展示所有数量区间；下单后再按实际数量形成准确订单总价。</span>
+        </div>
         <div v-for="line in quoteIntervalLines" :key="line.id" class="interval-product">
           <div class="interval-product__head">
-            <strong>{{ line.product_name }}</strong>
-            <el-tag effect="plain">{{ line.pricing_source }}</el-tag>
+            <div>
+              <strong>{{ line.product_name }}</strong>
+              <p>{{ line.pricing_source || 'pricing model' }}</p>
+            </div>
+            <el-tag effect="plain">参考数量 {{ line.quantity }}</el-tag>
           </div>
           <el-table :data="line.interval_quote_table ?? []" size="small" border>
-            <el-table-column prop="quantity_label" label="数量区间" width="140" />
-            <el-table-column label="FOB 单价">
+            <el-table-column prop="quantity_label" label="Quantity" width="150" />
+            <el-table-column label="FOB Unit Price">
               <template #default="{ row }">{{ formatIntervalPrice(row.fob_unit_price, row.currency) }}</template>
             </el-table-column>
-            <el-table-column label="DDP 单价">
+            <el-table-column label="DDP Unit Price">
               <template #default="{ row }">{{ formatIntervalPrice(row.ddp_unit_price, row.currency) }}</template>
             </el-table-column>
-            <el-table-column label="可用条款">
+            <el-table-column label="Terms">
               <template #default="{ row }">{{ (row.incoterms_available ?? []).join(' / ') || '-' }}</template>
             </el-table-column>
           </el-table>
         </div>
       </section>
 
-      <section class="section mb">
-        <h3>内部参考数量校验</h3>
-        <el-alert
-          v-if="quoteIntervalLines.length"
-          type="warning"
-          :closable="false"
-          show-icon
-          title="以下数量、小计和内部参考总额用于内部成本/利润校验，不是客户区间报价主体。"
-          class="mb"
-        />
+      <section class="section">
+        <div class="section-title">
+          <h2>报价产品明细</h2>
+          <span>用于内部核对产品、参考数量和当前报价快照；成本与利润不在客户侧展示。</span>
+        </div>
         <el-table :data="quote.line_items" stripe>
-          <el-table-column prop="line_number" label="#" width="50" />
-          <el-table-column prop="product_name" label="Product" />
-          <el-table-column prop="quantity" label="Reference Qty" width="130" />
-          <el-table-column prop="final_unit_price" label="Reference Unit" width="140" />
-          <el-table-column prop="total_price" label="Reference Total" width="150" />
-          <el-table-column prop="pricing_source" label="Source" width="140" />
+          <el-table-column prop="line_number" label="#" width="56" />
+          <el-table-column prop="product_name" label="产品" min-width="260" />
+          <el-table-column prop="quantity" label="参考数量" width="110" />
+          <el-table-column prop="final_unit_price" label="参考单价" width="130" />
+          <el-table-column prop="total_price" label="参考小计" width="130" />
+          <el-table-column prop="pricing_source" label="计价来源" width="160" />
         </el-table>
       </section>
 
-      <section class="section mb">
-        <h3>Quote PDF Exports</h3>
-        <el-alert type="info" :closable="false" show-icon title="PDF Safety" :description="PDF_SAFETY" class="mb" />
-        <el-alert v-if="pdfError" type="error" :title="pdfError" show-icon class="mb" />
-        <el-button type="primary" :loading="pdfExporting" @click="onExportPdf">Export Customer PDF</el-button>
-        <div v-if="pdfLoading" v-loading="true" style="min-height: 80px; margin-top: 16px" />
-        <el-empty v-else-if="!pdfExports.length" description="No PDF exports yet" class="mt" />
-        <el-table v-else :data="pdfExports" stripe class="mt">
-          <el-table-column prop="file_name" label="File" />
-          <el-table-column prop="exported_at" label="Exported At" width="200" />
-          <el-table-column label="Download" width="120">
-            <template #default="{ row }">
-              <el-link :href="quotePdfDownloadUrl(quote.id, row.export_id)" target="_blank" type="primary">
-                Download
-              </el-link>
-            </template>
-          </el-table-column>
-        </el-table>
-      </section>
-
-      <section class="section mb">
-        <h3>Quote Delivery</h3>
-        <el-alert type="info" :closable="false" show-icon title="Delivery Safety" :description="DELIVERY_SAFETY" class="mb" />
-        <el-alert v-if="deliveryError" type="error" :title="deliveryError" show-icon class="mb" />
-        <el-button
-          v-if="canMarkSent"
-          type="success"
-          @click="showDeliveryForm = !showDeliveryForm"
-        >
-          Mark as Sent (manual)
-        </el-button>
-
-        <el-form v-if="showDeliveryForm" label-width="140px" class="delivery-form mt">
-          <el-form-item label="Channel">
-            <el-select v-model="deliveryForm.sent_channel" style="width: 240px">
-              <el-option v-for="c in SENT_CHANNELS" :key="c.value" :label="c.label" :value="c.value" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="Sent to name">
-            <el-input v-model="deliveryForm.sent_to_name" />
-          </el-form-item>
-          <el-form-item label="Sent to email">
-            <el-input v-model="deliveryForm.sent_to_email" />
-          </el-form-item>
-          <el-form-item label="Sent to company">
-            <el-input v-model="deliveryForm.sent_to_company" />
-          </el-form-item>
-          <el-form-item label="PDF export">
-            <el-select v-model="deliveryForm.pdf_export_id" clearable style="width: 100%">
-              <el-option v-for="p in pdfExports" :key="p.export_id" :label="p.file_name" :value="p.export_id" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="Version">
-            <el-select v-model="deliveryForm.quote_version_id" clearable style="width: 240px">
-              <el-option
-                v-for="v in versions"
-                :key="v.id"
-                :label="v.version_label || `v${v.version_number}`"
-                :value="v.id"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="Follow-up date">
-            <el-date-picker v-model="deliveryForm.follow_up_date" type="date" value-format="YYYY-MM-DD" />
-          </el-form-item>
-          <el-form-item label="Note">
-            <el-input v-model="deliveryForm.note" type="textarea" rows="2" />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" :loading="deliverySubmitting" @click="onSubmitDelivery">
-              Record Manual Delivery
-            </el-button>
-          </el-form-item>
-        </el-form>
-
-        <div v-if="deliveryLoading" v-loading="true" style="min-height: 80px; margin-top: 16px" />
-        <el-empty v-else-if="!deliveryLogs.length" description="No delivery logs yet" class="mt" />
-        <el-table v-else :data="deliveryLogs" stripe class="mt">
-          <el-table-column prop="sent_at" label="Sent At" width="180" />
-          <el-table-column prop="sent_channel" label="Channel" width="120" />
-          <el-table-column prop="sent_to_name" label="Recipient" />
-          <el-table-column prop="sent_to_company" label="Company" />
-          <el-table-column prop="follow_up_date" label="Follow-up" width="120" />
-        </el-table>
-      </section>
-
-      <section class="section mb">
-        <h3>报价学习 / 客户反馈</h3>
-        <el-alert type="info" :closable="false" show-icon title="安全边界" :description="LEARNING_SAFETY" class="mb" />
-        <el-alert v-if="learningError" type="error" :title="learningError" show-icon class="mb" />
-
-        <div v-if="latestLearning" class="learning-summary mb">
-          <div class="learning-summary__head">
-            <el-tag type="primary" effect="plain">{{ latestLearning.outcome_status }}</el-tag>
-            <span>{{ latestLearning.owner || '未指定 owner' }}</span>
-            <span>{{ latestLearning.follow_up_date || '未设跟进日期' }}</span>
+      <section class="section two-column">
+        <div class="panel">
+          <div class="section-title compact">
+            <h2>客户 PDF</h2>
+            <span>生成后仍需人工下载或发送。</span>
           </div>
-          <p v-if="latestLearning.customer_feedback">客户反馈：{{ latestLearning.customer_feedback }}</p>
-          <p v-if="latestLearning.customer_objection">客户异议：{{ latestLearning.customer_objection }}</p>
-          <p v-if="latestLearning.reason_category">原因分类：{{ latestLearning.reason_category }}</p>
-          <p v-if="latestLearning.won_reason">赢单原因：{{ latestLearning.won_reason }}</p>
-          <p v-if="latestLearning.lost_reason">丢单原因：{{ latestLearning.lost_reason }}</p>
-          <p v-if="latestLearning.next_action">下一步：{{ latestLearning.next_action }}</p>
-          <div class="mt">
-            <el-tag
-              v-for="factor in latestLearning.customer_decision_factors"
-              :key="`decision-${factor}`"
-              size="small"
-              type="success"
-              effect="plain"
-              class="mr"
-            >
-              {{ factor }}
-            </el-tag>
-            <el-tag
-              v-for="dimension in latestLearning.product_dimensions"
-              :key="`dimension-${dimension}`"
-              size="small"
-              effect="plain"
-              class="mr"
-            >
-              {{ dimension }}
-            </el-tag>
-            <el-tag
-              v-for="factor in latestLearning.product_factors"
-              :key="`product-${factor}`"
-              size="small"
-              type="warning"
-              effect="plain"
-              class="mr"
-            >
-              {{ factor }}
-            </el-tag>
-            <el-tag
-              v-for="factor in latestLearning.partner_factors"
-              :key="`partner-${factor}`"
-              size="small"
-              type="info"
-              effect="plain"
-              class="mr"
-            >
-              {{ factor }}
-            </el-tag>
+          <el-alert type="info" :closable="false" show-icon title="PDF 安全边界" :description="PDF_SAFETY" class="mb" />
+          <el-alert v-if="pdfError" type="error" :title="pdfError" show-icon class="mb" />
+          <el-button type="primary" :loading="pdfExporting" @click="onExportPdf">导出客户 PDF</el-button>
+          <div v-if="pdfLoading" v-loading="true" class="small-loading" />
+          <el-empty v-else-if="!pdfExports.length" description="暂无 PDF 导出记录" class="mt" />
+          <el-table v-else :data="pdfExports" stripe class="mt">
+            <el-table-column prop="file_name" label="文件" min-width="180" />
+            <el-table-column prop="exported_at" label="导出时间" width="170" />
+            <el-table-column label="下载" width="90">
+              <template #default="{ row }">
+                <el-link :href="quotePdfDownloadUrl(quote.id, row.export_id)" target="_blank" type="primary">下载</el-link>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <div class="panel">
+          <div class="section-title compact">
+            <h2>人工发送记录</h2>
+            <span>只记录人工动作，不自动触达客户。</span>
           </div>
-          <el-button
-            class="mt"
-            size="small"
-            type="warning"
-            plain
-            :loading="learningPromotingId === latestLearning.id"
-            @click="onPromoteLearning(latestLearning)"
-          >
-            生成 Market Response 审查项
+          <el-alert type="info" :closable="false" show-icon title="发送安全边界" :description="DELIVERY_SAFETY" class="mb" />
+          <el-alert v-if="deliveryError" type="error" :title="deliveryError" show-icon class="mb" />
+          <el-button v-if="canMarkSent" type="success" @click="showDeliveryForm = !showDeliveryForm">
+            记录人工发送
           </el-button>
+
+          <el-form v-if="showDeliveryForm" label-width="110px" class="delivery-form mt">
+            <el-form-item label="渠道">
+              <el-select v-model="deliveryForm.sent_channel" style="width: 220px">
+                <el-option v-for="c in SENT_CHANNELS" :key="c.value" :label="c.label" :value="c.value" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="收件人">
+              <el-input v-model="deliveryForm.sent_to_name" />
+            </el-form-item>
+            <el-form-item label="邮箱">
+              <el-input v-model="deliveryForm.sent_to_email" />
+            </el-form-item>
+            <el-form-item label="公司">
+              <el-input v-model="deliveryForm.sent_to_company" />
+            </el-form-item>
+            <el-form-item label="PDF 文件">
+              <el-select v-model="deliveryForm.pdf_export_id" clearable style="width: 100%">
+                <el-option v-for="p in pdfExports" :key="p.export_id" :label="p.file_name" :value="p.export_id" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="报价版本">
+              <el-select v-model="deliveryForm.quote_version_id" clearable style="width: 220px">
+                <el-option
+                  v-for="v in versions"
+                  :key="v.id"
+                  :label="v.version_label || `v${v.version_number}`"
+                  :value="v.id"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="跟进日期">
+              <el-date-picker v-model="deliveryForm.follow_up_date" type="date" value-format="YYYY-MM-DD" />
+            </el-form-item>
+            <el-form-item label="备注">
+              <el-input v-model="deliveryForm.note" type="textarea" rows="2" />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" :loading="deliverySubmitting" @click="onSubmitDelivery">保存发送记录</el-button>
+            </el-form-item>
+          </el-form>
+
+          <div v-if="deliveryLoading" v-loading="true" class="small-loading" />
+          <el-empty v-else-if="!deliveryLogs.length" description="暂无人工发送记录" class="mt" />
+          <el-table v-else :data="deliveryLogs" stripe class="mt">
+            <el-table-column prop="sent_at" label="发送时间" width="165" />
+            <el-table-column prop="sent_channel" label="渠道" width="105" />
+            <el-table-column prop="sent_to_name" label="收件人" />
+            <el-table-column prop="sent_to_company" label="公司" />
+            <el-table-column prop="follow_up_date" label="跟进" width="110" />
+          </el-table>
         </div>
-        <el-empty v-else description="暂无报价学习记录；请在客户回复、报价修订、赢单或丢单后记录原因。" class="mt" />
-
-        <el-form label-width="150px" class="learning-form mt">
-          <el-form-item label="结果状态">
-            <el-select v-model="learningForm.outcome_status" style="width: 260px">
-              <el-option v-for="option in outcomeOptions" :key="option.value" :label="option.label" :value="option.value" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="原因分类">
-            <el-select v-model="learningForm.reason_category" style="width: 260px">
-              <el-option
-                v-for="option in reasonCategoryOptions"
-                :key="option.value"
-                :label="option.label"
-                :value="option.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="客户反馈">
-            <el-input v-model="learningForm.customer_feedback" type="textarea" :rows="2" placeholder="记录客户原始反馈摘要，不写成本/利润/供应商私密信息。" />
-          </el-form-item>
-          <el-form-item label="客户异议">
-            <el-input v-model="learningForm.customer_objection" type="textarea" :rows="2" placeholder="例如价格解释、交期、认证、安装、质保、噪音、承重等问题。" />
-          </el-form-item>
-          <el-form-item label="竞争情况">
-            <el-input v-model="learningForm.competitor_signal" type="textarea" :rows="2" placeholder="只记录人工确认过的竞争信号；未知则留空。" />
-          </el-form-item>
-          <el-form-item label="客户决策因素">
-            <el-input v-model="learningForm.customer_decision_factors_text" placeholder="price, delivery, certification, timing, relationship..." />
-          </el-form-item>
-          <el-form-item label="赢单 / 丢单原因">
-            <div class="grid-two">
-              <el-input v-model="learningForm.won_reason" type="textarea" :rows="2" placeholder="赢单原因" />
-              <el-input v-model="learningForm.lost_reason" type="textarea" :rows="2" placeholder="丢单原因" />
-            </div>
-          </el-form-item>
-          <el-form-item label="价格 / 交付反馈">
-            <div class="grid-two">
-              <el-input v-model="learningForm.price_feedback" type="textarea" :rows="2" placeholder="客户对价格、价值解释、报价结构的反馈" />
-              <el-input v-model="learningForm.delivery_feedback" type="textarea" :rows="2" placeholder="客户对交期、物流、安装、交付风险的反馈" />
-            </div>
-          </el-form-item>
-          <el-form-item label="产品维度">
-            <el-input v-model="learningForm.product_dimensions_text" placeholder="load, stability, noise, warranty, certification, delivery..." />
-          </el-form-item>
-          <el-form-item label="产品 / Partner 因素">
-            <div class="grid-two">
-              <el-input v-model="learningForm.product_factors_text" placeholder="HOSUN: load, stability, packaging; JOOBOO: durability, classroom deployment..." />
-              <el-input v-model="learningForm.partner_factors_text" placeholder="partner capacity, delivery support, certification support, after-sales..." />
-            </div>
-          </el-form-item>
-          <el-form-item label="下一步 / Owner">
-            <div class="grid-two">
-              <el-input v-model="learningForm.next_action" placeholder="下一步人工动作" />
-              <el-input v-model="learningForm.owner" placeholder="owner" />
-            </div>
-          </el-form-item>
-          <el-form-item label="跟进日期">
-            <el-date-picker v-model="learningForm.follow_up_date" type="date" value-format="YYYY-MM-DD" />
-          </el-form-item>
-          <el-form-item label="影响范围">
-            <el-checkbox v-model="learningForm.affects_opportunity">影响项目机会</el-checkbox>
-            <el-checkbox v-model="learningForm.affects_product_intelligence">影响产品洞察</el-checkbox>
-            <el-checkbox v-model="learningForm.affects_market_response">影响 Market Response</el-checkbox>
-            <el-checkbox v-model="learningForm.internal_only">内部可见</el-checkbox>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" :loading="learningSaving" @click="onSaveLearning">保存报价学习记录</el-button>
-          </el-form-item>
-        </el-form>
-
-        <div v-if="learningLoading" v-loading="true" style="min-height: 80px" />
-        <el-table v-else-if="learningRecords.length" :data="learningRecords" stripe class="mt">
-          <el-table-column prop="outcome_status" label="结果" width="130" />
-          <el-table-column prop="reason_category" label="原因分类" width="140" />
-          <el-table-column prop="customer_objection" label="异议 / 反馈" />
-          <el-table-column prop="next_action" label="下一步" />
-          <el-table-column prop="owner" label="Owner" width="140" />
-          <el-table-column prop="follow_up_date" label="跟进" width="120" />
-          <el-table-column label="市场响应" width="160">
-            <template #default="{ row }">
-              <el-button
-                size="small"
-                link
-                type="warning"
-                :loading="learningPromotingId === row.id"
-                @click="onPromoteLearning(row)"
-              >
-                生成审查项
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
       </section>
 
-      <section v-if="quotePartnerReadiness" class="section mb quote-commercial">
-        <div class="quote-commercial__head">
-          <div>
-            <h3>Partner 承接判断</h3>
-            <p>把报价行、Partner 能力、交付风险和客户可见表述缺口合并为发送/转订单前的人工判断。</p>
-          </div>
-          <div class="quote-commercial__tags">
-            <el-tag :type="quotePartnerReadiness.priority === 'P1' ? 'warning' : 'info'" effect="plain">
-              {{ quotePartnerReadiness.priority }}
-            </el-tag>
-            <el-tag effect="plain">{{ quotePartnerReadiness.health }}</el-tag>
-          </div>
+      <section class="section">
+        <div class="section-title">
+          <h2>转订单准备</h2>
+          <span>只做人工检查；是否创建订单由操作员明确执行。</span>
         </div>
-        <p class="quote-commercial__action">{{ quotePartnerReadiness.next_best_action }}</p>
-        <div class="quote-commercial__grid">
-          <div
-            v-for="partner in quotePartnerReadiness.partners"
-            :key="partner.partner_id"
-            class="quote-commercial__block"
-          >
-            <h4>{{ partner.partner_name }}</h4>
-            <div class="quote-commercial__tags">
-              <el-tag size="small" :type="partner.priority === 'P1' ? 'warning' : 'info'" effect="plain">{{ partner.priority }}</el-tag>
-              <el-tag size="small" type="info" effect="plain">{{ partner.readiness_score }}/100</el-tag>
-              <el-tag size="small" effect="plain">{{ partner.business_focus }}</el-tag>
-            </div>
-            <p class="quote-commercial__action">{{ partner.next_best_action }}</p>
-            <div class="quote-commercial__chips">
-              <el-tag
-                v-for="item in partner.missing_inputs.slice(0, 5)"
-                :key="item"
-                size="small"
-                type="warning"
-                effect="plain"
-              >
-                {{ item }}
-              </el-tag>
-              <el-tag
-                v-for="item in partner.risk_signals.slice(0, 3)"
-                :key="item"
-                size="small"
-                type="danger"
-                effect="plain"
-              >
-                {{ item }}
-              </el-tag>
-              <span v-if="!partner.missing_inputs.length && !partner.risk_signals.length" class="quote-commercial__empty">暂无关键承接缺口</span>
-            </div>
-          </div>
-        </div>
-        <el-alert class="mt" type="warning" :closable="false" show-icon :title="quotePartnerReadiness.customer_safe_boundary" />
-      </section>
-
-      <section class="section mb">
-        <h3>Order Readiness</h3>
-        <el-alert type="warning" :closable="false" show-icon title="Readiness Safety" :description="READINESS_SAFETY" class="mb" />
+        <el-alert type="warning" :closable="false" show-icon title="转订单安全边界" :description="READINESS_SAFETY" class="mb" />
         <el-alert v-if="readinessError" type="error" :title="readinessError" show-icon class="mb" />
         <el-alert v-if="copyMsg" type="success" :title="copyMsg" show-icon class="mb" @close="copyMsg = ''" />
-        <el-button :loading="readinessLoading" @click="loadReadiness">Refresh Readiness</el-button>
-        <el-button v-if="readiness" @click="copyOrderSummary">Copy Order Input Summary</el-button>
-        <el-button v-if="readiness" @click="copyMissingItems">Copy Missing Items</el-button>
-        <el-button v-if="canCreateOrder" type="primary" @click="showCreateOrderModal = true">Create Order</el-button>
-        <el-button
-          v-else-if="activeOrder"
-          type="primary"
-          @click="router.push({ name: 'order-detail', params: { orderId: activeOrder.id } })"
-        >
-          View Order ({{ activeOrder.order_number }})
-        </el-button>
+        <div class="actions mb">
+          <el-button :loading="readinessLoading" @click="loadReadiness">刷新检查</el-button>
+          <el-button v-if="readiness" @click="copyOrderSummary">复制订单输入摘要</el-button>
+          <el-button v-if="readiness" @click="copyMissingItems">复制阻塞/提醒项</el-button>
+          <el-button v-if="canCreateOrder" type="primary" @click="showCreateOrderModal = true">创建订单</el-button>
+          <el-button
+            v-else-if="activeOrder"
+            type="primary"
+            @click="router.push({ name: 'order-detail', params: { orderId: activeOrder.id } })"
+          >
+            查看订单 {{ activeOrder.order_number }}
+          </el-button>
+        </div>
 
-        <el-dialog v-model="showCreateOrderModal" title="Create Order from Quote" width="520px">
-          <el-alert type="warning" :closable="false" show-icon title="Safety" :description="CREATE_ORDER_SAFETY" class="mb" />
-          <el-checkbox v-model="createWithConfirmation">Include customer confirmation (status → confirmed)</el-checkbox>
-          <p v-if="!createWithConfirmation" class="hint">Without confirmation, order status will be pending_customer_confirmation.</p>
-          <el-input
-            v-if="createWithConfirmation"
-            v-model="createOrderNote"
-            class="mt"
-            type="textarea"
-            placeholder="Confirmation note"
-            :rows="2"
-          />
-          <template #footer>
-            <el-button @click="showCreateOrderModal = false">Cancel</el-button>
-            <el-button type="primary" :loading="createOrderLoading" @click="onCreateOrder">Create Order</el-button>
-          </template>
-        </el-dialog>
-
-        <div v-if="readinessLoading" v-loading="true" style="min-height: 100px; margin-top: 16px" />
+        <div v-if="readinessLoading" v-loading="true" class="small-loading" />
         <template v-else-if="readiness">
-          <div class="readiness-header mt">
+          <div class="readiness-bar">
             <el-tag :type="statusTagType(readiness.readiness_status)" size="large">
-              {{ readiness.readiness_status }}
+              {{ readinessStatusLabel(readiness.readiness_status) }}
             </el-tag>
-            <span class="score">Score: {{ readiness.readiness_score }}</span>
+            <strong>评分 {{ readiness.readiness_score }}</strong>
+            <span>{{ readiness.recommended_next_action }}</span>
           </div>
-          <p class="next-action">{{ readiness.recommended_next_action }}</p>
-
           <el-alert
             v-if="readiness.blocking_items.length"
             type="error"
-            title="Blocking items"
+            title="阻塞项"
             :description="readiness.blocking_items.join(', ')"
             show-icon
             class="mb"
@@ -1118,102 +704,414 @@ onMounted(load)
           <el-alert
             v-if="readiness.warning_items.length"
             type="warning"
-            title="Warnings"
+            title="提醒项"
             :description="readiness.warning_items.slice(0, 8).join(', ')"
             show-icon
             class="mb"
           />
-
-          <el-table :data="readiness.checklist" stripe class="mt" max-height="320">
-            <el-table-column prop="label" label="Check" />
-            <el-table-column prop="status" label="Status" width="100" />
-            <el-table-column prop="details" label="Details" />
+          <el-table :data="readiness.checklist" stripe max-height="300">
+            <el-table-column prop="label" label="检查项" min-width="220" />
+            <el-table-column prop="status" label="状态" width="100" />
+            <el-table-column prop="details" label="说明" min-width="280" />
           </el-table>
-
-          <h4 class="mt">Order Input Contract Summary</h4>
-          <el-descriptions :column="2" border size="small">
-            <el-descriptions-item label="Customer">
-              {{ (readiness.order_input_contract.customer as Record<string, string>)?.company_name || '—' }}
-            </el-descriptions-item>
-            <el-descriptions-item label="Grand Total">
-              {{ (readiness.order_input_contract.totals as Record<string, string>)?.currency }}
-              {{ (readiness.order_input_contract.totals as Record<string, string>)?.grand_total }}
-            </el-descriptions-item>
-            <el-descriptions-item label="Line Items">
-              {{ (readiness.order_input_contract.line_items as unknown[])?.length ?? 0 }}
-            </el-descriptions-item>
-            <el-descriptions-item label="Source Quote">
-              {{ (readiness.order_input_contract.source_quote as Record<string, string>)?.quote_number }}
-            </el-descriptions-item>
-          </el-descriptions>
         </template>
-        <el-empty v-else description="No readiness data" class="mt" />
+        <el-empty v-else description="暂无转订单检查数据" class="mt" />
       </section>
 
-      <section class="section mb">
-        <h3>Quote Timeline</h3>
-        <div v-if="timelineLoading" v-loading="true" style="min-height: 80px" />
-        <el-empty v-else-if="!timelineItems.length" description="No timeline events yet" />
-        <el-timeline v-else>
-          <el-timeline-item
-            v-for="(item, idx) in timelineItems"
-            :key="idx"
-            :timestamp="item.timestamp || ''"
-          >
-            <strong>{{ item.title }}</strong>
-            <span v-if="item.channel"> — {{ item.channel }}</span>
-          </el-timeline-item>
-        </el-timeline>
+      <section class="section internal-section">
+        <el-collapse>
+          <el-collapse-item name="learning">
+            <template #title>
+              <span class="collapse-title">内部记录：客户反馈 / 赢输原因 / Market Response</span>
+            </template>
+            <el-alert type="info" :closable="false" show-icon title="内部记录安全边界" :description="LEARNING_SAFETY" class="mb" />
+            <el-alert v-if="learningError" type="error" :title="learningError" show-icon class="mb" />
+
+            <div v-if="latestLearning" class="learning-summary mb">
+              <div class="learning-summary__head">
+                <el-tag type="primary" effect="plain">{{ latestLearning.outcome_status }}</el-tag>
+                <span>{{ latestLearning.owner || '未指定 owner' }}</span>
+                <span>{{ latestLearning.follow_up_date || '未设置跟进日期' }}</span>
+              </div>
+              <p v-if="latestLearning.customer_feedback">客户反馈：{{ latestLearning.customer_feedback }}</p>
+              <p v-if="latestLearning.customer_objection">客户异议：{{ latestLearning.customer_objection }}</p>
+              <p v-if="latestLearning.reason_category">原因分类：{{ latestLearning.reason_category }}</p>
+              <p v-if="latestLearning.won_reason">赢单原因：{{ latestLearning.won_reason }}</p>
+              <p v-if="latestLearning.lost_reason">丢单原因：{{ latestLearning.lost_reason }}</p>
+              <p v-if="latestLearning.next_action">下一步：{{ latestLearning.next_action }}</p>
+              <div class="chip-row">
+                <el-tag
+                  v-for="factor in latestLearning.customer_decision_factors"
+                  :key="`decision-${factor}`"
+                  size="small"
+                  type="success"
+                  effect="plain"
+                >
+                  {{ factor }}
+                </el-tag>
+                <el-tag
+                  v-for="factor in latestLearning.product_factors"
+                  :key="`product-${factor}`"
+                  size="small"
+                  type="warning"
+                  effect="plain"
+                >
+                  {{ factor }}
+                </el-tag>
+                <el-tag
+                  v-for="factor in latestLearning.partner_factors"
+                  :key="`partner-${factor}`"
+                  size="small"
+                  type="info"
+                  effect="plain"
+                >
+                  {{ factor }}
+                </el-tag>
+              </div>
+              <el-button
+                class="mt"
+                size="small"
+                type="warning"
+                plain
+                :loading="learningPromotingId === latestLearning.id"
+                @click="onPromoteLearning(latestLearning)"
+              >
+                生成 Market Response 审查项
+              </el-button>
+            </div>
+            <el-empty v-else description="暂无报价复盘记录；客户回复、报价修订、赢单或丢单后再记录原因。" class="mt" />
+
+            <el-form label-width="140px" class="learning-form mt">
+              <el-form-item label="结果状态">
+                <el-select v-model="learningForm.outcome_status" style="width: 260px">
+                  <el-option v-for="option in outcomeOptions" :key="option.value" :label="option.label" :value="option.value" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="原因分类">
+                <el-select v-model="learningForm.reason_category" style="width: 260px">
+                  <el-option v-for="option in reasonCategoryOptions" :key="option.value" :label="option.label" :value="option.value" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="客户反馈">
+                <el-input
+                  v-model="learningForm.customer_feedback"
+                  type="textarea"
+                  :rows="2"
+                  placeholder="记录客户原始反馈摘要；不要写成本、利润或供应商私密信息。"
+                />
+              </el-form-item>
+              <el-form-item label="客户异议">
+                <el-input
+                  v-model="learningForm.customer_objection"
+                  type="textarea"
+                  :rows="2"
+                  placeholder="例如价格解释、交期、认证、安装、质保、噪音、承重等问题。"
+                />
+              </el-form-item>
+              <el-form-item label="竞争情况">
+                <el-input
+                  v-model="learningForm.competitor_signal"
+                  type="textarea"
+                  :rows="2"
+                  placeholder="只记录人工确认过的竞争信号；未知则留空。"
+                />
+              </el-form-item>
+              <el-form-item label="客户决策因素">
+                <el-input v-model="learningForm.customer_decision_factors_text" placeholder="price, delivery, certification, timing, relationship..." />
+              </el-form-item>
+              <el-form-item label="赢单 / 丢单原因">
+                <div class="grid-two">
+                  <el-input v-model="learningForm.won_reason" type="textarea" :rows="2" placeholder="赢单原因" />
+                  <el-input v-model="learningForm.lost_reason" type="textarea" :rows="2" placeholder="丢单原因" />
+                </div>
+              </el-form-item>
+              <el-form-item label="价格 / 交付反馈">
+                <div class="grid-two">
+                  <el-input v-model="learningForm.price_feedback" type="textarea" :rows="2" placeholder="客户对价格、价值解释、报价结构的反馈" />
+                  <el-input v-model="learningForm.delivery_feedback" type="textarea" :rows="2" placeholder="客户对交期、物流、安装、交付风险的反馈" />
+                </div>
+              </el-form-item>
+              <el-form-item label="产品维度">
+                <el-input v-model="learningForm.product_dimensions_text" placeholder="load, stability, noise, warranty, certification, delivery..." />
+              </el-form-item>
+              <el-form-item label="产品 / Partner 因素">
+                <div class="grid-two">
+                  <el-input v-model="learningForm.product_factors_text" placeholder="HOSUN: load, stability, packaging; JOOBOO: durability, classroom deployment..." />
+                  <el-input v-model="learningForm.partner_factors_text" placeholder="partner capacity, delivery support, certification support, after-sales..." />
+                </div>
+              </el-form-item>
+              <el-form-item label="下一步 / Owner">
+                <div class="grid-two">
+                  <el-input v-model="learningForm.next_action" placeholder="下一步人工动作" />
+                  <el-input v-model="learningForm.owner" placeholder="owner" />
+                </div>
+              </el-form-item>
+              <el-form-item label="跟进日期">
+                <el-date-picker v-model="learningForm.follow_up_date" type="date" value-format="YYYY-MM-DD" />
+              </el-form-item>
+              <el-form-item label="影响范围">
+                <el-checkbox v-model="learningForm.affects_opportunity">影响项目机会</el-checkbox>
+                <el-checkbox v-model="learningForm.affects_product_intelligence">影响产品洞察</el-checkbox>
+                <el-checkbox v-model="learningForm.affects_market_response">影响 Market Response</el-checkbox>
+                <el-checkbox v-model="learningForm.internal_only">内部可见</el-checkbox>
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" :loading="learningSaving" @click="onSaveLearning">保存报价复盘记录</el-button>
+              </el-form-item>
+            </el-form>
+
+            <div v-if="learningLoading" v-loading="true" class="small-loading" />
+            <el-table v-else-if="learningRecords.length" :data="learningRecords" stripe class="mt">
+              <el-table-column prop="outcome_status" label="结果" width="130" />
+              <el-table-column prop="reason_category" label="原因分类" width="140" />
+              <el-table-column prop="customer_objection" label="异议 / 反馈" min-width="220" />
+              <el-table-column prop="next_action" label="下一步" min-width="220" />
+              <el-table-column prop="owner" label="Owner" width="130" />
+              <el-table-column prop="follow_up_date" label="跟进" width="120" />
+              <el-table-column label="市场响应" width="150">
+                <template #default="{ row }">
+                  <el-button size="small" link type="warning" :loading="learningPromotingId === row.id" @click="onPromoteLearning(row)">
+                    生成审查项
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-collapse-item>
+
+          <el-collapse-item name="timeline">
+            <template #title>
+              <span class="collapse-title">内部记录：报价时间线</span>
+            </template>
+            <div v-if="timelineLoading" v-loading="true" class="small-loading" />
+            <el-empty v-else-if="!timelineItems.length" description="暂无时间线记录" />
+            <el-timeline v-else>
+              <el-timeline-item v-for="(item, idx) in timelineItems" :key="idx" :timestamp="item.timestamp || ''">
+                <strong>{{ item.title }}</strong>
+                <span v-if="item.channel"> / {{ item.channel }}</span>
+              </el-timeline-item>
+            </el-timeline>
+          </el-collapse-item>
+        </el-collapse>
       </section>
 
-      <div class="actions">
-        <el-button
-          v-if="quote.status === 'internal_review'"
-          type="primary"
-          :loading="actionLoading"
-          @click="onMarkReady"
-        >
-          Mark Ready to Send
-        </el-button>
-      </div>
+      <el-dialog v-model="showCreateOrderModal" title="从报价创建订单" width="540px">
+        <el-alert type="warning" :closable="false" show-icon title="安全边界" :description="CREATE_ORDER_SAFETY" class="mb" />
+        <el-checkbox v-model="createWithConfirmation">包含客户确认记录，订单状态进入 confirmed</el-checkbox>
+        <p v-if="!createWithConfirmation" class="hint">未包含客户确认时，订单会保持 pending_customer_confirmation。</p>
+        <el-input
+          v-if="createWithConfirmation"
+          v-model="createOrderNote"
+          class="mt"
+          type="textarea"
+          placeholder="客户确认备注"
+          :rows="2"
+        />
+        <template #footer>
+          <el-button @click="showCreateOrderModal = false">取消</el-button>
+          <el-button type="primary" :loading="createOrderLoading" @click="onCreateOrder">创建订单</el-button>
+        </template>
+      </el-dialog>
     </template>
   </div>
 </template>
 
 <style scoped>
-.page { padding: 16px; }
-.mb { margin-bottom: 16px; }
-.mt { margin-top: 16px; }
-.actions { display: flex; gap: 12px; }
-.section { border-top: 1px solid var(--el-border-color); padding-top: 16px; }
-.delivery-form { max-width: 640px; background: var(--el-fill-color-light); padding: 16px; border-radius: 8px; }
-.readiness-header { display: flex; align-items: center; gap: 16px; }
-.hint { font-size: 13px; color: #666; margin-top: 8px; }
-.mt { margin-top: 12px; }
-.mr { margin-right: 6px; }
-.score { font-weight: 600; }
-.next-action { margin: 12px 0; color: var(--el-text-color-secondary); }
-.quote-commercial { border: 1px solid var(--el-border-color); border-radius: 8px; padding: 14px; background: var(--el-fill-color-lighter); }
-.quote-commercial__head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-.quote-commercial__head h3 { margin: 0 0 4px; }
-.quote-commercial__head p { margin: 0; color: var(--el-text-color-secondary); font-size: 13px; }
-.quote-commercial__tags,
-.quote-commercial__chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.quote-commercial__action { margin: 12px 0; color: var(--el-text-color-primary); font-weight: 600; }
-.quote-commercial__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.quote-commercial__label { margin-bottom: 6px; color: var(--el-text-color-secondary); font-size: 12px; }
-.quote-commercial__empty { color: var(--el-text-color-placeholder); font-size: 12px; }
-.quote-playbook { border: 1px solid var(--el-color-primary-light-7); border-radius: 8px; background: var(--el-color-primary-light-9); padding: 12px; }
-.interval-product { border: 1px solid var(--el-border-color); border-radius: 8px; padding: 12px; margin-top: 12px; background: var(--el-fill-color-lighter); }
-.interval-product__head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 10px; color: var(--el-text-color-secondary); }
-.interval-product__head strong { color: var(--el-text-color-primary); }
-.learning-summary { border: 1px solid var(--el-border-color); border-radius: 8px; background: var(--el-fill-color-light); padding: 12px; }
-.learning-summary__head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 8px; color: var(--el-text-color-secondary); font-size: 13px; }
-.learning-form { max-width: 960px; background: var(--el-fill-color-lighter); padding: 16px; border-radius: 8px; }
-.grid-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: 100%; }
-@media (max-width: 760px) {
-  .grid-two { grid-template-columns: 1fr; }
-  .quote-commercial__head { flex-direction: column; }
-  .quote-commercial__grid { grid-template-columns: 1fr; }
+.quote-detail-page {
+  min-height: 100%;
+  padding: 20px 28px 48px;
+  background: #f5f7fb;
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.page-head h1 {
+  margin: 4px 0 6px;
+  color: #0f172a;
+  font-size: 28px;
+}
+
+.page-head p {
+  margin: 0;
+  color: #64748b;
+}
+
+.back-link {
+  padding-left: 0;
+}
+
+.head-actions,
+.actions,
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.mb {
+  margin-bottom: 16px;
+}
+
+.mt {
+  margin-top: 14px;
+}
+
+.loading-block {
+  min-height: 180px;
+}
+
+.small-loading {
+  min-height: 90px;
+  margin-top: 14px;
+}
+
+.section {
+  margin-bottom: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+}
+
+.section-title {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.section-title h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 18px;
+}
+
+.section-title span {
+  color: #64748b;
+  font-size: 13px;
+  text-align: right;
+}
+
+.section-title.compact {
+  align-items: flex-start;
+}
+
+.two-column {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.panel {
+  min-width: 0;
+}
+
+.interval-product {
+  margin-top: 12px;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fbfdff;
+}
+
+.interval-product__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+}
+
+.interval-product__head strong {
+  color: #0f172a;
+}
+
+.interval-product__head p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.delivery-form,
+.learning-form {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  background: #f8fafc;
+}
+
+.readiness-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.readiness-bar span {
+  color: #475569;
+}
+
+.internal-section {
+  background: #f8fafc;
+}
+
+.collapse-title {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.learning-summary {
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff;
+}
+
+.learning-summary__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.grid-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.hint {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+@media (max-width: 980px) {
+  .page-head,
+  .section-title {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .section-title span {
+    text-align: left;
+  }
+
+  .two-column,
+  .grid-two {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
