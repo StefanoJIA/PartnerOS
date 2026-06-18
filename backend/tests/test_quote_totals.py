@@ -75,3 +75,31 @@ def test_resolve_initial_status():
     assert resolve_initial_status(["price_tier"]) == "ready_to_send"
     assert resolve_initial_status(["manual_unit_price"]) == "internal_review"
     assert resolve_initial_status(["cost_model"]) == "internal_review"
+    assert resolve_initial_status(["manual_interval_override"]) == "internal_review"
+
+
+def test_manual_interval_override_updates_quote_model_reference_price():
+    from app.services.quotes.quote_service import _apply_manual_interval_override, _sanitize_manual_interval_table
+
+    rows = _sanitize_manual_interval_table(
+        [
+            {"min_qty": 1, "max_qty": 49, "quantity_label": "1-49", "fob_unit_price": None, "ddp_unit_price": "88.53"},
+            {"min_qty": 50, "max_qty": 99, "quantity_label": "50-99", "fob_unit_price": "31.06", "ddp_unit_price": "84.99"},
+            {"min_qty": 100, "max_qty": 299, "quantity_label": "100-299", "fob_unit_price": "29.82", "ddp_unit_price": "81.44"},
+        ]
+    )
+
+    pricing, unit_price = _apply_manual_interval_override(
+        {"quote_model": {"final_quote_stage": {}, "pricing_stage": {}}, "price_breakdown": {}},
+        rows=rows,
+        quantity=50,
+        incoterm="DDP",
+    )
+
+    assert str(unit_price) == "84.99"
+    stage = pricing["quote_model"]["final_quote_stage"]
+    assert stage["selected_interval"]["quantity_label"] == "50-99"
+    assert stage["line_subtotal"] == "4249.50"
+    assert [row["quantity_label"] for row in stage["interval_quote_table"]] == ["1-49", "50-99", "100-299"]
+    assert pricing["source"] == "manual_interval_override"
+    assert "manual_interval_price_override_requires_review" in pricing["warnings"]

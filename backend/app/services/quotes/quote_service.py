@@ -40,7 +40,7 @@ FORBIDDEN_PHRASES = (
 )
 
 VALIDITY_DAYS = 21
-REVIEW_SOURCES = {"manual_unit_price", "cost_model", "unknown"}
+REVIEW_SOURCES = {"manual_unit_price", "manual_interval_override", "cost_model", "unknown"}
 
 
 def assert_no_forbidden_phrases(text: str) -> None:
@@ -155,6 +155,110 @@ def _line_interval_quote_table(line: QuoteLineItem) -> list[dict[str, Any]]:
             }
         )
     return safe_rows
+
+
+def _quantity_label(min_qty: int, max_qty: int | None) -> str:
+    return f">={min_qty}" if max_qty is None else f"{min_qty}-{max_qty}"
+
+
+def _manual_money(value: Any) -> str | None:
+    if value in (None, "", "N/A"):
+        return None
+    amount = Decimal(str(value))
+    if amount <= 0:
+        return None
+    return str(amount.quantize(Decimal("0.01")))
+
+
+def _sanitize_manual_interval_table(rows: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    safe_rows: list[dict[str, Any]] = []
+    for row in rows or []:
+        min_qty = int(row.get("min_qty") or 0)
+        if min_qty <= 0:
+            raise ApiError(VALIDATION_ERROR, "manual interval min_qty must be positive", status_code=400)
+        raw_max = row.get("max_qty")
+        max_qty = int(raw_max) if raw_max not in (None, "", "N/A") else None
+        if max_qty is not None and max_qty < min_qty:
+            raise ApiError(VALIDATION_ERROR, "manual interval max_qty must be greater than min_qty", status_code=400)
+        fob = _manual_money(row.get("fob_unit_price"))
+        ddp = _manual_money(row.get("ddp_unit_price"))
+        if fob is None and ddp is None:
+            raise ApiError(VALIDATION_ERROR, "manual interval requires FOB/EXW or DDP unit price", status_code=400)
+        incoterms = []
+        if fob is not None:
+            incoterms.append("FOB")
+        if ddp is not None:
+            incoterms.append("DDP")
+        safe_rows.append(
+            {
+                "min_qty": min_qty,
+                "max_qty": max_qty,
+                "quantity_label": row.get("quantity_label") or _quantity_label(min_qty, max_qty),
+                "currency": row.get("currency") or "USD",
+                "fob_unit_price": fob,
+                "ddp_unit_price": ddp,
+                "incoterms_available": incoterms,
+                "pricing_strategies": ["manual_quote_editor"],
+                "customer_visible": True,
+                "pricing_basis": "manual_interval_override",
+            }
+        )
+    safe_rows.sort(key=lambda item: (int(item["min_qty"]), int(item["max_qty"] or 99999999)))
+    return safe_rows
+
+
+def _selected_manual_interval(rows: list[dict[str, Any]], quantity: int) -> dict[str, Any] | None:
+    for row in rows:
+        max_qty = row.get("max_qty")
+        if quantity >= int(row["min_qty"]) and (max_qty is None or quantity <= int(max_qty)):
+            return row
+    return None
+
+
+def _apply_manual_interval_override(
+    pricing_breakdown: dict[str, Any] | None,
+    *,
+    rows: list[dict[str, Any]],
+    quantity: int,
+    incoterm: str,
+) -> tuple[dict[str, Any], Decimal]:
+    if not pricing_breakdown:
+        pricing_breakdown = {}
+    selected = _selected_manual_interval(rows, quantity) or rows[0]
+    key = "ddp_unit_price" if incoterm == "DDP" else "fob_unit_price"
+    unit_raw = selected.get(key)
+    if unit_raw is None:
+        raise ApiError(
+            VALIDATION_ERROR,
+            f"{incoterm} price is not available for manual interval {selected.get('quantity_label')}",
+            status_code=400,
+        )
+    unit_price = Decimal(str(unit_raw)).quantize(Decimal("0.01"))
+    line_subtotal = (unit_price * quantity).quantize(Decimal("0.01"))
+
+    quote_model = pricing_breakdown.setdefault("quote_model", {})
+    pricing_stage = quote_model.setdefault("pricing_stage", {})
+    final_stage = quote_model.setdefault("final_quote_stage", {})
+    pricing_stage["interval_quote_table"] = rows
+    pricing_stage["source"] = "manual_interval_override"
+    final_stage["interval_quote_table"] = rows
+    final_stage["selected_interval"] = selected
+    final_stage["quote_output_mode"] = "product_interval_table"
+    final_stage["reference_quantity_only"] = True
+    final_stage["line_subtotal_customer_visible"] = False
+    final_stage["unit_price"] = str(unit_price)
+    final_stage["line_subtotal"] = str(line_subtotal)
+    final_stage["manual_price_override"] = True
+
+    price_breakdown = pricing_breakdown.setdefault("price_breakdown", {})
+    price_breakdown["base_unit_price"] = str(unit_price)
+    price_breakdown["final_unit_price_after_discount"] = str(unit_price)
+    price_breakdown["line_subtotal"] = str(line_subtotal)
+    pricing_breakdown["source"] = "manual_interval_override"
+    pricing_breakdown["warnings"] = sorted(
+        set([*list(pricing_breakdown.get("warnings") or []), "manual_interval_price_override_requires_review"])
+    )
+    return pricing_breakdown, unit_price
 
 
 def build_quote_snapshot(quote: Quote) -> dict[str, Any]:
@@ -333,6 +437,7 @@ def _build_line_from_pricing(
     pricing_strategy: str,
     discount: dict | None,
     manual_unit_price: Decimal | None,
+    manual_interval_quote_table: list[dict[str, Any]] | None,
     manual_product_name: str | None,
     color_finish: str | None,
     size_dimension: str | None,
@@ -346,6 +451,7 @@ def _build_line_from_pricing(
     estimated_margin = None
     requires_review = True
     warnings: list[str] = []
+    manual_rows = _sanitize_manual_interval_table(manual_interval_quote_table)
 
     if product and manual_unit_price is None:
         preview = calculate_line_price(
@@ -375,6 +481,17 @@ def _build_line_from_pricing(
             except Exception:
                 internal_cost = None
         requires_review = pricing_source in REVIEW_SOURCES
+        if manual_rows:
+            pricing_breakdown, final_unit = _apply_manual_interval_override(
+                pricing_breakdown,
+                rows=manual_rows,
+                quantity=quantity,
+                incoterm=incoterm,
+            )
+            unit_price = final_unit
+            pricing_source = "manual_interval_override"
+            warnings.append("manual interval price override requires review")
+            requires_review = True
     elif manual_unit_price is not None:
         warnings.append("manual price requires review")
         final_unit = manual_unit_price
@@ -498,6 +615,7 @@ def create_quote(
             pricing_strategy=str(item.get("pricing_strategy") or "volume"),
             discount=item.get("discount"),
             manual_unit_price=Decimal(str(manual_price)) if manual_price is not None else None,
+            manual_interval_quote_table=item.get("manual_interval_quote_table"),
             manual_product_name=item.get("manual_product_name"),
             color_finish=item.get("color_finish"),
             size_dimension=item.get("size_dimension"),
@@ -617,6 +735,7 @@ def add_line_item(db: Session, quote_id: UUID, *, user: User, item: dict[str, An
         pricing_strategy=str(item.get("pricing_strategy") or "volume"),
         discount=item.get("discount"),
         manual_unit_price=Decimal(str(manual_price)) if manual_price is not None else None,
+        manual_interval_quote_table=item.get("manual_interval_quote_table"),
         manual_product_name=item.get("manual_product_name"),
         color_finish=item.get("color_finish"),
         size_dimension=item.get("size_dimension"),

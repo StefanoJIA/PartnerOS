@@ -26,6 +26,7 @@ describe('PricingPreviewPage', () => {
           product_family: null,
           description_customer: null,
           status: 'active',
+          image_url: null,
           attributes_json: null,
         },
       ],

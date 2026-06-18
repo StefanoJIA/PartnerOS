@@ -12,6 +12,7 @@ export interface CatalogProduct {
   product_family: string | null
   description_customer: string | null
   status: string
+  image_url: string | null
   attributes_json: Record<string, unknown> | null
 }
 

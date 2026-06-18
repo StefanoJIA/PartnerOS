@@ -16,6 +16,15 @@ class AddressIn(BaseModel):
     address: str | None = None
 
 
+class QuoteManualIntervalRowIn(BaseModel):
+    min_qty: int = Field(..., gt=0)
+    max_qty: int | None = None
+    quantity_label: str | None = None
+    currency: str = "USD"
+    fob_unit_price: Decimal | None = None
+    ddp_unit_price: Decimal | None = None
+
+
 class QuoteLineItemIn(BaseModel):
     product_id: UUID | None = None
     product_catalog_id: UUID | None = None
@@ -27,6 +36,7 @@ class QuoteLineItemIn(BaseModel):
     discount: dict[str, Any] | None = None
     manual_unit_price: Decimal | None = None
     unit_price: Decimal | None = None
+    manual_interval_quote_table: list[QuoteManualIntervalRowIn] | None = None
     color_finish: str | None = None
     size_dimension: str | None = None
 
