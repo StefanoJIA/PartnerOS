@@ -55,7 +55,20 @@ def test_generate_quote_number_increments():
         quote_number="Q-2026-0005"
     )
     num = generate_quote_number(db, date(2026, 5, 23))
-    assert num == "Q-2026-0006"
+    assert num == "Q-2026-0085"
+
+
+def test_generate_quote_number_continues_after_imported_sequence_floor():
+    from datetime import date
+
+    from app.services.quotes.quote_service import generate_quote_number
+
+    db = MagicMock()
+    db.query.return_value.filter.return_value.order_by.return_value.with_for_update.return_value.first.return_value = SimpleNamespace(
+        quote_number="Q-2026-0085"
+    )
+    num = generate_quote_number(db, date(2026, 5, 23))
+    assert num == "Q-2026-0086"
 
 
 def test_generate_quote_number_first_of_year():
@@ -66,7 +79,7 @@ def test_generate_quote_number_first_of_year():
     db = MagicMock()
     db.query.return_value.filter.return_value.order_by.return_value.with_for_update.return_value.first.return_value = None
     num = generate_quote_number(db, date(2026, 1, 1))
-    assert num == "Q-2026-0001"
+    assert num == "Q-2026-0085"
 
 
 def test_resolve_initial_status():

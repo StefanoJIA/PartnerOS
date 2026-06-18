@@ -41,6 +41,28 @@ const DEFAULT_INTERVAL_ROWS: EditableIntervalRow[] = [
   { min_qty: 500, max_qty: null, quantity_label: '>=500', currency: 'USD', fob_unit_price: '', ddp_unit_price: '' },
 ]
 
+const PAYMENT_TERMS = [
+  '30% deposit upon order placement;',
+  '50% payment within one (1) calendar day after the goods depart the port of loading (ETD), against a copy of the "On Board" Bill of Lading or the carrier’s departure notice;',
+  'The remaining 20% to be paid within two (2) weeks after receipt of the goods.',
+]
+const MANUFACTURING_LEAD_TIME = '21 to 28 days after order confirmed'
+const DDP_DELIVERY_TIME = '45 to 50 days after order confirmed'
+const SHIPPING_INFORMATION = [
+  "EXW (Ex Works): Price at the seller’s facility (Chongqing, China); the buyer is responsible for pickup, loading, export clearance, main carriage, insurance, and all costs/risks from collection.",
+  'FOB (Free on Board): Price excludes shipping and insurance.',
+  'CIF (Cost, Insurance, and Freight) to Boston: Price includes ocean freight and insurance up to the destination port (Boston).',
+  'DDP (Delivered Duty Paid): Goods delivered to the final destination, with import duties and taxes included.',
+]
+const ADDITIONAL_NOTES = [
+  'Description: Please provide a detailed description of the product or service.',
+  'Quantity: Specify the required quantity of a single product model.',
+  'Unit Price: Indicate the base price for each item.',
+  'Discount: Apply any applicable discounts by amount or percentage.',
+  'Tax Rate: Specify the applicable tax rate.',
+  'Total: The final amount will be automatically calculated.',
+]
+
 const router = useRouter()
 const products = ref<CatalogProduct[]>([])
 const selectedProductId = ref('')
@@ -57,30 +79,13 @@ const validDays = ref(21)
 const billTo = ref({ name: '', company: '', address: '' })
 const shipTo = ref({ name: '', company: '', address: '' })
 
-const PAYMENT_TERMS = [
-  '30% deposit upon order placement;',
-  '50% payment within one (1) calendar day after the goods depart the port of loading (ETD), against a copy of the "On Board" Bill of Lading or the carrier\'s departure notice;',
-  'The remaining 20% to be paid within two (2) weeks after receipt of the goods.',
-]
-const MANUFACTURING_LEAD_TIME = '21 to 28 days after order confirmed'
-const DDP_DELIVERY_TIME = '45 to 50 days after order confirmed'
-const SHIPPING_INFORMATION = [
-  "EXW (Ex Works): Price at the seller's facility (Chongqing, China); the buyer is responsible for pickup, loading, export clearance, main carriage, insurance, and all costs/risks from collection.",
-  'FOB (Free on Board): Price excludes shipping and insurance.',
-  'CIF (Cost, Insurance, and Freight) to Boston: Price includes ocean freight and insurance up to the destination port (Boston).',
-  'DDP (Delivered Duty Paid): Goods delivered to the final destination, with import duties and taxes included.',
-]
-const ADDITIONAL_NOTES = [
-  'Description: Please provide a detailed description of the product or service.',
-  'Quantity: Specify the required quantity of a single product model.',
-  'Unit Price: Indicate the base price for each item.',
-  'Discount: Apply any applicable discounts by amount or percentage.',
-  'Tax Rate: Specify the applicable tax rate.',
-  'Total: The final amount will be automatically calculated.',
-]
-
 const selectedProduct = computed(() => products.value.find((item) => item.id === selectedProductId.value) ?? null)
 const canCreate = computed(() => blocks.value.length > 0 && !creating.value)
+const validTill = computed(() => {
+  const date = new Date(`${quoteDate.value}T00:00:00`)
+  date.setDate(date.getDate() + validDays.value)
+  return date.toLocaleDateString('en-US')
+})
 const customerQuoteTerms = computed(() =>
   [
     'Thank you for your business!',
@@ -102,11 +107,6 @@ const customerQuoteTerms = computed(() =>
     ...ADDITIONAL_NOTES,
   ].join('\n'),
 )
-const validTill = computed(() => {
-  const date = new Date(`${quoteDate.value}T00:00:00`)
-  date.setDate(date.getDate() + validDays.value)
-  return date.toLocaleDateString('en-US')
-})
 
 function blankRows() {
   return DEFAULT_INTERVAL_ROWS.map((row) => ({ ...row }))
@@ -142,6 +142,19 @@ function productImage(product: CatalogProduct) {
   return product.image_url || ''
 }
 
+function productDisplayName(product: CatalogProduct) {
+  const attrs = product.attributes_json || {}
+  return String(attrs.customer_quote_name || product.product_name)
+}
+
+function productOptionLabel(product: CatalogProduct) {
+  return `${product.internal_sku} - ${productDisplayName(product)}`
+}
+
+function formatQuantityLabel(label: string) {
+  return label.replace('>=', '≥').replace('-', ' ~ ')
+}
+
 function displayPrice(value: string | null | undefined) {
   return value && value !== 'N/A' ? `$${Number(value).toFixed(2)}` : 'N/A'
 }
@@ -157,9 +170,9 @@ function selectedUnitPrice(block: QuoteProductBlock) {
 }
 
 function warningText(block: QuoteProductBlock) {
-  if (block.source === 'manual_interval_blank') return '需手工填写完整阶梯价'
+  if (block.source === 'manual_interval_blank') return '需要手工补全该产品的区间价格'
   if (block.warnings.length) return block.warnings.join(' / ')
-  return '已载入底层区间价'
+  return '已加载底层成本和区间报价模型；成本、利润、物流测算保持内部可见'
 }
 
 async function loadProducts() {
@@ -217,7 +230,7 @@ async function addProductBlock() {
       target.rows = blankRows()
       target.source = 'manual_interval_blank'
       target.warnings = ['No interval price found; manual customer-visible prices required.']
-      error.value = '该产品没有可用区间价，已加入空白阶梯表；请手工填写 EXW/FOB 或 DDP 单价后再保存。'
+      error.value = '该产品没有可用区间报价，请先维护成本模型或手工补全区间价格。'
     }
   } catch (e: unknown) {
     const target = blocks.value.find((item) => item.local_id === localId)
@@ -225,7 +238,7 @@ async function addProductBlock() {
       target.rows = blankRows()
       target.source = 'manual_interval_blank'
       target.warnings = [e instanceof Error ? e.message : 'Preview failed; manual interval prices required.']
-      error.value = '区间报价加载失败，已加入空白阶梯表；请手工填写客户可见单价后再保存。'
+      error.value = '区间报价加载失败，已加入空白区间表，请手工填写客户可见单价后再保存。'
     }
   } finally {
     const target = blocks.value.find((item) => item.local_id === localId)
@@ -248,7 +261,7 @@ async function createQuote() {
   }
   const incomplete = blocks.value.find((block) => block.rows.some((row) => !hasPrice(row)))
   if (incomplete) {
-    error.value = `产品 ${incomplete.product.internal_sku} 存在未填写单价的数量区间；每个区间至少需要 EXW/FOB 或 DDP 价格。`
+    error.value = `产品 ${incomplete.product.internal_sku} 存在未填写单价的数量区间；每个区间至少需要 FOB 或 DDP 价格。`
     return
   }
 
@@ -296,7 +309,7 @@ onMounted(loadProducts)
       <div>
         <el-button link @click="router.push({ name: 'quotes' })">返回报价列表</el-button>
         <h1>新建报价单</h1>
-        <p>操作系统为中文；客户报价正文保持英文格式。保存只创建内部报价记录，不会自动发送。</p>
+        <p>操作系统为中文；客户报价正文保持英文。保存只创建内部报价记录，不会自动发送。</p>
       </div>
       <div class="topbar-actions">
         <el-button @click="router.push({ name: 'pricing-preview' })">底层成本/区间逻辑</el-button>
@@ -305,7 +318,7 @@ onMounted(loadProducts)
     </div>
 
     <el-alert
-      type="warning"
+      type="info"
       :closable="false"
       show-icon
       title="安全边界"
@@ -321,11 +334,11 @@ onMounted(loadProducts)
             <h2>IntelliOpus Engineering</h2>
             <p>529 Main Street, Suite 2000, Charlestown, MA, 02129</p>
             <a href="https://www.intelli-opus.com" target="_blank" rel="noreferrer">www.intelli-opus.com</a>
+            <p>(928) 679-3822</p>
           </div>
           <div class="brand-lockup">
             <img src="/favicon.svg" alt="IntelliOpus logo" />
             <strong>IntelliOpus</strong>
-            <span>Engineering</span>
           </div>
         </header>
 
@@ -359,6 +372,7 @@ onMounted(loadProducts)
               <label>Valid For</label>
               <el-input-number v-model="validDays" :min="1" :max="180" class="days-control" />
               <p><strong>Valid Till:</strong> {{ validTill }}</p>
+              <p class="auto-number">编号保存时自动生成，从 #84 后继续递增。</p>
             </div>
           </div>
         </section>
@@ -367,18 +381,13 @@ onMounted(loadProducts)
           <div class="composer-title">
             <div>
               <h3>添加报价产品</h3>
-              <p>选择客户感兴趣的产品；每个产品会生成完整阶梯价，可直接编辑客户可见单价。</p>
+              <p>只选择客户感兴趣的产品；每个产品会加入完整数量区间表，可在保存前直接编辑客户可见单价。</p>
             </div>
-            <el-tag effect="plain">Manual quote sheet</el-tag>
+            <el-tag effect="plain">Internal quote editor</el-tag>
           </div>
           <div class="composer-controls">
             <el-select v-model="selectedProductId" filterable placeholder="选择产品" :loading="loadingProducts">
-              <el-option
-                v-for="p in products"
-                :key="p.id"
-                :label="`${p.internal_sku} - ${p.product_name}`"
-                :value="p.id"
-              />
+              <el-option v-for="p in products" :key="p.id" :label="productOptionLabel(p)" :value="p.id" />
             </el-select>
             <el-input-number v-model="addQuantity" :min="1" />
             <el-select v-model="addIncoterm">
@@ -386,7 +395,7 @@ onMounted(loadProducts)
               <el-option label="DDP" value="DDP" />
             </el-select>
             <el-select v-model="addStrategy">
-              <el-option label="销售" value="volume" />
+              <el-option label="销量" value="volume" />
               <el-option label="引流" value="traffic" />
               <el-option label="利润" value="profit" />
             </el-select>
@@ -398,18 +407,18 @@ onMounted(loadProducts)
           <div class="quote-table-head">
             <div>Products</div>
             <div>Quantity</div>
-            <div>EXW Unit Price</div>
+            <div>FOB Unit Price</div>
             <div>DDP Unit Price</div>
-            <div>Internal</div>
+            <div>Review</div>
           </div>
 
-          <el-empty v-if="!blocks.length" description="请选择客户感兴趣的产品，系统会按产品生成完整阶梯报价。" />
+          <el-empty v-if="!blocks.length" description="请选择客户感兴趣的产品。系统会按产品生成完整阶梯报价，而不是只生成一个数量点。" />
 
           <article v-for="block in blocks" :key="block.local_id" class="product-block">
             <div class="product-card">
               <div class="product-title">
                 <strong>{{ block.product.internal_sku }}</strong>
-                <span>{{ block.product.product_name }}</span>
+                <span>{{ productDisplayName(block.product) }}</span>
               </div>
               <img v-if="productImage(block.product)" :src="productImage(block.product)" alt="Product image" />
               <div v-else class="image-pending">Product image pending</div>
@@ -418,7 +427,7 @@ onMounted(loadProducts)
 
             <div class="tier-table">
               <template v-for="row in block.rows" :key="`${block.local_id}-${row.quantity_label}`">
-                <div class="qty-cell">{{ row.quantity_label.replace('-', ' ~ ') }}</div>
+                <div class="qty-cell">{{ formatQuantityLabel(row.quantity_label) }}</div>
                 <div class="price-cell">
                   <el-input v-model="row.fob_unit_price" placeholder="N/A" />
                 </div>
@@ -433,14 +442,14 @@ onMounted(loadProducts)
                     effect="plain"
                     size="small"
                   >
-                    校验区间
+                    参考数量
                   </el-tag>
                 </div>
               </template>
             </div>
 
             <div class="line-tools">
-              <span>内部参考：{{ block.quantity }} {{ block.incoterm }} {{ selectedUnitPrice(block) }}</span>
+              <span>内部参考：{{ block.quantity }} {{ block.incoterm }} {{ selectedUnitPrice(block) }}；客户报价仍显示完整区间表。</span>
               <el-input-number v-model="block.quantity" :min="1" />
               <el-select v-model="block.incoterm">
                 <el-option label="FOB" value="FOB" />
@@ -489,6 +498,9 @@ onMounted(loadProducts)
 
 <style scoped>
 .quote-editor-page {
+  --quote-accent: #863bff;
+  --quote-accent-dark: #5f22d8;
+  --quote-accent-soft: #ede6ff;
   min-height: 100%;
   padding: 18px 28px 48px;
   background: #f4f6fa;
@@ -547,7 +559,7 @@ onMounted(loadProducts)
 
 .brand-block h2 {
   margin: 0 0 8px;
-  color: #f37021;
+  color: var(--quote-accent);
   font-size: 30px;
   font-weight: 500;
 }
@@ -560,7 +572,7 @@ onMounted(loadProducts)
 .brand-block a {
   display: inline-block;
   margin: 8px 0;
-  color: #2d67d6;
+  color: #2563eb;
   font-size: 19px;
 }
 
@@ -572,8 +584,8 @@ onMounted(loadProducts)
 }
 
 .brand-lockup img {
-  width: 92px;
-  height: 92px;
+  width: 104px;
+  height: 104px;
   object-fit: contain;
 }
 
@@ -581,14 +593,6 @@ onMounted(loadProducts)
   display: block;
   margin-top: 10px;
   font-size: 34px;
-  letter-spacing: 0;
-}
-
-.brand-lockup span {
-  display: block;
-  margin-top: 2px;
-  color: #6f7785;
-  font-size: 15px;
   letter-spacing: 0;
 }
 
@@ -617,7 +621,7 @@ onMounted(loadProducts)
 }
 
 .quote-rail strong {
-  color: #f37021;
+  color: var(--quote-accent);
   font-size: 28px;
   letter-spacing: 2px;
 }
@@ -645,7 +649,7 @@ onMounted(loadProducts)
 .address-panel h3 {
   margin: 0 0 8px;
   padding-bottom: 8px;
-  color: #f37021;
+  color: var(--quote-accent);
   font-size: 16px;
   font-weight: 700;
   border-bottom: 1px solid #d5d8dd;
@@ -664,6 +668,12 @@ onMounted(loadProducts)
 .date-panel p {
   margin: 8px 0 0;
   font-size: 18px;
+}
+
+.auto-number {
+  color: #6b7280;
+  font-size: 13px !important;
+  line-height: 1.45;
 }
 
 .date-control,
@@ -716,7 +726,7 @@ onMounted(loadProducts)
 .quote-table-head {
   display: grid;
   grid-template-columns: minmax(390px, 1.45fr) 160px 180px 180px 120px;
-  background: #f37021;
+  background: var(--quote-accent);
   color: #fff;
   font-size: 17px;
   font-weight: 700;
@@ -801,7 +811,7 @@ onMounted(loadProducts)
 
 .price-cell :deep(.el-input__wrapper:hover),
 .price-cell :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 1px #8bbcff inset;
+  box-shadow: 0 0 0 1px var(--quote-accent) inset;
   background: #fff;
 }
 
@@ -853,7 +863,7 @@ onMounted(loadProducts)
   margin: -27px 0 2px;
   width: fit-content;
   padding-right: 12px;
-  color: #f37021;
+  color: var(--quote-accent);
   background: #fff;
   font-size: 20px;
   font-weight: 800;

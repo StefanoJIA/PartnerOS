@@ -35,13 +35,13 @@ describe('QuoteNewPage', () => {
           partner_id: 'partner-1',
           internal_sku: 'DF0402',
           partner_product_code: null,
-          product_name: 'Chair',
+          product_name: 'DF0402 Chair',
           product_category: 'education_furniture',
-          product_family: 'school desks/chairs',
+          product_family: 'school_chairs',
           description_customer: null,
           status: 'active',
           image_url: null,
-          attributes_json: null,
+          attributes_json: { customer_quote_name: 'DF0402 Chair' },
         },
       ],
       total: 1,
@@ -61,7 +61,7 @@ describe('QuoteNewPage', () => {
       profit_breakdown: {},
       quote_model: {
         workflow: [],
-        product: { id: 'p1', name: 'Chair', category: 'education_furniture', family: 'school desks/chairs' },
+        product: { id: 'p1', name: 'DF0402 Chair', category: 'education_furniture', family: 'school_chairs' },
         inputs: {},
         fx_stage: {},
         cost_stage: {},
@@ -120,7 +120,8 @@ describe('QuoteNewPage', () => {
     expect(wrapper.text()).toContain('IntelliOpus Engineering')
     expect(wrapper.text()).not.toContain('IntelliOpus Engineering x HOSUN')
     expect(wrapper.text()).toContain('BILL TO')
-    expect(wrapper.text()).toContain('EXW Unit Price')
+    expect(wrapper.text()).toContain('FOB Unit Price')
+    expect(wrapper.text()).toContain('DDP Unit Price')
     expect(wrapper.text()).toContain('Thank you for your business!')
     expect(wrapper.text()).toContain('Terms & Instructions')
     expect(wrapper.text()).toContain('Payment Terms:')

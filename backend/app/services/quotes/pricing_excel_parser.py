@@ -454,6 +454,12 @@ def parse_cost_sheet(sheet_name: str, rows: list[tuple[Any, ...]]) -> SheetParse
         if not product_name:
             report.skipped_rows += 1
             continue
+        fob_cost = parse_decimal_cell(row_value(row, cols.get("fob_cost")))
+        ddp_cost = parse_decimal_cell(row_value(row, cols.get("ddp_cost")))
+        if fob_cost is None and ddp_cost is None:
+            report.skipped_rows += 1
+            report.warnings.append("skipped cost input row without FOB/DDP cost result")
+            continue
         explicit_code = None
         if re.fullmatch(r"[A-Z0-9]{3,12}", product_name.upper()):
             explicit_code = product_name.upper()
@@ -473,8 +479,8 @@ def parse_cost_sheet(sheet_name: str, rows: list[tuple[Any, ...]]) -> SheetParse
                 weight=parse_decimal_cell(row_value(row, cols.get("weight"))),
                 domestic_transport=parse_decimal_cell(row_value(row, cols.get("domestic_transport"))),
                 freight_cost_usd=parse_decimal_cell(row_value(row, cols.get("freight_cost_usd"))),
-                fob_cost_usd=parse_decimal_cell(row_value(row, cols.get("fob_cost"))),
-                ddp_cost_usd=parse_decimal_cell(row_value(row, cols.get("ddp_cost"))),
+                fob_cost_usd=fob_cost,
+                ddp_cost_usd=ddp_cost,
             )
         )
         report.candidate_rows += 1

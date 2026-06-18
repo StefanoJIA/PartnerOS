@@ -41,6 +41,7 @@ FORBIDDEN_PHRASES = (
 
 VALIDITY_DAYS = 21
 REVIEW_SOURCES = {"manual_unit_price", "manual_interval_override", "cost_model", "unknown"}
+QUOTE_SEQUENCE_START_AFTER = 84
 
 
 def assert_no_forbidden_phrases(text: str) -> None:
@@ -59,12 +60,12 @@ def generate_quote_number(db: Session, quote_date: date) -> str:
         .with_for_update()
         .first()
     )
-    seq = 1
+    seq = QUOTE_SEQUENCE_START_AFTER + 1
     if last:
         try:
-            seq = int(last.quote_number.split("-")[-1]) + 1
+            seq = max(seq, int(last.quote_number.split("-")[-1]) + 1)
         except ValueError:
-            seq = 1
+            seq = QUOTE_SEQUENCE_START_AFTER + 1
     return f"{prefix}{seq:04d}"
 
 
