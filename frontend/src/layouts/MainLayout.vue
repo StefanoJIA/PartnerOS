@@ -1,11 +1,17 @@
 <template>
   <el-container class="h-screen">
-    <el-aside width="248px" class="bg-slate-900 text-white">
-      <div class="p-4 font-semibold tracking-tight">intelliOffice</div>
+    <el-aside width="260px" class="bg-slate-950 text-white">
+      <div class="brand-panel">
+        <div class="brand-mark"><IntelliOpusMark /></div>
+        <div>
+          <div class="brand-name">IntelliOpus</div>
+          <div class="brand-subtitle">PartnerOS</div>
+        </div>
+      </div>
       <el-menu
         :default-active="$route.path"
         :default-openeds="defaultOpeneds"
-        class="border-none bg-slate-900"
+        class="border-none bg-slate-950"
         text-color="#cbd5e1"
         active-text-color="#fff"
         router
@@ -37,6 +43,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import IntelliOpusMark from '@/components/brand/IntelliOpusMark.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -95,7 +102,7 @@ const navGroups = [
     key: 'customer-portal',
     label: '客户 Portal',
     items: [
-      { path: '/portal-operations', label: 'Portal 运营' },
+      { path: '/portal-integration', label: 'Portal 运营' },
       { path: '/portal-customer-bridge', label: 'Portal 联调 UAT' },
       { path: '/feedback-tickets', label: '客户反馈' },
     ],
@@ -104,8 +111,8 @@ const navGroups = [
     key: 'market-response',
     label: '市场响应',
     items: [
-      { path: '/market-response', label: '市场响应' },
-      { path: '/market-intelligence', label: '市场信号预览' },
+      { path: '/market-intelligence', label: '市场响应' },
+      { path: '/market-response', label: '市场响应入口' },
     ],
   },
   {
@@ -119,7 +126,7 @@ const navGroups = [
   },
   {
     key: 'demo-docs',
-    label: '演示与资料',
+    label: '执行与资料',
     items: [
       { path: '/external-execution', label: '外部执行 / Staging' },
       { path: '/knowledge-base', label: '资料库' },
@@ -150,12 +157,41 @@ function logout() {
 </script>
 
 <style scoped>
+.brand-panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.24);
+}
+
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+}
+
+.brand-name {
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 760;
+  line-height: 1.1;
+}
+
+.brand-subtitle {
+  margin-top: 3px;
+  color: #7dd3fc;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
 .el-menu {
-  --el-menu-bg-color: #0f172a;
-  --el-menu-hover-bg-color: #1e293b;
+  --el-menu-bg-color: #020617;
+  --el-menu-hover-bg-color: #0f172a;
 }
 
 .el-menu-item.is-active {
-  background: #1e293b !important;
+  background: #0f172a !important;
 }
 </style>

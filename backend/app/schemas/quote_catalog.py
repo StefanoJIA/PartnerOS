@@ -60,6 +60,11 @@ class ProductCatalogOut(BaseModel):
     image_url: str | None
     attributes_json: dict | None
     notes: str | None
+    partner_code: str | None = None
+    partner_name: str | None = None
+    quote_interval_count: int = 0
+    has_interval_pricing: bool = False
+    configuration_summary: dict | None = None
 
     model_config = {"from_attributes": True}
 

@@ -5,6 +5,8 @@ import { http } from '@/api/http'
 export interface CatalogProduct {
   id: string
   partner_id: string
+  partner_code?: string | null
+  partner_name?: string | null
   internal_sku: string
   partner_product_code: string | null
   product_name: string
@@ -14,6 +16,9 @@ export interface CatalogProduct {
   status: string
   image_url: string | null
   attributes_json: Record<string, unknown> | null
+  quote_interval_count?: number
+  has_interval_pricing?: boolean
+  configuration_summary?: Record<string, unknown> | null
 }
 
 export interface V1Envelope<T> {
@@ -101,6 +106,7 @@ export interface PricingPreviewResult {
 
 export async function fetchCatalogProducts(params?: {
   partner_id?: string
+  partner_code?: string
   category?: string
   search?: string
   limit?: number

@@ -1,0 +1,1381 @@
+{
+  "source_system": "desk_order_system",
+  "source_scope": "sanitized_product_catalog_only",
+  "safety": {
+    "contains_customers": false,
+    "contains_orders": false,
+    "contains_admins": false,
+    "contains_tokens": false,
+    "automatic_sending_enabled": false,
+    "inventory_reserved": false
+  },
+  "products": [
+    {
+      "id": 1,
+      "sku": "HS90602PRLCZ",
+      "name": "Rectangular Lifting Column 2-Stage 2.36\"×3.54\" (60×90mm)",
+      "description": "Chinese Name: 90x60正装两节方管立柱\nSpecification: 90*60\nStages: 2\nLifting Range: 710~1190mm\nAdjustable Width: 仅立柱，没有框架\nLoad Capacity: 120kg\nLifting Speed: 35mm/s\nPackage Size: 75 cmD×25 cmW×15.5 cmH\n（V08）",
+      "category": "Lifting Columns",
+      "image_url": "/static/images/products/90X60正装三节立柱-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634166"
+    },
+    {
+      "id": 2,
+      "sku": "HS90603PRLCZ",
+      "name": "Rectangular Lifting Column 3-Stage 2.36\"×3.54\" (60×90mm)",
+      "description": "Chinese Name: 90x60正装三节方管立柱\nSpecification: 90*60\nStages: 3\nLifting Range: 650~1300mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Lifting Columns",
+      "image_url": "/static/images/products/90X60正装三节立柱-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634171"
+    },
+    {
+      "id": 3,
+      "sku": "HS80502PRLCZ",
+      "name": "Rectangular Lifting Column 2-Stage 1.97\"×3.15\" (50×80mm)",
+      "description": "Chinese Name: 80x50正装两节方管立柱\nSpecification: 80*50\nStages: 2\nLifting Range: 710~1190mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Lifting Columns",
+      "image_url": "/static/images/products/80X50正装两节立柱-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634173"
+    },
+    {
+      "id": 4,
+      "sku": "HS80503PRLCZ",
+      "name": "Rectangular Lifting Column 3-Stage 1.97\"×3.15\" (50×80mm)",
+      "description": "Chinese Name: 80x50正装三节方管立柱\nSpecification: 80*50\nStages: 3\nLifting Range: 650~1300mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Lifting Columns",
+      "image_url": "/static/images/products/80X50正装三节立柱-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634175"
+    },
+    {
+      "id": 5,
+      "sku": "HS70702PRLCZ",
+      "name": "Square Lifting Column 2-Stage 2.76\"×2.76\" (70×70mm)",
+      "description": "Chinese Name: 70x70正装两节方管立柱\nSpecification: 70*70\nStages: 2\nLifting Range: 710~1190mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Lifting Columns",
+      "image_url": "/static/images/products/70X70正装两节立柱-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634176"
+    },
+    {
+      "id": 6,
+      "sku": "HS70703PRLCZ",
+      "name": "Square Lifting Column 3-Stage 2.76\"×2.76\" (70×70mm)",
+      "description": "Chinese Name: 70x70正装三节方管立柱\nSpecification: 70*70\nStages: 3\nLifting Range: 650~1300mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Lifting Columns",
+      "image_url": "/static/images/products/70X70正装三节立柱-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634178"
+    },
+    {
+      "id": 7,
+      "sku": "HS00702PRLCZ",
+      "name": "Round Lifting Column 2-Stage 2.76\" (⌀70mm)",
+      "description": "Chinese Name: 70正装两节圆管立柱\nSpecification: ⌀ 70\nStages: 2\nLifting Range: 710~1190mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Lifting Columns",
+      "image_url": "/static/images/products/圆形正装两节立柱-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634179"
+    },
+    {
+      "id": 8,
+      "sku": "HS00703PRLCZ",
+      "name": "Round Lifting Column 3-Stage 2.76\" (⌀70mm)",
+      "description": "Chinese Name: 70正装三节圆管立柱\nSpecification: ⌀ 70\nStages: 3\nLifting Range: 650~1300mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Lifting Columns",
+      "image_url": "/static/images/products/圆形正装三节立柱-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634181"
+    },
+    {
+      "id": 9,
+      "sku": "HSOVAL2PRLCZ",
+      "name": "Oval Lifting Column 2-Stage",
+      "description": "Chinese Name: 83*50正装三节椭圆管立柱\nSpecification: 83*50\nStages: 2\nLifting Range: 710~1190mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Lifting Columns",
+      "image_url": "/static/images/products/椭圆管正装二节立柱-Photoroom.png",
+      "price": 11.0,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634182"
+    },
+    {
+      "id": 10,
+      "sku": "HSOVAL3PRLCZ",
+      "name": "Oval Lifting Column 3-Stage",
+      "description": "Chinese Name: 83*50正装两节椭圆管立柱\nSpecification: 83*50\nStages: 3\nLifting Range: 650~1300mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Lifting Columns",
+      "image_url": "/static/images/products/椭圆管正装二节立柱-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634183"
+    },
+    {
+      "id": 11,
+      "sku": "HS90603PSLCZ",
+      "name": "Rectangular Short Lifting Column 3-Stage 2.36\"×3.54\" (60×90mm)",
+      "description": "Chinese Name: 90x60正装三节方管短立柱\nSpecification: 90*60\nStages: 3\nLifting Range: 400~760mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Lifting Columns",
+      "image_url": "/static/images/products/茶几桌90X60正装三节立柱-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634185"
+    },
+    {
+      "id": 12,
+      "sku": "HS80503PSLCZ",
+      "name": "Rectangular Short Lifting Column 3-Stage 1.97\"×3.15\" (50×80mm)",
+      "description": "Chinese Name: 80x50正装三节方管短立柱\nSpecification: 80*50\nStages: 3\nLifting Range: 400~760mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Lifting Columns",
+      "image_url": "/static/images/products/茶几桌80X50正装三节立柱-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634186"
+    },
+    {
+      "id": 13,
+      "sku": "HS90602PRDDFZ",
+      "name": "Rectangular Column Dual Motor Desk Frame 2-Stage 2.36\"×3.54\" (60×90mm)",
+      "description": "Chinese Name: 90x60正装双电机两节方管升降桌架\nSpecification: 90*60\nStages: 2\nLifting Range: 710~1190mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s\nPackage Size: 106.5 cmD×28.5 cmW×17 cmH\n（V05）",
+      "category": "Dual-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/80X50正装两节桌架 (3)-Photoroom.png",
+      "price": 486.440845070422,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634188"
+    },
+    {
+      "id": 14,
+      "sku": "HS90603PRDDFZ",
+      "name": "Rectangular Column Dual Motor Desk Frame 3-Stage 2.36\"×3.54\" (60×90mm)",
+      "description": "Chinese Name: 90x60正装双电机三节方管升降桌架\nSpecification: 90*60\nStages: 3\nLifting Range: 650~1300mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Dual-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/80X50正装两节桌架 (3)-Photoroom.png",
+      "price": 486.440845070422,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634189"
+    },
+    {
+      "id": 15,
+      "sku": "HS80502PRDDFZ",
+      "name": "Rectangular Column Dual Motor Desk Frame 2-Stage 1.97\"×3.15\" (50×80mm)",
+      "description": "Chinese Name: 80x50正装双电机两节方管升降桌架\nSpecification: 80*50\nStages: 2\nLifting Range: 710~1190mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Dual-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/80X50正装两节桌架 (3)-Photoroom.png",
+      "price": 486.440845070422,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634191"
+    },
+    {
+      "id": 16,
+      "sku": "HS80503PRDDFZ",
+      "name": "Rectangular Column Dual Motor Desk Frame 3-Stage 1.97\"×3.15\" (50×80mm)",
+      "description": "Chinese Name: 80x50正装双电机三节方管升降桌架\nSpecification: 80*50\nStages: 3\nLifting Range: 650~1300mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Dual-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/80X50正装两节桌架 (3)-Photoroom.png",
+      "price": 486.440845070422,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634192"
+    },
+    {
+      "id": 17,
+      "sku": "HS70702PRDDFZ",
+      "name": "Square Column Dual Motor Desk Frame 2-Stage 2.76\"×2.76\" (70×70mm)",
+      "description": "Chinese Name: 70x70正装双电机两节方管升降桌架\nSpecification: 70*70\nStages: 2\nLifting Range: 710~1190mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Dual-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/70X70正装两节桌架 (1)-Photoroom.png",
+      "price": 486.440845070422,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634194"
+    },
+    {
+      "id": 18,
+      "sku": "HS70703PRDDFZ",
+      "name": "Square Column Dual Motor Desk Frame 3-Stage 2.76\"×2.76\" (70×70mm)",
+      "description": "Chinese Name: 70x70正装双电机三节方管升降桌架\nSpecification: 70*70\nStages: 3\nLifting Range: 650~1300mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Dual-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/70X70正装两节桌架 (1)-Photoroom.png",
+      "price": 486.440845070422,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634195"
+    },
+    {
+      "id": 19,
+      "sku": "HS00702PRDDFZ",
+      "name": "Round Column Dual Motor Desk Frame 2-Stage 2.76\" (⌀70mm)",
+      "description": "Chinese Name: 70正装双电机两节圆管升降桌架\nSpecification: ⌀ 70\nStages: 2\nLifting Range: 710~1190mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Dual-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/圆形正装三节桌架 (5)-Photoroom.png",
+      "price": 415.985915492958,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634197"
+    },
+    {
+      "id": 20,
+      "sku": "HS00703PRDDFZ",
+      "name": "Round Column Dual Motor Desk Frame 3-Stage 2.76\" (⌀70mm)",
+      "description": "Chinese Name: 70正装双电机三节圆管升降桌架\nSpecification: ⌀ 70\nStages: 3\nLifting Range: 650~1300mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Dual-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/圆形正装三节桌架 (5)-Photoroom.png",
+      "price": 486.440845070422,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634198"
+    },
+    {
+      "id": 21,
+      "sku": "HSOVAL2PRDDFZ",
+      "name": "Oval Column Dual Motor Desk Frame 2-Stage",
+      "description": "Chinese Name: 83*50正装双电机三节椭圆管升降桌架\nSpecification: 83*50\nStages: 2\nLifting Range: 710~1190mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Dual-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/椭圆管正装二节桌架 (2)-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634200"
+    },
+    {
+      "id": 22,
+      "sku": "HS90603PSDDFZ",
+      "name": "Rectangular Column Short Dual Motor Desk Frame 3-Stage 2.36\"×3.54\" (60×90mm)",
+      "description": "Chinese Name: 90x60正装双电机三节方管茶几桌架\nSpecification: 90*60\nStages: 3\nLifting Range: 400~760mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Dual-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/茶几桌-Photoroom.png",
+      "price": 486.440845070422,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634201"
+    },
+    {
+      "id": 23,
+      "sku": "HS80503PSDDFZ",
+      "name": "Rectangular Column Short Dual Motor Desk Frame 3-Stage 1.97\"×3.15\" (50×80mm)",
+      "description": "Chinese Name: 80x50正装双电机三节方管茶几桌架\nSpecification: 80*50\nStages: 3\nLifting Range: 400~760mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Dual-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/茶几桌-Photoroom.png",
+      "price": 486.440845070422,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634203"
+    },
+    {
+      "id": 24,
+      "sku": "HS90602PRSDFZ",
+      "name": "Rectangular Column Single Motor Desk Frame 2-Stage 2.36\"×3.54\" (60×90mm)",
+      "description": "Chinese Name: 90x60正装单电机两节方管升降桌架\nSpecification: 90*60\nStages: 2\nLifting Range: 710~1190mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 80kg\nLifting Speed: 32mm/s\nPackage Size: 111 cmD×28.5 cmW×15.5 cmH\n（V03）",
+      "category": "Single-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/80x50单电机桌架-Photoroom.png",
+      "price": 415.985915492958,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634204"
+    },
+    {
+      "id": 25,
+      "sku": "HS80502PRSDFZ",
+      "name": "Rectangular Column Single Motor Desk Frame 2-Stage 1.97\"×3.15\" (50×80mm)",
+      "description": "Chinese Name: 80x50正装单电机两节方管升降桌架\nSpecification: 80*50\nStages: 2\nLifting Range: 710~1190mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 80kg\nLifting Speed: 32mm/s",
+      "category": "Single-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/80x50单电机桌架-Photoroom.png",
+      "price": 415.98,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634206"
+    },
+    {
+      "id": 26,
+      "sku": "HS70702PRSDFZ",
+      "name": "Square Column Single Motor Desk Frame 2-Stage 2.76\"×2.76\" (70×70mm)",
+      "description": "Chinese Name: 70x70正装单电机两节方管升降桌架\nSpecification: 70*70\nStages: 2\nLifting Range: 710~1190mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 80kg\nLifting Speed: 32mm/s",
+      "category": "Single-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/80x50单电机桌架-Photoroom.png",
+      "price": 249.848732394366,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634207"
+    },
+    {
+      "id": 27,
+      "sku": "HS00702PRSDFZ",
+      "name": "Round Column Single Motor Desk Frame 2-Stage 2.76\" (⌀70mm)",
+      "description": "Chinese Name: 70正装单电机两节圆管升降桌架\nSpecification: ⌀ 70\nStages: 2\nLifting Range: 710~1190mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 80kg\nLifting Speed: 32mm/s",
+      "category": "Single-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/圆管单电机桌架-Photoroom.png",
+      "price": 250.186478873239,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634209"
+    },
+    {
+      "id": 28,
+      "sku": "HSOVAL2PRSDFD",
+      "name": "Oval Column Single Motor Desk Frame 2-Stage",
+      "description": "Chinese Name: 83*50正装单电机两节椭圆管升降桌架\nSpecification: 83*50\nStages: 2\nLifting Range: 710~1190mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 80kg\nLifting Speed: 32mm/s",
+      "category": "Single-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/椭圆管单电机桌架-Photoroom.png",
+      "price": 250.18,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634210"
+    },
+    {
+      "id": 29,
+      "sku": "HS90602PSDDFZ",
+      "name": "Rectangular Column Short Single Motor Desk Frame 2-Stage 2.36\"×3.54\" (60×90mm)",
+      "description": "Chinese Name: 90x60正装单电机两节方管茶几桌架\nSpecification: 90*60\nStages: 2\nLifting Range: 400~600mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s\nPackage Size: 106.5 cmD×28.5 cmW×17 cmH\n（V05）",
+      "category": "Dual-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/茶几桌-Photoroom.png",
+      "price": 415.985915492958,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634211"
+    },
+    {
+      "id": 30,
+      "sku": "HS80502PSDDFZ",
+      "name": "Rectangular Column Short Single Motor Desk Frame 2-Stage 1.97\"×3.15\" (50×80mm)",
+      "description": "Chinese Name: 80x50正装单电机两节方管茶几桌架\nSpecification: 80*50\nStages: 2\nLifting Range: 400~600mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 120kg\nLifting Speed: 35mm/s",
+      "category": "Dual-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/茶几桌-Photoroom.png",
+      "price": 415.985915492958,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634213"
+    },
+    {
+      "id": 31,
+      "sku": "HS80502PRTDFZ",
+      "name": "Rectangular Column Triple Motor L-Shape Desk Frame 2-Stage 1.97\"×3.15\" (50×80mm)",
+      "description": "Chinese Name: 80x50正装三电机三腿两节方管升降桌架\nSpecification: 80*50\nStages: 2\nLifting Range: 710~1190mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 160kg\nLifting Speed: 35mm/s\nPackage Size: 81cmDx29.5 cmWx14.8  cmH （Carton-V16-01）\n118 cmDx26.5 cmWx13.8cmH（Carton-V16-02）\n118 cmDx26 cmWx13.5  cmH（Carton-V16-03）",
+      "category": "Triple-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/三腿拐角-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634214"
+    },
+    {
+      "id": 32,
+      "sku": "HS80503PRTDFZ",
+      "name": "Rectangular Column Triple Motor L-Shape Desk Frame 3-Stage 1.97\"×3.15\" (50×80mm)",
+      "description": "Chinese Name: 80x50正装三电机三腿三节方管升降桌架\nSpecification: 80*50\nStages: 3\nLifting Range: 650~1300mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 160kg\nLifting Speed: 35mm/s",
+      "category": "Triple-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/三腿拐角-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634216"
+    },
+    {
+      "id": 33,
+      "sku": "HS70702PRTDFZ",
+      "name": "Square Column Triple Motor L-Shape Desk Frame 2-Stage 2.76\"×2.76\" (70×70mm)",
+      "description": "Chinese Name: 70x70正装三电机三腿两节方管升降桌架\nSpecification: 70*70\nStages: 2\nLifting Range: 710~1190mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 160kg\nLifting Speed: 35mm/s",
+      "category": "Triple-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/三腿拐角-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634217"
+    },
+    {
+      "id": 34,
+      "sku": "HS70703PRTDFZ",
+      "name": "Square Column Triple Motor L-Shape Desk Frame 3-Stage 2.76\"×2.76\" (70×70mm)",
+      "description": "Chinese Name: 70x70正装三电机三腿三节方管升降桌架\nSpecification: 70*70\nStages: 3\nLifting Range: 650~1300mm\nAdjustable Width: 1100~1650mm\nLoad Capacity: 160kg\nLifting Speed: 35mm/s",
+      "category": "Triple-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/三腿拐角-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634219"
+    },
+    {
+      "id": 39,
+      "sku": "HS80502PRPNTD",
+      "name": "Rectangular Column Pneumatic Standing Desk 2-Stage Easylift 1.97\"×3.15\" (50×80mm)",
+      "description": "Chinese Name: 康养款\nSpecification: 80*50\nStages: 2\nLifting Range: 760-1140mm\nAdjustable Width: 仅立柱，没有框架\nLoad Capacity: 30kg（15）",
+      "category": "Pneumatic Standing Desk",
+      "image_url": "/static/images/pneumatic-healthcare.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634226"
+    },
+    {
+      "id": 40,
+      "sku": "HS65652LRPNTZ",
+      "name": "Square Column Pneumatic Standing Desk 2-Stage 2.56\"×2.56\" (65×65mm)",
+      "description": "Chinese Name: 简易款\nSpecification: 65*65\nStages: 2\nLifting Range: 647-1030mm\nLoad Capacity: 30kg（15）",
+      "category": "Pneumatic Standing Desk",
+      "image_url": "/static/images/pneumatic-simple.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634228"
+    },
+    {
+      "id": 41,
+      "sku": "HS65652PRPNTZE",
+      "name": "Square Column Pneumatic Standing Desk 2-Stage V-Leg 2.56\"×2.56\" (65×65mm)",
+      "description": "Chinese Name: 八字脚款\nSpecification: 65*65\nStages: 2\nLifting Range: 750-1090mm\nLoad Capacity: 30kg（15）",
+      "category": "Pneumatic Standing Desk",
+      "image_url": "/static/images/pneumatic-v-leg.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634229"
+    },
+    {
+      "id": 42,
+      "sku": "HS65652PRPNTZF",
+      "name": "Square Column Tilting-Top Pneumatic Standing Desk 2-Stage 2.56\"×2.56\" (65×65mm)",
+      "description": "Chinese Name: 翻转气动桌\nSpecification: 65*65\nStages: 2\nLifting Range: 650-1030mm\nLoad Capacity: 30kg（15）",
+      "category": "Pneumatic Standing Desk",
+      "image_url": "/static/images/pneumatic-tilting.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-09T23:16:46.634230"
+    },
+    {
+      "id": 43,
+      "sku": "HS80502PRCWSZ",
+      "name": "Rectangular Column Combination Workstation Frame 2-Stage 1.97\"×3.15\" (50×80mm)",
+      "description": null,
+      "category": "Combination Workstation",
+      "image_url": "/static/images/products/multi-user-face-to-face.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-23T15:44:17.602160"
+    },
+    {
+      "id": 44,
+      "sku": "HS80503PRCWSZ",
+      "name": "Rectangular Column Combination Workstation Frame 3-Stage 1.97\"×3.15\" (50×80mm)",
+      "description": null,
+      "category": "Combination Workstation",
+      "image_url": "/static/images/products/multi-user-face-to-face.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-23T15:44:17.602164"
+    },
+    {
+      "id": 45,
+      "sku": "HS70702PRCWSZ",
+      "name": "Square Column Combination Workstation Frame 2-Stage 2.76\"×2.76\" (70×70mm)",
+      "description": null,
+      "category": "Combination Workstation",
+      "image_url": "/static/images/products/multi-user-face-to-face.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-23T15:44:17.602165"
+    },
+    {
+      "id": 46,
+      "sku": "HS70703PRCWSZ",
+      "name": "Square Column Combination Workstation Frame 3-Stage 2.76\"×2.76\" (70×70mm)",
+      "description": null,
+      "category": "Combination Workstation",
+      "image_url": "/static/images/products/multi-user-face-to-face.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-23T15:44:17.602166"
+    },
+    {
+      "id": 47,
+      "sku": "HS80502PRFDF2",
+      "name": "Rectangular Column 120° Trio Workstation Frame 2-Stage 50*80mm",
+      "description": null,
+      "category": "Combination Workstation",
+      "image_url": "/static/images/products/multi-user-120-trio.png",
+      "price": null,
+      "is_active": false,
+      "created_at": "2025-11-23T15:44:17.602166"
+    },
+    {
+      "id": 48,
+      "sku": "HS80503PRFDF2",
+      "name": "Rectangular Column 120° Trio Workstation Frame 3-Stage 1.97\"×3.15\" (50×80mm)",
+      "description": null,
+      "category": "Combination Workstation",
+      "image_url": "/static/images/products/multi-user-120-trio.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-23T15:44:17.602167"
+    },
+    {
+      "id": 49,
+      "sku": "HS70702PRFDFZ",
+      "name": "Square Column 120° Trio Workstation Frame 2-Stage 2.76\"×2.76\" (70×70mm)",
+      "description": null,
+      "category": "Combination Workstation",
+      "image_url": "/static/images/products/multi-user-120-trio.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-23T15:44:17.602168"
+    },
+    {
+      "id": 50,
+      "sku": "HS70703PRFDF2",
+      "name": "Square Column 120° Trio Workstation Frame 3-Stage 2.76\"×2.76\" (70×70mm)",
+      "description": null,
+      "category": "Combination Workstation",
+      "image_url": "/static/images/products/multi-user-120-trio.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-23T15:44:17.602168"
+    },
+    {
+      "id": 51,
+      "sku": "HS90602HRDDFZ",
+      "name": "Rectangular Column Heavy-Duty Desk Frame 2-Stage 2.36\"×3.54\" (60×90mm)",
+      "description": "Heavy-Duty Dual Motor Desk Frame 90*60",
+      "category": "Dual-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/80X50正装两节桌架 (3)-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-29T00:52:06.757036"
+    },
+    {
+      "id": 52,
+      "sku": "HS80502HRDDFZ",
+      "name": "Rectangular Column Heavy-Duty Desk Frame 2-Stage 1.97\"×3.15\" (50×80mm)",
+      "description": "Heavy-Duty Dual Motor Desk Frame 80*50",
+      "category": "Dual-Motor Standing Desk Frames",
+      "image_url": "/static/images/products/80X50正装两节桌架 (3)-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2025-11-29T00:52:06.757041"
+    },
+    {
+      "id": 53,
+      "sku": "SWATCH-4COLOR",
+      "name": "4-Color RAL Swatch Sample Set",
+      "description": "Get a physical sample of our four basic RAL colors to help you choose the perfect color for your standing desk order.",
+      "category": "Sample Set",
+      "image_url": "/docs/reference/Sample/Sample_Kit.png",
+      "price": 9.99,
+      "is_active": true,
+      "created_at": "2026-01-10T19:47:31.588558"
+    },
+    {
+      "id": 54,
+      "sku": "HS11A",
+      "name": "Hand Control Panel HS11A",
+      "description": "Basic button control panel with USB/Type-C power",
+      "category": "Accessories",
+      "image_url": "/static/images/products/HS11A-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2026-01-16T15:10:59.847204"
+    },
+    {
+      "id": 55,
+      "sku": "HS11B",
+      "name": "Hand Control Panel HS11B",
+      "description": "Rocker control with LCD display and 2 memory positions",
+      "category": "Accessories",
+      "image_url": "/static/images/products/HS11B-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2026-01-16T15:10:59.847208"
+    },
+    {
+      "id": 56,
+      "sku": "HS11C",
+      "name": "Hand Control Panel HS11C",
+      "description": "Button control with 7-segment numeric display and 3 memory positions",
+      "category": "Accessories",
+      "image_url": "/static/images/products/HS11C-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2026-01-16T15:10:59.847209"
+    },
+    {
+      "id": 57,
+      "sku": "HS11D",
+      "name": "Hand Control Panel HS11D",
+      "description": "Touch control with LCD display and 2 memory positions",
+      "category": "Accessories",
+      "image_url": "/static/images/products/HS11D-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2026-01-16T15:10:59.847210"
+    },
+    {
+      "id": 58,
+      "sku": "HS11E",
+      "name": "Hand Control Panel HS11E",
+      "description": "Touch control with digital display and 4 memory positions",
+      "category": "Accessories",
+      "image_url": "/static/images/products/HS11E-Photoroom.png",
+      "price": null,
+      "is_active": true,
+      "created_at": "2026-01-16T15:10:59.847210"
+    }
+  ],
+  "color_options": [
+    {
+      "id": 1,
+      "color_code": "WHITE",
+      "color_name": "White",
+      "color_type": "ral",
+      "hex_code": "#FFFFFF",
+      "lead_time_days": 0,
+      "is_active": false
+    },
+    {
+      "id": 2,
+      "color_code": "BLACK",
+      "color_name": "Black",
+      "color_type": "ral",
+      "hex_code": "#000000",
+      "lead_time_days": 0,
+      "is_active": false
+    },
+    {
+      "id": 3,
+      "color_code": "GRAY",
+      "color_name": "Gray",
+      "color_type": "ral",
+      "hex_code": "#808080",
+      "lead_time_days": 0,
+      "is_active": false
+    },
+    {
+      "id": 4,
+      "color_code": "BEIGE",
+      "color_name": "Beige",
+      "color_type": "ral",
+      "hex_code": "#F5F5DC",
+      "lead_time_days": 0,
+      "is_active": false
+    },
+    {
+      "id": 5,
+      "color_code": "RAL9010",
+      "color_name": "Pure White",
+      "color_type": "ral",
+      "hex_code": "#F7F9EF",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 6,
+      "color_code": "RAL9005",
+      "color_name": "Jet Black",
+      "color_type": "basic",
+      "hex_code": "#0E0E10",
+      "lead_time_days": 0,
+      "is_active": true
+    },
+    {
+      "id": 7,
+      "color_code": "RAL7035",
+      "color_name": "Light Grey",
+      "color_type": "ral",
+      "hex_code": "#9B9B9B",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 8,
+      "color_code": "RAL1015",
+      "color_name": "Light Ivory",
+      "color_type": "ral",
+      "hex_code": "#E6D2B5",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 9,
+      "color_code": "RAL7024",
+      "color_name": "Graphite Grey",
+      "color_type": "ral",
+      "hex_code": "#474A50",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 10,
+      "color_code": "RAL9006",
+      "color_name": "White Aluminium",
+      "color_type": "basic",
+      "hex_code": "#A5A5A5",
+      "lead_time_days": 0,
+      "is_active": true
+    },
+    {
+      "id": 11,
+      "color_code": "RAL9016",
+      "color_name": "Traffic White",
+      "color_type": "basic",
+      "hex_code": "#F1F0EA",
+      "lead_time_days": 0,
+      "is_active": true
+    },
+    {
+      "id": 12,
+      "color_code": "RAL9007",
+      "color_name": "Grey Aluminium",
+      "color_type": "ral",
+      "hex_code": "#8F8F8F",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 13,
+      "color_code": "RAL7038",
+      "color_name": "Agate Grey",
+      "color_type": "ral",
+      "hex_code": "#B8B8B8",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 14,
+      "color_code": "RAL7040",
+      "color_name": "Window Grey",
+      "color_type": "ral",
+      "hex_code": "#9D9D9D",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 15,
+      "color_code": "RAL7042",
+      "color_name": "Traffic Grey A",
+      "color_type": "ral",
+      "hex_code": "#8E9291",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 16,
+      "color_code": "RAL7043",
+      "color_name": "Traffic Grey B",
+      "color_type": "ral",
+      "hex_code": "#4E5452",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 17,
+      "color_code": "RAL7044",
+      "color_name": "Silk Grey",
+      "color_type": "ral",
+      "hex_code": "#BDBDBD",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 18,
+      "color_code": "RAL7045",
+      "color_name": "Telegrey 1",
+      "color_type": "ral",
+      "hex_code": "#91969A",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 19,
+      "color_code": "RAL7046",
+      "color_name": "Telegrey 2",
+      "color_type": "ral",
+      "hex_code": "#7E8687",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 20,
+      "color_code": "RAL7047",
+      "color_name": "Telegrey 4",
+      "color_type": "ral",
+      "hex_code": "#C6C7C4",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 21,
+      "color_code": "RAL7048",
+      "color_name": "Pearl Mouse Grey",
+      "color_type": "ral",
+      "hex_code": "#9C9C9C",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 22,
+      "color_code": "RAL1011",
+      "color_name": "Brown Beige",
+      "color_type": "ral",
+      "hex_code": "#A0876F",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 23,
+      "color_code": "RAL1012",
+      "color_name": "Lemon Yellow",
+      "color_type": "ral",
+      "hex_code": "#DDC283",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 24,
+      "color_code": "RAL1013",
+      "color_name": "Oyster White",
+      "color_type": "ral",
+      "hex_code": "#E2D3B6",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 25,
+      "color_code": "RAL1014",
+      "color_name": "Ivory",
+      "color_type": "ral",
+      "hex_code": "#DDD4C6",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 26,
+      "color_code": "RAL1016",
+      "color_name": "Sulphur Yellow",
+      "color_type": "ral",
+      "hex_code": "#E5D68E",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 27,
+      "color_code": "RAL1017",
+      "color_name": "Saffron Yellow",
+      "color_type": "ral",
+      "hex_code": "#D6AE01",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 28,
+      "color_code": "RAL1018",
+      "color_name": "Zinc Yellow",
+      "color_type": "ral",
+      "hex_code": "#F3A505",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 29,
+      "color_code": "RAL1019",
+      "color_name": "Grey Beige",
+      "color_type": "ral",
+      "hex_code": "#A29985",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 30,
+      "color_code": "RAL1020",
+      "color_name": "Olive Yellow",
+      "color_type": "ral",
+      "hex_code": "#9D9101",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 31,
+      "color_code": "RAL1021",
+      "color_name": "Rape Yellow",
+      "color_type": "ral",
+      "hex_code": "#E9D700",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 32,
+      "color_code": "RAL1023",
+      "color_name": "Traffic Yellow",
+      "color_type": "ral",
+      "hex_code": "#F5B300",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 33,
+      "color_code": "RAL1024",
+      "color_name": "Ochre Yellow",
+      "color_type": "ral",
+      "hex_code": "#A68B29",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 34,
+      "color_code": "RAL1026",
+      "color_name": "Luminous Yellow",
+      "color_type": "ral",
+      "hex_code": "#F8F32B",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 35,
+      "color_code": "RAL1027",
+      "color_name": "Curry",
+      "color_type": "ral",
+      "hex_code": "#BA8F4C",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 36,
+      "color_code": "RAL1028",
+      "color_name": "Melon Yellow",
+      "color_type": "ral",
+      "hex_code": "#E8A700",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 37,
+      "color_code": "RAL1032",
+      "color_name": "Broom Yellow",
+      "color_type": "ral",
+      "hex_code": "#D9A100",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 38,
+      "color_code": "RAL1033",
+      "color_name": "Dahlia Yellow",
+      "color_type": "ral",
+      "hex_code": "#F99A1C",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 39,
+      "color_code": "RAL1034",
+      "color_name": "Pastel Yellow",
+      "color_type": "ral",
+      "hex_code": "#EB9C52",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 40,
+      "color_code": "RAL1035",
+      "color_name": "Pearl Beige",
+      "color_type": "ral",
+      "hex_code": "#908370",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 41,
+      "color_code": "RAL1036",
+      "color_name": "Pearl Gold",
+      "color_type": "ral",
+      "hex_code": "#80643F",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 42,
+      "color_code": "RAL1037",
+      "color_name": "Sun Yellow",
+      "color_type": "ral",
+      "hex_code": "#F09200",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 43,
+      "color_code": "RAL2000",
+      "color_name": "Yellow Orange",
+      "color_type": "ral",
+      "hex_code": "#DD7907",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 44,
+      "color_code": "RAL2001",
+      "color_name": "Red Orange",
+      "color_type": "ral",
+      "hex_code": "#BE4E20",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 45,
+      "color_code": "RAL2002",
+      "color_name": "Vermillion",
+      "color_type": "ral",
+      "hex_code": "#C63927",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 46,
+      "color_code": "RAL2003",
+      "color_name": "Pastel Orange",
+      "color_type": "ral",
+      "hex_code": "#FA842B",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 47,
+      "color_code": "RAL2004",
+      "color_name": "Pure Orange",
+      "color_type": "ral",
+      "hex_code": "#E75B12",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 48,
+      "color_code": "RAL2005",
+      "color_name": "Luminous Orange",
+      "color_type": "ral",
+      "hex_code": "#FF2300",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 49,
+      "color_code": "RAL2007",
+      "color_name": "Luminous Bright Orange",
+      "color_type": "ral",
+      "hex_code": "#FFA420",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 50,
+      "color_code": "RAL2008",
+      "color_name": "Bright Red Orange",
+      "color_type": "ral",
+      "hex_code": "#F44600",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 51,
+      "color_code": "RAL2009",
+      "color_name": "Traffic Orange",
+      "color_type": "ral",
+      "hex_code": "#FF7500",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 52,
+      "color_code": "RAL2010",
+      "color_name": "Signal Orange",
+      "color_type": "ral",
+      "hex_code": "#FFB200",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 53,
+      "color_code": "RAL2011",
+      "color_name": "Deep Orange",
+      "color_type": "ral",
+      "hex_code": "#C6844D",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 54,
+      "color_code": "RAL2012",
+      "color_name": "Salmon Orange",
+      "color_type": "ral",
+      "hex_code": "#E55137",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 55,
+      "color_code": "RAL2013",
+      "color_name": "Pearl Orange",
+      "color_type": "ral",
+      "hex_code": "#C35831",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 56,
+      "color_code": "RAL3000",
+      "color_name": "Flame Red",
+      "color_type": "ral",
+      "hex_code": "#A52019",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 57,
+      "color_code": "RAL3001",
+      "color_name": "Signal Red",
+      "color_type": "ral",
+      "hex_code": "#A2231D",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 58,
+      "color_code": "RAL3002",
+      "color_name": "Carmine Red",
+      "color_type": "ral",
+      "hex_code": "#A11712",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 59,
+      "color_code": "RAL3003",
+      "color_name": "Ruby Red",
+      "color_type": "ral",
+      "hex_code": "#721422",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 60,
+      "color_code": "RAL3004",
+      "color_name": "Purple Red",
+      "color_type": "ral",
+      "hex_code": "#B44C43",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 61,
+      "color_code": "RAL3005",
+      "color_name": "Wine Red",
+      "color_type": "ral",
+      "hex_code": "#701D29",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 62,
+      "color_code": "RAL3007",
+      "color_name": "Black Red",
+      "color_type": "ral",
+      "hex_code": "#3E2022",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 63,
+      "color_code": "RAL3009",
+      "color_name": "Oxide Red",
+      "color_type": "ral",
+      "hex_code": "#6F1F23",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 64,
+      "color_code": "RAL3011",
+      "color_name": "Brown Red",
+      "color_type": "ral",
+      "hex_code": "#792423",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 65,
+      "color_code": "RAL3012",
+      "color_name": "Beige Red",
+      "color_type": "ral",
+      "hex_code": "#C6846D",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 66,
+      "color_code": "RAL3013",
+      "color_name": "Tomato Red",
+      "color_type": "ral",
+      "hex_code": "#972E25",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 67,
+      "color_code": "RAL3014",
+      "color_name": "Antique Pink",
+      "color_type": "ral",
+      "hex_code": "#CC7D6B",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 68,
+      "color_code": "RAL3015",
+      "color_name": "Light Pink",
+      "color_type": "ral",
+      "hex_code": "#D1A3A0",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 69,
+      "color_code": "RAL3016",
+      "color_name": "Coral Red",
+      "color_type": "ral",
+      "hex_code": "#A63D2F",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 70,
+      "color_code": "RAL3017",
+      "color_name": "Rose",
+      "color_type": "ral",
+      "hex_code": "#CC8899",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 71,
+      "color_code": "RAL3018",
+      "color_name": "Strawberry Red",
+      "color_type": "ral",
+      "hex_code": "#C73E1D",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 72,
+      "color_code": "RAL3020",
+      "color_name": "Traffic Red",
+      "color_type": "ral",
+      "hex_code": "#CC0000",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 73,
+      "color_code": "RAL3022",
+      "color_name": "Salmon Pink",
+      "color_type": "ral",
+      "hex_code": "#D36E70",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 74,
+      "color_code": "RAL3024",
+      "color_name": "Luminous Red",
+      "color_type": "ral",
+      "hex_code": "#F80000",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 75,
+      "color_code": "RAL3026",
+      "color_name": "Luminous Bright Red",
+      "color_type": "ral",
+      "hex_code": "#FE0000",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 76,
+      "color_code": "RAL3027",
+      "color_name": "Raspberry Red",
+      "color_type": "ral",
+      "hex_code": "#C51D34",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 77,
+      "color_code": "RAL3028",
+      "color_name": "Pure Red",
+      "color_type": "ral",
+      "hex_code": "#CB3234",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 78,
+      "color_code": "RAL3031",
+      "color_name": "Orient Red",
+      "color_type": "ral",
+      "hex_code": "#721422",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 79,
+      "color_code": "RAL3032",
+      "color_name": "Pearl Ruby Red",
+      "color_type": "ral",
+      "hex_code": "#B44C43",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 80,
+      "color_code": "RAL3033",
+      "color_name": "Pearl Pink",
+      "color_type": "ral",
+      "hex_code": "#721422",
+      "lead_time_days": 7,
+      "is_active": false
+    },
+    {
+      "id": 81,
+      "color_code": "RAL7016",
+      "color_name": "Anthracite Grey",
+      "color_type": "basic",
+      "hex_code": "#383E42",
+      "lead_time_days": 0,
+      "is_active": true
+    }
+  ],
+  "inventory": [
+    {
+      "id": 83,
+      "product_id": 2,
+      "color_id": 11,
+      "quantity": 36,
+      "reserved_quantity": 0,
+      "last_updated": "2026-01-01T20:57:42.804900"
+    },
+    {
+      "id": 84,
+      "product_id": 48,
+      "color_id": 10,
+      "quantity": 2,
+      "reserved_quantity": 0,
+      "last_updated": "2026-01-11T20:09:20.610827"
+    },
+    {
+      "id": 85,
+      "product_id": 44,
+      "color_id": 81,
+      "quantity": 13,
+      "reserved_quantity": 1,
+      "last_updated": "2026-01-18T16:12:10.740513"
+    },
+    {
+      "id": 86,
+      "product_id": 44,
+      "color_id": 6,
+      "quantity": 5,
+      "reserved_quantity": 0,
+      "last_updated": "2026-01-01T23:32:32.240794"
+    },
+    {
+      "id": 87,
+      "product_id": 57,
+      "color_id": 6,
+      "quantity": 12,
+      "reserved_quantity": 0,
+      "last_updated": "2026-01-18T14:58:54.146528"
+    }
+  ]
+}
