@@ -88,7 +88,7 @@ const fxSummary = computed(() => {
 const oceanFreightDisplay = computed(() => assumptions.value?.ocean_freight || null)
 
 function productImage(product: CatalogProduct) {
-  return product.image_url || '/favicon.svg'
+  return product.image_url || '/intelliopus-logo.png'
 }
 
 function customerName(product: CatalogProduct) {

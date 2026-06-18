@@ -25,7 +25,7 @@ const stats = computed(() => ({
 }))
 
 function imageUrl(row: CatalogProduct) {
-  return row.image_url || '/favicon.svg'
+  return row.image_url || '/intelliopus-logo.png'
 }
 
 function displayName(row: CatalogProduct) {

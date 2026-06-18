@@ -350,7 +350,7 @@ onMounted(loadProducts)
             <p>(928) 679-3822</p>
           </div>
           <div class="brand-lockup">
-            <img src="/favicon.svg" alt="IntelliOpus logo" />
+            <img src="/intelliopus-logo.png" alt="IntelliOpus logo" />
             <strong>IntelliOpus</strong>
           </div>
         </header>
