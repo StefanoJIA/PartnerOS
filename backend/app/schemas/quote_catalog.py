@@ -65,6 +65,7 @@ class ProductCatalogOut(BaseModel):
     quote_interval_count: int = 0
     has_interval_pricing: bool = False
     configuration_summary: dict | None = None
+    pricing_model_summary: dict | None = None
 
     model_config = {"from_attributes": True}
 

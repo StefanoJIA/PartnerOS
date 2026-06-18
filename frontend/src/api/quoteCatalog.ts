@@ -19,6 +19,7 @@ export interface CatalogProduct {
   quote_interval_count?: number
   has_interval_pricing?: boolean
   configuration_summary?: Record<string, unknown> | null
+  pricing_model_summary?: Record<string, unknown> | null
 }
 
 export interface V1Envelope<T> {
@@ -117,5 +118,10 @@ export async function fetchCatalogProducts(params?: {
 
 export async function postPricingPreview(body: PricingPreviewRequest) {
   const { data } = await http.post<V1Envelope<PricingPreviewResult>>('/v1/quotes/pricing/preview', body)
+  return data.data
+}
+
+export async function updateCatalogProduct(productId: string, body: Partial<CatalogProduct>) {
+  const { data } = await http.patch<V1Envelope<CatalogProduct>>(`/v1/products/${productId}`, body)
   return data.data
 }

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date
+from decimal import Decimal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
@@ -13,10 +15,108 @@ from app.core.deps import get_current_user
 from app.core.errors import ApiError, NOT_FOUND
 from app.core.request_id import get_request_id
 from app.core.responses import success_envelope
-from app.models import ManufacturingPartner, ProductCatalog, ProductPriceTier, User
+from app.models import FxRate, ManufacturingPartner, ProductCatalog, ProductCostModel, ProductPriceTier, User
 from app.schemas.quote_catalog import ProductCatalogCreate, ProductCatalogOut, ProductCatalogUpdate
 
 router = APIRouter(prefix="/products", tags=["v1-products"])
+
+
+def _decimal_text(value: Decimal | int | float | str | None, places: str = "0.01") -> str | None:
+    if value is None:
+        return None
+    dec = Decimal(str(value))
+    return str(dec.quantize(Decimal(places)))
+
+
+def _latest_fx(db: Session) -> FxRate | None:
+    return (
+        db.query(FxRate)
+        .filter(FxRate.base_currency == "USD", FxRate.quote_currency == "CNY")
+        .order_by(FxRate.rate_date.desc(), FxRate.created_at.desc())
+        .first()
+    )
+
+
+def _latest_cost_models(db: Session, product_ids: list[UUID]) -> dict[UUID, ProductCostModel]:
+    if not product_ids:
+        return {}
+    rows = (
+        db.query(ProductCostModel)
+        .filter(ProductCostModel.product_id.in_(product_ids))
+        .order_by(
+            ProductCostModel.product_id.asc(),
+            ProductCostModel.effective_from.desc().nullslast(),
+            ProductCostModel.created_at.desc(),
+        )
+        .all()
+    )
+    latest: dict[UUID, ProductCostModel] = {}
+    for row in rows:
+        latest.setdefault(row.product_id, row)
+    return latest
+
+
+def _target_margin(attrs: dict | None) -> str | None:
+    if not attrs:
+        return None
+    raw = attrs.get("target_margin") or attrs.get("sales_margin_rate")
+    if raw is None:
+        multiplier = attrs.get("quote_markup_multiplier")
+        if multiplier is None:
+            return None
+        try:
+            raw = Decimal(str(multiplier)) - Decimal("1")
+        except Exception:
+            return None
+    try:
+        dec = Decimal(str(raw))
+    except Exception:
+        return None
+    return str((dec * Decimal("100")).quantize(Decimal("0.01")))
+
+
+def _pricing_model_summary(
+    product: ProductCatalog,
+    *,
+    cost_model: ProductCostModel | None,
+    latest_fx: FxRate | None,
+    quote_interval_count: int,
+) -> dict:
+    attrs = product.attributes_json or {}
+    fx_age_days: int | None = None
+    if latest_fx:
+        fx_age_days = (date.today() - latest_fx.rate_date).days
+    return {
+        "internal_only": True,
+        "has_cost_model": cost_model is not None,
+        "has_interval_pricing": quote_interval_count > 0,
+        "customer_quote_mode": attrs.get("customer_safe_pricing_mode") or "full_quantity_interval_quote_table",
+        "cost_currency": cost_model.cost_currency if cost_model else None,
+        "factory_cost_rmb": _decimal_text(cost_model.unit_material_cost) if cost_model else None,
+        "unit_weight_kg": _decimal_text(cost_model.unit_weight, "0.0001") if cost_model else None,
+        "ocean_freight_unit_price": _decimal_text(cost_model.ocean_freight_unit_price, "0.0001")
+        if cost_model
+        else None,
+        "domestic_transport_cost_rmb": _decimal_text(cost_model.domestic_transport_cost) if cost_model else None,
+        "domestic_profit_rate_percent": str((Decimal(str(cost_model.domestic_profit_rate)) * Decimal("100")).quantize(Decimal("0.01")))
+        if cost_model and cost_model.domestic_profit_rate is not None
+        else None,
+        "fob_cost_usd": _decimal_text(cost_model.fob_cost_usd) if cost_model else None,
+        "ddp_cost_usd": _decimal_text(cost_model.ddp_cost_usd) if cost_model else None,
+        "product_target_margin_percent": _target_margin(attrs),
+        "fx_rate_usd_cny": _decimal_text(latest_fx.rate, "0.0001") if latest_fx else None,
+        "fx_rate_date": latest_fx.rate_date.isoformat() if latest_fx else None,
+        "fx_source": latest_fx.source if latest_fx else None,
+        "fx_is_stale": fx_age_days is not None and fx_age_days > 7,
+        "fx_age_days": fx_age_days,
+        "calculation_basis": [
+            "factory cost is maintained per product in RMB",
+            "transport cost = unit weight * ocean freight unit price",
+            "FOB/DDP cost is converted by the latest stored USD-CNY FX rate",
+            "customer quote displays every quantity interval for each selected product",
+            "cost, margin, and logistics assumptions remain internal-only",
+        ],
+    }
 
 
 def _configuration_summary(attrs: dict | None) -> dict | None:
@@ -48,6 +148,8 @@ def _product_payload(
     *,
     partner: ManufacturingPartner | None,
     quote_interval_count: int,
+    cost_model: ProductCostModel | None = None,
+    latest_fx: FxRate | None = None,
 ) -> dict:
     payload = ProductCatalogOut.model_validate(row).model_dump(mode="json")
     payload["partner_code"] = partner.partner_code if partner else None
@@ -55,6 +157,12 @@ def _product_payload(
     payload["quote_interval_count"] = quote_interval_count
     payload["has_interval_pricing"] = quote_interval_count > 0
     payload["configuration_summary"] = _configuration_summary(row.attributes_json)
+    payload["pricing_model_summary"] = _pricing_model_summary(
+        row,
+        cost_model=cost_model,
+        latest_fx=latest_fx,
+        quote_interval_count=quote_interval_count,
+    )
     return payload
 
 
@@ -119,8 +227,16 @@ def list_products(
             else []
         )
     }
+    cost_models = _latest_cost_models(db, product_ids)
+    latest_fx = _latest_fx(db)
     items = [
-        _product_payload(r, partner=partners.get(r.partner_id), quote_interval_count=int(tier_counts.get(r.id, 0)))
+        _product_payload(
+            r,
+            partner=partners.get(r.partner_id),
+            quote_interval_count=int(tier_counts.get(r.id, 0)),
+            cost_model=cost_models.get(r.id),
+            latest_fx=latest_fx,
+        )
         for r in rows
     ]
     rid = get_request_id(request)
@@ -145,9 +261,17 @@ def get_product(
     quote_interval_count = (
         db.query(func.count(ProductPriceTier.id)).filter(ProductPriceTier.product_id == row.id).scalar() or 0
     )
+    cost_model = _latest_cost_models(db, [row.id]).get(row.id)
+    latest_fx = _latest_fx(db)
     rid = get_request_id(request)
     return success_envelope(
-        _product_payload(row, partner=partner, quote_interval_count=int(quote_interval_count)),
+        _product_payload(
+            row,
+            partner=partner,
+            quote_interval_count=int(quote_interval_count),
+            cost_model=cost_model,
+            latest_fx=latest_fx,
+        ),
         request_id=rid,
     )
 

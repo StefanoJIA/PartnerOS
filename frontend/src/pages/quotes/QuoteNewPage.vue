@@ -41,27 +41,25 @@ const DEFAULT_INTERVAL_ROWS: EditableIntervalRow[] = [
   { min_qty: 500, max_qty: null, quantity_label: '>=500', currency: 'USD', fob_unit_price: '', ddp_unit_price: '' },
 ]
 
-const PAYMENT_TERMS = [
+const DEFAULT_PAYMENT_TERMS = [
   '30% deposit upon order placement;',
   '50% payment within one (1) calendar day after the goods depart the port of loading (ETD), against a copy of the "On Board" Bill of Lading or the carrier’s departure notice;',
   'The remaining 20% to be paid within two (2) weeks after receipt of the goods.',
-]
-const MANUFACTURING_LEAD_TIME = '21 to 28 days after order confirmed'
-const DDP_DELIVERY_TIME = '45 to 50 days after order confirmed'
-const SHIPPING_INFORMATION = [
-  "EXW (Ex Works): Price at the seller’s facility (Chongqing, China); the buyer is responsible for pickup, loading, export clearance, main carriage, insurance, and all costs/risks from collection.",
+].join('\n')
+const DEFAULT_SHIPPING_INFORMATION = [
+  'EXW (Ex Works): Price at the seller’s facility (Chongqing, China); the buyer is responsible for pickup, loading, export clearance, main carriage, insurance, and all costs/risks from collection.',
   'FOB (Free on Board): Price excludes shipping and insurance.',
   'CIF (Cost, Insurance, and Freight) to Boston: Price includes ocean freight and insurance up to the destination port (Boston).',
   'DDP (Delivered Duty Paid): Goods delivered to the final destination, with import duties and taxes included.',
-]
-const ADDITIONAL_NOTES = [
+].join('\n')
+const DEFAULT_ADDITIONAL_NOTES = [
   'Description: Please provide a detailed description of the product or service.',
   'Quantity: Specify the required quantity of a single product model.',
   'Unit Price: Indicate the base price for each item.',
   'Discount: Apply any applicable discounts by amount or percentage.',
   'Tax Rate: Specify the applicable tax rate.',
   'Total: The final amount will be automatically calculated.',
-]
+].join('\n')
 
 const router = useRouter()
 const products = ref<CatalogProduct[]>([])
@@ -78,6 +76,12 @@ const quoteDate = ref(new Date().toISOString().slice(0, 10))
 const validDays = ref(21)
 const billTo = ref({ name: '', company: '', address: '' })
 const shipTo = ref({ name: '', company: '', address: '' })
+const thankYouText = ref('Thank you for your business!')
+const paymentTermsText = ref(DEFAULT_PAYMENT_TERMS)
+const manufacturingLeadTime = ref('21 to 28 days after order confirmed')
+const ddpDeliveryTime = ref('45 to 50 days after order confirmed')
+const shippingInformationText = ref(DEFAULT_SHIPPING_INFORMATION)
+const additionalNotesText = ref(DEFAULT_ADDITIONAL_NOTES)
 
 const selectedProduct = computed(() => products.value.find((item) => item.id === selectedProductId.value) ?? null)
 const canCreate = computed(() => blocks.value.length > 0 && !creating.value)
@@ -86,27 +90,37 @@ const validTill = computed(() => {
   date.setDate(date.getDate() + validDays.value)
   return date.toLocaleDateString('en-US')
 })
+const paymentLines = computed(() => splitLines(paymentTermsText.value))
+const shippingLines = computed(() => splitLines(shippingInformationText.value))
+const additionalLines = computed(() => splitLines(additionalNotesText.value))
 const customerQuoteTerms = computed(() =>
   [
-    'Thank you for your business!',
+    thankYouText.value,
     '',
     'Terms & Instructions',
     'Payment Terms:',
-    ...PAYMENT_TERMS,
+    paymentTermsText.value,
     '',
     'Manufacturing Lead Time',
-    MANUFACTURING_LEAD_TIME,
+    manufacturingLeadTime.value,
     '',
     'DDP Delivery Time:',
-    DDP_DELIVERY_TIME,
+    ddpDeliveryTime.value,
     '',
     'Shipping Information:',
-    ...SHIPPING_INFORMATION,
+    shippingInformationText.value,
     '',
     'Additional Notes:',
-    ...ADDITIONAL_NOTES,
+    additionalNotesText.value,
   ].join('\n'),
 )
+
+function splitLines(value: string) {
+  return value
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+}
 
 function blankRows() {
   return DEFAULT_INTERVAL_ROWS.map((row) => ({ ...row }))
@@ -170,9 +184,9 @@ function selectedUnitPrice(block: QuoteProductBlock) {
 }
 
 function warningText(block: QuoteProductBlock) {
-  if (block.source === 'manual_interval_blank') return '需要手工补全该产品的区间价格'
+  if (block.source === 'manual_interval_blank') return '需要手工补全该产品的区间价格。'
   if (block.warnings.length) return block.warnings.join(' / ')
-  return '已加载底层成本和区间报价模型；成本、利润、物流测算保持内部可见'
+  return '已加载底层成本和区间报价模型；成本、利润、物流测算保持内部可见。'
 }
 
 async function loadProducts() {
@@ -230,7 +244,7 @@ async function addProductBlock() {
       target.rows = blankRows()
       target.source = 'manual_interval_blank'
       target.warnings = ['No interval price found; manual customer-visible prices required.']
-      error.value = '该产品没有可用区间报价，请先维护成本模型或手工补全区间价格。'
+      error.value = '该产品没有可用区间报价，已加入空白区间表，请手工填写客户可见单价后再保存。'
     }
   } catch (e: unknown) {
     const target = blocks.value.find((item) => item.local_id === localId)
@@ -278,11 +292,11 @@ async function createQuote() {
       })),
       bill_to: billTo.value,
       ship_to: shipTo.value,
-      payment_terms: PAYMENT_TERMS.join('\n'),
+      payment_terms: paymentTermsText.value,
       shipping_terms: [
-        `Manufacturing Lead Time: ${MANUFACTURING_LEAD_TIME}`,
-        `DDP Delivery Time: ${DDP_DELIVERY_TIME}`,
-        ...SHIPPING_INFORMATION,
+        `Manufacturing Lead Time: ${manufacturingLeadTime.value}`,
+        `DDP Delivery Time: ${ddpDeliveryTime.value}`,
+        shippingInformationText.value,
       ].join('\n'),
       customer_notes: customerQuoteTerms.value,
       internal_notes: 'Created from editable quote sheet. Manual interval price overrides require internal review before sending.',
@@ -371,7 +385,7 @@ onMounted(loadProducts)
               <label>Valid For</label>
               <el-input-number v-model="validDays" :min="1" :max="180" class="days-control" />
               <p><strong>Valid Till:</strong> {{ validTill }}</p>
-              <p class="auto-number">编号保存时自动生成，从 #84 后继续递增。</p>
+              <p class="auto-number">编号保存时自动生成；Quote #84 之后继续递增留档。</p>
             </div>
           </div>
         </section>
@@ -460,33 +474,51 @@ onMounted(loadProducts)
         </section>
 
         <footer class="quote-closing">
-          <p class="thank-you">Thank you for your business!</p>
+          <el-input v-model="thankYouText" class="thank-you-input" />
           <section class="terms-instructions">
             <h3>Terms &amp; Instructions</h3>
 
-            <div class="terms-section">
-              <h4>Payment Terms:</h4>
-              <p v-for="line in PAYMENT_TERMS" :key="line">{{ line }}</p>
-            </div>
+            <div class="terms-layout">
+              <div class="terms-preview">
+                <div class="terms-section">
+                  <h4>Payment Terms:</h4>
+                  <p v-for="line in paymentLines" :key="line">{{ line }}</p>
+                </div>
 
-            <div class="terms-section compact">
-              <h4>Manufacturing Lead Time</h4>
-              <p>{{ MANUFACTURING_LEAD_TIME }}</p>
-            </div>
+                <div class="terms-section compact">
+                  <h4>Manufacturing Lead Time</h4>
+                  <p>{{ manufacturingLeadTime }}</p>
+                </div>
 
-            <div class="terms-section compact">
-              <h4>DDP Delivery Time:</h4>
-              <p>{{ DDP_DELIVERY_TIME }}</p>
-            </div>
+                <div class="terms-section compact">
+                  <h4>DDP Delivery Time:</h4>
+                  <p>{{ ddpDeliveryTime }}</p>
+                </div>
 
-            <div class="terms-section">
-              <h4>Shipping Information:</h4>
-              <p v-for="line in SHIPPING_INFORMATION" :key="line">{{ line }}</p>
-            </div>
+                <div class="terms-section">
+                  <h4>Shipping Information:</h4>
+                  <p v-for="line in shippingLines" :key="line">{{ line }}</p>
+                </div>
 
-            <div class="terms-section">
-              <h4>Additional Notes:</h4>
-              <p v-for="line in ADDITIONAL_NOTES" :key="line">{{ line }}</p>
+                <div class="terms-section">
+                  <h4>Additional Notes:</h4>
+                  <p v-for="line in additionalLines" :key="line">{{ line }}</p>
+                </div>
+              </div>
+
+              <div class="terms-editor">
+                <h4>编辑英文报价收尾内容</h4>
+                <label>Payment Terms</label>
+                <el-input v-model="paymentTermsText" type="textarea" :rows="4" />
+                <label>Manufacturing Lead Time</label>
+                <el-input v-model="manufacturingLeadTime" />
+                <label>DDP Delivery Time</label>
+                <el-input v-model="ddpDeliveryTime" />
+                <label>Shipping Information</label>
+                <el-input v-model="shippingInformationText" type="textarea" :rows="5" />
+                <label>Additional Notes</label>
+                <el-input v-model="additionalNotesText" type="textarea" :rows="5" />
+              </div>
             </div>
           </section>
         </footer>
@@ -845,8 +877,13 @@ onMounted(loadProducts)
   border-top: 1px solid #1f2937;
 }
 
-.thank-you {
-  margin: 28px 0 30px;
+.thank-you-input {
+  display: block;
+  width: 360px;
+  margin: 28px auto 30px;
+}
+
+.thank-you-input :deep(.el-input__inner) {
   text-align: center;
   color: #000;
   font-size: 22px;
@@ -859,7 +896,7 @@ onMounted(loadProducts)
 }
 
 .terms-instructions h3 {
-  margin: -27px 0 2px;
+  margin: -27px 0 12px;
   width: fit-content;
   padding-right: 12px;
   color: var(--quote-accent);
@@ -868,11 +905,13 @@ onMounted(loadProducts)
   font-weight: 800;
 }
 
-.terms-section {
-  margin-bottom: 26px;
+.terms-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 390px;
+  gap: 28px;
 }
 
-.terms-section.compact {
+.terms-section {
   margin-bottom: 24px;
 }
 
@@ -888,10 +927,31 @@ onMounted(loadProducts)
   line-height: 1.28;
 }
 
+.terms-editor {
+  padding: 14px;
+  border: 1px solid #dbeafe;
+  background: #f8fbff;
+}
+
+.terms-editor h4 {
+  margin: 0 0 12px;
+  color: #1d4ed8;
+  font-size: 15px;
+}
+
+.terms-editor label {
+  display: block;
+  margin: 10px 0 4px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 @media (max-width: 1180px) {
   .topbar,
   .address-grid,
-  .quote-closing {
+  .quote-closing,
+  .terms-layout {
     display: grid;
     grid-template-columns: 1fr;
   }

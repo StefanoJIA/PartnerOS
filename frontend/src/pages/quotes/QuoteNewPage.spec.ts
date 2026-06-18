@@ -42,6 +42,7 @@ describe('QuoteNewPage', () => {
           status: 'active',
           image_url: null,
           attributes_json: { customer_quote_name: 'DF0402 Chair' },
+          pricing_model_summary: null,
         },
       ],
       total: 1,
@@ -122,10 +123,10 @@ describe('QuoteNewPage', () => {
     expect(wrapper.text()).toContain('BILL TO')
     expect(wrapper.text()).toContain('FOB Unit Price')
     expect(wrapper.text()).toContain('DDP Unit Price')
-    expect(wrapper.text()).toContain('Thank you for your business!')
     expect(wrapper.text()).toContain('Terms & Instructions')
     expect(wrapper.text()).toContain('Payment Terms:')
     expect(wrapper.text()).toContain('Shipping Information:')
+    expect(wrapper.text()).toContain('编辑英文报价收尾内容')
 
     const addButton = wrapper.findAll('button').find((button) => button.text().includes('添加产品'))
     expect(addButton).toBeTruthy()
@@ -152,9 +153,11 @@ describe('QuoteNewPage', () => {
     expect(wrapper.text()).toContain('50 ~ 99')
 
     const vm = wrapper.vm as unknown as {
+      paymentTermsText: string
       blocks: Array<{ rows: Array<{ ddp_unit_price: string }> }>
     }
     vm.blocks[0].rows[1].ddp_unit_price = '78.50'
+    vm.paymentTermsText = '40% deposit upon order placement;'
 
     const saveButton = wrapper.findAll('button').find((button) => button.text().includes('保存报价'))
     expect(saveButton).toBeTruthy()
@@ -164,7 +167,7 @@ describe('QuoteNewPage', () => {
     expect(http.post).toHaveBeenCalledWith(
       '/v1/quotes',
       expect.objectContaining({
-        payment_terms: expect.stringContaining('30% deposit upon order placement'),
+        payment_terms: expect.stringContaining('40% deposit upon order placement'),
         shipping_terms: expect.stringContaining('DDP Delivery Time'),
         customer_notes: expect.stringContaining('Thank you for your business'),
         line_items: [

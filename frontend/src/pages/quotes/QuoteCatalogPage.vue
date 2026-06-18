@@ -1,9 +1,17 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { fetchCatalogProducts, postPricingPreview, type CatalogProduct, type IntervalQuoteRow } from '@/api/quoteCatalog'
+import { ElMessage } from 'element-plus'
+import {
+  fetchCatalogProducts,
+  postPricingPreview,
+  updateCatalogProduct,
+  type CatalogProduct,
+  type IntervalQuoteRow,
+} from '@/api/quoteCatalog'
 
 const loading = ref(false)
 const tableLoading = ref(false)
+const savingMargin = ref(false)
 const error = ref<string | null>(null)
 const products = ref<CatalogProduct[]>([])
 const category = ref('')
@@ -12,6 +20,7 @@ const partnerCode = ref('')
 const selected = ref<CatalogProduct | null>(null)
 const tableDrawer = ref(false)
 const intervalRows = ref<IntervalQuoteRow[]>([])
+const marginPercentDraft = ref<number | null>(null)
 
 const partnerOptions = [
   { label: '全部 Partner', value: '' },
@@ -37,8 +46,25 @@ function text(value: unknown, fallback = '未维护') {
   return raw || fallback
 }
 
+function money(value: unknown, prefix = '$') {
+  if (value === null || value === undefined || value === '') return '未维护'
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric)) return String(value)
+  return `${prefix}${numeric.toFixed(2)}`
+}
+
+function numberText(value: unknown, suffix = '') {
+  if (value === null || value === undefined || value === '') return '未维护'
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? `${numeric.toFixed(2)}${suffix}` : `${value}${suffix}`
+}
+
 function summary(product: CatalogProduct) {
   return product.configuration_summary || {}
+}
+
+function pricing(product: CatalogProduct | null) {
+  return product?.pricing_model_summary || {}
 }
 
 function productImage(product: CatalogProduct) {
@@ -50,17 +76,19 @@ function customerName(product: CatalogProduct) {
   return String(attrs['customer_quote_name'] || product.product_name)
 }
 
-function categoryLabel(value: string | null) {
+function categoryLabel(value: string | null | undefined) {
   const labels: Record<string, string> = {
     lifting_systems: '升降系统',
     lifting_columns: '升降柱',
     desk_frames: '桌架',
-    heavy_duty_supply: '重载系统',
+    heavy_duty_supply: '重载升降系统',
+    heavy_duty_desk_frames: '重载桌架',
     education_furniture: '教育家具',
     project_furniture: '项目制家具',
     desk_accessories: '配件',
     pneumatic_standing_desks: '气动升降桌',
     benching_frames: '多人位桌架',
+    hosun_general: 'HOSUN 产品',
   }
   return value ? labels[value] || value : '未分类'
 }
@@ -80,6 +108,12 @@ function formatPrice(value: string | null | undefined) {
   return Number.isFinite(numeric) ? `$${numeric.toFixed(2)}` : value
 }
 
+function marginValue(product: CatalogProduct | null) {
+  const value = pricing(product).product_target_margin_percent
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : null
+}
+
 async function load() {
   loading.value = true
   error.value = null
@@ -91,6 +125,9 @@ async function load() {
       limit: 200,
     })
     products.value = data.items
+    if (selected.value) {
+      selected.value = data.items.find((item) => item.id === selected.value?.id) || selected.value
+    }
   } catch (e) {
     error.value = e instanceof Error ? e.message : '报价产品目录加载失败，请确认 backend 和登录状态。'
   } finally {
@@ -100,6 +137,7 @@ async function load() {
 
 async function openIntervalTable(product: CatalogProduct) {
   selected.value = product
+  marginPercentDraft.value = marginValue(product)
   tableDrawer.value = true
   intervalRows.value = []
   tableLoading.value = true
@@ -115,6 +153,28 @@ async function openIntervalTable(product: CatalogProduct) {
     intervalRows.value = []
   } finally {
     tableLoading.value = false
+  }
+}
+
+async function saveMargin() {
+  if (!selected.value || marginPercentDraft.value === null) return
+  savingMargin.value = true
+  try {
+    const attrs = { ...(selected.value.attributes_json || {}) }
+    attrs.target_margin = Number(marginPercentDraft.value) / 100
+    attrs.quote_markup_multiplier = 1 + Number(marginPercentDraft.value) / 100
+    attrs.pricing_margin_source = 'manual_catalog_review'
+    await updateCatalogProduct(selected.value.id, { attributes_json: attrs })
+    ElMessage.success('产品级利润率已保存到内部计价模型。已有固定区间价不会被自动覆盖。')
+    await load()
+    if (selected.value) {
+      const refreshed = products.value.find((item) => item.id === selected.value?.id)
+      if (refreshed) selected.value = refreshed
+    }
+  } catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : '利润率保存失败')
+  } finally {
+    savingMargin.value = false
   }
 }
 
@@ -135,8 +195,8 @@ onMounted(load)
         <p class="eyebrow">Product Catalog / Quote Source</p>
         <h1>报价产品目录</h1>
         <p class="hero-copy">
-          这里是报价单选品来源。每个产品都应维护完整数量区间，报价单会展示该产品所有区间价格；
-          下单后才根据实际数量形成订单总价。成本、利润和物流测算仍保持内部可见。
+          这里是内部报价选品和计价模型入口。每个产品应维护完整数量区间；客户报价单只展示区间单价，
+          出厂成本、重量、海运单价、汇率、利润率和物流测算只在内部可见。
         </p>
       </div>
       <div class="hero-metrics">
@@ -160,7 +220,7 @@ onMounted(load)
       :closable="false"
       show-icon
       class="mb-4"
-      title="安全边界：报价目录只用于内部选品和区间价维护，不自动创建报价、不自动发送、不承诺库存。"
+      title="安全边界：报价目录只用于内部选品、成本模型和区间价维护；不会自动创建报价、不会自动发送、不会承诺库存。"
     />
 
     <section class="toolbar">
@@ -183,13 +243,13 @@ onMounted(load)
     <el-alert v-if="error" type="error" :closable="false" show-icon class="mb-3" :title="error" />
 
     <el-table v-loading="loading" :data="products" stripe class="catalog-table" row-key="id">
-      <el-table-column label="产品" min-width="380">
+      <el-table-column label="产品" min-width="390">
         <template #default="{ row }">
           <div class="product-cell">
             <img :src="productImage(row)" alt="" />
             <div>
               <div class="product-title">{{ customerName(row) }}</div>
-              <div class="product-meta">{{ row.internal_sku }} · 原 SKU {{ row.partner_product_code || '未维护' }}</div>
+              <div class="product-meta">{{ row.internal_sku }} · 原厂型号 {{ row.partner_product_code || '未维护' }}</div>
               <div class="mt-2 flex flex-wrap gap-1">
                 <el-tag size="small" effect="plain">{{ row.partner_code || row.partner_name || '未归属' }}</el-tag>
                 <el-tag size="small" type="info" effect="plain">{{ categoryLabel(row.product_family || row.product_category) }}</el-tag>
@@ -200,68 +260,91 @@ onMounted(load)
         </template>
       </el-table-column>
 
-      <el-table-column label="配置逻辑" min-width="260">
+      <el-table-column label="规格参数" min-width="260">
         <template #default="{ row }">
           <div class="config-grid">
             <span>类型：{{ text(summary(row).base_type) }}</span>
             <span>节数：{{ text(summary(row).stage) }}</span>
-            <span>管型：{{ text(summary(row).column_type) }}</span>
             <span>尺寸：{{ text(summary(row).dimensions) }}</span>
-          </div>
-        </template>
-      </el-table-column>
-
-      <el-table-column label="关键参数" min-width="260">
-        <template #default="{ row }">
-          <div class="config-grid">
             <span>承重：{{ text(summary(row).load_capacity) }}</span>
-            <span>行程：{{ text(summary(row).lifting_range) }}</span>
-            <span>速度：{{ text(summary(row).lifting_speed) }}</span>
-            <span>包装：{{ text(summary(row).package_size) }}</span>
           </div>
         </template>
       </el-table-column>
 
-      <el-table-column label="区间报价状态" width="190">
+      <el-table-column label="内部计价模型" min-width="300">
+        <template #default="{ row }">
+          <div class="pricing-grid">
+            <span>汇率 USD/CNY：{{ numberText(pricing(row).fx_rate_usd_cny) }}</span>
+            <span>出厂成本：{{ money(pricing(row).factory_cost_rmb, '¥') }}</span>
+            <span>重量：{{ numberText(pricing(row).unit_weight_kg, ' kg') }}</span>
+            <span>海运单价：{{ money(pricing(row).ocean_freight_unit_price, '¥') }}</span>
+            <span>目标利润率：{{ numberText(pricing(row).product_target_margin_percent, '%') }}</span>
+            <el-tag v-if="pricing(row).fx_is_stale" size="small" type="warning" effect="plain">汇率可能过期</el-tag>
+            <el-tag v-if="!pricing(row).has_cost_model" size="small" type="danger" effect="plain">成本模型缺失</el-tag>
+          </div>
+        </template>
+      </el-table-column>
+
+      <el-table-column label="区间报价状态" width="180">
         <template #default="{ row }">
           <el-tag :type="rowStatus(row).type" effect="plain">{{ rowStatus(row).label }}</el-tag>
           <p class="mt-2 text-xs text-slate-500">{{ intervalCount(row) }} 条区间价格</p>
         </template>
       </el-table-column>
 
-      <el-table-column label="颜色/库存参考" width="180">
-        <template #default="{ row }">
-          <div class="text-sm text-slate-700">{{ text(summary(row).total_available_colors, '0') }} 个颜色选项</div>
-          <div class="text-xs text-slate-500">{{ text(summary(row).inventory_reference_count, '0') }} 条库存参考，不承诺库存</div>
-        </template>
-      </el-table-column>
-
       <el-table-column label="操作" width="150" fixed="right">
         <template #default="{ row }">
-          <el-button size="small" :disabled="!row.has_interval_pricing" @click="openIntervalTable(row)">查看区间价</el-button>
+          <el-button size="small" @click="openIntervalTable(row)">查看/编辑模型</el-button>
         </template>
       </el-table-column>
     </el-table>
 
     <el-empty v-if="!loading && !error && !products.length" description="暂无产品。请运行产品导入脚本或调整筛选条件。" />
 
-    <el-drawer v-model="tableDrawer" size="560px" :title="selected ? customerName(selected) : '产品详情'">
+    <el-drawer v-model="tableDrawer" size="680px" :title="selected ? customerName(selected) : '产品详情'">
       <div v-if="selected" class="drawer-body">
         <img class="drawer-image" :src="productImage(selected)" alt="" />
+
         <div class="drawer-section">
           <h3>产品配置</h3>
           <dl>
             <dt>Partner</dt><dd>{{ selected.partner_code || selected.partner_name || '未归属' }}</dd>
-            <dt>SKU</dt><dd>{{ selected.internal_sku }}</dd>
-            <dt>原系统 SKU</dt><dd>{{ selected.partner_product_code || '未维护' }}</dd>
+            <dt>IntelliOpus SKU</dt><dd>{{ selected.internal_sku }}</dd>
+            <dt>原厂型号</dt><dd>{{ selected.partner_product_code || '未维护' }}</dd>
             <dt>产品族</dt><dd>{{ categoryLabel(selected.product_family || selected.product_category) }}</dd>
             <dt>配置来源</dt><dd>{{ text(summary(selected).source_system) }}</dd>
           </dl>
         </div>
+
+        <div class="drawer-section">
+          <h3>内部计价参数</h3>
+          <dl>
+            <dt>最新汇率</dt>
+            <dd>
+              USD/CNY {{ numberText(pricing(selected).fx_rate_usd_cny) }}
+              <span class="muted">({{ text(pricing(selected).fx_rate_date) }} · {{ text(pricing(selected).fx_source) }})</span>
+            </dd>
+            <dt>出厂成本</dt><dd>{{ money(pricing(selected).factory_cost_rmb, '¥') }}</dd>
+            <dt>单位重量</dt><dd>{{ numberText(pricing(selected).unit_weight_kg, ' kg') }}</dd>
+            <dt>海运单价</dt><dd>{{ money(pricing(selected).ocean_freight_unit_price, '¥') }}</dd>
+            <dt>FOB 成本</dt><dd>{{ money(pricing(selected).fob_cost_usd) }}</dd>
+            <dt>DDP 成本</dt><dd>{{ money(pricing(selected).ddp_cost_usd) }}</dd>
+            <dt>目标利润率</dt>
+            <dd class="margin-edit">
+              <el-input-number v-model="marginPercentDraft" :min="0" :max="300" :precision="2" />
+              <span>%</span>
+              <el-button size="small" type="primary" :loading="savingMargin" @click="saveMargin">保存利润率</el-button>
+            </dd>
+          </dl>
+          <p class="model-note">
+            利润率用于成本模型生成区间价；如产品已有从 Excel 价目表导入的固定区间价，系统不会自动覆盖历史客户报价区间。
+          </p>
+        </div>
+
         <div class="drawer-section">
           <h3>客户可见区间报价表</h3>
           <el-table v-loading="tableLoading" :data="intervalRows" size="small" border>
-            <el-table-column prop="quantity_label" label="Quantity" width="110" />
+            <el-table-column prop="quantity_label" label="Quantity" width="120" />
             <el-table-column label="FOB Unit Price">
               <template #default="{ row }">{{ formatPrice(row.fob_unit_price) }}</template>
             </el-table-column>
@@ -270,7 +353,7 @@ onMounted(load)
             </el-table-column>
           </el-table>
           <p v-if="!tableLoading && !intervalRows.length" class="mt-3 text-sm text-amber-700">
-            该产品还没有可用区间报价。需要先维护成本模型或 ProductPriceTier。
+            该产品还没有可用区间报价。请先维护成本模型或 ProductPriceTier。
           </p>
         </div>
       </div>
@@ -310,7 +393,7 @@ onMounted(load)
 }
 
 .hero-copy {
-  max-width: 820px;
+  max-width: 880px;
   margin: 10px 0 0;
   color: #526174;
   line-height: 1.7;
@@ -364,8 +447,8 @@ onMounted(load)
 }
 
 .product-cell img {
-  width: 88px;
-  height: 68px;
+  width: 92px;
+  height: 70px;
   object-fit: contain;
   border: 1px solid #dbeafe;
   background: #fff;
@@ -383,7 +466,8 @@ onMounted(load)
   font-size: 12px;
 }
 
-.config-grid {
+.config-grid,
+.pricing-grid {
   display: grid;
   gap: 4px;
   color: #475569;
@@ -416,7 +500,7 @@ onMounted(load)
 
 dl {
   display: grid;
-  grid-template-columns: 108px 1fr;
+  grid-template-columns: 130px 1fr;
   gap: 8px 12px;
   margin: 0;
   font-size: 14px;
@@ -429,5 +513,17 @@ dt {
 dd {
   margin: 0;
   color: #0f172a;
+}
+
+.margin-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.model-note,
+.muted {
+  color: #64748b;
+  font-size: 12px;
 }
 </style>
