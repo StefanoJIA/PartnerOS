@@ -169,9 +169,14 @@ function logout() {
 }
 
 .brand-mark {
-  width: 42px;
-  height: 42px;
+  width: 58px;
+  height: 58px;
   flex: 0 0 auto;
+  padding: 6px;
+  border: 1px solid rgba(219, 234, 254, 0.45);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(219, 234, 254, 0.86));
+  box-shadow: 0 10px 24px rgb(2 6 23 / 18%);
 }
 
 .brand-name {

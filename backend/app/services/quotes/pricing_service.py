@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import ApiError, NOT_FOUND, VALIDATION_ERROR
 from app.models import FxRate, MarginStrategyTier, ProductCatalog, ProductCostModel, ProductPriceTier
+from app.services.quotes.fx_rates import ensure_latest_fx_rate, get_latest_fx
 from app.services.quotes.pricing_assumptions import PricingAssumptionSnapshot, get_current_pricing_assumptions
 from app.services.quotes.pricing_calculations import (
     VALID_INCOTERMS,
@@ -60,15 +61,6 @@ def _effective_on(ref: date, effective_from: date | None, effective_to: date | N
     if effective_to and ref > effective_to:
         return False
     return True
-
-
-def get_latest_fx(db: Session, *, base: str, quote: str, rate_date: date | None) -> FxRate | None:
-    q = db.query(FxRate).filter(FxRate.base_currency == base, FxRate.quote_currency == quote)
-    if rate_date:
-        row = q.filter(FxRate.rate_date <= rate_date).order_by(FxRate.rate_date.desc()).first()
-        if row:
-            return row
-    return q.order_by(FxRate.rate_date.desc()).first()
 
 
 def _select_price_tier(
@@ -514,7 +506,7 @@ def calculate_line_price(
         raise ApiError(NOT_FOUND, "product not found", status_code=404)
 
     ref = fx_rate_date or date.today()
-    fx = get_latest_fx(db, base="USD", quote="CNY", rate_date=ref)
+    fx = ensure_latest_fx_rate(db, base="USD", quote="CNY", rate_date=ref)
     fx_rate_usd_cny = fx.rate if fx else None
     assumptions = get_current_pricing_assumptions(db, ref=ref)
     if fx and fx.rate_date < date.today():

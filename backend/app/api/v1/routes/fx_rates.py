@@ -14,7 +14,7 @@ from app.core.request_id import get_request_id
 from app.core.responses import success_envelope
 from app.models import FxRate, User
 from app.schemas.quote_catalog import FxRateCreate, FxRateOut
-from app.services.quotes.pricing_service import get_latest_fx
+from app.services.quotes.fx_rates import ensure_latest_fx_rate
 
 router = APIRouter(prefix="/fx-rates", tags=["v1-fx-rates"])
 
@@ -29,7 +29,7 @@ def get_latest_fx_rate(
 ):
     from datetime import date
 
-    row = get_latest_fx(db, base=base.upper(), quote=quote.upper(), rate_date=date.today())
+    row = ensure_latest_fx_rate(db, base=base.upper(), quote=quote.upper(), rate_date=date.today())
     if not row:
         raise ApiError(NOT_FOUND, "fx rate not found", status_code=404)
     rid = get_request_id(request)

@@ -367,10 +367,8 @@ onMounted(() => {
       <el-table-column label="内部计价模型" min-width="300">
         <template #default="{ row }">
           <div class="pricing-grid">
-            <span>汇率 USD/CNY：{{ numberText(pricing(row).fx_rate_usd_cny) }}</span>
             <span>出厂成本：{{ money(pricing(row).factory_cost_rmb, '¥') }}</span>
             <span>重量：{{ numberText(pricing(row).unit_weight_kg, ' kg') }}</span>
-            <span>海运单价：{{ money(pricing(row).ocean_freight_unit_price, '¥') }}</span>
             <span>目标利润率：{{ numberText(pricing(row).product_target_margin_percent, '%') }}</span>
             <el-tag v-if="pricing(row).fx_is_stale" size="small" type="warning" effect="plain">汇率可能过期</el-tag>
             <el-tag v-if="!pricing(row).has_cost_model" size="small" type="danger" effect="plain">成本模型缺失</el-tag>
@@ -412,14 +410,8 @@ onMounted(() => {
         <div class="drawer-section">
           <h3>内部计价参数</h3>
           <dl>
-            <dt>最新汇率</dt>
-            <dd>
-              USD/CNY {{ numberText(pricing(selected).fx_rate_usd_cny) }}
-              <span class="muted">({{ text(pricing(selected).fx_rate_date) }} · {{ text(pricing(selected).fx_source) }})</span>
-            </dd>
             <dt>出厂成本</dt><dd>{{ money(pricing(selected).factory_cost_rmb, '¥') }}</dd>
             <dt>单位重量</dt><dd>{{ numberText(pricing(selected).unit_weight_kg, ' kg') }}</dd>
-            <dt>海运单价</dt><dd>{{ money(pricing(selected).ocean_freight_unit_price, '¥') }}</dd>
             <dt>FOB 成本</dt><dd>{{ money(pricing(selected).fob_cost_usd) }}</dd>
             <dt>DDP 成本</dt><dd>{{ money(pricing(selected).ddp_cost_usd) }}</dd>
             <dt>目标利润率</dt>

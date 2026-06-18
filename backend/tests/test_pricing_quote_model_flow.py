@@ -199,7 +199,7 @@ def test_pricing_preview_returns_quote_model_snapshot(monkeypatch):
             },
         ],
     )
-    monkeypatch.setattr(pricing_service, "get_latest_fx", lambda *args, **kwargs: fx)
+    monkeypatch.setattr(pricing_service, "ensure_latest_fx_rate", lambda *args, **kwargs: fx)
     monkeypatch.setattr(
         pricing_service,
         "_select_margin_multiplier",
@@ -284,8 +284,8 @@ def test_pricing_preview_uses_generated_interval_price_for_reference_quantity():
 
     original_select_cost = svc._select_cost_model
     svc._select_cost_model = lambda *args, **kwargs: cost
-    original_fx = svc.get_latest_fx
-    svc.get_latest_fx = lambda *args, **kwargs: fx
+    original_fx = svc.ensure_latest_fx_rate
+    svc.ensure_latest_fx_rate = lambda *args, **kwargs: fx
     try:
         result = svc.calculate_line_price(
             db,
@@ -296,7 +296,7 @@ def test_pricing_preview_uses_generated_interval_price_for_reference_quantity():
         )
     finally:
         svc._select_cost_model = original_select_cost
-        svc.get_latest_fx = original_fx
+        svc.ensure_latest_fx_rate = original_fx
 
     rows = result["quote_model"]["final_quote_stage"]["interval_quote_table"]
     selected = result["quote_model"]["final_quote_stage"]["selected_interval"]

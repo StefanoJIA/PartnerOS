@@ -17,6 +17,7 @@ from app.core.request_id import get_request_id
 from app.core.responses import success_envelope
 from app.models import FxRate, ManufacturingPartner, ProductCatalog, ProductCostModel, ProductPriceTier, User
 from app.schemas.quote_catalog import ProductCatalogCreate, ProductCatalogOut, ProductCatalogUpdate
+from app.services.quotes.fx_rates import ensure_latest_fx_rate
 from app.services.quotes.pricing_assumptions import PricingAssumptionSnapshot, get_current_pricing_assumptions
 from app.services.quotes.pricing_calculations import compute_cost_breakdown
 
@@ -31,12 +32,7 @@ def _decimal_text(value: Decimal | int | float | str | None, places: str = "0.01
 
 
 def _latest_fx(db: Session) -> FxRate | None:
-    return (
-        db.query(FxRate)
-        .filter(FxRate.base_currency == "USD", FxRate.quote_currency == "CNY")
-        .order_by(FxRate.rate_date.desc(), FxRate.created_at.desc())
-        .first()
-    )
+    return ensure_latest_fx_rate(db, base="USD", quote="CNY")
 
 
 def _latest_cost_models(db: Session, product_ids: list[UUID]) -> dict[UUID, ProductCostModel]:
