@@ -117,8 +117,14 @@ describe('QuoteNewPage', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('新建报价单')
+    expect(wrapper.text()).toContain('IntelliOpus Engineering')
+    expect(wrapper.text()).not.toContain('IntelliOpus Engineering x HOSUN')
     expect(wrapper.text()).toContain('BILL TO')
     expect(wrapper.text()).toContain('EXW Unit Price')
+    expect(wrapper.text()).toContain('Thank you for your business!')
+    expect(wrapper.text()).toContain('Terms & Instructions')
+    expect(wrapper.text()).toContain('Payment Terms:')
+    expect(wrapper.text()).toContain('Shipping Information:')
 
     const addButton = wrapper.findAll('button').find((button) => button.text().includes('添加产品'))
     expect(addButton).toBeTruthy()
@@ -157,6 +163,9 @@ describe('QuoteNewPage', () => {
     expect(http.post).toHaveBeenCalledWith(
       '/v1/quotes',
       expect.objectContaining({
+        payment_terms: expect.stringContaining('30% deposit upon order placement'),
+        shipping_terms: expect.stringContaining('DDP Delivery Time'),
+        customer_notes: expect.stringContaining('Thank you for your business'),
         line_items: [
           expect.objectContaining({
             product_id: 'p1',

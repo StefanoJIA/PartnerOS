@@ -56,15 +56,52 @@ const quoteDate = ref(new Date().toISOString().slice(0, 10))
 const validDays = ref(21)
 const billTo = ref({ name: '', company: '', address: '' })
 const shipTo = ref({ name: '', company: '', address: '' })
-const terms = ref(
-  'Prices are quoted in USD and are subject to final confirmation before order release. This quote does not reserve inventory or guarantee certification, lead time, or delivery date.',
-)
-const instructions = ref(
-  'Please confirm selected products, quantity tier, shipping term, billing information, and ship-to address before purchase order submission.',
-)
+
+const PAYMENT_TERMS = [
+  '30% deposit upon order placement;',
+  '50% payment within one (1) calendar day after the goods depart the port of loading (ETD), against a copy of the "On Board" Bill of Lading or the carrier\'s departure notice;',
+  'The remaining 20% to be paid within two (2) weeks after receipt of the goods.',
+]
+const MANUFACTURING_LEAD_TIME = '21 to 28 days after order confirmed'
+const DDP_DELIVERY_TIME = '45 to 50 days after order confirmed'
+const SHIPPING_INFORMATION = [
+  "EXW (Ex Works): Price at the seller's facility (Chongqing, China); the buyer is responsible for pickup, loading, export clearance, main carriage, insurance, and all costs/risks from collection.",
+  'FOB (Free on Board): Price excludes shipping and insurance.',
+  'CIF (Cost, Insurance, and Freight) to Boston: Price includes ocean freight and insurance up to the destination port (Boston).',
+  'DDP (Delivered Duty Paid): Goods delivered to the final destination, with import duties and taxes included.',
+]
+const ADDITIONAL_NOTES = [
+  'Description: Please provide a detailed description of the product or service.',
+  'Quantity: Specify the required quantity of a single product model.',
+  'Unit Price: Indicate the base price for each item.',
+  'Discount: Apply any applicable discounts by amount or percentage.',
+  'Tax Rate: Specify the applicable tax rate.',
+  'Total: The final amount will be automatically calculated.',
+]
 
 const selectedProduct = computed(() => products.value.find((item) => item.id === selectedProductId.value) ?? null)
 const canCreate = computed(() => blocks.value.length > 0 && !creating.value)
+const customerQuoteTerms = computed(() =>
+  [
+    'Thank you for your business!',
+    '',
+    'Terms & Instructions',
+    'Payment Terms:',
+    ...PAYMENT_TERMS,
+    '',
+    'Manufacturing Lead Time',
+    MANUFACTURING_LEAD_TIME,
+    '',
+    'DDP Delivery Time:',
+    DDP_DELIVERY_TIME,
+    '',
+    'Shipping Information:',
+    ...SHIPPING_INFORMATION,
+    '',
+    'Additional Notes:',
+    ...ADDITIONAL_NOTES,
+  ].join('\n'),
+)
 const validTill = computed(() => {
   const date = new Date(`${quoteDate.value}T00:00:00`)
   date.setDate(date.getDate() + validDays.value)
@@ -228,9 +265,13 @@ async function createQuote() {
       })),
       bill_to: billTo.value,
       ship_to: shipTo.value,
-      payment_terms: terms.value,
-      shipping_terms: instructions.value,
-      customer_notes: `${terms.value}\n\n${instructions.value}`,
+      payment_terms: PAYMENT_TERMS.join('\n'),
+      shipping_terms: [
+        `Manufacturing Lead Time: ${MANUFACTURING_LEAD_TIME}`,
+        `DDP Delivery Time: ${DDP_DELIVERY_TIME}`,
+        ...SHIPPING_INFORMATION,
+      ].join('\n'),
+      customer_notes: customerQuoteTerms.value,
       internal_notes: 'Created from editable quote sheet. Manual interval price overrides require internal review before sending.',
     })
     if (data.ok && data.data?.id) {
@@ -277,14 +318,14 @@ onMounted(loadProducts)
       <div class="quote-paper">
         <header class="paper-header">
           <div class="brand-block">
-            <h2>IntelliOpus Engineering x HOSUN</h2>
-            <p>529 Main Street, Suit 2000, Charlestown, MA, 02129</p>
-            <a href="https://www.hosunherstar.com" target="_blank" rel="noreferrer">www.hosunherstar.com</a>
-            <p>(928) 679-3822</p>
+            <h2>IntelliOpus Engineering</h2>
+            <p>529 Main Street, Suite 2000, Charlestown, MA, 02129</p>
+            <a href="https://www.intelli-opus.com" target="_blank" rel="noreferrer">www.intelli-opus.com</a>
           </div>
           <div class="brand-lockup">
-            <strong>HOSUN</strong>
-            <span>Brand logo pending</span>
+            <img src="/favicon.svg" alt="IntelliOpus logo" />
+            <strong>IntelliOpus</strong>
+            <span>Engineering</span>
           </div>
         </header>
 
@@ -410,15 +451,36 @@ onMounted(loadProducts)
           </article>
         </section>
 
-        <footer class="quote-footer">
-          <div>
-            <h3>Terms</h3>
-            <el-input v-model="terms" type="textarea" :rows="4" class="document-input" />
-          </div>
-          <div>
-            <h3>Instructions</h3>
-            <el-input v-model="instructions" type="textarea" :rows="4" class="document-input" />
-          </div>
+        <footer class="quote-closing">
+          <p class="thank-you">Thank you for your business!</p>
+          <section class="terms-instructions">
+            <h3>Terms &amp; Instructions</h3>
+
+            <div class="terms-section">
+              <h4>Payment Terms:</h4>
+              <p v-for="line in PAYMENT_TERMS" :key="line">{{ line }}</p>
+            </div>
+
+            <div class="terms-section compact">
+              <h4>Manufacturing Lead Time</h4>
+              <p>{{ MANUFACTURING_LEAD_TIME }}</p>
+            </div>
+
+            <div class="terms-section compact">
+              <h4>DDP Delivery Time:</h4>
+              <p>{{ DDP_DELIVERY_TIME }}</p>
+            </div>
+
+            <div class="terms-section">
+              <h4>Shipping Information:</h4>
+              <p v-for="line in SHIPPING_INFORMATION" :key="line">{{ line }}</p>
+            </div>
+
+            <div class="terms-section">
+              <h4>Additional Notes:</h4>
+              <p v-for="line in ADDITIONAL_NOTES" :key="line">{{ line }}</p>
+            </div>
+          </section>
         </footer>
       </div>
     </section>
@@ -503,23 +565,30 @@ onMounted(loadProducts)
 }
 
 .brand-lockup {
-  min-width: 210px;
+  min-width: 230px;
   align-self: flex-start;
-  padding-top: 28px;
+  padding-top: 18px;
   text-align: center;
+}
+
+.brand-lockup img {
+  width: 92px;
+  height: 92px;
+  object-fit: contain;
 }
 
 .brand-lockup strong {
   display: block;
-  font-size: 42px;
-  letter-spacing: 4px;
+  margin-top: 10px;
+  font-size: 34px;
+  letter-spacing: 0;
 }
 
 .brand-lockup span {
   display: block;
-  margin-top: 6px;
-  color: #8a92a0;
-  font-size: 12px;
+  margin-top: 2px;
+  color: #6f7785;
+  font-size: 15px;
   letter-spacing: 0;
 }
 
@@ -573,8 +642,7 @@ onMounted(loadProducts)
   border-bottom: 1px solid #d5d8dd;
 }
 
-.address-panel h3,
-.quote-footer h3 {
+.address-panel h3 {
   margin: 0 0 8px;
   padding-bottom: 8px;
   color: #f37021;
@@ -763,17 +831,58 @@ onMounted(loadProducts)
   font-size: 13px;
 }
 
-.quote-footer {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 28px;
-  margin-top: 30px;
+.quote-closing {
+  margin-top: 34px;
+  border-top: 1px solid #1f2937;
+}
+
+.thank-you {
+  margin: 28px 0 30px;
+  text-align: center;
+  color: #000;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.terms-instructions {
+  color: #172236;
+  border-top: 1px solid #a8a8a8;
+}
+
+.terms-instructions h3 {
+  margin: -27px 0 2px;
+  width: fit-content;
+  padding-right: 12px;
+  color: #f37021;
+  background: #fff;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.terms-section {
+  margin-bottom: 26px;
+}
+
+.terms-section.compact {
+  margin-bottom: 24px;
+}
+
+.terms-section h4 {
+  margin: 0 0 2px;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.terms-section p {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.28;
 }
 
 @media (max-width: 1180px) {
   .topbar,
   .address-grid,
-  .quote-footer {
+  .quote-closing {
     display: grid;
     grid-template-columns: 1fr;
   }
