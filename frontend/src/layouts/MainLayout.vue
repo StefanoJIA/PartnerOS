@@ -1,6 +1,6 @@
 <template>
   <el-container class="h-screen">
-    <el-aside width="260px" class="bg-slate-950 text-white">
+    <el-aside width="260px" class="app-aside text-white">
       <div class="brand-panel">
         <div class="brand-mark"><IntelliOpusMark /></div>
         <div>
@@ -11,9 +11,9 @@
       <el-menu
         :default-active="$route.path"
         :default-openeds="defaultOpeneds"
-        class="border-none bg-slate-950"
-        text-color="#cbd5e1"
-        active-text-color="#fff"
+        class="border-none"
+        text-color="#dbeafe"
+        active-text-color="#ffffff"
         router
       >
         <el-sub-menu v-for="group in navGroups" :key="group.key" :index="group.key">
@@ -81,7 +81,6 @@ const navGroups = [
     items: [
       { path: '/products', label: '产品库' },
       { path: '/quote-catalog', label: '报价目录' },
-      { path: '/pricing-preview', label: '价格预览' },
       { path: '/quotes', label: '报价单' },
       { path: '/quotes/new', label: '新建报价' },
       { path: '/rfqs', label: 'RFQ' },
@@ -125,7 +124,7 @@ const navGroups = [
     ],
   },
   {
-    key: 'demo-docs',
+    key: 'execution-docs',
     label: '执行与资料',
     items: [
       { path: '/external-execution', label: '外部执行 / Staging' },
@@ -157,12 +156,16 @@ function logout() {
 </script>
 
 <style scoped>
+.app-aside {
+  background: linear-gradient(180deg, #0b2f6b 0%, #0a2454 46%, #071a3a 100%);
+}
+
 .brand-panel {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 18px 16px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.24);
+  border-bottom: 1px solid rgba(191, 219, 254, 0.24);
 }
 
 .brand-mark {
@@ -180,18 +183,18 @@ function logout() {
 
 .brand-subtitle {
   margin-top: 3px;
-  color: #7dd3fc;
+  color: #bfdbfe;
   font-size: 12px;
   font-weight: 650;
   letter-spacing: 0;
 }
 
 .el-menu {
-  --el-menu-bg-color: #020617;
-  --el-menu-hover-bg-color: #0f172a;
+  --el-menu-bg-color: transparent;
+  --el-menu-hover-bg-color: rgba(37, 99, 235, 0.32);
 }
 
 .el-menu-item.is-active {
-  background: #0f172a !important;
+  background: rgba(37, 99, 235, 0.48) !important;
 }
 </style>

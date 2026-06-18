@@ -101,6 +101,46 @@ def _pricing_model_attributes(existing: dict | None, *, product_name: str, partn
     return data
 
 
+def _infer_product_image_url(product_name: str, partner_code: str | None) -> str | None:
+    """Map workbook product names to imported PartnerOS product assets when the source workbook has no image."""
+
+    text = product_name.lower()
+    partner = (partner_code or "").upper()
+    if partner == "JOOBOO":
+        return None
+    if "3-leg" in text or "triple-motor" in text:
+        return "/desk-order-assets/products/三腿拐角-Photoroom.png"
+    if "face-to-face" in text or "benching" in text or "four-motor" in text:
+        return "/desk-order-assets/products/multi-user-face-to-face.png"
+    if "pneumatic" in text and "v-leg" in text:
+        return "/desk-order-assets/products/V-LEG.png"
+    if "pneumatic" in text and ("easylift" in text or "rectangular" in text):
+        return "/desk-order-assets/products/EASYLIFT.png"
+    if "pneumatic" in text:
+        return "/desk-order-assets/products/STANDARD.png"
+    if "single-motor" in text and "round" in text:
+        return "/desk-order-assets/products/圆管单电机桌架-Photoroom.png"
+    if "single-motor" in text:
+        return "/desk-order-assets/products/80x50单电机桌架-Photoroom.png"
+    if "round" in text:
+        return "/desk-order-assets/products/圆形正装两节立柱-Photoroom.png"
+    if "heavy" in text:
+        return "/desk-order-assets/products/70X70正装两节桌架 (1)-Photoroom.png"
+    if "3-stage" in text and ("3.54" in text or "90x60" in text):
+        return "/desk-order-assets/products/90X60正装三节立柱-Photoroom.png"
+    if "3-stage" in text:
+        return "/desk-order-assets/products/80X50正装三节立柱-Photoroom.png"
+    if "2-stage" in text and ("3.54" in text or "90x60" in text):
+        return "/desk-order-assets/products/80X50正装两节桌架 (3)-Photoroom.png"
+    if "desk frame" in text or "adjustable desk frame" in text:
+        return "/desk-order-assets/products/70X70正装两节桌架 (1)-Photoroom.png"
+    if "desk legs" in text:
+        return "/desk-order-assets/products/standalone-frames.png"
+    if "lifting column" in text:
+        return "/desk-order-assets/products/electric-columns.png"
+    return None
+
+
 def _assign_product_metadata(product: ProductCatalog, *, product_name: str, partner_code: str | None) -> None:
     category, family = _product_taxonomy(product_name, partner_code)
     product.product_category = category
@@ -110,6 +150,8 @@ def _assign_product_metadata(product: ProductCatalog, *, product_name: str, part
         product_name=product_name,
         partner_code=partner_code,
     )
+    if not product.image_url:
+        product.image_url = _infer_product_image_url(product_name, partner_code)
 
 
 def _ensure_partner(db, code: str, *, overwrite: bool) -> tuple[ManufacturingPartner, str]:
@@ -187,6 +229,7 @@ def _upsert_product(
         status="active",
         base_currency="USD",
         default_incoterm="FOB",
+        image_url=_infer_product_image_url(name, getattr(row, "partner_code", None) or partner.partner_code),
         attributes_json=_pricing_model_attributes(
             None,
             product_name=name,
@@ -622,6 +665,8 @@ def _import_quote_template_product(
             category, family = _product_taxonomy(quote_product_name, partner.partner_code)
             product.product_category = category
             product.product_family = family
+            if not product.image_url:
+                product.image_url = _infer_product_image_url(quote_product_name, partner.partner_code)
             product.notes = "excel_quote_template_import"
             summary["products"]["updated"] += 1
         summary["quote_template_products"]["matched"] += 1
@@ -753,6 +798,26 @@ def _apply_sheet_report(
             _import_margin_row(db, row, overwrite=overwrite, summary=summary)
 
 
+def _backfill_inferred_images(db, partners: dict[str, ManufacturingPartner], summary: dict) -> None:
+    """Backfill product images from known PartnerOS assets when workbook rows do not carry image files."""
+
+    partner_by_id = {partner.id: code for code, partner in partners.items()}
+    updated = 0
+    for product in db.query(ProductCatalog).filter(ProductCatalog.image_url.is_(None)).all():
+        partner_code = partner_by_id.get(product.partner_id)
+        image_url = _infer_product_image_url(product.product_name or "", partner_code)
+        if not image_url:
+            continue
+        product.image_url = image_url
+        attrs = dict(product.attributes_json or {})
+        attrs["image_backfill_source"] = "excel_import_name_match_to_partneros_asset"
+        attrs["image_backfill_customer_safe"] = True
+        product.attributes_json = attrs
+        updated += 1
+    summary.setdefault("image_backfill", {"updated": 0})
+    summary["image_backfill"]["updated"] += updated
+
+
 def run(
     file_path: Path,
     *,
@@ -840,6 +905,7 @@ def run(
                 overwrite=overwrite,
                 summary=summary,
             )
+        _backfill_inferred_images(db, partners, summary)
 
         if apply:
             db.commit()

@@ -48,7 +48,6 @@ const router = createRouter({
         { path: 'products', name: 'products', component: () => import('@/pages/products/ProductsPage.vue') },
         { path: 'products/:productId', name: 'product-detail', component: () => import('@/pages/products/ProductDetailPage.vue') },
         { path: 'quote-catalog', name: 'quote-catalog', component: () => import('@/pages/quotes/QuoteCatalogPage.vue') },
-        { path: 'pricing-preview', name: 'pricing-preview', component: () => import('@/pages/quotes/PricingPreviewPage.vue') },
         { path: 'quotes', name: 'quotes', component: () => import('@/pages/quotes/QuotesListPage.vue') },
         { path: 'quotes/new', name: 'quote-new', component: () => import('@/pages/quotes/QuoteNewPage.vue') },
         { path: 'quotes/:id', name: 'quote-detail', component: () => import('@/pages/quotes/QuoteDetailPage.vue') },

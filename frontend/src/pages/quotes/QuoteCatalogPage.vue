@@ -3,14 +3,14 @@ import { computed, onMounted, ref } from 'vue'
 import { fetchCatalogProducts, postPricingPreview, type CatalogProduct, type IntervalQuoteRow } from '@/api/quoteCatalog'
 
 const loading = ref(false)
-const previewLoading = ref(false)
+const tableLoading = ref(false)
 const error = ref<string | null>(null)
 const products = ref<CatalogProduct[]>([])
 const category = ref('')
 const search = ref('')
 const partnerCode = ref('')
 const selected = ref<CatalogProduct | null>(null)
-const previewDrawer = ref(false)
+const tableDrawer = ref(false)
 const intervalRows = ref<IntervalQuoteRow[]>([])
 
 const partnerOptions = [
@@ -59,6 +59,8 @@ function categoryLabel(value: string | null) {
     education_furniture: '教育家具',
     project_furniture: '项目制家具',
     desk_accessories: '配件',
+    pneumatic_standing_desks: '气动升降桌',
+    benching_frames: '多人位桌架',
   }
   return value ? labels[value] || value : '未分类'
 }
@@ -69,7 +71,7 @@ function intervalCount(product: CatalogProduct) {
 
 function rowStatus(product: CatalogProduct) {
   if (product.has_interval_pricing) return { label: '区间报价已维护', type: 'success' as const }
-  return { label: '需维护区间价', type: 'warning' as const }
+  return { label: '需要维护区间价', type: 'warning' as const }
 }
 
 function formatPrice(value: string | null | undefined) {
@@ -96,23 +98,23 @@ async function load() {
   }
 }
 
-async function openPreview(product: CatalogProduct) {
+async function openIntervalTable(product: CatalogProduct) {
   selected.value = product
-  previewDrawer.value = true
+  tableDrawer.value = true
   intervalRows.value = []
-  previewLoading.value = true
+  tableLoading.value = true
   try {
-    const preview = await postPricingPreview({
+    const result = await postPricingPreview({
       product_id: product.id,
       quantity: 50,
       incoterm: 'DDP',
       pricing_strategy: 'volume',
     })
-    intervalRows.value = (preview.quote_model?.final_quote_stage?.interval_quote_table as IntervalQuoteRow[]) || []
+    intervalRows.value = (result.quote_model?.final_quote_stage?.interval_quote_table as IntervalQuoteRow[]) || []
   } catch {
     intervalRows.value = []
   } finally {
-    previewLoading.value = false
+    tableLoading.value = false
   }
 }
 
@@ -133,7 +135,8 @@ onMounted(load)
         <p class="eyebrow">Product Catalog / Quote Source</p>
         <h1>报价产品目录</h1>
         <p class="hero-copy">
-          目录吸收 desk-order-system 的产品库、配置项、颜色与库存参考；PartnerOS 仍负责内部报价、区间价、成本边界和客户安全输出。
+          这里是报价单选品来源。每个产品都应维护完整数量区间，报价单会展示该产品所有区间价格；
+          下单后才根据实际数量形成订单总价。成本、利润和物流测算仍保持内部可见。
         </p>
       </div>
       <div class="hero-metrics">
@@ -146,8 +149,8 @@ onMounted(load)
           <small>已有区间价</small>
         </div>
         <div>
-          <span>{{ partnerStats.length }}</span>
-          <small>Partner</small>
+          <span>{{ products.filter((item) => item.image_url).length }}</span>
+          <small>已有图片</small>
         </div>
       </div>
     </section>
@@ -157,7 +160,7 @@ onMounted(load)
       :closable="false"
       show-icon
       class="mb-4"
-      title="安全边界：本目录只用于内部产品和区间报价管理，不自动创建报价、不自动发送、不承诺库存。"
+      title="安全边界：报价目录只用于内部选品和区间价维护，不自动创建报价、不自动发送、不承诺库存。"
     />
 
     <section class="toolbar">
@@ -165,7 +168,7 @@ onMounted(load)
       <el-select v-model="category" clearable placeholder="分类筛选" class="w-56" @change="load">
         <el-option v-for="item in visibleCategories" :key="item" :label="categoryLabel(item)" :value="item" />
       </el-select>
-      <el-input v-model="search" clearable placeholder="搜索 SKU / 产品名称" class="w-72" @keyup.enter="load" />
+      <el-input v-model="search" clearable placeholder="搜索 SKU / 产品名称 / 规格" class="w-80" @keyup.enter="load" />
       <el-button type="primary" @click="load">刷新</el-button>
       <el-button @click="clearFilters">清空</el-button>
     </section>
@@ -180,7 +183,7 @@ onMounted(load)
     <el-alert v-if="error" type="error" :closable="false" show-icon class="mb-3" :title="error" />
 
     <el-table v-loading="loading" :data="products" stripe class="catalog-table" row-key="id">
-      <el-table-column label="产品" min-width="360">
+      <el-table-column label="产品" min-width="380">
         <template #default="{ row }">
           <div class="product-cell">
             <img :src="productImage(row)" alt="" />
@@ -190,6 +193,7 @@ onMounted(load)
               <div class="mt-2 flex flex-wrap gap-1">
                 <el-tag size="small" effect="plain">{{ row.partner_code || row.partner_name || '未归属' }}</el-tag>
                 <el-tag size="small" type="info" effect="plain">{{ categoryLabel(row.product_family || row.product_category) }}</el-tag>
+                <el-tag v-if="!row.image_url" size="small" type="warning" effect="plain">图片待补</el-tag>
               </div>
             </div>
           </div>
@@ -218,10 +222,10 @@ onMounted(load)
         </template>
       </el-table-column>
 
-      <el-table-column label="报价状态" width="190">
+      <el-table-column label="区间报价状态" width="190">
         <template #default="{ row }">
           <el-tag :type="rowStatus(row).type" effect="plain">{{ rowStatus(row).label }}</el-tag>
-          <p class="mt-2 text-xs text-slate-500">{{ intervalCount(row) }} 条区间价记录</p>
+          <p class="mt-2 text-xs text-slate-500">{{ intervalCount(row) }} 条区间价格</p>
         </template>
       </el-table-column>
 
@@ -234,14 +238,14 @@ onMounted(load)
 
       <el-table-column label="操作" width="150" fixed="right">
         <template #default="{ row }">
-          <el-button size="small" @click="openPreview(row)">查看区间价</el-button>
+          <el-button size="small" :disabled="!row.has_interval_pricing" @click="openIntervalTable(row)">查看区间价</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <el-empty v-if="!loading && !error && !products.length" description="暂无产品。请运行 desk-order 产品导入脚本或调整筛选条件。" />
+    <el-empty v-if="!loading && !error && !products.length" description="暂无产品。请运行产品导入脚本或调整筛选条件。" />
 
-    <el-drawer v-model="previewDrawer" size="520px" :title="selected ? customerName(selected) : '产品详情'">
+    <el-drawer v-model="tableDrawer" size="560px" :title="selected ? customerName(selected) : '产品详情'">
       <div v-if="selected" class="drawer-body">
         <img class="drawer-image" :src="productImage(selected)" alt="" />
         <div class="drawer-section">
@@ -255,8 +259,8 @@ onMounted(load)
           </dl>
         </div>
         <div class="drawer-section">
-          <h3>客户可见区间报价预览</h3>
-          <el-table v-loading="previewLoading" :data="intervalRows" size="small" border>
+          <h3>客户可见区间报价表</h3>
+          <el-table v-loading="tableLoading" :data="intervalRows" size="small" border>
             <el-table-column prop="quantity_label" label="Quantity" width="110" />
             <el-table-column label="FOB Unit Price">
               <template #default="{ row }">{{ formatPrice(row.fob_unit_price) }}</template>
@@ -265,7 +269,7 @@ onMounted(load)
               <template #default="{ row }">{{ formatPrice(row.ddp_unit_price) }}</template>
             </el-table-column>
           </el-table>
-          <p v-if="!previewLoading && !intervalRows.length" class="mt-3 text-sm text-amber-700">
+          <p v-if="!tableLoading && !intervalRows.length" class="mt-3 text-sm text-amber-700">
             该产品还没有可用区间报价。需要先维护成本模型或 ProductPriceTier。
           </p>
         </div>
@@ -285,13 +289,13 @@ onMounted(load)
   gap: 24px;
   margin-bottom: 18px;
   padding: 22px;
-  border: 1px solid #d8e2ef;
+  border: 1px solid #bfdbfe;
   background: #ffffff;
 }
 
 .eyebrow {
   margin: 0 0 6px;
-  color: #0f6b78;
+  color: #2563eb;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0;
@@ -306,7 +310,7 @@ onMounted(load)
 }
 
 .hero-copy {
-  max-width: 780px;
+  max-width: 820px;
   margin: 10px 0 0;
   color: #526174;
   line-height: 1.7;
@@ -322,14 +326,14 @@ onMounted(load)
 .hero-metrics div {
   min-width: 92px;
   padding: 12px;
-  border: 1px solid #d8e2ef;
-  background: #f8fafc;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
   text-align: center;
 }
 
 .hero-metrics span {
   display: block;
-  color: #0f6b78;
+  color: #1d4ed8;
   font-size: 24px;
   font-weight: 760;
 }
@@ -363,7 +367,7 @@ onMounted(load)
   width: 88px;
   height: 68px;
   object-fit: contain;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dbeafe;
   background: #fff;
 }
 
@@ -395,7 +399,7 @@ onMounted(load)
   width: 100%;
   max-height: 260px;
   object-fit: contain;
-  border: 1px solid #d8e2ef;
+  border: 1px solid #bfdbfe;
   background: #fff;
 }
 

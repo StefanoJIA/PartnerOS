@@ -135,6 +135,18 @@ def test_no_overwrite_skips_duplicate_cost_model():
     assert summary["cost_models"]["skipped"] == 1
 
 
+def test_excel_import_infers_hosun_product_images_without_faking_jooboo():
+    assert (
+        _mod._infer_product_image_url("3-Leg 3-Stage Triple-Motor Rectangular Desk Frame 90x60mm", "HOSUN")
+        == "/desk-order-assets/products/三腿拐角-Photoroom.png"
+    )
+    assert (
+        _mod._infer_product_image_url("2-Stage Four-Motor Face-to-Face Rectangular Benching Frame", "HOSUN")
+        == "/desk-order-assets/products/multi-user-face-to-face.png"
+    )
+    assert _mod._infer_product_image_url("DF0402 Chair", "JOOBOO") is None
+
+
 def test_workbook_not_in_repo():
     repo_root = Path(__file__).resolve().parents[2]
     tracked = (repo_root / ".git" / "index").exists()

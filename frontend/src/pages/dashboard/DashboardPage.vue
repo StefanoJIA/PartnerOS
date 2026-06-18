@@ -563,7 +563,7 @@ const operatingMap = computed<OperatingMapEntry[]>(() => {
       metric: numberLabel(quoteCount),
       tone: 'success',
       description: `待处理报价 / RFQ ${numberLabel(quoteCount)}，用于把客户兴趣转成报价机会和订单入口。`,
-      nextAction: '复核 RFQ、报价目录和价格预览，必要时创建或更新报价。',
+      nextAction: '复核 RFQ、报价目录和新建报价单，必要时创建或更新报价。',
       links: [
         { label: '报价单', path: '/quotes' },
         { label: 'RFQ', path: '/rfqs' },

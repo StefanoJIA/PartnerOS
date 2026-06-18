@@ -128,7 +128,7 @@ def main() -> int:
         "companies",
         "lead-intelligence",
         "quote-catalog",
-        "pricing-preview",
+        "quotes/new",
         "knowledge-base",
     )
     ok, missing = _contains_all(router, route_markers)

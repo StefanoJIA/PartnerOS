@@ -312,7 +312,6 @@ onMounted(loadProducts)
         <p>操作系统为中文；客户报价正文保持英文。保存只创建内部报价记录，不会自动发送。</p>
       </div>
       <div class="topbar-actions">
-        <el-button @click="router.push({ name: 'pricing-preview' })">底层成本/区间逻辑</el-button>
         <el-button type="primary" :loading="creating" :disabled="!canCreate" @click="createQuote">保存报价</el-button>
       </div>
     </div>
@@ -498,9 +497,9 @@ onMounted(loadProducts)
 
 <style scoped>
 .quote-editor-page {
-  --quote-accent: #863bff;
-  --quote-accent-dark: #5f22d8;
-  --quote-accent-soft: #ede6ff;
+  --quote-accent: #2563eb;
+  --quote-accent-dark: #1d4ed8;
+  --quote-accent-soft: #dbeafe;
   min-height: 100%;
   padding: 18px 28px 48px;
   background: #f4f6fa;

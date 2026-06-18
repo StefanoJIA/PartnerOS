@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.import_desk_order_catalog import DEFAULT_SEED, _category_family, _parse_description
+from scripts.import_desk_order_catalog import DEFAULT_SEED, _category_family, _image_url, _parse_description
 
 
 def test_desk_order_product_seed_is_product_only():
@@ -42,3 +42,11 @@ def test_category_mapping_keeps_hosun_and_jooboo_extensible():
     assert _category_family("Lifting Columns", "Rectangular Lifting Column")[1] == "lifting_columns"
     assert _category_family("Dual-Motor Standing Desk Frames", "Heavy Duty Desk Frame")[1] == "heavy_duty_supply"
     assert _category_family("Education Furniture", "School Classroom Desk")[0] == "education_furniture"
+
+
+def test_legacy_image_paths_map_to_partneros_assets():
+    assert _image_url("/static/images/pneumatic-healthcare.png") == "/desk-order-assets/products/EASYLIFT.png"
+    assert _image_url("/static/images/pneumatic-simple.png") == "/desk-order-assets/products/STANDARD.png"
+    assert _image_url("/static/images/pneumatic-v-leg.png") == "/desk-order-assets/products/V-LEG.png"
+    assert _image_url("/static/images/pneumatic-tilting.png") == "/desk-order-assets/products/FLIPPABLE.png"
+    assert _image_url("/docs/reference/Sample/Sample_Kit.png") == "/desk-order-assets/products/accessories.png"

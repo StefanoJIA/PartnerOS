@@ -123,6 +123,15 @@ def _configuration_model(product: dict[str, Any], specs: dict[str, str]) -> dict
 def _image_url(original: str | None) -> str | None:
     if not original:
         return None
+    legacy_map = {
+        "/static/images/pneumatic-healthcare.png": "/desk-order-assets/products/EASYLIFT.png",
+        "/static/images/pneumatic-simple.png": "/desk-order-assets/products/STANDARD.png",
+        "/static/images/pneumatic-v-leg.png": "/desk-order-assets/products/V-LEG.png",
+        "/static/images/pneumatic-tilting.png": "/desk-order-assets/products/FLIPPABLE.png",
+        "/docs/reference/Sample/Sample_Kit.png": "/desk-order-assets/products/accessories.png",
+    }
+    if original in legacy_map:
+        return legacy_map[original]
     marker = "/static/images/products/"
     if marker in original:
         return "/desk-order-assets/products/" + original.split(marker, 1)[1]
