@@ -21,8 +21,8 @@ def main() -> int:
     current, head, _ = get_migration_revisions(settings)
     checks: list[tuple[str, bool, str]] = []
 
-    mig_ok = current == head == "0026_customer_project_requests"
-    checks.append(("migration head 0026", mig_ok, f"{current}/{head}"))
+    mig_ok = current == head == "0033_commercial_pilot"
+    checks.append(("migration head 0033_commercial_pilot", mig_ok, f"{current}/{head}"))
 
     portal_off = not settings.PORTAL_CUSTOMER_API_ENABLED or settings.PORTAL_CUSTOMER_API_TOKEN == ""
     checks.append(("portal bridge default safe", portal_off or settings.PORTAL_CUSTOMER_API_REQUIRE_TOKEN, "token gate"))

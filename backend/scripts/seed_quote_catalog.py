@@ -57,21 +57,6 @@ PRODUCTS: tuple[dict, ...] = (
         },
     },
     {
-        "partner_code": "HOSUN",
-        "sku": "HS-HRD-300",
-        "code": "HRD-300",
-        "name": "Heavy-Duty Dual Motor Desk Frame (legacy HOSUN catalog)",
-        "category": "lifting_systems",
-        "family": "heavy_duty_supply",
-        "attrs": {
-            "load_capacity_kg": 300,
-            "noise_db": 45,
-            "certifications": ["CE"],
-            "customer_quote_name": "Heavy-Duty Dual Motor Frame",
-            "legacy_reference": True,
-        },
-    },
-    {
         "partner_code": "JOOBOO",
         "sku": "JB-DEMO-SCHOOL-DESK",
         "code": "JB-SCHOOL-DESK",
@@ -145,6 +130,24 @@ def _ensure_partner(db, spec: dict, *, overwrite: bool) -> tuple[ManufacturingPa
     db.add(row)
     db.flush()
     return row, "created"
+
+
+def _cleanup_hosun_demo_pollution(db) -> int:
+    """Remove non-whitelist demo SKUs that must not count toward HOSUN governance total."""
+    partner = db.query(ManufacturingPartner).filter(ManufacturingPartner.partner_code == "HOSUN").first()
+    if not partner:
+        return 0
+    rows = (
+        db.query(ProductCatalog)
+        .filter(
+            ProductCatalog.partner_id == partner.id,
+            ProductCatalog.internal_sku.in_(["HS-HRD-300"]),
+        )
+        .all()
+    )
+    for row in rows:
+        db.delete(row)
+    return len(rows)
 
 
 def run(*, apply: bool, overwrite: bool) -> int:
@@ -318,6 +321,9 @@ def run(*, apply: bool, overwrite: bool) -> int:
             summary["fx_rates"]["skipped"] += 1
 
         if apply:
+            removed = _cleanup_hosun_demo_pollution(db)
+            if removed:
+                summary["warnings"].append(f"removed {removed} HOSUN demo pollution SKU(s)")
             db.commit()
             print("Seed applied.")
         else:
