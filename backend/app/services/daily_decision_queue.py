@@ -13,7 +13,7 @@ from urllib.parse import urlencode
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from app.models import DailyQueueHandlingRecord, FeedbackTicket, User
+from app.models import CustomerProjectRequest, DailyQueueHandlingRecord, FeedbackTicket, User
 from app.schemas.dashboard_actions import (
     DailyDecisionQueueItem,
     DailyDecisionQueueOut,
@@ -430,6 +430,33 @@ def _feedback_item(row: FeedbackTicket) -> DailyDecisionQueueItem:
     )
 
 
+def _project_request_item(row: CustomerProjectRequest) -> DailyDecisionQueueItem:
+    completeness = (row.completeness_json or {}).get("completeness_pct", 0)
+    priority = "P1" if row.status in {"submitted", "needs_information"} else "P2"
+    if row.priority == "urgent":
+        priority = "P0"
+    return DailyDecisionQueueItem(
+        id=_decision_id("project-request", row.id),
+        title=f"项目需求待处理：{row.request_reference}",
+        category="project request",
+        priority=priority,
+        severity=row.status,
+        owner="operator",
+        customer_or_account=row.company_name_text or row.customer_name,
+        readiness_impact=["Quote Input Contract", "Market Response"],
+        risk=f"Completeness {completeness}% / {row.status}",
+        reason="Customer project requirement needs operator triage before quote or order conversion.",
+        next_action="Review fit summary, assign partner/SKU, generate quote input contract, or request missing info.",
+        source_type="customer_project_request",
+        source_id=str(row.id),
+        source_path=f"/admin/project-requests/{row.id}",
+        depends_on_external_input=row.status == "needs_information",
+        needs_partner_feedback=False,
+        affects_pilot=True,
+        customer_safe_boundary="Do not treat intake as confirmed order; no auto quote or supplier notification.",
+    )
+
+
 def _forecast_item(row: dict, *, high_risk: bool = False) -> DailyDecisionQueueItem:
     source_type = str(row.get("source_type") or "forecast")
     source_id = str(row.get("source_id") or "")
@@ -679,6 +706,15 @@ def build_daily_decision_queue(db: Session, user: User) -> DailyDecisionQueueOut
         .all()
     )
     items.extend(_feedback_item(row) for row in feedback_rows)
+
+    project_request_rows = (
+        db.query(CustomerProjectRequest)
+        .filter(CustomerProjectRequest.status.in_(("submitted", "triage", "needs_information", "quote_ready")))
+        .order_by(CustomerProjectRequest.submitted_at.desc().nullslast())
+        .limit(10)
+        .all()
+    )
+    items.extend(_project_request_item(row) for row in project_request_rows)
 
     seen_forecast_ids: set[str] = set()
     for row in revenue_forecast.get("high_risk_projects") or []:

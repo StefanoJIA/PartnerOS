@@ -51,14 +51,24 @@ def test_site_routes_present_when_compat_enabled():
     assert education["is_available"] is False
 
 
-def test_site_order_post_is_non_persisted_stub():
+def test_site_order_post_persists_project_request_reference():
     client, _ = _client(Settings(CUSTOMER_SITE_COMPAT_ENABLED=True))
-    response = client.post("/api/site/customer/orders", json={"items": []})
+    fake_id = uuid4()
+    fake_row = MagicMock()
+    fake_row.id = fake_id
+    fake_row.request_reference = "CPR-RC0001"
+    with patch(
+        "app.api.routes.customer_site_compat.create_project_request_from_site",
+        return_value=fake_row,
+    ):
+        response = client.post("/api/site/customer/orders", json={"items": []})
     assert response.status_code == 200
     data = response.json()
     assert data["order_created"] is False
-    assert data["status"] == "draft_intake_not_persisted"
-    assert "quote acceptance" in data["message"].lower() or "pending" in data["message"].lower()
+    assert data["status"] == "project_request_submitted"
+    assert data["request_reference"] == "CPR-RC0001"
+    assert data["intake_type"] == "project_request"
+    assert "formal order" in data["message"].lower() or "not" in data["message"].lower()
 
 
 def test_portal_disabled_returns_service_unavailable():
