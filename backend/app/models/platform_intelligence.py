@@ -26,6 +26,13 @@ class PlatformBenchmarkRecord(Base, TimestampMixin, UserAuditMixin):
     build_priority: Mapped[str] = mapped_column(String(8), nullable=False, default="P2")
     evidence_source: Mapped[str | None] = mapped_column(String(255), nullable=True)
     evidence_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    competitor_capability: Mapped[str | None] = mapped_column(Text, nullable=True)
+    partneros_existing: Mapped[str | None] = mapped_column(Text, nullable=True)
+    gap_description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    target_user: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    business_value: Mapped[str | None] = mapped_column(Text, nullable=True)
+    implementation_cost: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    build_action: Mapped[str | None] = mapped_column(String(32), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
@@ -44,6 +51,10 @@ class ChannelIntelligenceMetric(Base, TimestampMixin, UserAuditMixin):
     data_source: Mapped[str] = mapped_column(String(64), nullable=False, default="manual")
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     metrics_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    qualified_project_count: Mapped[int | None] = mapped_column(nullable=True)
+    cycle_days_avg: Mapped[int | None] = mapped_column(nullable=True)
+    supplier_coverage_pct: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+    lost_reasons_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     owner_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
