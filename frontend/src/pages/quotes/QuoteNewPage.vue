@@ -17,7 +17,7 @@ import {
   type QuoteCustomerCompanyOption,
   type QuoteCustomerContactOption,
 } from '@/api/quotes'
-import { fetchQuoteInputContract, type QuoteInputContract } from '@/api/quoteInputContract'
+import { fetchQuoteInputContract, fetchProjectRequestQuoteInputContract, type QuoteInputContract } from '@/api/quoteInputContract'
 
 type EditableIntervalRow = {
   min_qty: number
@@ -74,6 +74,7 @@ const DEFAULT_ADDITIONAL_NOTES = [
 const router = useRouter()
 const route = useRoute()
 const leadId = computed(() => String(route.query.leadId || '').trim() || null)
+const projectRequestId = computed(() => String(route.query.projectRequestId || '').trim() || null)
 const leadContract = ref<QuoteInputContract | null>(null)
 const products = ref<CatalogProduct[]>([])
 const selectedProductId = ref('')
@@ -339,12 +340,14 @@ function duplicateShipTo() {
 }
 
 async function loadLeadContext() {
-  if (!leadId.value) {
+  if (!leadId.value && !projectRequestId.value) {
     leadContract.value = null
     return
   }
   try {
-    leadContract.value = await fetchQuoteInputContract(leadId.value)
+    leadContract.value = leadId.value
+      ? await fetchQuoteInputContract(leadId.value)
+      : await fetchProjectRequestQuoteInputContract(projectRequestId.value!)
     const customer = leadContract.value.quote_input_fields?.customer
     if (customer?.company_name) {
       billTo.value.company = customer.company_name
@@ -404,7 +407,9 @@ async function createQuote() {
       ].join('\n'),
       internal_notes: leadId.value
         ? `Created from lead ${leadId.value} via quote input contract handoff.`
-        : 'Created from editable quote sheet. Manual interval price overrides require internal review before sending.',
+        : projectRequestId.value
+          ? `Created from project request ${projectRequestId.value} via quote input contract handoff.`
+          : 'Created from editable quote sheet. Manual interval price overrides require internal review before sending.',
     }
     let quoteId: string | undefined
     if (leadId.value) {
@@ -422,6 +427,16 @@ async function createQuote() {
       if (data.ok && data.data?.id) quoteId = data.data.id
     }
     if (quoteId) {
+      if (projectRequestId.value) {
+        try {
+          await http.patch(`/project-requests/${projectRequestId.value}`, {
+            quote_id: quoteId,
+            status: 'converted',
+          })
+        } catch {
+          // Quote saved; linkage can be completed manually from project request detail.
+        }
+      }
       try {
         await exportQuotePdf(quoteId)
         ElMessage.success('报价已保存并生成客户 PDF；不会自动发送。')

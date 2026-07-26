@@ -554,7 +554,23 @@ def _build_line_from_pricing(
     warnings: list[str] = []
     manual_rows = _sanitize_manual_interval_table(manual_interval_quote_table)
 
-    if product and manual_unit_price is None:
+    if product and manual_unit_price is None and manual_rows:
+        pricing_breakdown, final_unit = _apply_manual_interval_override(
+            {
+                "quote_model": {"final_quote_stage": {"interval_quote_table": manual_rows}},
+                "source": "manual_interval_override",
+                "warnings": ["manual interval price override requires review"],
+            },
+            rows=manual_rows,
+            quantity=quantity,
+            incoterm=incoterm,
+        )
+        pricing_source = "manual_interval_override"
+        unit_price = final_unit
+        warnings = list(pricing_breakdown.get("warnings") or [])
+        warnings.append("manual interval price override requires review")
+        requires_review = True
+    elif product and manual_unit_price is None:
         preview = calculate_line_price(
             db,
             product_id=product.id,

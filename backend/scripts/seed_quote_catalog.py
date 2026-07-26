@@ -28,7 +28,35 @@ PARTNERS = (
     {"code": "JOOBOO", "name": "JOOBOO Education Furniture (demo)", "type": "Education Furniture Manufacturer", "city": "Chongqing"},
 )
 
-PRODUCTS: tuple[dict, ...] = ()
+PRODUCTS: tuple[dict, ...] = (
+    {
+        "partner_code": "HOSUN",
+        "sku": "HS-HRD-300",
+        "code": "HRD-300",
+        "name": "Heavy-Duty Dual Motor Desk Frame (demo)",
+        "category": "lifting_systems",
+        "family": "heavy_duty_supply",
+        "attrs": {
+            "load_capacity_kg": 300,
+            "noise_db": 45,
+            "certifications": ["CE"],
+            "customer_quote_name": "Heavy-Duty Dual Motor Frame",
+        },
+    },
+    {
+        "partner_code": "JOOBOO",
+        "sku": "JB-DEMO-SCHOOL-DESK",
+        "code": "JB-SCHOOL-DESK",
+        "name": "School Desk Set (demo pending)",
+        "category": "education_furniture",
+        "family": "school_desks",
+        "attrs": {
+            "is_pending": True,
+            "catalog_pending": True,
+            "load_capacity_kg": 80,
+        },
+    },
+)
 
 TIERS = (
     (1, 49, Decimal("185.00"), Decimal("215.00")),

@@ -22,6 +22,52 @@ from app.services.customer_project_requests.intake_service import (
 from app.services.customer_project_requests.market_signal_service import build_market_signal_draft
 
 
+ALLOWED_STATUS_TRANSITIONS: dict[str, set[str]] = {
+    CustomerProjectRequestStatus.submitted.value: {
+        CustomerProjectRequestStatus.triage.value,
+        CustomerProjectRequestStatus.needs_information.value,
+        CustomerProjectRequestStatus.declined.value,
+    },
+    CustomerProjectRequestStatus.triage.value: {
+        CustomerProjectRequestStatus.needs_information.value,
+        CustomerProjectRequestStatus.quote_ready.value,
+        CustomerProjectRequestStatus.declined.value,
+    },
+    CustomerProjectRequestStatus.needs_information.value: {
+        CustomerProjectRequestStatus.triage.value,
+        CustomerProjectRequestStatus.quote_ready.value,
+        CustomerProjectRequestStatus.declined.value,
+    },
+    CustomerProjectRequestStatus.quote_ready.value: {
+        CustomerProjectRequestStatus.converted.value,
+        CustomerProjectRequestStatus.declined.value,
+        CustomerProjectRequestStatus.needs_information.value,
+    },
+    CustomerProjectRequestStatus.converted.value: set(),
+    CustomerProjectRequestStatus.declined.value: set(),
+}
+
+
+def _validate_status_transition(row: CustomerProjectRequest, new_status: CustomerProjectRequestStatus) -> None:
+    from fastapi import HTTPException
+
+    current = row.status
+    target = new_status.value
+    if current == target:
+        return
+    allowed = ALLOWED_STATUS_TRANSITIONS.get(current, set())
+    if target not in allowed:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Illegal status transition from {current} to {target}",
+        )
+    if new_status == CustomerProjectRequestStatus.quote_ready:
+        if not row.fit_summary_json:
+            raise HTTPException(status_code=400, detail="Cannot mark quote_ready without fit summary")
+        if not row.partner_id and not row.sku:
+            raise HTTPException(status_code=400, detail="Cannot mark quote_ready without partner or SKU assignment")
+
+
 def _now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -73,6 +119,7 @@ def update_request_status(
     actor_id: UUID,
     operator_notes: str | None = None,
 ) -> CustomerProjectRequest:
+    _validate_status_transition(row, status)
     old = row.status
     row.status = status.value
     row.updated_by_id = actor_id

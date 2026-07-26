@@ -41,11 +41,23 @@ PROJECT_REQUIREMENT_SIGNALS: tuple[tuple[str, str, str], ...] = (
 
 
 def normalize_capability(attrs: dict[str, Any] | None) -> dict[str, Any]:
+    import re
+
     raw = attrs if isinstance(attrs, dict) else {}
     out: dict[str, Any] = {}
     for key, _label, _kind in LIFTING_CAPABILITY_FIELDS:
         if key in raw and raw[key] not in (None, "", []):
             out[key] = raw[key]
+    if "load_capacity_kg" not in out:
+        lc = raw.get("load_capacity")
+        if lc not in (None, "", []):
+            text = str(lc)
+            match = re.search(r"([\d.]+)", text)
+            if match:
+                val = float(match.group(1))
+                if "lb" in text.lower():
+                    val *= 0.453592
+                out["load_capacity_kg"] = val
     return out
 
 

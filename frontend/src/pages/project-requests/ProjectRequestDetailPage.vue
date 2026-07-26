@@ -9,6 +9,13 @@
         <div class="flex flex-wrap gap-2">
           <el-button @click="router.push({ name: 'project-requests' })">返回列表</el-button>
           <el-button type="primary" :loading="contractLoading" @click="generateContract">生成 Quote Input Contract</el-button>
+          <el-button
+            v-if="row.quote_input_contract || contractText"
+            type="success"
+            @click="router.push({ name: 'quote-new', query: { projectRequestId: row.id } })"
+          >
+            从 QIC 创建报价
+          </el-button>
           <el-button :loading="signalLoading" @click="promoteSignal">提交 Market Response 审核</el-button>
         </div>
       </div>

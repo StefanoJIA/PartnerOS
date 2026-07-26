@@ -355,7 +355,7 @@ def build_fit_summary(
         "overall_status": overall,
         "partner_code": partner_code,
         "partner_pending": partner_pending,
-        "product_sku": row.sku or (catalog_row.sku if catalog_row else None),
+        "product_sku": row.sku or (catalog_row.internal_sku if catalog_row else None),
         "coverage_pct": coverage["coverage_pct"],
         "missing_fields": coverage["missing_labels"],
         "matches": matches,
@@ -425,7 +425,7 @@ def create_project_request_from_site(
     db.flush()
 
     if row.sku and not row.product_catalog_id:
-        catalog = db.query(ProductCatalog).filter(ProductCatalog.sku == row.sku).first()
+        catalog = db.query(ProductCatalog).filter(ProductCatalog.internal_sku == row.sku).first()
         if catalog:
             row.product_catalog_id = catalog.id
             row.partner_id = catalog.partner_id
