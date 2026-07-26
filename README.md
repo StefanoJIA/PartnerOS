@@ -299,6 +299,9 @@ First-time setup: `python scripts/init_local_env.py` → edit `backend/.env` →
 ### Current PartnerOS Local Status
 
 - **阶段**：`READY_FOR_STAGING_HANDOFF` after local gates pass; not `STAGING_VALIDATED`.
+- **Release candidate audit**：[docs/records/release_candidate_audit_20260725.md](docs/records/release_candidate_audit_20260725.md) · smoke: `python backend/scripts/release_candidate_check.py`
+- **Feature flags（生产默认关闭）**：`PORTAL_CUSTOMER_API_ENABLED=false` · `CUSTOMER_SITE_COMPAT_ENABLED=false` · 前端 customer-site Vite 路由需 `VITE_CUSTOMER_SITE_ENABLED=true`。本地 `.env` 可仅为 D7.7 rehearsal 打开 portal，不代表 staging 默认。
+- **演示边界**：`POST /api/site/customer/orders` 为 **非持久化 stub**（`draft_intake_not_persisted`）；customer-site UI 显示 **`[演示/意向提交]`**。JOOBOO 大 catalog PDF 不在 Git 中；缺失时 Resources 页降级为 “Local copy unavailable”。
 - **后端**（在 `backend` 目录）：`python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8014`
 - **前端**（在 `frontend` 目录）：`npm run dev`（端口常见 **5173** 或 **5174**）
 - **健康检查**：当前 D7.6+/D8 验证默认 `http://127.0.0.1:8014/health`；前端只读页 `/system-health`

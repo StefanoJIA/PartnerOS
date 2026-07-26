@@ -168,6 +168,8 @@ The customer portal must not expose:
 - internal readiness flags;
 - internal commercial intelligence.
 
+**RC note (2026-07-25):** The imported legacy customer-site compat API (`CUSTOMER_SITE_COMPAT_ENABLED`, default off) exposes `POST /api/site/customer/orders` as a **non-persistent demo intake** (`draft_intake_not_persisted`) until quote-acceptance workflow is wired. JOOBOO education catalog SKUs/PDF may be `pending` or local-only; do not treat as production-ready catalog data.
+
 ### 6.6 Orders, Production, And Logistics
 
 Orders should preferably be created by customers from the customer portal. Internal admin-created orders may remain available for exceptions, but should not be the primary customer workflow.
