@@ -17,6 +17,7 @@ from app.api.routes import (
     customer_project_requests,
     dashboard,
     benchmark_knowledge,
+    commercial_pilot_operations,
     field_visits,
     files,
     interactions,
@@ -118,6 +119,7 @@ def create_app() -> FastAPI:
     api.include_router(benchmark_knowledge.router)
     api.include_router(supplier_discovery.router)
     api.include_router(supplier_sample_evaluations.router)
+    api.include_router(commercial_pilot_operations.router)
     api.include_router(platform_intelligence.router)
     api.include_router(products.router)
     api.include_router(product_categories.router)

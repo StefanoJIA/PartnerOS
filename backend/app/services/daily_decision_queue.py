@@ -14,9 +14,11 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.models import (
+    CommercialPilotRun,
     CustomerProjectRequest,
     DailyQueueHandlingRecord,
     FeedbackTicket,
+    SupplierDevelopmentTask,
     SupplierDiscoveryRecord,
     SupplierSampleEvaluation,
     User,
@@ -327,6 +329,62 @@ def _build_supplier_network_items(db: Session) -> list[DailyDecisionQueueItem]:
         .all()
     ):
         items.append(_sample_eval_item(row))
+    return items
+
+
+def _build_commercial_pilot_items(db: Session) -> list[DailyDecisionQueueItem]:
+    items: list[DailyDecisionQueueItem] = []
+    for task in (
+        db.query(SupplierDevelopmentTask)
+        .filter(SupplierDevelopmentTask.status.in_(("open", "in_progress")))
+        .order_by(SupplierDevelopmentTask.due_date.asc().nullslast())
+        .limit(8)
+        .all()
+    ):
+        rec = db.query(SupplierDiscoveryRecord).filter(SupplierDiscoveryRecord.id == task.supplier_discovery_id).first()
+        company = rec.company_name if rec else "Supplier"
+        items.append(
+            DailyDecisionQueueItem(
+                id=f"commercial-pilot-task:{task.id}",
+                category="commercial_pilot",
+                priority=task.priority,
+                title=f"供应商开发任务：{task.title}",
+                reason=f"{company} — {task.task_type}; email draft requires human approval.",
+                state="needs review" if task.status == "open" else "in_progress",
+                next_action="Review task checklist and approve email draft before send",
+                source_type="supplier_development_task",
+                source_id=str(task.id),
+                source_label=company,
+                product_focus=[task.task_type],
+                due_date=task.due_date,
+                source_path=_path("/commercial-pilot-operations"),
+                customer_safe_boundary="Do not expose qualification notes or internal rejection reasons to portal.",
+            )
+        )
+    for pilot in (
+        db.query(CommercialPilotRun)
+        .filter(CommercialPilotRun.status.in_(("mr_pending", "quote_blocked", "running")))
+        .order_by(CommercialPilotRun.updated_at.desc())
+        .limit(5)
+        .all()
+    ):
+        items.append(
+            DailyDecisionQueueItem(
+                id=f"commercial-pilot-run:{pilot.id}",
+                category="commercial_pilot",
+                priority="P1",
+                title=f"Commercial Pilot 待审：{pilot.pilot_name}",
+                reason=pilot.result_summary or "Pilot artifacts pending operator review.",
+                state="needs review",
+                next_action="Review MR draft, scenario quote block, and candidate selection",
+                source_type="commercial_pilot_run",
+                source_id=str(pilot.id),
+                source_label=pilot.pilot_code,
+                product_focus=[pilot.industry_vertical],
+                source_path=_path("/commercial-pilot-operations"),
+                customer_safe_boundary="Portal must not expose candidates, comparisons, or internal notes.",
+            )
+        )
     return items
 
 
@@ -763,6 +821,7 @@ def build_daily_decision_queue(db: Session, user: User) -> DailyDecisionQueueOut
 
     items: list[DailyDecisionQueueItem] = []
     items.extend(_build_supplier_network_items(db))
+    items.extend(_build_commercial_pilot_items(db))
     for gap in external.get("readiness_gap_intelligence") or []:
         if gap.get("severity") in {"P0", "P1"} or gap.get("affects_d9") or gap.get("affects_pilot"):
             items.append(_gap_item(gap))

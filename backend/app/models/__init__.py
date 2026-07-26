@@ -57,6 +57,7 @@ from app.models.quote_catalog import (
     ProductCostModel,
     ProductPriceTier,
 )
+from app.models.commercial_pilot import CategoryCoverageAssessment, CommercialPilotRun, SupplierDevelopmentTask
 from app.models.customer_project_requests import CustomerProjectRequest
 from app.models.rfq import Quotation, QuotationItem, RFQ, RFQItem, RFQPartnerCandidate
 from app.models.samples import Sample, SampleShipment
@@ -68,6 +69,8 @@ __all__ = [
     "BenchmarkProductCapability",
     "BenchmarkSourceReference",
     "ChannelIntelligenceMetric",
+    "CategoryCoverageAssessment",
+    "CommercialPilotRun",
     "ActivityLog",
     "Company",
     "CompanyEnrichmentRun",
@@ -134,6 +137,7 @@ __all__ = [
     "RFQPartnerCandidate",
     "Role",
     "SupplierDiscoveryRecord",
+    "SupplierDevelopmentTask",
     "SupplierSampleEvaluation",
     "SupplierSelectionSnapshot",
     "Sample",
