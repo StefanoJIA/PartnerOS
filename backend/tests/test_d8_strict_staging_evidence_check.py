@@ -129,6 +129,7 @@ def test_strict_staging_evidence_does_not_write_local_rehearsal_to_docs_records(
                 base="http://127.0.0.1:8014",
                 origin="https://service.intelli-opus.com",
                 allow_local=True,
+                deployed_commit_sha="04ebcb56883e",
                 evidence_json=str(evidence),
                 gap_markdown=str(gap),
             )
@@ -282,6 +283,57 @@ def test_strict_staging_evidence_rejects_placeholder_token_without_network(
     assert health_check["detail"] == "not attempted; staging inputs unsafe"
     assert "private-token-from-operator" not in output
     assert "private-token-from-operator" not in evidence.read_text(encoding="utf-8")
+
+
+def test_strict_staging_evidence_rejects_missing_deployed_commit_sha_without_network(
+    tmp_path, monkeypatch, capsys
+):
+    module = _load_module()
+    evidence = tmp_path / "d8_strict_staging_evidence_20260530.json"
+    monkeypatch.setenv("BACKEND_BASE_URL", "https://partneros-staging.example.com")
+    monkeypatch.setenv("SERVICE_PORTAL_PARTNEROS_TOKEN", "staging-secret-token-123")
+    monkeypatch.setenv("SERVICE_PORTAL_ORIGIN", "https://service.intelli-opus.com")
+    monkeypatch.delenv("DEPLOYED_COMMIT_SHA", raising=False)
+    monkeypatch.delenv("DEPLOYED_COMMIT", raising=False)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "d8_strict_staging_evidence_check.py",
+            "--evidence-json",
+            str(evidence),
+        ],
+    )
+
+    assert module.main() == 1
+    payload = json.loads(evidence.read_text(encoding="utf-8"))
+    sha_check = next(check for check in payload["checks"] if check["label"] == "deployed commit SHA configured")
+    health_check = next(check for check in payload["checks"] if check["label"] == "health reachable")
+
+    assert sha_check["status"] == "FAIL"
+    assert "DEPLOYED_COMMIT_SHA" in sha_check["detail"]
+    assert health_check["detail"] == "not attempted; staging inputs unsafe"
+    assert "deployed_commit_sha" not in payload
+
+
+def test_strict_staging_evidence_binds_deployed_commit_sha_in_payload(tmp_path, monkeypatch):
+    module = _load_module()
+    evidence = tmp_path / "d8_strict_staging_evidence_20260530.json"
+    checks = [module.Check("synthetic pass")]
+    checks[0].pass_("ok")
+    module._write_evidence(
+        str(evidence),
+        checks=checks,
+        base="https://partneros-staging.example.com",
+        origin="https://service.intelli-opus.com",
+        allow_local=False,
+        deployed_commit_sha="04ebcb56883eff81cc8c3b953dfef4c3b47ccd72",
+    )
+    payload = json.loads(evidence.read_text(encoding="utf-8"))
+    assert payload["deployed_commit_sha"] == "04ebcb56883eff81cc8c3b953dfef4c3b47ccd72"
+    assert payload["service_portal_origin"] == "https://service.intelli-opus.com"
+    assert payload["execution_timestamp_utc"]
+    assert payload["generated_at"]
 
 
 def test_strict_staging_forbidden_scan_handles_httpx_json_response():

@@ -26,7 +26,16 @@ def test_readiness_audit_reports_staging_validated_for_pass_evidence(tmp_path, m
     module = _load_module()
     monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
     (tmp_path / "d8_strict_staging_evidence_20260530.json").write_text(
-        '{"result":"PASS","checks":[],"safety":{"token_redacted":true,"response_bodies_stored":false}}\n',
+        """
+{
+  "backend_base_url": "https://<redacted-backend>",
+  "deployed_commit_sha": "04ebcb5abc123",
+  "result": "PASS",
+  "checks": [],
+  "safety": {"token_redacted": true, "response_bodies_stored": false}
+}
+""".strip()
+        + "\n",
         encoding="utf-8",
     )
 
@@ -40,6 +49,7 @@ def test_readiness_audit_rejects_pass_local_rehearsal_evidence(tmp_path, monkeyp
         """
 {
   "backend_base_url": "http://127.0.0.1:8014",
+  "deployed_commit_sha": "04ebcb5abc123",
   "allow_local_http": true,
   "result": "PASS",
   "checks": [],

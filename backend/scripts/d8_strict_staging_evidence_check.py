@@ -90,6 +90,10 @@ def _portal_token() -> str:
     return (_env("SERVICE_PORTAL_PARTNEROS_TOKEN") or _env("PORTAL_CUSTOMER_API_TOKEN")).strip()
 
 
+def _deployed_commit_sha() -> str:
+    return (_env("DEPLOYED_COMMIT_SHA") or _env("DEPLOYED_COMMIT")).strip()
+
+
 def _allow_local_http() -> bool:
     return _truthy(os.getenv("D8_STRICT_ALLOW_LOCAL_HTTP"))
 
@@ -237,6 +241,8 @@ def _recommended_action(check: Check) -> str:
         return "Align SERVICE_PORTAL_ORIGIN and PORTAL_CUSTOMER_ALLOWED_ORIGINS with the service portal HTTPS origin."
     if "token" in label:
         return "Rotate and configure a non-default SERVICE_PORTAL_PARTNEROS_TOKEN without printing it in logs."
+    if "deployed commit" in label or "commit sha" in label:
+        return "Set DEPLOYED_COMMIT_SHA to the git SHA of the deployed backend build before saving evidence."
     if "health" in label or "readiness" in label or "manifest" in label:
         return "Check deployed backend health, database readiness, migrations, PUBLIC_BASE_URL, and reverse proxy routing."
     if "products" in label or "orders" in label or "subresources" in label:
@@ -284,19 +290,29 @@ def _write_gap_markdown(raw_path: str | None, *, checks: list[Check], base: str,
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def _write_evidence(raw_path: str | None, *, checks: list[Check], base: str, origin: str, allow_local: bool) -> None:
+def _write_evidence(
+    raw_path: str | None,
+    *,
+    checks: list[Check],
+    base: str,
+    origin: str,
+    allow_local: bool,
+    deployed_commit_sha: str,
+) -> None:
     if not raw_path:
         return
     path = _safe_evidence_path(raw_path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    payload = {
+    result = "PASS" if all(check.ok for check in checks) else "FAIL"
+    payload: dict[str, Any] = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "execution_timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "script": "d8_strict_staging_evidence_check.py",
         "backend_base_url": _redacted_url(base) or "<missing>",
         "service_portal_origin": origin,
         "allow_local_http": allow_local,
         "write_actions": False,
-        "result": "PASS" if all(check.ok for check in checks) else "FAIL",
+        "result": result,
         "checks": [check.evidence() for check in checks],
         "safety": {
             "token_redacted": True,
@@ -306,6 +322,8 @@ def _write_evidence(raw_path: str | None, *, checks: list[Check], base: str, ori
             "business_records_mutated": False,
         },
     }
+    if deployed_commit_sha:
+        payload["deployed_commit_sha"] = deployed_commit_sha
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
@@ -315,6 +333,7 @@ def _finish(
     base: str,
     origin: str,
     allow_local: bool,
+    deployed_commit_sha: str,
     evidence_json: str | None,
     gap_markdown: str | None,
 ) -> int:
@@ -332,7 +351,14 @@ def _finish(
         output_paths = [path for path in (evidence_path, gap_path) if path is not None]
         if _local_rehearsal_outputs_forbidden(base=base, allow_local=allow_local, paths=output_paths):
             raise ValueError("local rehearsal evidence must stay outside docs/records")
-        _write_evidence(evidence_json, checks=checks, base=base, origin=origin, allow_local=allow_local)
+        _write_evidence(
+            evidence_json,
+            checks=checks,
+            base=base,
+            origin=origin,
+            allow_local=allow_local,
+            deployed_commit_sha=deployed_commit_sha,
+        )
         _write_gap_markdown(gap_markdown, checks=checks, base=base, origin=origin)
     except OSError as exc:
         print(f"[FAIL] evidence output write ({str(exc)[:120]})")
@@ -357,11 +383,14 @@ def main() -> int:
     headers = {"X-Portal-Customer-Token": token}
     allow_local = _allow_local_http()
 
+    deployed_commit_sha = _deployed_commit_sha()
+
     checks = [
         Check("BACKEND_BASE_URL configured"),
         Check("HTTPS staging URL"),
         Check("portal origin HTTPS"),
         Check("portal token safe"),
+        Check("deployed commit SHA configured"),
         Check("health reachable"),
         Check("system readiness envelope"),
         Check("portal manifest envelope"),
@@ -402,14 +431,20 @@ def main() -> int:
     else:
         checks[3].fail("set a non-default SERVICE_PORTAL_PARTNEROS_TOKEN")
 
-    if not all(check.ok for check in checks[:4]):
-        for item in checks[4:]:
+    if deployed_commit_sha and not _is_placeholder(deployed_commit_sha):
+        checks[4].pass_(deployed_commit_sha[:12])
+    else:
+        checks[4].fail("set DEPLOYED_COMMIT_SHA to the deployed backend build SHA")
+
+    if not all(check.ok for check in checks[:5]):
+        for item in checks[5:]:
             item.fail("not attempted; staging inputs unsafe")
         return _finish(
             checks=checks,
             base=base,
             origin=origin,
             allow_local=allow_local,
+            deployed_commit_sha=deployed_commit_sha,
             evidence_json=args.evidence_json,
             gap_markdown=args.gap_markdown,
         )
@@ -421,12 +456,12 @@ def main() -> int:
             health = client.get(f"{base}/health")
         except httpx.HTTPError as exc:
             health = None
-            checks[4].fail(str(exc)[:120])
+            checks[5].fail(str(exc)[:120])
         else:
             if health.status_code == 200:
-                checks[4].pass_("HTTP 200")
+                checks[5].pass_("HTTP 200")
             else:
-                checks[4].fail(f"HTTP {health.status_code}")
+                checks[5].fail(f"HTTP {health.status_code}")
         responses.append(health)
 
         readiness = _get(client, "/api/v1/system/readiness")
@@ -434,9 +469,9 @@ def main() -> int:
         if _envelope_ok(readiness):
             data = _json(readiness).get("data") or {}
             ok_detail = "ready" if data.get("ok") is True else "envelope ok; readiness degraded"
-            checks[5].pass_(ok_detail)
+            checks[6].pass_(ok_detail)
         else:
-            checks[5].fail(f"HTTP {readiness.status_code if readiness else 'unreachable'}")
+            checks[6].fail(f"HTTP {readiness.status_code if readiness else 'unreachable'}")
 
         manifest = _get(client, "/api/v1/portal/manifest")
         responses.append(manifest)
@@ -444,19 +479,19 @@ def main() -> int:
             data = _json(manifest).get("data") or {}
             manifest_base = str(data.get("base_url") or "")
             if manifest_base.startswith("https://") or (allow_local and manifest_base.startswith("http://")):
-                checks[6].pass_(manifest_base)
+                checks[7].pass_(manifest_base)
             else:
-                checks[6].fail("manifest base_url is not staging-safe")
+                checks[7].fail("manifest base_url is not staging-safe")
         else:
-            checks[6].fail(f"HTTP {manifest.status_code if manifest else 'unreachable'}")
+            checks[7].fail(f"HTTP {manifest.status_code if manifest else 'unreachable'}")
 
         missing = _get(client, "/api/v1/portal/customer/products?limit=1")
         wrong = _get(client, "/api/v1/portal/customer/products?limit=1", headers={"X-Portal-Customer-Token": "wrong"})
         responses.extend([missing, wrong])
-        checks[7].pass_("HTTP 401") if missing and missing.status_code == 401 else checks[7].fail(
+        checks[8].pass_("HTTP 401") if missing and missing.status_code == 401 else checks[8].fail(
             f"HTTP {missing.status_code if missing else 'unreachable'}"
         )
-        checks[8].pass_("HTTP 403") if wrong and wrong.status_code == 403 else checks[8].fail(
+        checks[9].pass_("HTTP 403") if wrong and wrong.status_code == 403 else checks[9].fail(
             f"HTTP {wrong.status_code if wrong else 'unreachable'}"
         )
 
@@ -471,22 +506,22 @@ def main() -> int:
             )
         except httpx.HTTPError as exc:
             preflight = None
-            checks[9].fail(str(exc)[:120])
+            checks[10].fail(str(exc)[:120])
         else:
             allow_origin = preflight.headers.get("access-control-allow-origin", "")
             if preflight.status_code in {200, 204} and allow_origin == origin:
-                checks[9].pass_(origin)
+                checks[10].pass_(origin)
             else:
-                checks[9].fail(f"HTTP {preflight.status_code} allow-origin={allow_origin or 'missing'}")
+                checks[10].fail(f"HTTP {preflight.status_code} allow-origin={allow_origin or 'missing'}")
         responses.append(preflight)
 
         products = _get(client, "/api/v1/portal/customer/products?limit=5", headers=headers)
         orders = _get(client, "/api/v1/portal/customer/orders?limit=5", headers=headers)
         responses.extend([products, orders])
-        checks[10].pass_(f"HTTP {products.status_code}") if products and products.status_code == 200 else checks[
-            10
+        checks[11].pass_(f"HTTP {products.status_code}") if products and products.status_code == 200 else checks[
+            11
         ].fail(f"HTTP {products.status_code if products else 'unreachable'}")
-        checks[11].pass_(f"HTTP {orders.status_code}") if orders and orders.status_code == 200 else checks[11].fail(
+        checks[12].pass_(f"HTTP {orders.status_code}") if orders and orders.status_code == 200 else checks[12].fail(
             f"HTTP {orders.status_code if orders else 'unreachable'}"
         )
 
@@ -500,24 +535,25 @@ def main() -> int:
             resources = _get(client, f"/api/v1/portal/customer/orders/{order_id}/resources", headers=headers)
             responses.extend([detail, production, shipment, resources])
             if all(response and response.status_code == 200 for response in (detail, production, shipment, resources)):
-                checks[12].pass_(str(order_id))
+                checks[13].pass_(str(order_id))
             else:
                 status_list = ", ".join(
                     str(response.status_code if response else "unreachable")
                     for response in (detail, production, shipment, resources)
                 )
-                checks[12].fail(status_list)
+                checks[13].fail(status_list)
         else:
-            checks[12].pass_("no order rows")
+            checks[13].pass_("no order rows")
 
     clean, detail = _no_forbidden_blob(token, *responses)
-    checks[13].pass_(detail) if clean else checks[13].fail(detail)
+    checks[14].pass_(detail) if clean else checks[14].fail(detail)
 
     return _finish(
         checks=checks,
         base=base,
         origin=origin,
         allow_local=allow_local,
+        deployed_commit_sha=deployed_commit_sha,
         evidence_json=args.evidence_json,
         gap_markdown=args.gap_markdown,
     )
