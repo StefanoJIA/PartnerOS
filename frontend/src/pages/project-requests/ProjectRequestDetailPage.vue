@@ -82,6 +82,38 @@
         </el-table>
       </el-card>
 
+      <el-card shadow="never">
+        <template #header>
+          <div class="flex items-center justify-between">
+            <span>多供应商候选比对</span>
+            <el-button size="small" :loading="candidatesLoading" @click="refreshCandidates">刷新候选</el-button>
+          </div>
+        </template>
+        <p class="mb-3 text-xs text-slate-500">legacy / pending / benchmark 不可自动进入正式报价。</p>
+        <el-table :data="candidates" size="small" stripe>
+          <el-table-column prop="display_name" label="候选" min-width="200" />
+          <el-table-column prop="candidate_source_type" label="来源" width="100" />
+          <el-table-column prop="overall_fit_status" label="总体" width="100" />
+          <el-table-column prop="candidate_role" label="角色" width="120" />
+          <el-table-column label="可报价" width="80">
+            <template #default="{ row: c }">{{ c.eligible_for_formal_quote ? '是' : '否' }}</template>
+          </el-table-column>
+          <el-table-column label="操作" width="160">
+            <template #default="{ row: c }">
+              <el-button
+                v-if="c.eligible_for_formal_quote"
+                size="small"
+                type="primary"
+                link
+                @click="selectCandidate(c)"
+              >
+                选为主候选
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-card>
+
       <el-card v-if="contractText" shadow="never">
         <template #header>Quote Input Contract</template>
         <pre class="whitespace-pre-wrap text-sm text-slate-700">{{ contractText }}</pre>
@@ -109,6 +141,8 @@ const contractLoading = ref(false)
 const signalLoading = ref(false)
 const row = ref<Record<string, any> | null>(null)
 const contractText = ref('')
+const candidates = ref<Record<string, unknown>[]>([])
+const candidatesLoading = ref(false)
 
 const STATUSES = ['submitted', 'triage', 'needs_information', 'quote_ready', 'converted', 'declined']
 const PRIORITIES = ['low', 'normal', 'high', 'urgent']
@@ -142,6 +176,31 @@ const qtyLabel = computed(() => {
   return '—'
 })
 
+async function loadCandidates() {
+  const { data } = await http.get(`/project-requests/${route.params.requestId}/candidates`)
+  candidates.value = data
+}
+
+async function refreshCandidates() {
+  candidatesLoading.value = true
+  try {
+    const { data } = await http.post(`/project-requests/${route.params.requestId}/refresh-candidates`)
+    candidates.value = data
+    ElMessage.success('候选已刷新')
+  } finally {
+    candidatesLoading.value = false
+  }
+}
+
+async function selectCandidate(c: Record<string, unknown>) {
+  await http.post(`/project-requests/${route.params.requestId}/candidates/${c.id}/decision`, {
+    decision: 'selected',
+    reason: 'Operator selected from multi-supplier compare',
+  })
+  ElMessage.success('已记录选择')
+  await loadCandidates()
+}
+
 async function load() {
   loading.value = true
   try {
@@ -151,6 +210,7 @@ async function load() {
     edit.priority = data.priority
     edit.sku = data.sku || ''
     edit.operator_notes = data.operator_notes || ''
+    await loadCandidates()
   } finally {
     loading.value = false
   }

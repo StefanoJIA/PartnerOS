@@ -120,6 +120,9 @@ const navGroups = [
     items: [
       { path: '/partner-onboarding', label: 'Partner 接入' },
       { path: '/manufacturing-partners', label: '制造伙伴' },
+      { path: '/supplier-discovery', label: '供应商发现' },
+      { path: '/benchmark-knowledge', label: '行业 Benchmark' },
+      { path: '/platform-intelligence', label: '平台能力矩阵' },
       { path: '/external-execution', label: '外部执行 / Staging' },
     ],
   },

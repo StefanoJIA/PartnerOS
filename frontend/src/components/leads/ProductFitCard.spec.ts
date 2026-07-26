@@ -66,7 +66,7 @@ describe('ProductFitCard', () => {
     expect(wrapper.text()).toContain('Product Fit & Project Opportunity')
     expect(wrapper.text()).toContain('78')
     expect(wrapper.text()).toContain('Promising')
-    expect(wrapper.text()).toContain('HOSUN Lifting Systems')
+    expect(wrapper.text()).toContain('Lifting Systems (vendor-neutral)')
   })
 
   it('renders product focus badges', async () => {

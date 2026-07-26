@@ -105,7 +105,7 @@ describe('ProductOpportunityBoard', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('Product Opportunity Board')
     expect(wrapper.text()).toContain('Ergo Sit Stand')
-    expect(wrapper.text()).toContain('HOSUN Lifting Systems')
+    expect(wrapper.text()).toContain('Lifting Systems (vendor-neutral)')
   })
 
   it('renders missing info summary', async () => {

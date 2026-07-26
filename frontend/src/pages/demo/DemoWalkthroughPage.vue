@@ -34,7 +34,7 @@ const journey = computed(() => [
     key: 'campaign',
     label: 'Campaign / 营销活动',
     value: '人工外联任务',
-    detail: '用 Growth Operations 规划 HOSUN / JOOBOO 分群、生成中英文草稿、记录人工状态；系统不自动发送。',
+    detail: '用 Growth Operations 规划升降系统 / 教育家具 / 合同办公分群、生成中英文草稿、记录人工状态；系统不自动发送。',
     route: '/growth-operations',
   },
   {
@@ -62,7 +62,7 @@ const journey = computed(() => [
     key: 'partner',
     label: 'Partner 分单',
     value: `${portal.value?.multi_partner_flow_readiness.split_count ?? 0} splits across ${portal.value?.multi_partner_flow_readiness.partners_with_orders ?? 0} partners`,
-    detail: 'HOSUN、JOOBOO 和未来 partner 都是平级制造伙伴，不是平台默认主品牌。',
+    detail: 'LIFT-DEMO、JOOBOO、合同办公 benchmark 和未来 partner 都是平级资源；legacy HOSUN 仅作历史参考。',
     route: '/partner-operations',
   },
   {
@@ -110,30 +110,49 @@ const storyLine = computed(() => [
 
 const scenarioCards = computed(() => [
   {
-    title: 'HOSUN lifting systems',
-    partner: hosunPartner.value?.partner_name || 'HOSUN',
-    focus: 'Desk frames, desk legs, lifting columns, and heavy-duty lifting projects',
+    title: 'Generic lifting systems (active fixture)',
+    partner: liftPartner.value?.partner_name || 'LIFT-DEMO',
+    focus: 'Desk frames, desk legs, lifting columns — vendor-neutral mature vertical',
     story:
-      '运营从升降办公需求出发，准备报价，将已确认订单分配给 HOSUN，跟踪生产 readiness，维护物流计划，并把物流/反馈信号带回市场响应。',
-    route: { name: 'market', query: { focus_category: 'lifting_columns' } },
+      '项目需求 → 多供应商比对 → 选择 LIFT-DEMO 候选 → QIC → 区间报价/PDF → 样品/工程评审 → 市场响应。',
+    route: { name: 'project-requests' },
   },
   {
-    title: 'JOOBOO education furniture',
-    partner: secondaryPartner.value?.partner_name || 'JOOBOO / future partner',
+    title: 'JOOBOO education (candidate partner)',
+    partner: educationPartner.value?.partner_name || 'JOOBOO / candidate',
     focus: 'Education furniture and project furniture programs',
     story:
-      '同一运营闭环也适用于教室和项目制家具：匹配产品要求、项目报价、partner 分工、展示客户安全交付状态，并把反馈转成 partner focus。',
-    route: { name: 'market', query: { focus_category: 'education_furniture' } },
+      '教育家具候选 partner — catalog pending，仅工程评审候选，不可自动进入正式报价。',
+    route: { name: 'project-requests' },
+  },
+  {
+    title: 'Contract office (benchmark taxonomy)',
+    partner: 'Industry benchmark',
+    focus: 'Desks, workstations, seating, partitions, acoustic, project delivery',
+    story:
+      '合同办公 benchmark 用于能力对照，不作为 partner 或授权经销商展示，不可用于正式报价。',
+    route: { name: 'market' },
+  },
+  {
+    title: 'HOSUN (legacy historical case)',
+    partner: legacyPartner.value?.partner_name || 'HOSUN (legacy)',
+    focus: 'Historical orders, quotes, and catalog reference only',
+    story:
+      'Legacy partner — 可查看历史订单/报价，不可作为新项目的默认推荐或自动候选。',
+    route: { name: 'partners' },
   },
 ])
 
 const partnerRows = computed(() => portal.value?.multi_partner_flow_readiness.items || [])
-const hosunPartner = computed(() => partnerRows.value.find((row) => row.partner_name.toUpperCase().includes('HOSUN')))
-const secondaryPartner = computed(() =>
+const liftPartner = computed(() =>
+  partnerRows.value.find((row) => row.partner_name.toUpperCase().includes('LIFT-DEMO') || row.partner_name.toUpperCase().includes('GENERIC LIFTING')),
+)
+const legacyPartner = computed(() => partnerRows.value.find((row) => row.partner_name.toUpperCase().includes('HOSUN')))
+const educationPartner = computed(() =>
   partnerRows.value.find((row) => {
     const name = row.partner_name.toUpperCase()
-    return name.includes('JOOBOO') || name.includes('HUIJU') || name.includes('EDUCATION')
-  }) || partnerRows.value.find((row) => row.partner_id !== hosunPartner.value?.partner_id),
+    return name.includes('JOOBOO') || name.includes('EDUCATION')
+  }),
 )
 
 const focusRows = computed(() =>
@@ -306,17 +325,17 @@ onMounted(load)
         </div>
         <div class="grid gap-3 md:grid-cols-2">
           <div class="rounded border border-slate-100 p-3">
-            <div class="text-xs uppercase text-slate-500">HOSUN 方向</div>
-            <div class="mt-1 font-semibold text-slate-900">{{ hosunPartner?.partner_name || 'HOSUN lifting systems' }}</div>
+            <div class="text-xs uppercase text-slate-500">升降系统（active fixture）</div>
+            <div class="mt-1 font-semibold text-slate-900">{{ liftPartner?.partner_name || 'LIFT-DEMO generic lifting' }}</div>
             <p class="mt-2 text-sm text-slate-600">
-              桌架、桌腿、升降柱和重载升降系统以运营信号呈现，不是硬编码的平台偏好。
+              桌架、桌腿、升降柱以 vendor-neutral 活跃 fixture 呈现，不是 legacy partner 默认。
             </p>
           </div>
           <div class="rounded border border-slate-100 p-3">
-            <div class="text-xs uppercase text-slate-500">第二 partner 方向</div>
-            <div class="mt-1 font-semibold text-slate-900">{{ secondaryPartner?.partner_name || 'JOOBOO education furniture' }}</div>
+            <div class="text-xs uppercase text-slate-500">教育 / benchmark</div>
+            <div class="mt-1 font-semibold text-slate-900">{{ educationPartner?.partner_name || 'JOOBOO (candidate)' }}</div>
             <p class="mt-2 text-sm text-slate-600">
-              教育家具和项目制家具证明 PartnerOS 可以支持多个外部品牌运营线。
+              教育候选 partner 与合同办公 benchmark 证明多垂直、多来源比对能力。
             </p>
           </div>
         </div>
@@ -338,8 +357,8 @@ onMounted(load)
 
       <section class="rounded border border-slate-200 bg-white p-4">
         <div class="mb-3 flex items-center justify-between gap-3">
-          <h3 class="font-semibold text-slate-800">两条演示场景</h3>
-          <el-tag type="success" effect="plain">HOSUN + JOOBOO</el-tag>
+          <h3 class="font-semibold text-slate-800">四条演示场景</h3>
+          <el-tag type="success" effect="plain">multibrand export OS</el-tag>
         </div>
         <div class="grid gap-3">
           <button
