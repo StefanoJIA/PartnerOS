@@ -149,3 +149,30 @@ def test_admin_project_requests_requires_auth():
     client, _ = _api_client()
     response = client.get("/api/project-requests")
     assert response.status_code in {401, 403}
+
+
+def test_illegal_status_transition_rejected():
+    from app.core.deps import get_current_user
+    from app.models import User
+
+    client, db = _api_client()
+    user = User(id=uuid4(), email="admin@test.example", is_active=True)
+    client.app.dependency_overrides[get_current_user] = lambda: user
+    row_id = uuid4()
+    row = CustomerProjectRequest(
+        id=row_id,
+        request_reference="CPR-TRANS01",
+        status="submitted",
+        fit_summary_json={"overall_status": "PARTIAL", "matches": []},
+        sku="HS-HRD-300",
+    )
+    db.query.return_value.filter.return_value.first.return_value = row
+    with patch(
+        "app.api.routes.customer_project_requests.update_request_status",
+        side_effect=__import__("fastapi").HTTPException(status_code=400, detail="Illegal status transition"),
+    ):
+        response = client.patch(
+            f"/api/project-requests/{row_id}",
+            json={"status": "converted"},
+        )
+    assert response.status_code == 400
