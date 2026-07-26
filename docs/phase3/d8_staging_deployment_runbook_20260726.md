@@ -23,6 +23,7 @@ This document complements:
 - **No real staging network calls from CI or doc-only runs** — use local dry-run commands below.
 - **No automatic email, webhook, SMS, carrier API, customer/supplier notification, or order/shipment/payment mutation.**
 - **Do not write `STAGING_VALIDATED`** until real strict staging evidence exists per operator runbook.
+- Current stage boundary: `READY_FOR_STAGING_HANDOFF` / `WAITING_FOR_REAL_STAGING_EVIDENCE` — local rehearsal does not satisfy strict evidence.
 
 ---
 
