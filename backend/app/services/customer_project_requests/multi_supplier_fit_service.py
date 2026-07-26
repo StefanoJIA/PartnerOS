@@ -231,6 +231,7 @@ def refresh_supplier_candidates(db: Session, row: CustomerProjectRequest, *, act
         if not partner:
             continue
         payload = build_partner_candidate(db, row, catalog, partner)
+        payload.pop("lifecycle_status", None)
         cand = ProjectRequestSupplierCandidate(
             project_request_id=row.id,
             created_by_id=actor_id,

@@ -36,6 +36,8 @@ from app.services.customer_project_requests.multi_supplier_fit_service import (
     record_candidate_decision,
     refresh_supplier_candidates,
 )
+from app.services.supplier_network_service import freeze_selection_snapshot, get_selection_snapshot
+from app.schemas.multibrand_export import SupplierSelectionSnapshotOut
 
 router = APIRouter(prefix="/project-requests", tags=["project-requests"])
 
@@ -241,4 +243,25 @@ def decide_candidate(
     if body.decision == "selected" and not cand.eligible_for_formal_quote:
         raise HTTPException(status_code=400, detail="Candidate not eligible for formal quote")
     updated = record_candidate_decision(db, cand, decision=body.decision, reason=body.reason, actor_id=user.id)
+    if body.decision == "selected":
+        freeze_selection_snapshot(
+            db,
+            project_request_id=request_id,
+            selected_candidate=updated,
+            actor_id=user.id,
+        )
+        db.commit()
+        db.refresh(updated)
     return ProjectRequestCandidateOut.model_validate(updated)
+
+
+@router.get("/{request_id}/selection-snapshot", response_model=SupplierSelectionSnapshotOut)
+def get_selection_snapshot_route(
+    request_id: UUID,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> SupplierSelectionSnapshotOut:
+    snapshot = get_selection_snapshot(db, request_id)
+    if not snapshot:
+        raise HTTPException(status_code=404, detail="No selection snapshot for this request")
+    return SupplierSelectionSnapshotOut.model_validate(snapshot)
