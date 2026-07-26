@@ -25,6 +25,8 @@ from app.models.project_request_candidates import ProjectRequestSupplierCandidat
 from app.models.partners import ManufacturingPartner, PartnerCapability, PartnerContact
 from app.models.products import Product, ProductCategory, ProductDocument, ProductPartnerLink
 from app.models.supplier_discovery import SupplierDiscoveryRecord
+from app.models.supplier_sample_evaluations import SupplierSampleEvaluation
+from app.models.supplier_selection_snapshots import SupplierSelectionSnapshot
 from app.models.quality import FactoryAudit, QualityDocument
 from app.models.customer_orders import (
     CustomerOrder,
@@ -132,6 +134,8 @@ __all__ = [
     "RFQPartnerCandidate",
     "Role",
     "SupplierDiscoveryRecord",
+    "SupplierSampleEvaluation",
+    "SupplierSelectionSnapshot",
     "Sample",
     "SampleShipment",
     "SalesOpportunity",

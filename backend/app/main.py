@@ -34,6 +34,7 @@ from app.api.routes import (
     rfqs,
     samples,
     supplier_discovery,
+    supplier_sample_evaluations,
     tasks,
     users,
 )
@@ -116,6 +117,7 @@ def create_app() -> FastAPI:
     api.include_router(manufacturing_partners.router)
     api.include_router(benchmark_knowledge.router)
     api.include_router(supplier_discovery.router)
+    api.include_router(supplier_sample_evaluations.router)
     api.include_router(platform_intelligence.router)
     api.include_router(products.router)
     api.include_router(product_categories.router)
