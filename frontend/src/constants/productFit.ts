@@ -4,7 +4,7 @@ export const PRODUCT_FIT_SAFETY =
   'This card suggests product fit and project questions only. It does not create quotes, promise pricing, confirm inventory, or send messages.'
 
 export const PRODUCT_FOCUS_LABELS: Record<string, string> = {
-  hosun_lifting_systems: 'HOSUN Lifting Systems',
+  hosun_lifting_systems: 'Lifting Systems (vendor-neutral)',
   adjustable_desk_frames: 'Adjustable Desk Frames',
   lifting_columns: 'Lifting Columns',
   jooboo_education_furniture: 'JOOBOO Education Furniture',

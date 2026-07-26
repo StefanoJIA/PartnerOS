@@ -57,6 +57,8 @@ class PartnerUpdate(BaseModel):
     ai_risk_summary: str | None = None
     notes: str | None = None
     is_active: bool | None = None
+    lifecycle_status: str | None = None
+    lifecycle_notes: str | None = None
 
 
 class PartnerOut(BaseModel):
@@ -65,6 +67,8 @@ class PartnerOut(BaseModel):
     partner_type: str
     country: str | None
     risk_level: str | None
+    partner_code: str | None = None
+    lifecycle_status: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -108,6 +112,8 @@ class PartnerDetailOut(BaseModel):
     ai_risk_summary: str | None
     extra_scores: dict | None
     is_active: bool
+    lifecycle_status: str | None = None
+    lifecycle_notes: str | None = None
     created_at: datetime
     updated_at: datetime
 

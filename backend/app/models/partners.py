@@ -66,6 +66,8 @@ class ManufacturingPartner(Base, TimestampMixin, UserAuditMixin):
     default_incoterm: Mapped[str | None] = mapped_column(String(16), nullable=True)
     default_currency: Mapped[str | None] = mapped_column(String(3), nullable=True, default="USD")
     catalog_status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
+    lifecycle_status: Mapped[str] = mapped_column(String(32), nullable=False, default="active", index=True)
+    lifecycle_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     contacts: Mapped[list["PartnerContact"]] = relationship(
         "PartnerContact", back_populates="partner", cascade="all, delete-orphan"

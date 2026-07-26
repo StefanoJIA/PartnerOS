@@ -24,16 +24,29 @@ from app.models import (
 from app.services.quotes.catalog_enrichment import PROFIT_MARGIN_TIERS
 
 PARTNERS = (
-    {"code": "HOSUN", "name": "HOSUN Lifting Systems (demo)", "type": "Lifting System Manufacturer", "city": "Shenzhen"},
-    {"code": "JOOBOO", "name": "JOOBOO Education Furniture (demo)", "type": "Education Furniture Manufacturer", "city": "Chongqing"},
+    {
+        "code": "LIFT-DEMO",
+        "name": "Generic Lifting Systems (active demo fixture)",
+        "type": "Lifting System Manufacturer",
+        "city": "Shenzhen",
+        "lifecycle": "active",
+    },
+    {
+        "code": "HOSUN",
+        "name": "HOSUN Lifting Systems (legacy reference)",
+        "type": "Lifting System Manufacturer",
+        "city": "Shenzhen",
+        "lifecycle": "legacy",
+    },
+    {"code": "JOOBOO", "name": "JOOBOO Education Furniture (demo)", "type": "Education Furniture Manufacturer", "city": "Chongqing", "lifecycle": "candidate"},
 )
 
 PRODUCTS: tuple[dict, ...] = (
     {
-        "partner_code": "HOSUN",
-        "sku": "HS-HRD-300",
+        "partner_code": "LIFT-DEMO",
+        "sku": "LIFT-HRD-300",
         "code": "HRD-300",
-        "name": "Heavy-Duty Dual Motor Desk Frame (demo)",
+        "name": "Heavy-Duty Dual Motor Desk Frame (vendor-neutral demo)",
         "category": "lifting_systems",
         "family": "heavy_duty_supply",
         "attrs": {
@@ -41,6 +54,21 @@ PRODUCTS: tuple[dict, ...] = (
             "noise_db": 45,
             "certifications": ["CE"],
             "customer_quote_name": "Heavy-Duty Dual Motor Frame",
+        },
+    },
+    {
+        "partner_code": "HOSUN",
+        "sku": "HS-HRD-300",
+        "code": "HRD-300",
+        "name": "Heavy-Duty Dual Motor Desk Frame (legacy HOSUN catalog)",
+        "category": "lifting_systems",
+        "family": "heavy_duty_supply",
+        "attrs": {
+            "load_capacity_kg": 300,
+            "noise_db": 45,
+            "certifications": ["CE"],
+            "customer_quote_name": "Heavy-Duty Dual Motor Frame",
+            "legacy_reference": True,
         },
     },
     {
@@ -88,6 +116,9 @@ def _ensure_partner(db, spec: dict, *, overwrite: bool) -> tuple[ManufacturingPa
             row.default_incoterm = "FOB"
             row.default_currency = "USD"
             row.catalog_status = "active"
+            row.lifecycle_status = spec.get("lifecycle", "active")
+            if spec.get("lifecycle") == "legacy":
+                row.lifecycle_notes = row.lifecycle_notes or "Legacy reference — not default for new quotes."
             return row, "updated"
         return row, "skipped"
     row = db.query(ManufacturingPartner).filter(ManufacturingPartner.partner_name == spec["name"]).first()
@@ -96,6 +127,7 @@ def _ensure_partner(db, spec: dict, *, overwrite: bool) -> tuple[ManufacturingPa
         row.default_incoterm = "FOB"
         row.default_currency = "USD"
         row.catalog_status = "active"
+        row.lifecycle_status = spec.get("lifecycle", "active")
         return row, "updated"
     row = ManufacturingPartner(
         partner_name=spec["name"],
@@ -106,6 +138,8 @@ def _ensure_partner(db, spec: dict, *, overwrite: bool) -> tuple[ManufacturingPa
         default_incoterm="FOB",
         default_currency="USD",
         catalog_status="active",
+        lifecycle_status=spec.get("lifecycle", "active"),
+        lifecycle_notes="Legacy reference — not default for new quotes." if spec.get("lifecycle") == "legacy" else None,
         notes="D6.2 demo seed — sample pricing only.",
     )
     db.add(row)

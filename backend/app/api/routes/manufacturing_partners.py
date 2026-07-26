@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models import ManufacturingPartner, Product, User
+from app.models.enums import PartnerLifecycle
 from app.schemas.object_workspaces import PartnerWorkspaceOut
 from app.schemas.pagination import PaginatedResponse
 from app.schemas.partners import PartnerCreate, PartnerDetailOut, PartnerOut, PartnerScoreBody, PartnerUpdate
@@ -26,12 +27,18 @@ router = APIRouter(prefix="/manufacturing-partners", tags=["manufacturing-partne
 @router.get("", response_model=PaginatedResponse[PartnerOut])
 def list_partners(
     q: str | None = None,
+    include_legacy: bool = Query(False),
+    lifecycle: str | None = None,
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=200),
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ) -> PaginatedResponse[PartnerOut]:
     query = db.query(ManufacturingPartner).filter(ManufacturingPartner.is_active.is_(True))
+    if lifecycle:
+        query = query.filter(ManufacturingPartner.lifecycle_status == lifecycle)
+    elif not include_legacy:
+        query = query.filter(ManufacturingPartner.lifecycle_status != PartnerLifecycle.legacy.value)
     if q:
         like = f"%{q}%"
         query = query.filter(

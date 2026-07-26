@@ -20,6 +20,7 @@ from app.services.customer_project_requests.intake_service import (
     requirements_to_json,
 )
 from app.services.customer_project_requests.market_signal_service import build_market_signal_draft
+from app.services.partner_lifecycle import assert_partner_selectable_for_quote
 
 
 ALLOWED_STATUS_TRANSITIONS: dict[str, set[str]] = {
@@ -151,6 +152,10 @@ def assign_partner_and_sku(
     row.product_catalog_id = product_catalog_id
     if sku:
         row.sku = sku
+    if partner_id:
+        partner = db.query(ManufacturingPartner).filter(ManufacturingPartner.id == partner_id).first()
+        if partner:
+            assert_partner_selectable_for_quote(partner)
     row.updated_by_id = actor_id
     catalog = None
     if product_catalog_id:

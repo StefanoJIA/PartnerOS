@@ -583,7 +583,7 @@ def _sales_angle(focus: list[str], project_type: str, company_name: str) -> str:
         )
     if PRODUCT_FOCUS_HOSUN in focus:
         return (
-            f"Position HOSUN lifting systems — adjustable desk frames, desk legs, and lifting columns — "
+            f"Position vendor-neutral lifting systems — adjustable desk frames, desk legs, and lifting columns — "
             f"for {name}."
         )
     return (

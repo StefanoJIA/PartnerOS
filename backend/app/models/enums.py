@@ -264,6 +264,76 @@ class CustomerProjectRequestPriority(str, Enum):
     urgent = "urgent"
 
 
+class PartnerLifecycle(str, Enum):
+    candidate = "candidate"
+    onboarding = "onboarding"
+    active = "active"
+    paused = "paused"
+    legacy = "legacy"
+    archived = "archived"
+
+
+class BenchmarkSourceType(str, Enum):
+    public_reference = "PUBLIC_REFERENCE"
+    partner_provided = "PARTNER_PROVIDED"
+    authorized_catalog = "AUTHORIZED_CATALOG"
+    internal_fixture = "INTERNAL_FIXTURE"
+
+
+class FieldVerificationStatus(str, Enum):
+    fact = "fact"
+    inferred = "inferred"
+    pending_verification = "pending_verification"
+
+
+class SupplierDiscoveryStatus(str, Enum):
+    discovered = "discovered"
+    contacted = "contacted"
+    evaluating = "evaluating"
+    sample_requested = "sample_requested"
+    qualified = "qualified"
+    active = "active"
+    rejected = "rejected"
+    paused = "paused"
+
+
+class FitDimensionStatus(str, Enum):
+    match = "MATCH"
+    partial = "PARTIAL"
+    unknown = "UNKNOWN"
+    not_supported = "NOT_SUPPORTED"
+
+
+class CandidateRole(str, Enum):
+    primary = "primary"
+    alternate = "alternate"
+    engineering_review = "engineering_review"
+
+
+class CandidateSourceType(str, Enum):
+    partner = "partner"
+    supplier_discovery = "supplier_discovery"
+    benchmark = "benchmark"
+
+
+class ChannelLeadSource(str, Enum):
+    direct = "direct"
+    referral = "referral"
+    trade_show = "trade_show"
+    alibaba = "Alibaba"
+    thomasnet = "Thomasnet"
+    website = "website"
+    dealer = "dealer"
+    manual = "manual"
+    other = "other"
+
+
+class PlatformBuildPriority(str, Enum):
+    p0 = "P0"
+    p1 = "P1"
+    p2 = "P2"
+
+
 class ObjectType(str, Enum):
     company = "company"
     contact = "contact"

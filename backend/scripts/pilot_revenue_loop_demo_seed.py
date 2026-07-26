@@ -18,6 +18,7 @@ from app.models.enums import CustomerProjectRequestStatus
 from app.schemas.customer_project_request_domain import ProjectRequirementFields
 from app.services.customer_project_requests.intake_service import build_fit_summary, compute_completeness
 from app.services.customer_project_requests.workspace_service import create_admin_request
+from app.services.partner_lifecycle import get_default_lifting_partner
 from app.schemas.customer_project_request_domain import CustomerProjectRequestCreate
 
 
@@ -41,12 +42,12 @@ def main() -> int:
             print(f"Demo project request already exists: {MARKER_REF}")
             return 0
 
-        hosun = db.query(ManufacturingPartner).filter(ManufacturingPartner.partner_code == "HOSUN").first()
+        lift_partner = get_default_lifting_partner(db)
         catalog = None
-        if hosun:
+        if lift_partner:
             catalog = (
                 db.query(ProductCatalog)
-                .filter(ProductCatalog.partner_id == hosun.id, ProductCatalog.status == "active")
+                .filter(ProductCatalog.partner_id == lift_partner.id, ProductCatalog.status == "active")
                 .first()
             )
 
@@ -55,8 +56,8 @@ def main() -> int:
             customer_email="pilot.demo@example.com",
             company_name_text="Staging Test Alpha Corp (Synthetic)",
             product_interest="Heavy-duty dual motor desk frame",
-            sku=catalog.sku if catalog else "HS-DEMO-PRDDFZ",
-            partner_id=hosun.id if hosun else None,
+            sku=catalog.internal_sku if catalog else "LIFT-HRD-300",
+            partner_id=lift_partner.id if lift_partner else None,
             product_catalog_id=catalog.id if catalog else None,
             quantity_min=20,
             quantity_max=50,
