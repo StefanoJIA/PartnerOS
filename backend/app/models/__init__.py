@@ -46,6 +46,7 @@ from app.models.quote_catalog import (
     ProductCostModel,
     ProductPriceTier,
 )
+from app.models.customer_project_requests import CustomerProjectRequest
 from app.models.rfq import Quotation, QuotationItem, RFQ, RFQItem, RFQPartnerCandidate
 from app.models.samples import Sample, SampleShipment
 
@@ -57,6 +58,7 @@ __all__ = [
     "CompanyEnrichmentSource",
     "CompanyEnrichmentSuggestion",
     "Contact",
+    "CustomerProjectRequest",
     "CustomerOrder",
     "DailyQueueHandlingRecord",
     "ExternalExecutionAction",

@@ -1723,6 +1723,10 @@
                 const intake = typeof handleSiteOrderIntakeResponse === 'function'
                     ? handleSiteOrderIntakeResponse(data)
                     : { kind: data.order_number ? 'success' : 'demo_intake', message: data.message || 'Submitted.' };
+                if (intake.kind === 'project_request') {
+                    showSuccess(`[项目需求已提交] ${intake.message}`);
+                    return;
+                }
                 if (intake.kind === 'demo_intake') {
                     showSuccess(`[演示/意向提交] ${intake.message}`);
                     return;

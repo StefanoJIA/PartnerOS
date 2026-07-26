@@ -248,6 +248,22 @@ class AITaskType(str, Enum):
     product_sales_description = "product_sales_description"
 
 
+class CustomerProjectRequestStatus(str, Enum):
+    submitted = "submitted"
+    triage = "triage"
+    needs_information = "needs_information"
+    quote_ready = "quote_ready"
+    converted = "converted"
+    declined = "declined"
+
+
+class CustomerProjectRequestPriority(str, Enum):
+    low = "low"
+    normal = "normal"
+    high = "high"
+    urgent = "urgent"
+
+
 class ObjectType(str, Enum):
     company = "company"
     contact = "contact"
@@ -259,3 +275,4 @@ class ObjectType(str, Enum):
     order = "order"
     field_visit = "field_visit"
     user = "user"
+    customer_project_request = "customer_project_request"

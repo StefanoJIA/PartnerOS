@@ -7,6 +7,19 @@ function handleSiteOrderIntakeResponse(data) {
       message: 'Unexpected server response.',
     };
   }
+  if (
+    data.intake_type === 'project_request' ||
+    data.status === 'project_request_submitted' ||
+    (data.request_reference && data.order_created === false)
+  ) {
+    return {
+      kind: 'project_request',
+      message:
+        data.message ||
+        `项目需求已提交，参考号 ${data.request_reference || '—'}。这不是正式订单确认，运营团队将审核后跟进报价。`,
+      requestReference: data.request_reference,
+    };
+  }
   if (data.order_created === false || data.status === 'draft_intake_not_persisted' || !data.order_number) {
     return {
       kind: 'demo_intake',

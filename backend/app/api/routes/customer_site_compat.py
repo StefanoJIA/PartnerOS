@@ -13,7 +13,7 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -23,6 +23,8 @@ from app.models import Company, Contact, ManufacturingPartner, ProductCatalog, S
 from app.models.customer_orders import CustomerOrder, OrderLineItem, OrderProductionMilestone, ShipmentPlan
 from app.services.portal.customer_order_snapshot import build_customer_order_snapshot
 from app.services.portal.customer_portal_bridge import create_feedback_ticket
+from app.schemas.customer_project_request_domain import SiteProjectRequestIn, SiteProjectRequestOut
+from app.services.customer_project_requests.intake_service import create_project_request_from_site
 
 router = APIRouter(prefix="/site", tags=["customer-site-compat"])
 
@@ -1033,18 +1035,45 @@ def site_customer_order_detail(order_id: UUID, db: Session = Depends(get_db)) ->
     return build_customer_order_snapshot(db, order.id)
 
 
-@router.post("/customer/orders")
-def site_customer_order_create() -> dict[str, Any]:
-    return {
-        "message": "Customer order submission is pending formal quote acceptance workflow integration.",
-        "order_created": False,
-        "status": "draft_intake_not_persisted",
-    }
+@router.post("/customer/orders", response_model=SiteProjectRequestOut)
+def site_customer_order_create(
+    body: SiteProjectRequestIn,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> SiteProjectRequestOut:
+    idempotency_key = request.headers.get("Idempotency-Key") or request.headers.get("X-Idempotency-Key")
+    client_ip = request.client.host if request.client else None
+    try:
+        row = create_project_request_from_site(
+            db,
+            body,
+            idempotency_key=idempotency_key,
+            client_ip=client_ip,
+        )
+    except ValueError as exc:
+        if str(exc) == "rate_limit_exceeded":
+            raise HTTPException(status_code=429, detail="Too many submissions. Please try again later.") from exc
+        raise
+    return SiteProjectRequestOut(
+        message=(
+            "Project requirement received. This is not a formal order confirmation. "
+            "An operator will review your request and follow up with a quote path."
+        ),
+        order_created=False,
+        status="project_request_submitted",
+        request_reference=row.request_reference,
+        request_id=row.id,
+        intake_type="project_request",
+    )
 
 
-@router.post("/customer/custom-order")
-def site_customer_custom_order_create() -> dict[str, Any]:
-    return site_customer_order_create()
+@router.post("/customer/custom-order", response_model=SiteProjectRequestOut)
+def site_customer_custom_order_create(
+    body: SiteProjectRequestIn,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> SiteProjectRequestOut:
+    return site_customer_order_create(body, request, db)
 
 
 @router.post("/customer/feedback")
