@@ -70,7 +70,7 @@ alembic current
 | Check | Status |
 |---|---|
 | Strict staging env vars (`BACKEND_BASE_URL`, `SERVICE_PORTAL_PARTNEROS_TOKEN`, `SERVICE_PORTAL_ORIGIN`) | **MISSING** in process env and `backend/.env` |
-| Real `service.intelli-opus.com` smoke | **BLOCKED** — see `docs/records/d8_strict_staging_evidence_20260726.json` |
+| Real `service.intelli-opus.com` smoke | **BLOCKED** — see `docs/records/d8_staging_preflight_blocker_20260726.json` |
 | Project stage | **`READY_FOR_STAGING_HANDOFF`** (unchanged) |
 
 ## Feature flags (production defaults)
