@@ -16,6 +16,7 @@ from app.api.routes import (
     customer_site_compat,
     customer_project_requests,
     dashboard,
+    benchmark_knowledge,
     field_visits,
     files,
     interactions,
@@ -23,6 +24,7 @@ from app.api.routes import (
     leads,
     manufacturing_partners,
     market,
+    platform_intelligence,
     object_interactions,
     objects_meta,
     orders,
@@ -31,6 +33,7 @@ from app.api.routes import (
     quotations,
     rfqs,
     samples,
+    supplier_discovery,
     tasks,
     users,
 )
@@ -111,6 +114,9 @@ def create_app() -> FastAPI:
     api.include_router(objects_meta.tags_attach_router)
     api.include_router(objects_meta.activity_router)
     api.include_router(manufacturing_partners.router)
+    api.include_router(benchmark_knowledge.router)
+    api.include_router(supplier_discovery.router)
+    api.include_router(platform_intelligence.router)
     api.include_router(products.router)
     api.include_router(product_categories.router)
     api.include_router(files.router)

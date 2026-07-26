@@ -1,5 +1,11 @@
 from app.models.ai_kb import AIOutput, KbChunk, KbDocument
 from app.models.auth import Role, User
+from app.models.benchmark_knowledge import (
+    BenchmarkBrand,
+    BenchmarkDataRights,
+    BenchmarkProductCapability,
+    BenchmarkSourceReference,
+)
 from app.models.common import ActivityLog, File, FileAttachment, Note, ObjectTag, OrderResource, Tag
 from app.models.crm import Company, Contact, Interaction, Lead, OutreachTemplate, Task
 from app.models.enrichment import (
@@ -14,8 +20,11 @@ from app.models.growth import GrowthCampaign, GrowthCampaignTask, SalesOpportuni
 from app.models.market import MarketIntelligenceItem
 from app.models.market_response import MarketResponseReview
 from app.models.orders import Order, OrderItem, ProductionMilestone, ShippingRecord
+from app.models.platform_intelligence import ChannelIntelligenceMetric, PlatformBenchmarkRecord
+from app.models.project_request_candidates import ProjectRequestSupplierCandidate
 from app.models.partners import ManufacturingPartner, PartnerCapability, PartnerContact
 from app.models.products import Product, ProductCategory, ProductDocument, ProductPartnerLink
+from app.models.supplier_discovery import SupplierDiscoveryRecord
 from app.models.quality import FactoryAudit, QualityDocument
 from app.models.customer_orders import (
     CustomerOrder,
@@ -52,6 +61,11 @@ from app.models.samples import Sample, SampleShipment
 
 __all__ = [
     "AIOutput",
+    "BenchmarkBrand",
+    "BenchmarkDataRights",
+    "BenchmarkProductCapability",
+    "BenchmarkSourceReference",
+    "ChannelIntelligenceMetric",
     "ActivityLog",
     "Company",
     "CompanyEnrichmentRun",
@@ -89,6 +103,8 @@ __all__ = [
     "OrderPartnerSplit",
     "OrderProductionMilestone",
     "OutreachTemplate",
+    "PlatformBenchmarkRecord",
+    "ProjectRequestSupplierCandidate",
     "PartnerCapability",
     "PartnerContact",
     "ProductionMilestone",
@@ -115,6 +131,7 @@ __all__ = [
     "RFQItem",
     "RFQPartnerCandidate",
     "Role",
+    "SupplierDiscoveryRecord",
     "Sample",
     "SampleShipment",
     "SalesOpportunity",
