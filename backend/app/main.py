@@ -14,6 +14,7 @@ from app.api.routes import (
     container_calc,
     contacts,
     customer_site_compat,
+    customer_project_requests,
     dashboard,
     field_visits,
     files,
@@ -118,6 +119,7 @@ def create_app() -> FastAPI:
     api.include_router(field_visits.router)
     api.include_router(samples.router)
     api.include_router(rfqs.router)
+    api.include_router(customer_project_requests.router)
     api.include_router(quotations.router)
     api.include_router(orders.router)
     api.include_router(market.router)
