@@ -337,6 +337,45 @@ class CandidateSourceType(str, Enum):
     benchmark = "benchmark"
 
 
+class SupplierRelationshipType(str, Enum):
+    public_candidate = "PUBLIC_CANDIDATE"
+    internal_research = "INTERNAL_RESEARCH"
+    qualified_supplier = "QUALIFIED_SUPPLIER"
+
+
+class SupplierEvidenceStatus(str, Enum):
+    verified_public = "verified_public"
+    partial_public = "partial_public"
+    pending_review = "pending_review"
+    unknown = "UNKNOWN"
+
+
+class SupplierDevelopmentTaskType(str, Enum):
+    initial_research = "initial_research"
+    contact_prep = "contact_prep"
+    information_request = "information_request"
+    catalog_requested = "catalog_requested"
+    price_list_requested = "price_list_requested"
+    certification_requested = "certification_requested"
+    sample_requested = "sample_requested"
+    sample_follow_up = "sample_follow_up"
+    qualification_review = "qualification_review"
+
+
+class CommercialPilotIndustry(str, Enum):
+    lifting_systems = "lifting_systems"
+    education_furniture = "education_furniture"
+    contract_office = "contract_office"
+
+
+class CommercialPilotStatus(str, Enum):
+    draft = "draft"
+    running = "running"
+    quote_blocked = "quote_blocked"
+    mr_pending = "mr_pending"
+    completed = "completed"
+
+
 class ChannelLeadSource(str, Enum):
     direct = "direct"
     referral = "referral"

@@ -42,6 +42,9 @@ class SupplierDiscoveryRecord(Base, TimestampMixin, UserAuditMixin):
     usage_restrictions: Mapped[str | None] = mapped_column(Text, nullable=True)
     domain_key: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     dedup_fingerprint: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    relationship_type: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    evidence_status: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    manufacturing_region: Mapped[str | None] = mapped_column(String(128), nullable=True)
     status: Mapped[str] = mapped_column(String(64), nullable=False, default="discovered", index=True)
     owner_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True

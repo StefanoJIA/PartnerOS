@@ -56,6 +56,9 @@ class SupplierDiscoveryOut(BaseModel):
     retrieved_at: datetime | None = None
     usage_restrictions: str | None = None
     domain_key: str | None = None
+    relationship_type: str | None = None
+    evidence_status: str | None = None
+    manufacturing_region: str | None = None
     doc_completeness_pct: int | None
     contact_status: str | None
     owner_user_id: UUID | None
@@ -89,6 +92,9 @@ class SupplierDiscoveryCreate(BaseModel):
     data_rights_status: str | None = "pending_review"
     source_review_status: str | None = "pending"
     usage_restrictions: str | None = None
+    relationship_type: str | None = "INTERNAL_RESEARCH"
+    evidence_status: str | None = "pending_review"
+    manufacturing_region: str | None = None
     notes: str | None = None
 
 
