@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { fetchProductFit, type ProductFit } from '@/api/aDomain'
 import { formatApiError } from '@/api/errors'
@@ -20,6 +21,7 @@ const props = defineProps<{
   leadId: string | null
 }>()
 
+const router = useRouter()
 const loading = ref(false)
 const error = ref<string | null>(null)
 const fit = ref<ProductFit | null>(null)
@@ -152,6 +154,17 @@ defineExpose({ fit, load, PRODUCT_FIT_SAFETY, copyQuestions, copyBrief })
       </p>
 
       <div class="flex flex-wrap gap-2">
+        <el-button
+          v-if="leadId"
+          size="small"
+          type="success"
+          @click="router.push({ path: '/admin/quotes/new', query: { leadId } })"
+        >
+          进入报价创建
+        </el-button>
+        <el-button size="small" type="primary" plain @click="router.push('/admin/quote-catalog')">
+          查看报价目录
+        </el-button>
         <el-button size="small" @click="copyQuestions">Copy Questions</el-button>
         <el-button size="small" @click="copyBrief">Copy Product Brief</el-button>
       </div>

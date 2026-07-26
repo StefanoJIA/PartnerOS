@@ -13,7 +13,10 @@ from app.core.request_id import get_request_id
 from app.core.responses import success_envelope
 from app.models import User
 from app.schemas.market_response_reviews import MarketResponseReviewCreate, MarketResponseReviewUpdate
-from app.services.market_response_intelligence import build_market_response_intelligence
+from app.services.market_response_intelligence import (
+    build_lifting_project_expectations,
+    build_market_response_intelligence,
+)
 from app.services.market_response_reviews import (
     build_market_response_review_console,
     create_market_response_review,
@@ -32,6 +35,16 @@ def get_market_response_intelligence(
     _: User = Depends(require_permission(PERM_MARKET_READ)),
 ):
     data = build_market_response_intelligence(db, related_company_id=related_company_id, focus_category=focus_category)
+    return success_envelope(data, request_id=get_request_id(request))
+
+
+@router.get("/lifting-project-expectations")
+def get_lifting_project_expectations(
+    request: Request,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_permission(PERM_MARKET_READ)),
+):
+    data = build_lifting_project_expectations(db)
     return success_envelope(data, request_id=get_request_id(request))
 
 

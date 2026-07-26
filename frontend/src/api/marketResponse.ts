@@ -124,6 +124,30 @@ export async function fetchMarketResponseIntelligence(params?: { related_company
   return data.data
 }
 
+export interface LiftingProjectExpectations {
+  summary: {
+    catalog_product_count: number
+    feedback_signal_count: number
+    market_signal_count: number
+    requirement_count: number
+    high_priority_gaps: number
+  }
+  requirements: Array<{
+    requirement_key: string
+    requirement_label: string
+    current_capability_score: number
+    priority: string
+    recommended_validation: string
+    single_feedback_is_not_conclusion: boolean
+  }>
+  deep_links: Record<string, string>
+}
+
+export async function fetchLiftingProjectExpectations() {
+  const { data } = await http.get<V1Envelope<LiftingProjectExpectations>>('/v1/market/lifting-project-expectations')
+  return data.data
+}
+
 export interface MarketResponseReview {
   id: string
   partner_focus: string

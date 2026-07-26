@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { fetchQuoteInputContract, type QuoteInputContract } from '@/api/quoteInputContract'
 import { formatApiError } from '@/api/errors'
@@ -19,6 +20,7 @@ const props = defineProps<{
   leadId: string | null
 }>()
 
+const router = useRouter()
 const loading = ref(false)
 const error = ref<string | null>(null)
 const contract = ref<QuoteInputContract | null>(null)
@@ -82,6 +84,15 @@ function copyQuestions() {
   if (qs.length) {
     copyText(qs.map((q, i) => `${i + 1}. ${q}`).join('\n'), 'Customer questions')
   }
+}
+
+const canStartQuote = computed(
+  () => contract.value?.quote_module_readiness === 'ready_for_phase2_quote_draft',
+)
+
+function startQuoteDraft() {
+  if (!props.leadId) return
+  router.push({ path: '/admin/quotes/new', query: { leadId: props.leadId } })
 }
 
 defineExpose({
@@ -188,6 +199,9 @@ defineExpose({
       </div>
 
       <div class="flex flex-wrap gap-2">
+        <el-button size="small" type="success" :disabled="!canStartQuote" @click="startQuoteDraft">
+          进入报价创建
+        </el-button>
         <el-button size="small" type="primary" @click="copySummary">Copy Quote Input Summary</el-button>
         <el-button size="small" @click="copyJson">Copy Quote Input JSON</el-button>
         <el-button size="small" @click="copyQuestions">Copy Customer Questions</el-button>

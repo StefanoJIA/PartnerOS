@@ -83,26 +83,44 @@
         <div>
           <h3 class="font-semibold text-slate-800">Partner 产品方向解释</h3>
           <p class="mt-1 text-sm text-slate-600">
-            市场响应用于判断 HOSUN lifting systems、desk frames、desk legs、lifting columns、heavy-duty supply，
-            以及 JOOBOO education furniture / project furniture 是否值得继续投入。信号来自订单、物流、生产延迟和客户反馈。
+            市场响应用于判断升降系统（桌架、桌腿、升降柱、重载供应）与教育/项目家具方向是否值得继续投入。
+            各制造伙伴平级评估；信号来自订单、物流、生产延迟和客户反馈。
           </p>
         </div>
-        <el-tag type="success" effect="plain">HOSUN / JOOBOO 平级</el-tag>
+        <el-tag type="success" effect="plain">伙伴平级</el-tag>
       </div>
       <div class="grid gap-3 md:grid-cols-2">
         <div class="rounded border border-slate-100 bg-slate-50 p-3">
-          <p class="text-sm font-semibold text-slate-800">HOSUN lifting systems</p>
+          <p class="text-sm font-semibold text-slate-800">升降系统 / 桌架 / 桌腿 / 升降柱</p>
           <p class="mt-1 text-sm text-slate-600">
-            重点看 desk frames、desk legs、lifting columns 和 heavy-duty supply 的报价、订单、物流风险与反馈。
+            重点看区间报价、订单、物流风险、项目制需求与客户反馈；单次反馈不构成结论。
           </p>
         </div>
         <div class="rounded border border-slate-100 bg-slate-50 p-3">
-          <p class="text-sm font-semibold text-slate-800">JOOBOO education furniture</p>
+          <p class="text-sm font-semibold text-slate-800">教育 / 项目家具</p>
           <p class="mt-1 text-sm text-slate-600">
             重点看 education furniture / project furniture 的项目制采购、交付风险和客户反馈回流。
           </p>
         </div>
       </div>
+    </section>
+
+    <section v-if="liftingExpectations" class="rounded border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 class="font-semibold text-slate-800">升降项目期望视图</h3>
+          <p class="mt-1 text-sm text-slate-600">
+            汇总桌架/桌腿/升降柱市场需求、当前能力、证据与差距；单次反馈不构成结论。
+          </p>
+        </div>
+        <el-tag type="warning" effect="plain">P1 缺口 {{ liftingExpectations.summary.high_priority_gaps }}</el-tag>
+      </div>
+      <el-table :data="liftingExpectations.requirements.slice(0, 8)" stripe size="small">
+        <el-table-column prop="requirement_label" label="项目需求" min-width="180" />
+        <el-table-column prop="current_capability_score" label="能力分" width="90" />
+        <el-table-column prop="priority" label="优先级" width="90" />
+        <el-table-column prop="recommended_validation" label="建议验证" min-width="260" />
+      </el-table>
     </section>
 
     <section class="rounded border border-slate-200 bg-white p-4">
@@ -346,9 +364,11 @@ import { http } from '@/api/http'
 import {
   createMarketResponseReview,
   fetchMarketResponseIntelligence,
+  fetchLiftingProjectExpectations,
   fetchMarketResponseReviews,
   updateMarketResponseReview,
   type MarketResponseIntelligence,
+  type LiftingProjectExpectations,
   type MarketResponseReview,
   type MarketResponseReviewConsole,
   type MarketResponseReviewPayload,
@@ -362,6 +382,7 @@ const rows = ref<unknown[]>([])
 const filterCompanyId = ref<string | null>(null)
 const focusCategory = ref<string | null>(null)
 const data = ref<MarketResponseIntelligence | null>(null)
+const liftingExpectations = ref<LiftingProjectExpectations | null>(null)
 const loading = ref(false)
 const error = ref('')
 const reviewConsole = ref<MarketResponseReviewConsole | null>(null)
@@ -378,7 +399,7 @@ const reviewFilterKeys = ['partner_focus', 'focus_category', 'visibility_class',
 type ReviewFilterKey = (typeof reviewFilterKeys)[number]
 const reviewForm = ref({
   id: '',
-  partner_focus: 'HOSUN',
+  partner_focus: '',
   focus_category: 'adjustable_desk_frames',
   product_focus_text: 'lifting systems, desk frames, desk legs, lifting columns, heavy-duty supply',
   review_dimension: 'load',
@@ -428,11 +449,13 @@ async function load() {
     const params: { related_company_id?: string; focus_category?: string } = {}
     if (companyId) params.related_company_id = companyId
     if (focus) params.focus_category = focus
-    const [intelligence, marketItems] = await Promise.all([
+    const [intelligence, marketItems, lifting] = await Promise.all([
       fetchMarketResponseIntelligence(params),
       http.get('/market-intelligence', { params }),
+      fetchLiftingProjectExpectations(),
     ])
     data.value = intelligence
+    liftingExpectations.value = lifting
     rows.value = marketItems.data.items
   } catch (e) {
     error.value = formatApiError(e, '市场响应智能加载失败。')
@@ -517,7 +540,7 @@ async function loadReviews() {
 function resetReviewForm() {
   reviewForm.value = {
     id: '',
-    partner_focus: 'HOSUN',
+    partner_focus: '',
     focus_category: 'adjustable_desk_frames',
     product_focus_text: 'lifting systems, desk frames, desk legs, lifting columns, heavy-duty supply',
     review_dimension: 'load',

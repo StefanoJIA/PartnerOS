@@ -16,6 +16,44 @@ export interface QuoteSafety {
   lead_time_promised: boolean
 }
 
+export interface QuoteDraftSeed {
+  quote_number: string
+  valid_days: number
+  safety: {
+    automatic_sending_enabled: boolean
+    quote_created: boolean
+    customer_notified: boolean
+    supplier_notified: boolean
+  }
+}
+
+export interface QuoteCustomerCompanyOption {
+  id: string
+  company_name: string
+  address: string | null
+  city: string | null
+  state: string | null
+  country: string | null
+  customer_segment: string | null
+}
+
+export interface QuoteCustomerContactOption {
+  id: string
+  company_id: string
+  full_name: string
+  first_name: string
+  last_name: string
+  email: string | null
+  title: string | null
+  company_name: string
+  company_address: string | null
+}
+
+export interface QuoteCustomerOptions {
+  companies: QuoteCustomerCompanyOption[]
+  contacts: QuoteCustomerContactOption[]
+}
+
 export interface QuoteLearningSafety {
   external_message_sent: boolean
   quote_status_changed: boolean
@@ -425,6 +463,47 @@ export async function fetchQuote(id: string): Promise<QuoteDetail> {
   return data.data
 }
 
+export async function fetchQuoteDraftSeed(): Promise<QuoteDraftSeed> {
+  const { data } = await http.get<V1Envelope<QuoteDraftSeed>>('/v1/quotes/draft-seed')
+  return data.data
+}
+
+export async function fetchQuoteCustomerOptions(params?: { q?: string }): Promise<QuoteCustomerOptions> {
+  const search = new URLSearchParams()
+  if (params?.q) search.set('q', params.q)
+  const suffix = search.toString() ? `?${search}` : ''
+  const { data } = await http.get<V1Envelope<QuoteCustomerOptions>>(`/v1/quotes/customer-options${suffix}`)
+  return data.data
+}
+
+export interface QuoteFromContractPayload {
+  lead_id: string
+  line_items: Array<{
+    product_id: string
+    quantity: number
+    incoterm?: string
+    pricing_strategy?: string
+    manual_interval_quote_table?: Array<{
+      min_qty: number
+      max_qty: number | null
+      quantity_label: string
+      currency: string
+      fob_unit_price: string | null
+      ddp_unit_price: string | null
+    }> | null
+  }>
+  bill_to?: { name?: string; company?: string; address?: string }
+  ship_to?: { name?: string; company?: string; address?: string }
+  payment_terms?: string
+  shipping_terms?: string
+  internal_notes?: string
+}
+
+export async function createQuoteFromContract(payload: QuoteFromContractPayload): Promise<QuoteDetail> {
+  const { data } = await http.post<V1Envelope<QuoteDetail>>('/v1/quotes/from-contract', payload)
+  return data.data
+}
+
 export async function fetchQuoteLearning(quoteId: string): Promise<{ items: QuoteLearningRecord[]; total: number; safety: QuoteLearningSafety }> {
   const { data } = await http.get<V1Envelope<{ items: QuoteLearningRecord[]; total: number; safety: QuoteLearningSafety }>>(
     `/v1/quotes/${quoteId}/learning`,
@@ -510,6 +589,23 @@ export async function fetchQuotePdfExports(quoteId: string): Promise<PdfExportLi
 
 export function quotePdfDownloadUrl(quoteId: string, exportId: string): string {
   return `/api/v1/quotes/${quoteId}/pdf-exports/${exportId}/download`
+}
+
+export async function downloadQuotePdf(quoteId: string, exportId: string): Promise<Blob> {
+  const { data } = await http.get(`/v1/quotes/${quoteId}/pdf-exports/${exportId}/download`, {
+    responseType: 'blob',
+  })
+  return data
+}
+
+export async function deleteQuotePdfExport(
+  quoteId: string,
+  exportId: string,
+): Promise<{ deleted: boolean; export_id: string; file_removed: boolean }> {
+  const { data } = await http.delete<V1Envelope<{ deleted: boolean; export_id: string; file_removed: boolean }>>(
+    `/v1/quotes/${quoteId}/pdf-exports/${exportId}`,
+  )
+  return data.data
 }
 
 export type ReadinessStatus =

@@ -534,3 +534,126 @@ def build_market_response_intelligence(
         "recommendations": recommendations,
         "safety": market_response_safety(),
     }
+
+
+def build_lifting_project_expectations(db: Session) -> dict[str, Any]:
+    """Project expectation view for adjustable frames, desk legs, and lifting columns."""
+    from app.models import ProductCatalog
+    from app.services.product_capability_schema import (
+        PROJECT_REQUIREMENT_SIGNALS,
+        capability_coverage,
+        evaluate_project_requirement_fit,
+    )
+
+    focus_keys = ("adjustable_desk_frames", "desk_legs", "lifting_columns")
+    catalog_rows = _safe_rows(db, ProductCatalog)
+    focus_products = [
+        row
+        for row in catalog_rows
+        if _focus_matches(
+            "adjustable_desk_frames",
+            getattr(row, "product_category", None),
+            getattr(row, "product_name", None),
+            getattr(row, "product_family", None),
+        )
+        or _focus_matches(
+            "desk_legs",
+            getattr(row, "product_category", None),
+            getattr(row, "product_name", None),
+            getattr(row, "product_family", None),
+        )
+        or _focus_matches(
+            "lifting_columns",
+            getattr(row, "product_category", None),
+            getattr(row, "product_name", None),
+            getattr(row, "product_family", None),
+        )
+    ]
+
+    feedback_rows = _safe_rows(db, FeedbackTicket)
+    market_items = _safe_rows(db, MarketIntelligenceItem)
+    lifting_feedback = [
+        row
+        for row in feedback_rows
+        if _focus_matches("adjustable_desk_frames", *_feedback_focus_parts(row))
+        or _focus_matches("desk_legs", *_feedback_focus_parts(row))
+        or _focus_matches("lifting_columns", *_feedback_focus_parts(row))
+    ]
+    lifting_market = [
+        row
+        for row in market_items
+        if _focus_matches("adjustable_desk_frames", *_market_item_focus_parts(row))
+        or _focus_matches("desk_legs", *_market_item_focus_parts(row))
+        or _focus_matches("lifting_columns", *_market_item_focus_parts(row))
+    ]
+
+    evidence_snippets: list[str] = []
+    for row in lifting_feedback[:5]:
+        evidence_snippets.append(_text(getattr(row, "subject", None), getattr(row, "message", None)))
+    for row in lifting_market[:5]:
+        evidence_snippets.append(_text(getattr(row, "title", None), getattr(row, "summary", None)))
+
+    requirement_rows: list[dict[str, Any]] = []
+    for req_key, req_label, _field in PROJECT_REQUIREMENT_SIGNALS:
+        product_scores = [
+            evaluate_project_requirement_fit(
+                req_key,
+                (getattr(p, "attributes_json", None) or {}),
+                evidence=evidence_snippets[0] if evidence_snippets else None,
+            )
+            for p in focus_products[:12]
+        ]
+        best = max(product_scores, key=lambda x: x["fit_score"], default=None)
+        avg_score = (
+            round(sum(x["fit_score"] for x in product_scores) / len(product_scores), 1) if product_scores else 0
+        )
+        requirement_rows.append(
+            {
+                "requirement_key": req_key,
+                "requirement_label": req_label,
+                "market_demand_signal": req_label,
+                "current_capability_score": avg_score,
+                "best_product_fit": best,
+                "evidence_count": len(lifting_feedback) + len(lifting_market),
+                "evidence_samples": evidence_snippets[:3],
+                "gap_summary": best.get("missing_conditions", []) if best else ["no_catalog_products"],
+                "priority": "P1" if avg_score < 55 else "P2",
+                "recommended_validation": best.get("recommended_next") if best else "Import capability attributes.",
+                "single_feedback_is_not_conclusion": True,
+            }
+        )
+
+    product_rows = []
+    for product in focus_products[:20]:
+        coverage = capability_coverage(getattr(product, "attributes_json", None))
+        product_rows.append(
+            {
+                "product_id": str(product.id),
+                "product_name": product.product_name,
+                "product_category": product.product_category,
+                "partner_id": str(product.partner_id) if product.partner_id else None,
+                "coverage": coverage,
+                "priority": "P1" if coverage["coverage_pct"] < 50 else "P2",
+            }
+        )
+
+    requirement_rows.sort(key=lambda r: (r["priority"], -float(r["current_capability_score"])))
+
+    return {
+        "focus_categories": list(focus_keys),
+        "summary": {
+            "catalog_product_count": len(focus_products),
+            "feedback_signal_count": len(lifting_feedback),
+            "market_signal_count": len(lifting_market),
+            "requirement_count": len(requirement_rows),
+            "high_priority_gaps": sum(1 for r in requirement_rows if r["priority"] == "P1"),
+        },
+        "requirements": requirement_rows,
+        "products": product_rows,
+        "deep_links": {
+            "quote_catalog": "/admin/quote-catalog",
+            "market_intelligence": "/admin/market-intelligence",
+            "daily_decision_queue": "/admin/daily-decision-queue",
+        },
+        "safety": market_response_safety(),
+    }
