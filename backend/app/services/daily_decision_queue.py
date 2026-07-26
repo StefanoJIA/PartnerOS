@@ -13,7 +13,14 @@ from urllib.parse import urlencode
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from app.models import CustomerProjectRequest, DailyQueueHandlingRecord, FeedbackTicket, User
+from app.models import (
+    CustomerProjectRequest,
+    DailyQueueHandlingRecord,
+    FeedbackTicket,
+    SupplierDiscoveryRecord,
+    SupplierSampleEvaluation,
+    User,
+)
 from app.schemas.dashboard_actions import (
     DailyDecisionQueueItem,
     DailyDecisionQueueOut,
@@ -236,6 +243,91 @@ def _risk_for_gap(gap: dict) -> str:
     if gap.get("affects_pilot"):
         return "pilot readiness risk"
     return "operating gap"
+
+
+def _supplier_discovery_item(record: SupplierDiscoveryRecord, *, kind: str, title: str, reason: str) -> DailyDecisionQueueItem:
+    return DailyDecisionQueueItem(
+        id=f"supplier-discovery:{record.id}:{kind}",
+        category="supplier_network",
+        priority="P1" if kind in {"qualification_review", "cert_expiry"} else "P2",
+        severity=record.status,
+        title=title,
+        reason=reason,
+        risk=record.risk_level or "unknown",
+        next_action="Review supplier qualification workbench",
+        source_type="supplier_discovery",
+        source_id=str(record.id),
+        partner_focus=record.company_name,
+        product_focus=record.categories or [],
+        source_path=_path("/supplier-discovery", status=record.status),
+    )
+
+
+def _sample_eval_item(row: SupplierSampleEvaluation) -> DailyDecisionQueueItem:
+    overdue = row.request_date and not row.receipt_date
+    return DailyDecisionQueueItem(
+        id=f"supplier-sample:{row.id}",
+        category="supplier_network",
+        priority="P1" if overdue else "P2",
+        severity="overdue" if overdue else "pending",
+        title=f"样品/工程评审待完成：{row.template_key}",
+        reason="Sample or engineering evaluation pending reviewer sign-off.",
+        risk="quality_validation_pending",
+        next_action="Complete sample evaluation checklist",
+        source_type="supplier_sample_evaluation",
+        source_id=str(row.id),
+        partner_focus=None,
+        product_focus=[row.template_key],
+        due_date=row.request_date,
+        source_path=_path("/supplier-discovery", sample=str(row.id)),
+    )
+
+
+def _build_supplier_network_items(db: Session) -> list[DailyDecisionQueueItem]:
+    items: list[DailyDecisionQueueItem] = []
+    for rec in (
+        db.query(SupplierDiscoveryRecord)
+        .filter(
+            SupplierDiscoveryRecord.status.in_(
+                ("discovered", "contacted", "information_requested", "evaluating", "sample_requested")
+            )
+        )
+        .order_by(SupplierDiscoveryRecord.updated_at.desc())
+        .limit(8)
+        .all()
+    ):
+        items.append(
+            _supplier_discovery_item(
+                rec,
+                kind="contact",
+                title=f"供应商待联系/评估：{rec.company_name}",
+                reason=f"Discovery status: {rec.status}",
+            )
+        )
+    for rec in (
+        db.query(SupplierDiscoveryRecord)
+        .filter(SupplierDiscoveryRecord.status == "qualified")
+        .order_by(SupplierDiscoveryRecord.updated_at.desc())
+        .limit(5)
+        .all()
+    ):
+        items.append(
+            _supplier_discovery_item(
+                rec,
+                kind="qualification_review",
+                title=f"资质已通过待激活审批：{rec.company_name}",
+                reason="Qualified supplier requires manual operator approval to activate as partner.",
+            )
+        )
+    for row in (
+        db.query(SupplierSampleEvaluation)
+        .filter(SupplierSampleEvaluation.overall_result.is_(None))
+        .order_by(SupplierSampleEvaluation.updated_at.desc())
+        .limit(8)
+        .all()
+    ):
+        items.append(_sample_eval_item(row))
+    return items
 
 
 def _gap_item(gap: dict) -> DailyDecisionQueueItem:
@@ -670,6 +762,7 @@ def build_daily_decision_queue(db: Session, user: User) -> DailyDecisionQueueOut
     revenue_forecast = build_revenue_forecast_intelligence(db, limit=80)
 
     items: list[DailyDecisionQueueItem] = []
+    items.extend(_build_supplier_network_items(db))
     for gap in external.get("readiness_gap_intelligence") or []:
         if gap.get("severity") in {"P0", "P1"} or gap.get("affects_d9") or gap.get("affects_pilot"):
             items.append(_gap_item(gap))
