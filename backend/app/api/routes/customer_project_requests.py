@@ -19,7 +19,12 @@ from app.schemas.customer_project_request_domain import (
     QuoteInputContractGenerateOut,
 )
 from app.schemas.pagination import PaginatedResponse
-from app.services.customer_project_requests.market_signal_service import promote_market_signal_to_review
+from app.services.customer_project_requests.market_signal_service import (
+    build_market_signal_draft,
+    promote_market_signal_to_review,
+)
+from app.schemas.multibrand_export import CandidateDecisionBody, ProjectRequestCandidateOut
+from app.models.project_request_candidates import ProjectRequestSupplierCandidate
 from app.services.customer_project_requests.workspace_service import (
     assign_partner_and_sku,
     build_detail_payload,
@@ -27,7 +32,10 @@ from app.services.customer_project_requests.workspace_service import (
     create_admin_request,
     update_request_status,
 )
-from app.services.customer_project_requests.market_signal_service import build_market_signal_draft
+from app.services.customer_project_requests.multi_supplier_fit_service import (
+    record_candidate_decision,
+    refresh_supplier_candidates,
+)
 
 router = APIRouter(prefix="/project-requests", tags=["project-requests"])
 
@@ -181,3 +189,56 @@ def promote_market_signal(
         raise HTTPException(status_code=404, detail="Project request not found")
     review = promote_market_signal_to_review(db, row, actor_id=user.id)
     return {"review_id": str(review.id), "status": review.status, "message": "Market signal queued for operator review."}
+
+
+@router.post("/{request_id}/refresh-candidates", response_model=list[ProjectRequestCandidateOut])
+def refresh_candidates(
+    request_id: UUID,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> list[ProjectRequestCandidateOut]:
+    row = db.query(CustomerProjectRequest).filter(CustomerProjectRequest.id == request_id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Project request not found")
+    candidates = refresh_supplier_candidates(db, row, actor_id=user.id)
+    db.commit()
+    return [ProjectRequestCandidateOut.model_validate(c) for c in candidates]
+
+
+@router.get("/{request_id}/candidates", response_model=list[ProjectRequestCandidateOut])
+def list_candidates(
+    request_id: UUID,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> list[ProjectRequestCandidateOut]:
+    rows = (
+        db.query(ProjectRequestSupplierCandidate)
+        .filter(ProjectRequestSupplierCandidate.project_request_id == request_id)
+        .order_by(ProjectRequestSupplierCandidate.is_auto_recommended.desc())
+        .all()
+    )
+    return [ProjectRequestCandidateOut.model_validate(r) for r in rows]
+
+
+@router.post("/{request_id}/candidates/{candidate_id}/decision", response_model=ProjectRequestCandidateOut)
+def decide_candidate(
+    request_id: UUID,
+    candidate_id: UUID,
+    body: CandidateDecisionBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> ProjectRequestCandidateOut:
+    cand = (
+        db.query(ProjectRequestSupplierCandidate)
+        .filter(
+            ProjectRequestSupplierCandidate.id == candidate_id,
+            ProjectRequestSupplierCandidate.project_request_id == request_id,
+        )
+        .first()
+    )
+    if not cand:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    if body.decision == "selected" and not cand.eligible_for_formal_quote:
+        raise HTTPException(status_code=400, detail="Candidate not eligible for formal quote")
+    updated = record_candidate_decision(db, cand, decision=body.decision, reason=body.reason, actor_id=user.id)
+    return ProjectRequestCandidateOut.model_validate(updated)
