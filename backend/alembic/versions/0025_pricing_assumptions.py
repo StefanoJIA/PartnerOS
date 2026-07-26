@@ -20,7 +20,16 @@ branch_labels = None
 depends_on = None
 
 
+def table_exists(table_name: str) -> bool:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    return table_name in inspector.get_table_names()
+
+
 def upgrade() -> None:
+    if table_exists("pricing_assumptions"):
+        return
+
     op.create_table(
         "pricing_assumptions",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
@@ -42,6 +51,11 @@ def upgrade() -> None:
     op.create_index("ix_pricing_assumptions_assumption_key", "pricing_assumptions", ["assumption_key"])
     op.create_index("ix_pricing_assumptions_effective_from", "pricing_assumptions", ["effective_from"])
     op.create_index("ix_pricing_assumptions_is_active", "pricing_assumptions", ["is_active"])
+
+    bind = op.get_bind()
+    existing = bind.execute(sa.text("SELECT COUNT(*) FROM pricing_assumptions")).scalar()
+    if existing:
+        return
 
     assumptions = sa.table(
         "pricing_assumptions",
