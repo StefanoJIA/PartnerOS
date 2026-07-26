@@ -262,6 +262,7 @@
         }
     </style>
     <script src="/js/address-data.js"></script>
+    <script src="/js/site-order-intake.js"></script>
     <link rel="stylesheet" href="/css/customer-theme.css">
 </head>
 <body>
@@ -848,7 +849,23 @@
                     return;
                 }
 
-                showSuccess(`Order created successfully! Order Number: ${data.order_number}`);
+                const intake = typeof handleSiteOrderIntakeResponse === 'function'
+                    ? handleSiteOrderIntakeResponse(data)
+                    : { kind: data.order_number ? 'success' : 'demo_intake', message: data.message || 'Submitted.' };
+                if (intake.kind === 'demo_intake') {
+                    showSuccess(`[演示/意向提交] ${intake.message}`);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Place Order';
+                    return;
+                }
+                if (intake.kind !== 'success') {
+                    showError(intake.message || 'Failed to create order');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Place Order';
+                    return;
+                }
+
+                showSuccess(intake.message);
                 
                 setTimeout(() => {
                     window.location.href = '/dashboard';

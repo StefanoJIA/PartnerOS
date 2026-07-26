@@ -18,6 +18,9 @@ FORBIDDEN_FIELD_NAMES = {
     "token",
     "secret",
     "password",
+    "fit_risk",
+    "internal_fit",
+    "internal_risk",
 }
 
 FORBIDDEN_TEXT_MARKERS = (
@@ -29,8 +32,8 @@ FORBIDDEN_TEXT_MARKERS = (
     "backend/storage",
     "local_data",
     "portal_customer_api_token",
+    "internal_attachment",
 )
-
 
 FORBIDDEN_KEY_SUBSTRINGS = (
     "margin",
@@ -40,6 +43,8 @@ FORBIDDEN_KEY_SUBSTRINGS = (
     "supplier_private",
     "supplier_reference",
     "supplier_note",
+    "internal_attachment",
+    "fit_risk",
 )
 
 

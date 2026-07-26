@@ -861,7 +861,7 @@
                         <div class="download-meta">JOBO project furniture material</div>
                     </div>
                     <div class="resource-actions">
-                        <a href="/static/documents/jobo-school-furniture-catalog.pdf" class="btn-download" download>Download</a>
+                        <a href="/static/documents/jobo-school-furniture-catalog.pdf" class="btn-download" data-local-resource="true" download>Download</a>
                     </div>
                 </div>
             </div>
@@ -1036,8 +1036,30 @@
             return true;
         }
 
+        async function markMissingLocalResources() {
+            const links = document.querySelectorAll('[data-local-resource="true"]');
+            for (const link of links) {
+                const href = link.getAttribute('href');
+                if (!href) continue;
+                try {
+                    const response = await fetch(href, { method: 'HEAD' });
+                    if (response.ok) continue;
+                } catch (error) {
+                    // unavailable in this environment
+                }
+                link.classList.add('resource-unavailable');
+                link.removeAttribute('download');
+                link.textContent = 'Local copy unavailable';
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    alert('This brochure is not bundled in this demo environment. Contact IntelliOpus for the full catalog.');
+                });
+            }
+        }
+
         // Initialize public-safe resources; cart count remains authenticated-only.
         updatePublicHeader();
+        markMissingLocalResources();
         loadBasicColors();
         if (getToken()) {
             loadCartCount();
