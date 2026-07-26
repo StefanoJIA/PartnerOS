@@ -148,6 +148,45 @@ def test_d8_staging_evidence_review_rejects_fail_local_rehearsal(tmp_path, monke
     assert "Result: FAIL" in output
 
 
+def test_d8_staging_evidence_review_rejects_blocked_canonical_payload(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d8_strict_staging_evidence_20260726.json").write_text(
+        """
+{
+  "status": "BLOCKED",
+  "staging_validated": false,
+  "result": "PASS",
+  "checks": [{"label": "health", "status": "PASS", "detail": "ok"}],
+  "safety": {
+    "token_redacted": true,
+    "response_bodies_stored": false
+  }
+}
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert module.main() == 1
+    output = capsys.readouterr().out
+    assert "Review State: EVIDENCE_BLOCKED" in output
+    assert "Result: FAIL" in output
+
+
+def test_d8_staging_evidence_review_ignores_preflight_blocker_record(tmp_path, monkeypatch, capsys):
+    module = _load_module()
+    monkeypatch.setattr(module, "RECORDS_ROOT", tmp_path)
+    (tmp_path / "d8_staging_preflight_blocker_20260726.json").write_text(
+        '{"status":"BLOCKED","staging_validated":false}',
+        encoding="utf-8",
+    )
+
+    assert module.main() == 0
+    output = capsys.readouterr().out
+    assert "Review State: WAITING_FOR_STAGING_EVIDENCE" in output
+
+
 def test_d8_staging_evidence_review_flags_generic_private_key_in_doc(monkeypatch, tmp_path, capsys):
     module = _load_module()
     doc = tmp_path / "review.md"

@@ -110,6 +110,9 @@ def _evidence_state() -> tuple[str, str]:
 
     latest = files[0]
     data = _read_json(latest)
+    blocked_status = str(data.get("status") or "").upper()
+    if blocked_status in {"BLOCKED", "FAIL"}:
+        return "EVIDENCE_BLOCKED", latest.name
     result = str(data.get("result") or "").upper()
     checks = data.get("checks")
     safety = data.get("safety")
@@ -160,7 +163,6 @@ def main() -> int:
         checks[3].pass_(f"{state}: {detail}")
     else:
         checks[3].fail(f"{state}: {detail}")
-
     print("D8 Staging Evidence Review Check")
     for check in checks:
         print(check.line())

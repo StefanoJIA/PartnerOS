@@ -1,0 +1,26 @@
+{
+  "record_type": "d8_staging_preflight_blocker",
+  "status": "BLOCKED",
+  "stage": "READY_FOR_STAGING_HANDOFF",
+  "staging_validated": false,
+  "generated_at_utc": "2026-07-26T04:20:00Z",
+  "branch": "feat/e2e-supplier-convergence",
+  "audited_commit_range": "6b2bec3..244d133",
+  "deployed_commit_sha": null,
+  "backend_host_redacted": null,
+  "portal_origin_redacted": null,
+  "blocker_summary": "Strict staging HTTPS backend URL, portal partner token, and portal origin are not configured in process environment or backend/.env. Real staging smoke scripts were not executed.",
+  "preflight": {
+    "backend_base_url_config": { "present": false, "source": "process_env_and_backend_dotenv" },
+    "portal_partneros_token_config": { "present": false, "source": "process_env_and_backend_dotenv" },
+    "portal_origin_config": { "present": false, "source": "process_env_and_backend_dotenv" },
+    "database_config": { "present": true, "source": "backend/.env", "value_redacted": true }
+  },
+  "checks": [
+    { "script": "d8_staging_input_preflight_check.py", "status": "BLOCKED", "detail": "WAITING_FOR_PRIVATE_VALUES" },
+    { "script": "d8_3_service_portal_staging_check.py", "status": "BLOCKED", "detail": "not executed — missing backend URL and portal token" },
+    { "script": "d8_strict_staging_evidence_check.py", "status": "BLOCKED", "detail": "not executed — strict staging inputs missing" }
+  ],
+  "localhost_substitution": false,
+  "next_unblock_step": "Provide HTTPS backend URL pinned to deployed commit SHA, portal partner token (>=24 chars, non-default), and https://service.intelli-opus.com origin via secure operator channel; redeploy branch commit; rerun preflight then strict evidence scripts."
+}

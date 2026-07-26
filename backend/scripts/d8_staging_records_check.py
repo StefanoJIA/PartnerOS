@@ -20,7 +20,7 @@ POLICY_DOC = REPO_ROOT / "docs" / "phase3" / "d8_staging_records_policy.md"
 
 EVIDENCE_PATTERN = re.compile(r"^d8_strict_staging_evidence_\d{8}\.json$")
 STAGING_RECORD_PATTERN = re.compile(
-    r"^d8_(?:strict_staging_(?:evidence|gaps)_\d{8}|staging_operator_handoff_\d{8}|staging_access_request_\d{8}|production_go_no_go_\d{8})\.(?:json|md)$"
+    r"^d8_(?:strict_staging_(?:evidence|gaps)_\d{8}|staging_preflight_blocker_\d{8}|staging_operator_handoff_\d{8}|staging_access_request_\d{8}|production_go_no_go_\d{8})\.(?:json|md)$"
 )
 CURRENT_HANDOFF_PATTERN = re.compile(r"^d8_staging_operator_handoff_\d{8}\.md$")
 CURRENT_ACCESS_REQUEST_PATTERN = re.compile(r"^d8_staging_access_request_\d{8}\.md$")

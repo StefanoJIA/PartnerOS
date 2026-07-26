@@ -159,7 +159,13 @@ def _staging_status() -> tuple[str, str]:
         return "READY_FOR_STAGING", "no strict staging evidence JSON found"
     latest = files[0]
     data = _read_json(latest)
+    blocked_status = str(data.get("status") or "").upper()
+    if blocked_status in {"BLOCKED", "FAIL"}:
+        return "STAGING_EVIDENCE_BLOCKED", latest.name
     result = str(data.get("result") or "").upper()
+    deployed_sha = str(data.get("deployed_commit_sha") or data.get("commit_sha") or "").strip()
+    if result == "PASS" and not deployed_sha:
+        return "STAGING_EVIDENCE_INCOMPLETE", f"{latest.name}: missing deployed_commit_sha"
     backend_base_url = str(data.get("backend_base_url") or "")
     backend_host = (urlparse(backend_base_url).hostname or "").lower()
     if data.get("allow_local_http") is True or backend_host in {"localhost", "127.0.0.1", "::1"}:
