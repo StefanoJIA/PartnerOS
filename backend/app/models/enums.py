@@ -289,12 +289,33 @@ class FieldVerificationStatus(str, Enum):
 class SupplierDiscoveryStatus(str, Enum):
     discovered = "discovered"
     contacted = "contacted"
+    information_requested = "information_requested"
     evaluating = "evaluating"
     sample_requested = "sample_requested"
+    sample_received = "sample_received"
     qualified = "qualified"
     active = "active"
     rejected = "rejected"
     paused = "paused"
+
+
+class QualificationDimensionStatus(str, Enum):
+    pass_ = "PASS"
+    partial = "PARTIAL"
+    unknown = "UNKNOWN"
+    fail = "FAIL"
+
+
+class SampleEvaluationResult(str, Enum):
+    pass_ = "pass"
+    conditional = "conditional"
+    fail = "fail"
+
+
+class BuildAction(str, Enum):
+    build = "build"
+    integrate = "integrate"
+    do_not_build = "do-not-build"
 
 
 class FitDimensionStatus(str, Enum):
@@ -320,10 +341,11 @@ class ChannelLeadSource(str, Enum):
     direct = "direct"
     referral = "referral"
     trade_show = "trade_show"
-    alibaba = "Alibaba"
-    thomasnet = "Thomasnet"
     website = "website"
     dealer = "dealer"
+    alibaba = "Alibaba"
+    made_in_china = "Made-in-China"
+    thomasnet = "Thomasnet"
     manual = "manual"
     other = "other"
 

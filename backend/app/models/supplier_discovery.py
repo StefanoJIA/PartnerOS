@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import ForeignKey, Integer, String, Text
+from datetime import datetime
+
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -30,6 +32,16 @@ class SupplierDiscoveryRecord(Base, TimestampMixin, UserAuditMixin):
     contact_status: Mapped[str | None] = mapped_column(String(64), nullable=True)
     risk_level: Mapped[str | None] = mapped_column(String(32), nullable=True)
     data_source: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    source_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    factory_address: Mapped[str | None] = mapped_column(Text, nullable=True)
+    contacts_json: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    pricing_doc_status: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    data_rights_status: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    source_review_status: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    retrieved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    usage_restrictions: Mapped[str | None] = mapped_column(Text, nullable=True)
+    domain_key: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    dedup_fingerprint: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     status: Mapped[str] = mapped_column(String(64), nullable=False, default="discovered", index=True)
     owner_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True

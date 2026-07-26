@@ -47,11 +47,21 @@ class SupplierDiscoveryOut(BaseModel):
     status: str
     risk_level: str | None
     data_source: str | None
+    source_url: str | None = None
+    factory_address: str | None = None
+    contacts_json: list | None = None
+    pricing_doc_status: str | None = None
+    data_rights_status: str | None = None
+    source_review_status: str | None = None
+    retrieved_at: datetime | None = None
+    usage_restrictions: str | None = None
+    domain_key: str | None = None
     doc_completeness_pct: int | None
     contact_status: str | None
     owner_user_id: UUID | None
     partner_id: UUID | None
     notes: str | None
+    qualification_json: dict | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -72,6 +82,13 @@ class SupplierDiscoveryCreate(BaseModel):
     contact_status: str | None = None
     risk_level: str | None = None
     data_source: str | None = "manual"
+    source_url: str | None = None
+    factory_address: str | None = None
+    contacts_json: list[dict] | None = None
+    pricing_doc_status: str | None = "unknown"
+    data_rights_status: str | None = "pending_review"
+    source_review_status: str | None = "pending"
+    usage_restrictions: str | None = None
     notes: str | None = None
 
 
@@ -82,6 +99,79 @@ class SupplierDiscoveryUpdate(BaseModel):
     doc_completeness_pct: int | None = None
     notes: str | None = None
     owner_user_id: UUID | None = None
+    factory_address: str | None = None
+    contacts_json: list[dict] | None = None
+    pricing_doc_status: str | None = None
+    data_rights_status: str | None = None
+    source_review_status: str | None = None
+    usage_restrictions: str | None = None
+
+
+class SupplierDiscoveryImportResult(BaseModel):
+    created_count: int
+    skipped_count: int
+    created: list[SupplierDiscoveryOut]
+    skipped: list[dict[str, str]]
+
+
+class QualificationDimensionUpdate(BaseModel):
+    dimension_key: str
+    status: str
+    evidence: str | None = None
+    notes: str | None = None
+
+
+class SupplierSampleEvaluationOut(BaseModel):
+    id: UUID
+    template_key: str
+    supplier_discovery_id: UUID | None
+    partner_id: UUID | None
+    project_request_id: UUID | None
+    product_catalog_id: UUID | None
+    request_date: date | None
+    shipment_date: date | None
+    receipt_date: date | None
+    test_items_json: list | None
+    results_json: dict | None
+    file_refs_json: list | None
+    issues: str | None
+    corrective_action: str | None
+    overall_result: str | None
+    reviewer_user_id: UUID | None
+    reviewer_notes: str | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class SupplierSampleEvaluationCreate(BaseModel):
+    template_key: str = "generic"
+    supplier_discovery_id: UUID | None = None
+    partner_id: UUID | None = None
+    project_request_id: UUID | None = None
+    product_catalog_id: UUID | None = None
+    request_date: date | None = None
+
+
+class SupplierSampleEvaluationUpdate(BaseModel):
+    shipment_date: date | None = None
+    receipt_date: date | None = None
+    results_json: dict | None = None
+    file_refs_json: list | None = None
+    issues: str | None = None
+    corrective_action: str | None = None
+    overall_result: str | None = None
+    reviewer_notes: str | None = None
+
+
+class SupplierSelectionSnapshotOut(BaseModel):
+    id: UUID
+    project_request_id: UUID
+    selected_candidate_id: UUID | None
+    snapshot_json: dict
+    selected_at: datetime
+
+    model_config = {"from_attributes": True}
 
 
 class ProjectRequestCandidateOut(BaseModel):
@@ -118,6 +208,13 @@ class PlatformBenchmarkOut(BaseModel):
     build_recommended: bool
     build_priority: str
     evidence_source: str | None
+    competitor_capability: str | None = None
+    partneros_existing: str | None = None
+    gap_description: str | None = None
+    target_user: str | None = None
+    business_value: str | None = None
+    implementation_cost: str | None = None
+    build_action: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -133,5 +230,9 @@ class ChannelMetricOut(BaseModel):
     quote_rate: float | None
     win_rate: float | None
     data_source: str
+    qualified_project_count: int | None = None
+    cycle_days_avg: int | None = None
+    supplier_coverage_pct: float | None = None
+    lost_reasons_json: dict | None = None
 
     model_config = {"from_attributes": True}
