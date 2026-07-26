@@ -34,8 +34,8 @@ def main() -> int:
     current, head, _ = get_migration_revisions(settings)
     checks: list[tuple[str, bool, str]] = []
 
-    mig_ok = current == head == "0031_platform_intelligence"
-    checks.append(("migration head 0031_platform_intelligence", mig_ok, f"{current}/{head}"))
+    mig_ok = current == head == "0032_supplier_network"
+    checks.append(("migration head 0032_supplier_network", mig_ok, f"{current}/{head}"))
 
     checks.append(
         (
@@ -72,6 +72,7 @@ def main() -> int:
         ("d7_7 portal bridge", "d7_7_portal_bridge_check.py"),
         ("d8_0 staging build readiness", "d8_0_staging_build_readiness_check.py"),
         ("e2e supplier convergence", "e2e_supplier_convergence_check.py"),
+        ("supplier network e2e", "supplier_network_e2e_check.py"),
     ):
         code, output = _run_script(script)
         detail = "PASS" if code == 0 else (output.splitlines()[-1] if output else f"exit {code}")

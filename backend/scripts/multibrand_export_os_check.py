@@ -14,7 +14,7 @@ from alembic.script import ScriptDirectory
 def main() -> int:
     cfg = Config(os.path.join(os.path.dirname(os.path.dirname(__file__)), "alembic.ini"))
     head = ScriptDirectory.from_config(cfg).get_current_head()
-    expected = "0031_platform_intelligence"
+    expected = "0032_supplier_network"
     ok = head == expected
     print(f"Migration head: {head} (expected {expected})")
     return 0 if ok else 1
