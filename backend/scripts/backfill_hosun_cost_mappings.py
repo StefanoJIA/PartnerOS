@@ -35,54 +35,54 @@ class CostMapping:
 HOSUN_COST_MAPPINGS: tuple[CostMapping, ...] = (
     CostMapping(
         source_name="3-Leg 3-Stage Triple-Motor Rectangular Desk Frame 90x60mm",
-        target_skus=("IO-HOSUN-LS-HS80503PRTDFZ", "IO-HOSUN-LS-HS70703PRTDFZ"),
+        target_skus=("HS80503PRTDFZ", "HS70703PRTDFZ"),
     ),
     CostMapping(
         source_name="2-Stage Dual-Motor Rectangular Desk Frame 90x60mm 300kg Capacity",
-        target_skus=("IO-HOSUN-HD-HS90602HRDDFZ",),
+        target_skus=("HS90602HRDDFZ",),
         target_names=("2-Stage Dual-Motor Rectangular 3.54''×2.36'' Heavy Duty Desk Frame",),
         price_source_names=("2-Stage Dual-Motor Rectangular 3.54''×2.36'' Heavy Duty Desk Frame",),
     ),
     CostMapping(
         source_name="3-Stage Dual-Motor Rectangular Desk Frame 90x60mm",
-        target_skus=("IO-HOSUN-DF-HS90603PRDDFZ",),
+        target_skus=("HS90603PRDDFZ",),
         target_names=("3-Stage Dual-Motor Rectangular 3.54''×2.36'' Desk Frame",),
     ),
     CostMapping(
         source_name="3-Stage Dual-Motor Rectangular Desk Frame 80x50mm / 70x70mm",
-        target_skus=("IO-HOSUN-DF-HS80503PRDDFZ", "IO-HOSUN-DF-HS70703PRDDFZ"),
+        target_skus=("HS80503PRDDFZ", "HS70703PRDDFZ"),
         target_names=("3-Stage Dual-Motor Rectangular 3.15''×1.97'' / Square 2.76'' Desk Frame",),
     ),
     CostMapping(
         source_name="2-Stage Dual-Motor Rectangular Desk Frame 90x60mm",
-        target_skus=("IO-HOSUN-DF-HS90602PRDDFZ",),
+        target_skus=("HS90602PRDDFZ",),
     ),
     CostMapping(
         source_name="2-Stage Dual-Motor Rectangular Desk Frame 80x50mm / 70x70mm",
-        target_skus=("IO-HOSUN-DF-HS80502PRDDFZ", "IO-HOSUN-DF-HS70702PRDDFZ"),
+        target_skus=("HS80502PRDDFZ", "HS70702PRDDFZ"),
         target_names=("2-Stage Dual-Motor Rectangular 3.15''×1.97'' / Square 2.76'' Desk Frame",),
         price_source_names=("2-Stage Dual-Motor Rectangular 3.15''×1.97'' / Square 2.76'' Desk Frame",),
     ),
     CostMapping(
         source_name="2-Stage Dual-Motor Round Desk Frame ⌀ 70",
-        target_skus=("IO-HOSUN-DF-HS00702PRDDFZ",),
+        target_skus=("HS00702PRDDFZ",),
     ),
     CostMapping(
         source_name="2-Stage Single-Motor Rectangular Desk Frame 80x50mm",
-        target_skus=("IO-HOSUN-DF-HS80502PRSDFZ",),
+        target_skus=("HS80502PRSDFZ",),
     ),
     CostMapping(
         source_name="2-Stage Single-Motor Round Desk Frame ⌀ 70",
-        target_skus=("IO-HOSUN-DF-HS00702PRSDFZ",),
+        target_skus=("HS00702PRSDFZ",),
     ),
     CostMapping(
         source_name="2-Stage Four-Motor Face-to-Face Rectangular Benching Frame 80x50mm / 70x70mm",
-        target_skus=("IO-HOSUN-BF-HS80502PRCWSZ", "IO-HOSUN-BF-HS70702PRCWSZ"),
+        target_skus=("HS80502PRCWSZ", "HS70702PRCWSZ"),
         target_names=("2-Stage Four-Motor Face-to-Face Rectangular 3.15''×1.97'' / Square 2.76'' Benching Frame",),
     ),
     CostMapping(
         source_name="3-Stage Four-Motor Face-to-Face Rectangular Benching Frame 80x50mm / 70x70mm",
-        target_skus=("IO-HOSUN-BF-HS80503PRCWSZ", "IO-HOSUN-BF-HS70703PRCWSZ"),
+        target_skus=("HS80503PRCWSZ", "HS70703PRCWSZ"),
         target_names=("3-Stage Four-Motor Face-to-Face Rectangular 3.15''×1.97'' / Square 2.76'' Benching Frame",),
     ),
 )

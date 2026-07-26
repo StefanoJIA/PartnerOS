@@ -77,10 +77,18 @@ def main() -> int:
                 print("Result: FAIL")
                 return 1
 
-            pr = client.get(f"{base}/api/v1/products?limit=5", headers=headers)
+            pr = client.get(f"{base}/api/v1/products?limit=200", headers=headers)
             if pr.status_code == 200 and (pr.json().get("data") or {}).get("total", 0) > 0:
+                items = pr.json()["data"]["items"]
                 checks[0].pass_(f"{pr.json()['data']['total']} product(s)")
-                product_id = pr.json()["data"]["items"][0]["id"]
+                product_id = None
+                for item in items:
+                    summary = item.get("pricing_model_summary") or {}
+                    if item.get("has_interval_pricing") or summary.get("factory_cost_rmb"):
+                        product_id = item["id"]
+                        break
+                if not product_id and items:
+                    product_id = items[0]["id"]
             else:
                 checks[0].fail(f"HTTP {pr.status_code}")
                 product_id = None

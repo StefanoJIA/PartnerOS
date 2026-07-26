@@ -58,11 +58,10 @@ def category_prefix(category: str, name: str) -> str:
 
 def generate_hosun_sku(model: str, category: str, name: str) -> str:
     clean_model = normalize_model(model)
-    prefix = category_prefix(category, name)
     if clean_model:
-        return f"IO-HOSUN-{prefix}-{clean_model}"[:64]
+        return clean_model[:64]
     slug = re.sub(r"[^A-Z0-9]+", "-", name.upper()).strip("-")[:36]
-    return f"IO-HOSUN-{prefix}-{slug}"[:64]
+    return slug[:64]
 
 
 def taxonomy(category: str, name: str) -> tuple[str, str]:
@@ -266,7 +265,7 @@ def run(
                     "source_workbook": product_catalog.name,
                     "classification_workbook": classification.name if classification else None,
                     "partner_model": model,
-                    "intelliopus_sku_rule": "IO-HOSUN-{category-prefix}-{model}",
+                    "intelliopus_sku_rule": "factory model code used directly when available",
                     "tube_size": row.get("tube_size"),
                     "height_range": row.get("height_range"),
                     "width_range": row.get("width_range"),

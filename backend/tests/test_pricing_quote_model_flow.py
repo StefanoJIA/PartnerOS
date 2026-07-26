@@ -126,11 +126,103 @@ def test_product_interval_quote_table_can_be_generated_from_landed_cost(monkeypa
     )
 
     assert [row["quantity_label"] for row in table] == ["1-49", "50-99", "100-299", "300-499", ">=500"]
-    assert table[0]["fob_unit_price"] == "125.00"
+    assert table[0]["fob_unit_price"] is None
     assert table[0]["ddp_unit_price"] == "131.95"
     assert table[1]["fob_unit_price"] == "121.25"
     assert table[-1]["pricing_basis"] == "cost_plus_landed_cost"
     assert table[-1]["internal_pricing_basis"]["internal_only"] is True
+
+
+def test_cost_model_interval_table_overrides_imported_fixed_tiers_when_margin_changes():
+    product_id = uuid4()
+    product = SimpleNamespace(
+        id=product_id,
+        product_name="Heavy Duty Desk Frame",
+        product_category="lifting_systems",
+        product_family="heavy_duty_supply",
+        attributes_json={"target_margin": "0.40"},
+    )
+    cost = SimpleNamespace(
+        unit_material_cost=Decimal("1199"),
+        cost_currency="CNY",
+        unit_weight=Decimal("35"),
+        ocean_freight_unit_price=Decimal("22"),
+        domestic_transport_cost=None,
+        domestic_profit_rate=None,
+        fob_cost_usd=None,
+        ddp_cost_usd=None,
+        effective_from=None,
+        effective_to=None,
+    )
+    fixed_tier = SimpleNamespace(
+        id=uuid4(),
+        product_id=product_id,
+        min_qty=1,
+        max_qty=49,
+        incoterm="DDP",
+        currency="USD",
+        pricing_strategy="volume",
+        final_unit_price=Decimal("999.00"),
+        base_unit_price=None,
+        adjustment_value=None,
+        effective_from=None,
+        effective_to=None,
+        source="imported_fixed_workbook",
+    )
+    db = MagicMock()
+    db.query.return_value.filter.return_value.order_by.return_value.all.return_value = [fixed_tier]
+
+    table = pricing_service.build_product_interval_quote_table(
+        db,
+        product_id=product_id,
+        product=product,
+        cost_model=cost,
+        pricing_strategy="volume",
+        fx_rate_usd_cny=Decimal("6.77"),
+    )
+
+    assert table[0]["pricing_basis"] == "cost_plus_landed_cost"
+    assert table[0]["ddp_unit_price"] != "999.00"
+    assert table[0]["ddp_unit_price"] == "407.18"
+    assert Decimal(table[1]["ddp_unit_price"]) < Decimal(table[0]["ddp_unit_price"])
+
+
+def test_target_margin_overrides_stale_markup_multiplier_in_generated_interval_table():
+    product_id = uuid4()
+    product = SimpleNamespace(
+        id=product_id,
+        product_name="Margin Linked Desk Frame",
+        product_category="lifting_systems",
+        product_family="desk_frames",
+        attributes_json={"target_margin": "0.20", "quote_markup_multiplier": "1.15"},
+    )
+    cost = SimpleNamespace(
+        unit_material_cost=Decimal("952.66"),
+        cost_currency="CNY",
+        unit_weight=Decimal("30"),
+        ocean_freight_unit_price=Decimal("22"),
+        domestic_transport_cost=None,
+        domestic_profit_rate=None,
+        fob_cost_usd=None,
+        ddp_cost_usd=None,
+        effective_from=None,
+        effective_to=None,
+    )
+    db = MagicMock()
+
+    table = pricing_service.build_product_interval_quote_table(
+        db,
+        product_id=product_id,
+        product=product,
+        cost_model=cost,
+        pricing_strategy="volume",
+        fx_rate_usd_cny=Decimal("6.77"),
+    )
+
+    assert table[0]["fob_unit_price"] is None
+    assert table[0]["ddp_unit_price"] == "285.85"
+    assert table[1]["ddp_unit_price"] == "277.28"
+    assert table[0]["internal_pricing_basis"]["markup_multiplier"] == "1.2000"
 
 
 def test_pricing_preview_returns_quote_model_snapshot(monkeypatch):

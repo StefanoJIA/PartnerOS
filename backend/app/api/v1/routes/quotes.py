@@ -5,6 +5,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
+from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
@@ -12,7 +13,7 @@ from app.core.deps import get_current_user
 from app.core.errors import ApiError, NOT_FOUND, VALIDATION_ERROR
 from app.core.request_id import get_request_id
 from app.core.responses import success_envelope
-from app.models import User
+from app.models import Company, Contact, User
 from app.models.customer_quotes import Quote, QuoteAdjustment, QuoteLineItem, QuoteVersion
 from app.schemas.quotes import (
     MarkSentIn,
@@ -42,6 +43,7 @@ from app.services.quotes.quote_service import (
     get_quote,
     mark_expired,
     mark_ready,
+    preview_next_quote_number,
     quote_list_item,
     quote_to_dict,
     recalculate_quote,
@@ -51,6 +53,84 @@ from app.services.quotes.quote_totals import apply_totals_to_quote
 router = APIRouter(prefix="/quotes", tags=["v1-quotes"])
 
 ARCHIVABLE_QUOTE_STATUSES = ("internal_review", "ready_to_send", "revised", "expired")
+
+
+@router.get("/draft-seed")
+def quote_draft_seed(
+    request: Request,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    rid = get_request_id(request)
+    return success_envelope(
+        {
+            "quote_number": preview_next_quote_number(db),
+            "valid_days": 21,
+            "safety": {
+                "automatic_sending_enabled": False,
+                "quote_created": False,
+                "customer_notified": False,
+                "supplier_notified": False,
+            },
+        },
+        request_id=rid,
+    )
+
+
+@router.get("/customer-options")
+def quote_customer_options(
+    request: Request,
+    q: str | None = None,
+    limit: int = Query(200, ge=1, le=500),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    company_query = db.query(Company).filter(Company.is_active.is_(True))
+    contact_query = (
+        db.query(Contact, Company.company_name, Company.address)
+        .join(Company, Contact.company_id == Company.id)
+        .filter(Contact.is_active.is_(True), Company.is_active.is_(True))
+    )
+    if q:
+        like = f"%{q.strip()}%"
+        company_query = company_query.filter(Company.company_name.ilike(like))
+        contact_query = contact_query.filter(
+            or_(Contact.first_name.ilike(like), Contact.last_name.ilike(like), Company.company_name.ilike(like))
+        )
+    companies = company_query.order_by(Company.company_name.asc()).limit(limit).all()
+    contacts = contact_query.order_by(Company.company_name.asc(), Contact.first_name.asc()).limit(limit).all()
+    rid = get_request_id(request)
+    return success_envelope(
+        {
+            "companies": [
+                {
+                    "id": str(company.id),
+                    "company_name": company.company_name,
+                    "address": company.address,
+                    "city": company.city,
+                    "state": company.state,
+                    "country": company.country,
+                    "customer_segment": company.customer_segment,
+                }
+                for company in companies
+            ],
+            "contacts": [
+                {
+                    "id": str(contact.id),
+                    "company_id": str(contact.company_id),
+                    "full_name": f"{contact.first_name} {contact.last_name}".strip(),
+                    "first_name": contact.first_name,
+                    "last_name": contact.last_name,
+                    "email": contact.email,
+                    "title": contact.title,
+                    "company_name": company_name,
+                    "company_address": company_address,
+                }
+                for contact, company_name, company_address in contacts
+            ],
+        },
+        request_id=rid,
+    )
 
 
 @router.get("")
@@ -91,9 +171,11 @@ def create_quote_route(
         db,
         user=user,
         line_items_in=[li.model_dump(mode="json") for li in body.line_items],
+        quote_number=body.quote_number,
         lead_id=body.lead_id,
         company_id=body.company_id,
         contact_id=body.contact_id,
+        create_customer_if_missing=body.create_customer_if_missing,
         bill_to=body.bill_to.model_dump() if body.bill_to else None,
         ship_to=body.ship_to.model_dump() if body.ship_to else None,
         payment_terms=body.payment_terms,

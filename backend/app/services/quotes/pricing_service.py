@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import ApiError, NOT_FOUND, VALIDATION_ERROR
 from app.models import FxRate, MarginStrategyTier, ProductCatalog, ProductCostModel, ProductPriceTier
+from app.services.quotes.catalog_enrichment import PROFIT_MARGIN_TIERS
 from app.services.quotes.fx_rates import ensure_latest_fx_rate, get_latest_fx
 from app.services.quotes.pricing_assumptions import PricingAssumptionSnapshot, get_current_pricing_assumptions
 from app.services.quotes.pricing_calculations import (
@@ -34,8 +35,8 @@ PRODUCT_QUANTITY_RANGES: tuple[tuple[int, int | None], ...] = (
 
 DEFAULT_STRATEGY_MULTIPLIERS: dict[str, Decimal] = {
     "traffic": Decimal("1.10"),
-    "volume": Decimal("1.20"),
-    "profit": Decimal("1.30"),
+    "volume": Decimal("1.25"),
+    "profit": Decimal("1.50"),
 }
 
 DEFAULT_RANGE_CONCESSIONS: dict[int, Decimal] = {
@@ -71,9 +72,11 @@ def _select_price_tier(
     pricing_strategy: str | None,
     ref: date,
 ) -> ProductPriceTier | None:
+    normalized_incoterm = incoterm.upper()
+    lookup_incoterms = ["FOB", "EXW"] if normalized_incoterm == "FOB" else [normalized_incoterm]
     tiers = (
         db.query(ProductPriceTier)
-        .filter(ProductPriceTier.product_id == product_id, ProductPriceTier.incoterm == incoterm.upper())
+        .filter(ProductPriceTier.product_id == product_id, ProductPriceTier.incoterm.in_(lookup_incoterms))
         .order_by(ProductPriceTier.min_qty.asc())
         .all()
     )
@@ -104,21 +107,28 @@ def _select_cost_model(db: Session, product_id: UUID, ref: date) -> ProductCostM
     return rows[0] if rows else None
 
 
+def _default_margin_multiplier(strategy: str, quantity: int) -> Decimal | None:
+    for code, _name, min_qty, max_qty, multiplier in PROFIT_MARGIN_TIERS:
+        if code == strategy and qty_in_tier(quantity, min_qty, max_qty):
+            return multiplier
+    return None
+
+
 def _product_markup_multiplier(product: ProductCatalog, pricing_strategy: str) -> Decimal | None:
     attrs = product.attributes_json or {}
-    raw = attrs.get("quote_markup_multiplier") or attrs.get(f"{pricing_strategy}_markup_multiplier")
-    if raw is not None:
-        try:
-            value = Decimal(str(raw))
-            return value if value > 0 else None
-        except Exception:
-            return None
     raw_margin = attrs.get("target_margin") or attrs.get("sales_margin_rate")
     if raw_margin is not None:
         try:
             value = Decimal(str(raw_margin))
             if value > 0:
                 return Decimal("1") + value
+        except Exception:
+            return None
+    raw = attrs.get("quote_markup_multiplier") or attrs.get(f"{pricing_strategy}_markup_multiplier")
+    if raw is not None:
+        try:
+            value = Decimal(str(raw))
+            return value if value > 0 else None
         except Exception:
             return None
     return None
@@ -140,6 +150,9 @@ def _select_margin_multiplier(
     if rows:
         warnings.append("margin_strategy_tier_fallback")
         return rows[0].multiplier, warnings
+    fallback = _default_margin_multiplier(strategy, quantity)
+    if fallback is not None:
+        return fallback, ["margin_strategy_default_table"]
     return Decimal("1"), ["margin_strategy_missing"]
 
 
@@ -157,10 +170,16 @@ def _range_margin_multiplier(
         concession = DEFAULT_RANGE_CONCESSIONS.get(min_qty, Decimal("1"))
         return (product_multiplier * concession).quantize(Decimal("0.0001")), "product_markup_with_range_concession"
     tier_multiplier, warnings = _select_margin_multiplier(db, pricing_strategy, representative_qty)
+    if "margin_strategy_default_table" in warnings:
+        return tier_multiplier, "default_profit_margin_table"
     if "margin_strategy_missing" not in warnings:
         return tier_multiplier, "margin_strategy_tier"
 
-    base = DEFAULT_STRATEGY_MULTIPLIERS.get(pricing_strategy, Decimal("1.20"))
+    default_multiplier = _default_margin_multiplier(pricing_strategy, representative_qty)
+    if default_multiplier is not None:
+        return default_multiplier, "default_profit_margin_table"
+
+    base = DEFAULT_STRATEGY_MULTIPLIERS.get(pricing_strategy, Decimal("1.25"))
     concession = DEFAULT_RANGE_CONCESSIONS.get(min_qty, Decimal("1"))
     return (base * concession).quantize(Decimal("0.0001")), "default_strategy_with_range_concession"
 
@@ -232,21 +251,27 @@ def _build_cost_model_interval_quote_table(
         )
         fob_price = (fob_cost * multiplier).quantize(Decimal("0.0001"))
         ddp_price = (ddp_cost * multiplier).quantize(Decimal("0.0001"))
+        fob_available = min_qty > 1
         rows.append(
             {
                 "min_qty": min_qty,
                 "max_qty": max_qty,
                 "quantity_label": _quantity_range_label(min_qty, max_qty),
                 "currency": "USD",
-                "fob_unit_price": money(fob_price),
+                "fob_unit_price": money(fob_price) if fob_available else None,
                 "ddp_unit_price": money(ddp_price),
-                "incoterms_available": ["FOB", "DDP"],
+                "incoterms_available": ["FOB", "DDP"] if fob_available else ["DDP"],
                 "pricing_strategies": [pricing_strategy],
                 "customer_visible": True,
                 "pricing_basis": "cost_plus_landed_cost",
                 "internal_pricing_basis": {
                     "source": source,
                     "markup_multiplier": str(multiplier),
+                    "profit_table_basis": "traffic/volume/profit margin table by quantity interval",
+                    "ocean_freight_volume_logic": (
+                        "provider ocean freight unit price is an independent assumption; future volume breaks "
+                        "can be maintained separately from factory RMB cost"
+                    ),
                     "fob_cost_usd": cost_breakdown["fob_cost_usd"],
                     "ddp_cost_usd": cost_breakdown["ddp_cost_usd"],
                     "internal_only": True,
@@ -269,12 +294,30 @@ def build_product_interval_quote_table(
 ) -> list[dict[str, Any]]:
     """Build the customer-safe product quantity range price table.
 
-    The source quote workbook prices each product as a range table, not as a
-    single quantity point. Ranges must be derived from ProductPriceTier rows so
-    each product can keep its own interval structure and FOB/DDP availability.
+    The customer quote must show full quantity ranges for each selected product.
+    When a cost model is available, ranges are generated live from factory RMB
+    cost, weight, ocean freight, FX, product target margin, and quantity
+    concession. Imported ProductPriceTier rows remain a fallback for products
+    that do not yet have enough cost data.
     """
     effective_ref = ref or date.today()
     product = product or db.query(ProductCatalog).filter(ProductCatalog.id == product_id).first()
+    if product is not None:
+        cost = cost_model or _select_cost_model(db, product_id, effective_ref)
+        if cost and fx_rate_usd_cny:
+            try:
+                generated_rows, _, _ = _build_cost_model_interval_quote_table(
+                    db,
+                    product=product,
+                    cost=cost,
+                    pricing_strategy=pricing_strategy or "volume",
+                    fx_rate_usd_cny=fx_rate_usd_cny,
+                    assumptions=assumptions,
+                )
+                return generated_rows
+            except ValueError:
+                pass
+
     tiers = (
         db.query(ProductPriceTier)
         .filter(ProductPriceTier.product_id == product_id)
@@ -307,7 +350,10 @@ def build_product_interval_quote_table(
                 "customer_visible": True,
             },
         )
-        incoterm = (tier.incoterm or "").upper()
+        raw_incoterm = (tier.incoterm or "").upper()
+        if raw_incoterm not in {"FOB", "DDP", "EXW"}:
+            continue
+        incoterm = "FOB" if raw_incoterm == "EXW" else raw_incoterm
         if incoterm == "FOB":
             row["fob_unit_price"] = money(price)
         elif incoterm == "DDP":
@@ -340,6 +386,50 @@ def build_product_interval_quote_table(
     except ValueError:
         return []
     return generated_rows
+
+
+def validate_interval_quote_table(rows: list[dict[str, Any]]) -> list[str]:
+    """Return validation issue codes for an interval quote table."""
+    issues: list[str] = []
+    if not rows:
+        issues.append("empty_interval_table")
+        return issues
+
+    seen_ranges: set[tuple[int, int | None]] = set()
+    prev_max: int | None = None
+    for idx, row in enumerate(rows):
+        min_qty = int(row.get("min_qty") or 0)
+        max_qty = row.get("max_qty")
+        max_qty_int = int(max_qty) if max_qty is not None else None
+        if min_qty <= 0:
+            issues.append(f"row_{idx}_non_positive_min_qty")
+        if max_qty_int is not None and max_qty_int < min_qty:
+            issues.append(f"row_{idx}_max_lt_min")
+        key = (min_qty, max_qty_int)
+        if key in seen_ranges:
+            issues.append(f"row_{idx}_duplicate_range")
+        seen_ranges.add(key)
+        if prev_max is not None and min_qty != prev_max + 1:
+            issues.append(f"row_{idx}_range_gap")
+        prev_max = max_qty_int
+
+        fob = row.get("fob_unit_price")
+        ddp = row.get("ddp_unit_price")
+        for label, value in (("fob", fob), ("ddp", ddp)):
+            if value is None or str(value).strip() == "":
+                continue
+            try:
+                if Decimal(str(value)) < 0:
+                    issues.append(f"row_{idx}_{label}_negative")
+            except Exception:
+                issues.append(f"row_{idx}_{label}_invalid")
+        if fob is not None and ddp is not None:
+            try:
+                if Decimal(str(ddp)) < Decimal(str(fob)):
+                    issues.append(f"row_{idx}_ddp_lt_fob")
+            except Exception:
+                pass
+    return issues
 
 
 def _selected_interval_row(
@@ -551,7 +641,9 @@ def calculate_line_price(
         base_unit = manual_unit_price
         warnings.append("manual price requires review")
     else:
-        tier = _select_price_tier(db, product_id, quantity, inc, pricing_strategy, ref)
+        tier = None
+        if not (selected_interval and selected_interval.get("pricing_basis") == "cost_plus_landed_cost"):
+            tier = _select_price_tier(db, product_id, quantity, inc, pricing_strategy, ref)
         if tier:
             base_unit = tier_unit_price(
                 base_unit_price=tier.base_unit_price,
@@ -562,7 +654,8 @@ def calculate_line_price(
                 "id": str(tier.id),
                 "min_qty": tier.min_qty,
                 "max_qty": tier.max_qty,
-                "incoterm": tier.incoterm,
+                "incoterm": inc,
+                "source_incoterm": tier.incoterm,
                 "currency": tier.currency,
                 "pricing_strategy": tier.pricing_strategy,
                 "base_unit_price": str(tier.base_unit_price) if tier.base_unit_price is not None else None,

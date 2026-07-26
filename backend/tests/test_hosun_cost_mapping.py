@@ -19,7 +19,7 @@ def _mapping(source_name: str):
 def test_heavy_duty_cost_row_maps_to_heavy_duty_sku_and_quote_name():
     row = _mapping("2-Stage Dual-Motor Rectangular Desk Frame 90x60mm 300kg Capacity")
 
-    assert "IO-HOSUN-HD-HS90602HRDDFZ" in row.target_skus
+    assert "HS90602HRDDFZ" in row.target_skus
     assert "2-Stage Dual-Motor Rectangular 3.54''×2.36'' Heavy Duty Desk Frame" in row.target_names
     assert "2-Stage Dual-Motor Rectangular 3.54''×2.36'' Heavy Duty Desk Frame" in row.price_source_names
 
@@ -27,7 +27,7 @@ def test_heavy_duty_cost_row_maps_to_heavy_duty_sku_and_quote_name():
 def test_3_stage_90x60_cost_row_maps_to_catalog_model_and_quote_name():
     row = _mapping("3-Stage Dual-Motor Rectangular Desk Frame 90x60mm")
 
-    assert "IO-HOSUN-DF-HS90603PRDDFZ" in row.target_skus
+    assert "HS90603PRDDFZ" in row.target_skus
     assert "3-Stage Dual-Motor Rectangular 3.54''×2.36'' Desk Frame" in row.target_names
 
 
@@ -35,21 +35,21 @@ def test_benching_cost_rows_map_to_rectangular_and_square_catalog_skus():
     two_stage = _mapping("2-Stage Four-Motor Face-to-Face Rectangular Benching Frame 80x50mm / 70x70mm")
     three_stage = _mapping("3-Stage Four-Motor Face-to-Face Rectangular Benching Frame 80x50mm / 70x70mm")
 
-    assert {"IO-HOSUN-BF-HS80502PRCWSZ", "IO-HOSUN-BF-HS70702PRCWSZ"}.issubset(two_stage.target_skus)
-    assert {"IO-HOSUN-BF-HS80503PRCWSZ", "IO-HOSUN-BF-HS70703PRCWSZ"}.issubset(three_stage.target_skus)
+    assert {"HS80502PRCWSZ", "HS70702PRCWSZ"}.issubset(two_stage.target_skus)
+    assert {"HS80503PRCWSZ", "HS70703PRCWSZ"}.issubset(three_stage.target_skus)
 
 
 def test_3_leg_cost_row_maps_to_existing_l_shape_catalog_skus():
     row = _mapping("3-Leg 3-Stage Triple-Motor Rectangular Desk Frame 90x60mm")
 
-    assert {"IO-HOSUN-LS-HS80503PRTDFZ", "IO-HOSUN-LS-HS70703PRTDFZ"}.issubset(row.target_skus)
-    assert "IO-HOSUN-LS-HS90603PRTDFZ" not in row.target_skus
+    assert {"HS80503PRTDFZ", "HS70703PRTDFZ"}.issubset(row.target_skus)
+    assert "HS90603PRTDFZ" not in row.target_skus
 
 
 def test_80x50_70x70_cost_row_uses_customer_quote_interval_source():
     row = _mapping("2-Stage Dual-Motor Rectangular Desk Frame 80x50mm / 70x70mm")
 
-    assert {"IO-HOSUN-DF-HS80502PRDDFZ", "IO-HOSUN-DF-HS70702PRDDFZ"}.issubset(row.target_skus)
+    assert {"HS80502PRDDFZ", "HS70702PRDDFZ"}.issubset(row.target_skus)
     assert "2-Stage Dual-Motor Rectangular 3.15''×1.97'' / Square 2.76'' Desk Frame" in row.price_source_names
 
 
@@ -58,7 +58,7 @@ def test_product_payload_exposes_internal_pricing_model_summary():
     product = ProductCatalog(
         id=product_id,
         partner_id=uuid4(),
-        internal_sku="IO-HOSUN-HD-HS90602HRDDFZ",
+        internal_sku="HS90602HRDDFZ",
         product_name="2-Stage Dual-Motor Rectangular Heavy-Duty Frame",
         product_category="lifting_systems",
         status="active",

@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from pathlib import Path
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
@@ -90,4 +91,52 @@ def download_quote_pdf_route(
         path=record.file_path,
         media_type=record.content_type or "application/pdf",
         filename=record.file_name,
+    )
+
+
+@router.delete("/{quote_id}/pdf-exports/{export_id}")
+def delete_quote_pdf_export_route(
+    quote_id: UUID,
+    export_id: UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    get_quote(db, quote_id)
+    record = (
+        db.query(QuotePdfExport)
+        .filter(QuotePdfExport.id == export_id, QuotePdfExport.quote_id == quote_id)
+        .first()
+    )
+    if not record or record.status == "deleted":
+        raise ApiError(NOT_FOUND, "pdf export not found", status_code=404)
+
+    removed_file = False
+    file_path = Path(record.file_path) if record.file_path else None
+    if file_path and file_path.is_file():
+        file_path.unlink()
+        removed_file = True
+
+    record.status = "deleted"
+    record.file_path = None
+    record.file_size_bytes = 0
+    stamp = datetime.now(timezone.utc).isoformat()
+    record.notes = f"{record.notes or ''}\nDeleted by operator at {stamp}; file_removed={removed_file}".strip()
+    db.commit()
+
+    rid = get_request_id(request)
+    return success_envelope(
+        {
+            "deleted": True,
+            "export_id": str(export_id),
+            "file_removed": removed_file,
+            "safety": {
+                "automatic_sending_enabled": False,
+                "quote_status_changed": False,
+                "order_created": False,
+                "customer_notified": False,
+            },
+        },
+        request_id=rid,
+        status_code=status.HTTP_200_OK,
     )

@@ -158,8 +158,13 @@ def test_generate_quote_pdf_renders_interval_rows_as_quote_body(tmp_path, monkey
         for page in pdf.pages:
             text += page.extract_text() or ""
 
-    assert "Customer Quantity Range Pricing" in text
+    assert "Products" in text
+    assert "FOB Unit Price" in text
+    assert "DDP Unit Price" in text
     assert "1-49" in text
     assert "50-99" in text
+    assert "Reference Qty" not in text
+    assert "Reference Incoterm" not in text
+    assert "Customer Quantity Range Pricing" not in text
     assert "Grand Total" not in text
     assert "internal-tier-id" not in text

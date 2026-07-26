@@ -21,59 +21,14 @@ from app.models import (
     ProductCostModel,
     ProductPriceTier,
 )
+from app.services.quotes.catalog_enrichment import PROFIT_MARGIN_TIERS
 
 PARTNERS = (
     {"code": "HOSUN", "name": "HOSUN Lifting Systems (demo)", "type": "Lifting System Manufacturer", "city": "Shenzhen"},
     {"code": "JOOBOO", "name": "JOOBOO Education Furniture (demo)", "type": "Education Furniture Manufacturer", "city": "Chongqing"},
 )
 
-PRODUCTS = (
-    {
-        "partner_code": "HOSUN",
-        "sku": "HOSUN-FRAME-001",
-        "code": "HS-ADF-001",
-        "name": "Adjustable Desk Frame (demo sample)",
-        "category": "lifting_frame",
-        "family": "lifting_systems",
-        "attrs": {"load_capacity": "120kg", "frame_type": "dual_motor"},
-    },
-    {
-        "partner_code": "HOSUN",
-        "sku": "HOSUN-COL-001",
-        "code": "HS-LC-001",
-        "name": "Lifting Column (demo sample)",
-        "category": "lifting_columns",
-        "family": "lifting_systems",
-        "attrs": {"stage_count": "2", "load_capacity": "80kg"},
-    },
-    {
-        "partner_code": "HOSUN",
-        "sku": "HOSUN-LEG-001",
-        "code": "HS-DL-001",
-        "name": "Desk Legs Set (demo sample)",
-        "category": "desk_legs",
-        "family": "lifting_systems",
-        "attrs": {},
-    },
-    {
-        "partner_code": "JOOBOO",
-        "sku": "JOOBOO-DESK-001",
-        "code": "JB-EDU-D001",
-        "name": "Classroom Desk (demo sample)",
-        "category": "education_desk",
-        "family": "education",
-        "attrs": {"use_case": "classroom", "student_age_group": "6-12"},
-    },
-    {
-        "partner_code": "JOOBOO",
-        "sku": "JOOBOO-CHAIR-001",
-        "code": "JB-EDU-C001",
-        "name": "Classroom Chair (demo sample)",
-        "category": "education_chair",
-        "family": "education",
-        "attrs": {"use_case": "classroom"},
-    },
-)
+PRODUCTS: tuple[dict, ...] = ()
 
 TIERS = (
     (1, 49, Decimal("185.00"), Decimal("215.00")),
@@ -92,6 +47,7 @@ MARGIN_TIERS = (
     ("profit", "利润", 1, 49, Decimal("1.18")),
     ("profit", "利润", 50, None, Decimal("1.15")),
 )
+MARGIN_TIERS = PROFIT_MARGIN_TIERS
 
 
 def _ensure_partner(db, spec: dict, *, overwrite: bool) -> tuple[ManufacturingPartner, str]:

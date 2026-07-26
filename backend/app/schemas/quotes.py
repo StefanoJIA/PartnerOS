@@ -42,9 +42,11 @@ class QuoteLineItemIn(BaseModel):
 
 
 class QuoteCreateIn(BaseModel):
+    quote_number: str | None = None
     lead_id: UUID | None = None
     company_id: UUID | None = None
     contact_id: UUID | None = None
+    create_customer_if_missing: bool = False
     bill_to: AddressIn | None = None
     ship_to: AddressIn | None = None
     payment_terms: str | None = None

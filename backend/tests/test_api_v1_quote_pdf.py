@@ -129,3 +129,13 @@ def test_download_wrong_quote_returns_404(pdf_client):
     other = uuid4()
     r = client.get(f"/api/v1/quotes/{other}/pdf-exports/{export_id}/download")
     assert r.status_code == 404
+
+
+def test_delete_pdf_export_soft_deletes_record(pdf_client):
+    client, quote_id, export_id = pdf_client
+    r = client.delete(f"/api/v1/quotes/{quote_id}/pdf-exports/{export_id}")
+    assert r.status_code == 200
+    data = r.json()["data"]
+    assert data["deleted"] is True
+    assert data["export_id"] == str(export_id)
+    assert data["safety"]["quote_status_changed"] is False

@@ -90,14 +90,11 @@ def main() -> int:
                 checks[0].fail(f"HTTP {pr.status_code}")
                 product_id = None
 
-            if not product_id:
-                lr = client.get(f"{base}/api/v1/quotes?limit=1", headers=headers)
-                if lr.status_code == 200 and lr.json()["data"]["items"]:
-                    quote_id = lr.json()["data"]["items"][0]["id"]
-                    checks[1].pass_(f"existing {quote_id[:8]}")
-                else:
-                    checks[1].fail("no product or quote")
-            else:
+            lr = client.get(f"{base}/api/v1/quotes?limit=1", headers=headers)
+            if lr.status_code == 200 and lr.json()["data"]["items"]:
+                quote_id = lr.json()["data"]["items"][0]["id"]
+                checks[1].pass_(f"existing {quote_id[:8]}")
+            elif product_id:
                 cr = client.post(
                     f"{base}/api/v1/quotes",
                     headers=headers,
@@ -111,6 +108,8 @@ def main() -> int:
                     checks[1].pass_(quote_id[:8])
                 else:
                     checks[1].fail(f"HTTP {cr.status_code}")
+            else:
+                checks[1].fail("no product or quote")
 
             if quote_id:
                 gr = client.get(f"{base}/api/v1/quotes/{quote_id}", headers=headers)

@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.errors import ApiError, NOT_FOUND, VALIDATION_ERROR
 from app.models import ManufacturingPartner
 from app.models.customer_quotes import Quote, QuoteVersion
+from app.models.quote_catalog import ProductCatalog
 from app.services.quotes.quote_service import get_quote
 from app.services.quotes.quote_totals import DEFAULT_SUBJECT
 
@@ -22,10 +23,10 @@ PDF_SAFETY: dict[str, bool] = {
 }
 
 COMPANY_PROFILE: dict[str, str] = {
-    "brand": "IntelliOpus Engineering / intelliOffice",
+    "brand": "IntelliOpus Engineering",
     "address_line": "529 Main Street, Suite 2000, Charlestown, MA 02129",
-    "website": "",
-    "phone": "",
+    "website": "www.intelli-opus.com",
+    "phone": "(928) 679-3822",
 }
 
 INTERNAL_LINE_KEYS = frozenset(
@@ -62,6 +63,25 @@ def _partner_names(db: Session, partner_ids: set[str]) -> dict[str, str]:
         return {}
     rows = db.query(ManufacturingPartner).filter(ManufacturingPartner.id.in_(uuids)).all()
     return {str(r.id): r.partner_name for r in rows}
+
+
+def _product_image_urls(db: Session, product_ids: set[str]) -> dict[str, str]:
+    if not product_ids:
+        return {}
+    uuids = []
+    for pid in product_ids:
+        try:
+            uuids.append(UUID(pid))
+        except ValueError:
+            continue
+    if not uuids:
+        return {}
+    rows = (
+        db.query(ProductCatalog.id, ProductCatalog.image_url)
+        .filter(ProductCatalog.id.in_(uuids))
+        .all()
+    )
+    return {str(row.id): row.image_url for row in rows if row.image_url}
 
 
 def _line_description(line: dict[str, Any]) -> str:
@@ -120,6 +140,7 @@ def _sanitize_line(line: dict[str, Any], *, partner_name: str | None, export_typ
         "incoterm": clean.get("incoterm") or "",
         "color_finish": clean.get("color_finish") or "",
         "size_dimension": clean.get("size_dimension") or "",
+        "image_url": line.get("image_url") or "",
         "interval_quote_table": interval_quote_table,
     }
 
@@ -240,9 +261,17 @@ def build_quote_pdf_data(
         snapshot = version.snapshot_json
         partner_ids = {str(li.get("partner_id")) for li in snapshot.get("line_items") or [] if li.get("partner_id")}
         partners = _partner_names(db, partner_ids)
+        product_ids = {
+            str(li.get("product_catalog_id"))
+            for li in snapshot.get("line_items") or []
+            if li.get("product_catalog_id")
+        }
+        image_urls = _product_image_urls(db, product_ids)
         line_items = []
         for raw in sorted(snapshot.get("line_items") or [], key=lambda x: x.get("line_number", 0)):
             pname = partners.get(str(raw.get("partner_id")), "")
+            if raw.get("product_catalog_id") and not raw.get("image_url"):
+                raw = {**raw, "image_url": image_urls.get(str(raw.get("product_catalog_id")), "")}
             line_items.append(_sanitize_line(raw, partner_name=pname, export_type=export_type))
         adjustments = [
             a
@@ -290,11 +319,14 @@ def build_quote_pdf_data(
 
     partner_ids = {str(li.partner_id) for li in quote.line_items}
     partners = _partner_names(db, partner_ids)
+    product_ids = {str(getattr(li, "product_catalog_id", None)) for li in quote.line_items if getattr(li, "product_catalog_id", None)}
+    image_urls = _product_image_urls(db, product_ids)
     line_items = []
     for li in sorted(quote.line_items, key=lambda x: x.line_number):
         raw = {
             "line_number": li.line_number,
             "partner_id": str(li.partner_id),
+            "product_catalog_id": str(getattr(li, "product_catalog_id", None)) if getattr(li, "product_catalog_id", None) else None,
             "product_name": li.product_name,
             "manual_product_name": li.manual_product_name,
             "product_category": li.product_category,
@@ -310,6 +342,7 @@ def build_quote_pdf_data(
             "internal_cost": str(li.internal_cost) if li.internal_cost is not None else None,
             "estimated_margin": str(li.estimated_margin) if li.estimated_margin is not None else None,
             "pricing_breakdown_json": li.pricing_breakdown_json,
+            "image_url": image_urls.get(str(getattr(li, "product_catalog_id", None)), "") if getattr(li, "product_catalog_id", None) else "",
         }
         line_items.append(_sanitize_line(raw, partner_name=partners.get(str(li.partner_id)), export_type=export_type))
 

@@ -7,10 +7,11 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload, object_session
 
 from app.core.errors import ApiError, NOT_FOUND, VALIDATION_ERROR
-from app.models import ProductCatalog, User
+from app.models import Company, Contact, ProductCatalog, User
 from app.models.customer_quotes import (
     QUOTE_STATUSES,
     Quote,
@@ -67,6 +68,105 @@ def generate_quote_number(db: Session, quote_date: date) -> str:
         except ValueError:
             seq = QUOTE_SEQUENCE_START_AFTER + 1
     return f"{prefix}{seq:04d}"
+
+
+def preview_next_quote_number(db: Session, quote_date: date | None = None) -> str:
+    return generate_quote_number(db, quote_date or date.today())
+
+
+def _clean_text(value: Any) -> str:
+    return str(value or "").strip()
+
+
+def _split_contact_name(name: str) -> tuple[str, str]:
+    parts = [part for part in name.strip().split() if part]
+    if not parts:
+        return "", ""
+    if len(parts) == 1:
+        return parts[0], ""
+    return parts[0], " ".join(parts[1:])
+
+
+def _resolve_quote_customer(
+    db: Session,
+    *,
+    user: User,
+    company_id: UUID | None,
+    contact_id: UUID | None,
+    bill_to: dict | None,
+    create_customer_if_missing: bool,
+) -> tuple[UUID | None, UUID | None]:
+    company = None
+    contact = None
+    bill_to = bill_to or {}
+    company_name = _clean_text(bill_to.get("company"))
+    contact_name = _clean_text(bill_to.get("name"))
+    address = _clean_text(bill_to.get("address"))
+
+    if company_id:
+        company = db.query(Company).filter(Company.id == company_id, Company.is_active.is_(True)).first()
+        if not company:
+            raise ApiError(NOT_FOUND, f"company not found: {company_id}", status_code=404)
+
+    if contact_id:
+        contact = db.query(Contact).filter(Contact.id == contact_id, Contact.is_active.is_(True)).first()
+        if not contact:
+            raise ApiError(NOT_FOUND, f"contact not found: {contact_id}", status_code=404)
+        if company and contact.company_id != company.id:
+            raise ApiError(VALIDATION_ERROR, "selected contact does not belong to selected company", status_code=400)
+        company = company or contact.company
+
+    if not company and create_customer_if_missing and company_name:
+        company = (
+            db.query(Company)
+            .filter(func.lower(Company.company_name) == company_name.lower(), Company.is_active.is_(True))
+            .first()
+        )
+        if not company:
+            company = Company(
+                company_name=company_name,
+                company_type="Office Furniture Dealer",
+                country="United States",
+                address=address or None,
+                source="quote_manual_entry",
+                status="active",
+                notes="Created from internal quote draft. No external message was sent.",
+                created_by_id=user.id,
+                updated_by_id=user.id,
+            )
+            db.add(company)
+            db.flush()
+        elif address and not company.address:
+            company.address = address
+            company.updated_by_id = user.id
+
+    if company and not contact and create_customer_if_missing and contact_name:
+        first_name, last_name = _split_contact_name(contact_name)
+        if first_name:
+            query = db.query(Contact).filter(Contact.company_id == company.id, Contact.is_active.is_(True))
+            if last_name:
+                query = query.filter(
+                    func.lower(Contact.first_name) == first_name.lower(),
+                    func.lower(Contact.last_name) == last_name.lower(),
+                )
+            else:
+                query = query.filter(func.lower(Contact.first_name) == first_name.lower())
+            contact = query.first()
+            if not contact:
+                contact = Contact(
+                    first_name=first_name,
+                    last_name=last_name,
+                    company_id=company.id,
+                    contact_type="Buyer",
+                    status="active",
+                    notes="Created from internal quote draft. No external message was sent.",
+                    created_by_id=user.id,
+                    updated_by_id=user.id,
+                )
+                db.add(contact)
+                db.flush()
+
+    return (company.id if company else company_id, contact.id if contact else contact_id)
 
 
 def derived_expired(quote: Quote, *, today: date | None = None) -> bool:
@@ -547,9 +647,11 @@ def create_quote(
     *,
     user: User,
     line_items_in: list[dict[str, Any]],
+    quote_number: str | None = None,
     lead_id: UUID | None = None,
     company_id: UUID | None = None,
     contact_id: UUID | None = None,
+    create_customer_if_missing: bool = False,
     bill_to: dict | None = None,
     ship_to: dict | None = None,
     payment_terms: str | None = None,
@@ -563,8 +665,29 @@ def create_quote(
         raise ApiError(VALIDATION_ERROR, "quote requires at least one line item", status_code=400)
 
     quote_date = date.today()
+    if quote_number:
+        quote_number = quote_number.strip()
+        existing = db.query(Quote).filter(Quote.quote_number == quote_number).first()
+        if existing:
+            raise ApiError(
+                VALIDATION_ERROR,
+                f"quote number already exists: {quote_number}; reload the quote editor to get the next number",
+                status_code=400,
+            )
+    else:
+        quote_number = generate_quote_number(db, quote_date)
+
+    company_id, contact_id = _resolve_quote_customer(
+        db,
+        user=user,
+        company_id=company_id,
+        contact_id=contact_id,
+        bill_to=bill_to,
+        create_customer_if_missing=create_customer_if_missing,
+    )
+
     quote = Quote(
-        quote_number=generate_quote_number(db, quote_date),
+        quote_number=quote_number,
         lead_id=lead_id,
         company_id=company_id,
         contact_id=contact_id,

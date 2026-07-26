@@ -14,14 +14,14 @@ from scripts.import_hosun_product_catalog import (
 )
 
 
-def test_generate_hosun_sku_uses_intelliopus_prefix_and_model():
+def test_generate_hosun_sku_uses_factory_model_directly():
     sku = generate_hosun_sku(
         "HS90603PRLCZ",
         "Lifting Columns (Components)",
         "Rectangular Lifting Column 3-Stage",
     )
 
-    assert sku == "IO-HOSUN-LC-HS90603PRLCZ"
+    assert sku == "HS90603PRLCZ"
 
 
 def test_hosun_category_taxonomy_and_image_mapping():

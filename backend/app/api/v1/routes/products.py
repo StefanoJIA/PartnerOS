@@ -17,6 +17,7 @@ from app.core.request_id import get_request_id
 from app.core.responses import success_envelope
 from app.models import FxRate, ManufacturingPartner, ProductCatalog, ProductCostModel, ProductPriceTier, User
 from app.schemas.quote_catalog import ProductCatalogCreate, ProductCatalogOut, ProductCatalogUpdate
+from app.services.quotes.catalog_enrichment import infer_configuration_summary
 from app.services.quotes.fx_rates import ensure_latest_fx_rate
 from app.services.quotes.pricing_assumptions import PricingAssumptionSnapshot, get_current_pricing_assumptions
 from app.services.quotes.pricing_calculations import compute_cost_breakdown
@@ -129,11 +130,21 @@ def _pricing_model_summary(
         "stored_ddp_cost_usd_snapshot": _decimal_text(cost_model.ddp_cost_usd) if cost_model else None,
         "stored_cost_snapshot_used": bool(calculated_cost.get("stored_cost_snapshot_used", assumptions is None)),
         "product_target_margin_percent": _target_margin(attrs),
+        "commercial_margin_strategy": attrs.get("commercial_margin_strategy"),
+        "commercial_margin_strategy_reason": attrs.get("commercial_margin_strategy_reason"),
+        "pricing_margin_source": attrs.get("pricing_margin_source"),
         "fx_rate_usd_cny": _decimal_text(latest_fx.rate, "0.0001") if latest_fx else None,
         "fx_rate_date": latest_fx.rate_date.isoformat() if latest_fx else None,
         "fx_source": latest_fx.source if latest_fx else None,
         "fx_is_stale": fx_age_days is not None and fx_age_days > 7,
         "fx_age_days": fx_age_days,
+        "profit_strategy_basis": (
+            "interval margin multipliers are maintained by strategy: traffic, volume, profit"
+        ),
+        "ocean_freight_volume_logic": (
+            "ocean freight is maintained as an independent provider quote; volume freight breaks can be updated "
+            "without changing product factory cost"
+        ),
         "calculation_basis": [
             "factory cost is maintained per product in RMB",
             "transport cost = unit weight * ocean freight unit price",
@@ -144,24 +155,24 @@ def _pricing_model_summary(
     }
 
 
-def _configuration_summary(attrs: dict | None) -> dict | None:
-    if not attrs:
-        return None
+def _configuration_summary(row: ProductCatalog) -> dict | None:
+    attrs = row.attributes_json or {}
     specs = attrs.get("product_specs") or {}
-    model = attrs.get("configuration_model") or {}
     colors = attrs.get("color_options_summary") or {}
     inventory = attrs.get("inventory_snapshot") or []
+    summary = infer_configuration_summary(
+        name=row.product_name,
+        category=row.product_category,
+        product_family=row.product_family,
+        partner_model=row.partner_product_code or attrs.get("partner_model") or attrs.get("source_sku"),
+        attrs=attrs,
+        description=row.description_internal,
+    )
     return {
-        "source_system": attrs.get("source_system") or attrs.get("pricing_model_source"),
-        "customer_quote_name": attrs.get("customer_quote_name"),
-        "base_type": model.get("base_type"),
-        "stage": model.get("stage") or specs.get("stages"),
-        "column_type": model.get("column_type"),
-        "dimensions": model.get("dimensions") or specs.get("specification"),
-        "load_capacity": specs.get("load_capacity"),
-        "lifting_range": specs.get("lifting_range"),
-        "lifting_speed": specs.get("lifting_speed"),
-        "package_size": specs.get("package_size"),
+        **summary,
+        "source_system": summary.get("source_system") or attrs.get("source_system") or attrs.get("pricing_model_source"),
+        "customer_quote_name": summary.get("customer_quote_name") or attrs.get("customer_quote_name") or row.product_name,
+        "load_capacity": summary.get("load_capacity") or specs.get("load_capacity"),
         "total_available_colors": colors.get("total_available_colors"),
         "inventory_reference_count": len(inventory) if isinstance(inventory, list) else 0,
         "inventory_not_promised": True,
@@ -182,7 +193,7 @@ def _product_payload(
     payload["partner_name"] = partner.partner_name if partner else None
     payload["quote_interval_count"] = quote_interval_count
     payload["has_interval_pricing"] = quote_interval_count > 0
-    payload["configuration_summary"] = _configuration_summary(row.attributes_json)
+    payload["configuration_summary"] = _configuration_summary(row)
     payload["pricing_model_summary"] = _pricing_model_summary(
         row,
         cost_model=cost_model,
@@ -223,6 +234,8 @@ def list_products(
         q = q.filter(ProductCatalog.product_category == category)
     if status:
         q = q.filter(ProductCatalog.status == status)
+    else:
+        q = q.filter(ProductCatalog.status == "active")
     if search:
         like = f"%{search.strip()}%"
         q = q.filter(
@@ -247,7 +260,7 @@ def list_products(
         product_id: count
         for product_id, count in (
             db.query(ProductPriceTier.product_id, func.count(ProductPriceTier.id))
-            .filter(ProductPriceTier.product_id.in_(product_ids))
+            .filter(ProductPriceTier.product_id.in_(product_ids), ProductPriceTier.incoterm.in_(["FOB", "DDP"]))
             .group_by(ProductPriceTier.product_id)
             .all()
             if product_ids
@@ -276,6 +289,36 @@ def list_products(
     )
 
 
+@router.get("/partner-options")
+def list_product_partner_options(
+    request: Request,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    rows = (
+        db.query(ManufacturingPartner)
+        .filter(ManufacturingPartner.is_active.is_(True))
+        .order_by(ManufacturingPartner.partner_code.asc().nullslast(), ManufacturingPartner.partner_name.asc())
+        .all()
+    )
+    rid = get_request_id(request)
+    return success_envelope(
+        {
+            "items": [
+                {
+                    "id": str(row.id),
+                    "partner_code": row.partner_code,
+                    "partner_name": row.partner_name,
+                    "default_incoterm": row.default_incoterm,
+                    "default_currency": row.default_currency,
+                }
+                for row in rows
+            ]
+        },
+        request_id=rid,
+    )
+
+
 @router.get("/{product_id}")
 def get_product(
     product_id: UUID,
@@ -288,7 +331,10 @@ def get_product(
         raise ApiError(NOT_FOUND, "product not found", status_code=404)
     partner = db.query(ManufacturingPartner).filter(ManufacturingPartner.id == row.partner_id).first()
     quote_interval_count = (
-        db.query(func.count(ProductPriceTier.id)).filter(ProductPriceTier.product_id == row.id).scalar() or 0
+        db.query(func.count(ProductPriceTier.id))
+        .filter(ProductPriceTier.product_id == row.id, ProductPriceTier.incoterm.in_(["FOB", "DDP"]))
+        .scalar()
+        or 0
     )
     cost_model = _latest_cost_models(db, [row.id]).get(row.id)
     latest_fx = _latest_fx(db)
@@ -339,6 +385,27 @@ def update_product(
         raise ApiError(NOT_FOUND, "product not found", status_code=404)
     for k, v in body.model_dump(exclude_unset=True).items():
         setattr(row, k, v)
+    row.updated_by_id = user.id
+    db.commit()
+    db.refresh(row)
+    rid = get_request_id(request)
+    return success_envelope(ProductCatalogOut.model_validate(row).model_dump(mode="json"), request_id=rid)
+
+
+@router.delete("/{product_id}")
+def delete_product(
+    product_id: UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    row = db.query(ProductCatalog).filter(ProductCatalog.id == product_id).first()
+    if not row:
+        raise ApiError(NOT_FOUND, "product not found", status_code=404)
+    row.status = "inactive"
+    attrs = dict(row.attributes_json or {})
+    attrs["inactive_reason"] = "manual_catalog_delete"
+    row.attributes_json = attrs
     row.updated_by_id = user.id
     db.commit()
     db.refresh(row)

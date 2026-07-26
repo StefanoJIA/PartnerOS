@@ -159,6 +159,60 @@ def test_create_quote_envelope(quote_client):
     assert "source" not in rows[0]
 
 
+def test_create_quote_forwards_customer_source_and_visible_quote_number(quote_client, monkeypatch):
+    client, _, product_id, _ = quote_client
+    captured = {}
+
+    # Reuse the fixture's response quote while checking the route contract passed into the service.
+    response_quote = Quote(
+        id=uuid4(),
+        quote_number="Q-2026-0085",
+        quote_date=date.today(),
+        valid_until=date.today() + timedelta(days=21),
+        status="internal_review",
+        currency="USD",
+        subtotal=Decimal("0"),
+        adjustment_total=Decimal("0"),
+        tax_total=Decimal("0"),
+        grand_total=Decimal("0"),
+        payment_terms="Subject to confirmation",
+        shipping_terms="Subject to confirmation",
+        bill_to_company="New Customer Co",
+    )
+    response_quote.line_items = []
+    response_quote.adjustments = []
+    response_quote.versions = []
+
+    def _create_quote(db, **kw):
+        captured.update(kw)
+        return response_quote
+
+    monkeypatch.setattr("app.api.v1.routes.quotes.create_quote", _create_quote)
+    company_id = uuid4()
+    contact_id = uuid4()
+    r = client.post(
+        "/api/v1/quotes",
+        json={
+            "quote_number": "Q-2026-0085",
+            "company_id": str(company_id),
+            "contact_id": str(contact_id),
+            "create_customer_if_missing": True,
+            "bill_to": {"name": "Rick Vitale", "company": "New Customer Co", "address": "Beverly, MA"},
+            "ship_to": {"name": "Receiving", "company": "New Customer Co", "address": "Boston, MA"},
+            "line_items": [
+                {"product_id": str(product_id), "quantity": 10, "incoterm": "FOB", "pricing_strategy": "volume"}
+            ],
+        },
+    )
+    assert r.status_code == 201
+    assert captured["quote_number"] == "Q-2026-0085"
+    assert captured["company_id"] == company_id
+    assert captured["contact_id"] == contact_id
+    assert captured["create_customer_if_missing"] is True
+    assert captured["bill_to"]["company"] == "New Customer Co"
+    assert captured["ship_to"]["address"] == "Boston, MA"
+
+
 def test_mark_sent_envelope(quote_client):
     client, quote_id, _, _ = quote_client
     r = client.post(f"/api/v1/quotes/{quote_id}/mark-sent", json={"send_channel": "email"})
