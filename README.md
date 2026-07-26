@@ -349,6 +349,30 @@ Default login after `seed`: `admin@example.com` / `admin123`。
 
 `docker compose up --build` 可启动 db、backend、frontend、nginx（见 [docker-compose.yml](docker-compose.yml)）。根目录 `.env` 可覆盖 `DATABASE_URL` 等。
 
+## Docker Compose Local Server（本地服务器托管）
+
+如果要把 PartnerOS 放在本地服务器上长期运行，优先使用独立的 local-server compose，而不是手动开两个开发进程：
+
+```powershell
+docker compose -f docker-compose.local-server.yml up --build -d
+docker compose -f docker-compose.local-server.yml ps
+```
+
+- 前端入口：`http://127.0.0.1:8080`
+- 后端健康检查：`http://127.0.0.1:8014/health`
+- 前端 Nginx 反代健康检查：`http://127.0.0.1:8080/health`
+- 数据库：Docker Postgres，主机端口 `5435`
+
+该模式会构建前端静态文件并由 Nginx 托管，后端容器启动时执行 `alembic upgrade head` 后运行 Uvicorn（无 `--reload`）。Portal bridge 默认保持关闭，不会写入真实 token，也不代表 `STAGING_VALIDATED`。
+
+停止服务：
+
+```powershell
+docker compose -f docker-compose.local-server.yml down
+```
+
+只有在明确需要清空本地服务器数据时才使用 `down -v`。
+
 ## Tests
 
 - Backend: `cd backend && pytest`（含 `test_database_lifecycle`、`test_sidecar_entry`、`test_health` 等）— **[docs/testing.md](docs/testing.md)**  

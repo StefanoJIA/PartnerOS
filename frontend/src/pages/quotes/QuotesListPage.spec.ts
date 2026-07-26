@@ -58,6 +58,8 @@ describe('QuotesListPage', () => {
     expect(wrapper.text()).toContain('不会自动发送报价')
     expect(wrapper.text()).toContain('Q-2026-0001')
     expect(wrapper.text()).toContain('删除')
+    expect(wrapper.text()).not.toContain('参考金额')
+    expect(wrapper.text()).not.toContain('internal_review')
   })
 
   it('deletes an existing internal review quote and refreshes the list', async () => {

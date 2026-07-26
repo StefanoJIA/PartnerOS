@@ -1,0 +1,996 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catalog - IntelliOpus Portal</title>
+    <link rel="stylesheet" href="/css/apple-style.css">
+    <link rel="stylesheet" href="/css/customer-theme.css">
+    <style>
+        body {
+            background: var(--background);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--background);
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--spacing-md) var(--spacing-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: saturate(180%) blur(20px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .header-logo a {
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .header-logo a img {
+            height: 40px;
+            max-width: 160px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .header-logo img:last-child {
+            height: 110px;
+            max-width: 560px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+
+        .cart-icon {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            background: var(--background-secondary);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: background 0.2s;
+        }
+
+        .cart-icon:hover {
+            background: #E8E8ED;
+        }
+
+        .cart-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #FF3B30;
+            color: white;
+            border-radius: 10px;
+            min-width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 0 4px;
+        }
+
+        .btn-logout {
+            padding: 8px 16px;
+            font-size: 15px;
+            background: var(--background-secondary);
+            color: var(--text-primary);
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+        }
+
+        .btn-logout:hover {
+            background: #E8E8ED;
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-xl) var(--spacing-lg);
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 17px;
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .filter-section {
+            background: var(--background);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .filter-row {
+            display: flex;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: var(--spacing-xs);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .groups-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        .group-card {
+            background: var(--background);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 0;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .group-card-image {
+            width: 100%;
+            min-height: 150px;
+            background: linear-gradient(135deg, #f8fbff 0%, #eef5ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+            padding: var(--spacing-md);
+        }
+
+        .group-card-image span {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .group-card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: var(--spacing-md);
+        }
+
+        .group-card-image-preview {
+            flex: 1;
+            min-width: 0;
+            height: 126px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .group-card-image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            mix-blend-mode: multiply;
+        }
+
+        .group-card-content {
+            padding: var(--spacing-lg);
+        }
+
+        .group-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+        }
+
+        .group-name {
+            font-size: 19px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+
+        .group-name-en {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .group-count {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-top: var(--spacing-md);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .group-description {
+            font-size: 14px;
+            line-height: 1.55;
+            color: var(--text-secondary);
+            min-height: 54px;
+        }
+
+        .group-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: var(--spacing-md);
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(47, 128, 237, 0.08);
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .group-card.is-disabled {
+            cursor: default;
+            opacity: 0.76;
+        }
+
+        .group-card.is-disabled:hover {
+            transform: none;
+            box-shadow: var(--shadow-sm);
+            border-color: var(--border-color);
+        }
+
+        .view-models-link {
+            display: inline-block;
+            margin-top: var(--spacing-md);
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--primary);
+            color: white;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .view-models-link:hover {
+            background: #0051D5;
+        }
+        .partner-program-section { margin-bottom: var(--spacing-xl); }
+        .section-kicker { color: var(--primary); font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: var(--spacing-sm); }
+        .partner-program-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-lg); }
+        .partner-program-card { position: relative; overflow: hidden; min-height: 216px; display: flex; flex-direction: column; justify-content: flex-start; background: linear-gradient(145deg, #FFFFFF 0%, #F6FAFF 100%); border: 1px solid #D7E4F5; border-radius: 22px; padding: 22px; box-shadow: 0 18px 46px rgba(36, 75, 130, 0.08); }
+        .partner-program-card.is-active { border-color: #8CB8F6; box-shadow: 0 20px 50px rgba(47, 114, 217, 0.12); }
+        .partner-program-card::after { content: ""; position: absolute; inset: auto 18px 18px auto; width: 64px; height: 64px; border-radius: 999px; background: rgba(47, 114, 217, 0.06); pointer-events: none; }
+        .partner-program-badge { display: inline-flex; width: max-content; padding: 5px 9px; border-radius: 999px; background: #EAF3FF; color: #2569D8; font-size: 12px; font-weight: 700; margin-top: auto; margin-bottom: 0; }
+        .partner-program-name { margin-top: 12px; margin-bottom: 6px; font-size: 22px; font-weight: 700; color: #122033; }
+        .partner-program-desc { max-width: 94%; font-size: 14px; color: #607086; line-height: 1.55; }
+        .partner-program-logo { height: 64px; max-width: 128px; object-fit: contain; margin-bottom: 10px; display: block; }
+        .partner-program-image { width: 100%; height: 78px; object-fit: cover; border-radius: 16px; border: 1px solid #DDE7F4; background: #FFFFFF; margin-bottom: 10px; display: block; }
+        .partner-program-mark { width: 46px; height: 46px; border-radius: 16px; background: #EAF3FF; color: #2569D8; display: flex; align-items: center; justify-content: center; font-weight: 800; margin-bottom: 10px; }
+        .product-family-heading { display: flex; justify-content: space-between; gap: var(--spacing-md); align-items: end; margin: var(--spacing-xl) 0 var(--spacing-md); }
+        .product-family-heading h2 { margin: 0; font-size: 24px; color: #122033; }
+        .product-family-heading p { margin: 4px 0 0; color: #607086; }
+        .partner-section-title { grid-column: 1 / -1; margin: 8px 0 4px; padding-top: 14px; border-top: 1px solid #E4ECF7; color: #122033; font-size: 20px; font-weight: 700; }
+        .jobo-card .group-card-image img { object-fit: cover; padding: 0; mix-blend-mode: normal; }
+        .group-attribute-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--spacing-md); }
+        .group-attribute-list span { display: inline-flex; padding: 5px 8px; border-radius: 999px; background: #EEF4FB; color: #50647E; font-size: 12px; font-weight: 600; }
+        .partner-note { grid-column: 1 / -1; color: #607086; line-height: 1.6; margin: -6px 0 var(--spacing-sm); }
+        @media (max-width: 960px) { .partner-program-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 640px) { .partner-program-grid { grid-template-columns: 1fr; } .product-family-heading { flex-direction: column; align-items: flex-start; } }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-lg);
+            color: var(--text-secondary);
+        }
+
+        .loading {
+            text-align: center;
+            padding: var(--spacing-lg);
+            color: var(--text-secondary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            background: var(--background);
+            color: var(--text-primary);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        /* Custom Product Section Styles */
+        .custom-product-section {
+            margin-top: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .custom-product-card {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #0051D5 100%);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            color: white;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .custom-product-header {
+            display: flex;
+            align-items: start;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .custom-product-icon {
+            font-size: 48px;
+            line-height: 1;
+        }
+
+        .custom-product-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin: 0 0 var(--spacing-xs) 0;
+            color: white;
+        }
+
+        .custom-product-subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.9);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .custom-product-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: var(--spacing-xl);
+            align-items: center;
+        }
+
+        .custom-product-features {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .custom-feature-item {
+            display: flex;
+            align-items: start;
+            gap: var(--spacing-md);
+        }
+
+        .custom-feature-item .feature-icon {
+            font-size: 19px;
+            flex-shrink: 0;
+        }
+
+        .feature-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+            color: white;
+        }
+
+        .feature-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.4;
+        }
+
+        .custom-product-cta {
+            text-align: center;
+        }
+
+        .custom-product-cta .btn {
+            background: white;
+            color: var(--primary-color);
+            border: none;
+        }
+
+        .custom-product-cta .btn:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .groups-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .custom-product-content {
+                grid-template-columns: 1fr;
+            }
+
+            .custom-product-header {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header portal-header">
+    <div class="site-header-inner portal-header-inner">
+        <a class="portal-brand" href="/">
+    <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+    <span>
+        <strong>IntelliOpus</strong>
+        <small>Service Portal</small>
+    </span>
+</a>
+        <nav class="portal-nav portal-nav-main" aria-label="Primary navigation">
+    <div class="portal-nav-cluster" aria-label="Public site navigation">
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/about">About</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">IntelliOpus</span>
+                <a href="/about">Company overview</a>
+                <a href="/service-history">Service history</a>
+                <a href="/about#operating-bridge">U.S.-China operating bridge</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/services">Services</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Service scope</span>
+                <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+                <a href="/services#connected-workflow">From catalog to delivery</a>
+                <a href="/services#safety-boundary">Customer-safe boundary</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/manufacturers">Supplier Network</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Supplier network</span>
+                <a href="/manufacturers#hosun">HOSUN lifting systems</a>
+                <a href="/manufacturers#jobo">JOBO education furniture</a>
+                <a href="/manufacturers#future-suppliers">Future supplier programs</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link is-active" href="/products">Product Programs</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Product programs</span>
+                <a href="/products">Browse by supplier</a>
+                <a href="/inventory">Local Samples</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/reference-center">Resources</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Resources</span>
+                <a href="/reference-center">Resource library</a>
+                <a href="/reference-center#ral">RAL color guide</a>
+                <a href="/reference-center#hosun-resources">HOSUN resources</a>
+                <a href="/reference-center#jobo-resources">JOBO resources</a>
+            </div>
+        </div>
+    </div>
+</nav>
+        <div class="portal-user">
+            <div class="portal-nav-group portal-workspace-menu">
+                <a class="portal-nav-link portal-workspace-link" href="/dashboard">Customer Workspace</a>
+                <div class="portal-dropdown portal-dropdown-right">
+                    <a href="/dashboard">Workspace overview</a>
+                    <a href="/dashboard#ordersContainer">Orders and tracking</a>
+                    <a href="/inventory">Local samples</a>
+                    <a href="/customer-service">Support and feedback</a>
+                    <a href="/cart">Cart</a>
+                </div>
+            </div>
+            <a href="/cart" class="cart-icon" id="cartIcon" aria-label="Cart">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+    </svg>
+    <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
+</a>
+            <a href="/login" class="btn btn-login-header" id="signInBtn" style="display: none;">Sign In</a>
+            <button class="btn btn-logout" id="logoutBtn" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
+</header>
+
+    <div class="main-content">
+        <section class="portal-context-band portal-showcase-hero catalog-showcase-hero">
+            <div class="portal-showcase-copy">
+                <div class="section-label">Product Programs</div>
+                <h1>Supplier programs for product selection.</h1>
+                <p>Start with the supplier, then review approved product families, sample availability, and resources in one customer path.</p>
+                <div class="portal-showcase-actions">
+                    <a class="btn btn-login-header" href="#supplier-programs">Browse supplier programs</a>
+                    <a class="btn btn-secondary" href="/inventory">Check local samples</a>
+                    <a class="btn btn-secondary" href="/reference-center">Open resources</a>
+                </div>
+            </div>
+            <div class="portal-showcase-panel" aria-label="Supplier program preview">
+                <div class="showcase-card">
+                    <img src="/static/images/partners/hosun-logo.png" alt="HOSUN lifting systems">
+                    <div><strong>HOSUN lifting systems</strong><span>Desk frames, lifting columns, hand controls, finish samples, and project supply rules.</span></div>
+                </div>
+                <div class="showcase-card">
+                    <img src="/static/images/partners/jobo-brochure-cover.png" alt="JOBO education furniture catalog">
+                    <div><strong>JOBO education furniture</strong><span>School desks, chairs, classroom deployment, brochures, and project furniture resources.</span></div>
+                </div>
+                <div class="showcase-card">
+                    <img src="/intelliopus-logo.png" alt="Future supplier programs">
+                    <div><strong>Future supplier programs</strong><span>New manufacturers can enter with their own product families, quote logic, resources, and delivery rules.</span></div>
+                </div>
+            </div>
+        </section>
+                <div class="catalog-page-summary">
+            <div><strong>Supplier profile</strong><span>Start from HOSUN, JOBO, or a future supplier program so each manufacturer keeps its own product logic.</span></div>
+            <div><strong>Product family</strong><span>Review frames, columns, accessories, education furniture, samples, and future categories under the right supplier context.</span></div>
+            <div><strong>Customer workspace</strong><span>After sign-in, selected products connect to samples, resources, orders, shipment updates, and support.</span></div>
+        </div>
+                <div class="portal-flow-intro"><strong>Customer path</strong><span>Choose the supplier program first. Then check local samples, review approved resources, and continue in the customer workspace.</span></div>
+        <section class="workspace-path-mini portal-flow-path" aria-label="Customer portal flow">
+            <span class="is-current"><strong>1. Supplier products</strong><small>Choose the supplier program and product family.</small></span>
+            <a href="/inventory"><strong>2. Local samples</strong><small>Check finish and sample availability.</small></a>
+            <a href="/reference-center"><strong>3. Approved resources</strong><small>Review color guides, catalogs, and support files.</small></a>
+            <a href="/dashboard"><strong>4. Customer workspace</strong><small>Follow orders, delivery updates, and feedback.</small></a>
+        </section>
+        <section class="page-transition-strip functional-focus-strip" aria-label="Product program page use">
+            <div class="page-transition-copy">
+                <span>Product review</span>
+                <strong>Choose the supplier program first, then review product families.</strong>
+                <p>HOSUN, JOBO, and future suppliers keep separate product rules. Use this page to enter the right product family before checking samples, resources, or creating an order.</p>
+            </div>
+            <div class="page-transition-actions">
+                <a href="/manufacturers">Supplier network</a>
+                <a href="/reference-center">Resources</a>
+                <a href="/inventory">Local samples</a>
+            </div>
+        </section>
+<div class="filter-section">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="groupSearch">Search suppliers or product families</label>
+                    <input type="text" id="groupSearch" class="form-input" placeholder="Search supplier, product family, columns, accessories...">
+                </div>
+            </div>
+        </div>
+
+        <div class="partner-program-section" id="supplier-programs">
+            <div class="section-kicker">Approved supplier programs</div>
+            <div class="partner-program-grid">
+                <div class="partner-program-card is-active" id="hosun">
+                    <img class="partner-program-logo" src="/static/images/partners/hosun-logo.png" alt="HOSUN">
+                    <div class="partner-program-badge">Lifting systems</div>
+                    <div class="partner-program-name">HOSUN</div>
+                    <div class="partner-program-desc">Lifting systems, configurable desk frames, columns, hand controls, finish samples, and project supply rules.</div>
+                </div>
+                <div class="partner-program-card" id="jobo">
+                    <img class="partner-program-image" src="/static/images/partners/jobo-future-classroom.png" alt="JOBO education furniture">
+                    <div class="partner-program-badge">Education furniture</div>
+                    <div class="partner-program-name">JOBO</div>
+                    <div class="partner-program-desc">School desks, chairs, and project furniture organized by procurement timing, classroom deployment, resources, and project requirements.</div>
+                </div>
+                <div class="partner-program-card">
+                    <div class="partner-program-mark">+</div>
+                    <div class="partner-program-badge">Future programs</div>
+                    <div class="partner-program-name">Future suppliers</div>
+                    <div class="partner-program-desc">Additional manufacturers can join with their own product fields, resources, quote rules, and delivery requirements.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="product-family-heading" id="hosun-product-families">
+            <div>
+                <h2>Product families by supplier</h2>
+                <p>Each supplier keeps its own product logic. HOSUN uses configurable lifting-system families; JOBO uses education-project families; future suppliers enter through their own approved categories.</p>
+            </div>
+        </div>
+
+        <div id="groupsContainer" class="loading">Loading catalog sections...</div>
+
+        <!-- Project-specific request Section -->
+        <div class="custom-product-section">
+            <div class="custom-product-card">
+                <div class="custom-product-header">
+                    <div class="custom-product-icon">Custom</div>
+                    <div>
+                        <h2 class="custom-product-title">Project-specific request</h2>
+                        <p class="custom-product-subtitle">Send a request when the current catalog does not cover the project requirement.</p>
+                    </div>
+                </div>
+                <div class="custom-product-content">
+                    <div class="custom-product-features">
+                        <div class="custom-feature-item">
+                            <div class="feature-icon">Project</div>
+                            <div>
+                                <div class="feature-title">Project requirements</div>
+                                <div class="feature-desc">Share dimensions, finish, quantity, and timing.</div>
+                            </div>
+                        </div>
+                        <div class="custom-feature-item">
+                            <div class="feature-icon">Fit</div>
+                            <div>
+                                <div class="feature-title">Supplier fit review</div>
+                                <div class="feature-desc">We route the request to the right supplier program.</div>
+                            </div>
+                        </div>
+                        <div class="custom-feature-item">
+                            <div class="feature-icon">Supplier</div>
+                            <div>
+                                <div class="feature-title">Operator follow-up</div>
+                                <div class="feature-desc">An IntelliOpus operator reviews the request before any quote.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="custom-product-cta">
+                        <a href="/custom-product-request" class="btn btn-primary" style="font-size: 16px; padding: 12px 24px;">Send project request</a>
+                        <p style="margin-top: var(--spacing-sm); font-size: 13px; color: var(--text-secondary);">
+                            This creates a request only. It does not place an order.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin;
+        let allGroups = [];
+
+        function getToken() {
+            return localStorage.getItem('access_token');
+        }
+
+        function removeToken() {
+            localStorage.removeItem('access_token');
+        }
+
+        function updatePublicHeader() {
+            const hasToken = Boolean(getToken());
+            const cartIcon = document.getElementById('cartIcon');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const signInBtn = document.getElementById('signInBtn');
+            if (cartIcon) cartIcon.style.display = hasToken ? 'inline-flex' : 'none';
+            if (logoutBtn) logoutBtn.style.display = hasToken ? 'inline-flex' : 'none';
+            if (signInBtn) signInBtn.style.display = hasToken ? 'none' : 'inline-flex';
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to sign out?')) {
+                removeToken();
+                window.location.href = '/login';
+            }
+        }
+
+        async function loadProductGroups() {
+            try {
+                const token = getToken();
+                const headers = {};
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/api/site/products/categories/groups`, {
+                    headers: headers
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        removeToken();
+                        updatePublicHeader();
+                        document.getElementById('groupsContainer').innerHTML = '<div class="empty-state">Sign in to view selectable model families. The supplier program overview remains available above.</div>';
+                        return;
+                    }
+                    const errorText = await response.text();
+                    console.error('API Error:', response.status, errorText);
+                    document.getElementById('groupsContainer').innerHTML = `<div class="empty-state">Unable to load catalog sections (${response.status})</div>`;
+                    return;
+                }
+
+                allGroups = await response.json();
+                if (!allGroups || allGroups.length === 0) {
+                    document.getElementById('groupsContainer').innerHTML = '<div class="empty-state">No product categories found</div>';
+                    return;
+                }
+                displayGroups(allGroups);
+            } catch (error) {
+                console.error('Error loading product groups:', error);
+                document.getElementById('groupsContainer').innerHTML = `<div class="empty-state">Unable to load catalog sections: ${error.message}</div>`;
+            }
+        }
+
+        function groupIconSvg(icon) {
+            const icons = {
+                frame: '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M10 24h44M16 24v26M48 24v26M22 50h20M24 24l6-12h4l6 12"/></svg>',
+                bench: '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M8 24h48M12 38h40M16 24v28M48 24v28M24 24v14M40 24v14"/></svg>',
+                column: '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M24 10h16M27 10v44M37 10v44M20 54h24M24 24h16M24 40h16"/></svg>',
+                control: '<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="14" y="16" width="36" height="32" rx="6"/><path d="M22 26h20M22 36h8"/><circle cx="42" cy="36" r="4"/></svg>',
+                education: '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M10 28h44M16 28v18M48 28v18M20 46h24M22 18h20l8 10H14l8-10z"/></svg>',
+            };
+            return icons[icon] || icons.frame;
+        }
+
+        const joboProductFamilies = [
+            {
+                title: 'School Desks & Chairs',
+                subtitle: 'Education furniture',
+                image: '/static/images/partners/jobo-brochure-cover.png',
+                description: 'Classroom desk and chair products for school procurement and project furniture planning.',
+                attributes: ['durability', 'procurement cycle', 'classroom deployment']
+            },
+            {
+                title: 'Future Classroom',
+                subtitle: 'Flexible classroom systems',
+                image: '/static/images/partners/jobo-future-classroom.png',
+                description: 'Flexible learning-space furniture for project-based classroom layouts and teaching scenarios.',
+                attributes: ['flexible layout', 'resource needs', 'project planning']
+            },
+            {
+                title: 'Standard Classroom',
+                subtitle: 'Desk and chair deployment',
+                image: '/static/images/partners/jobo-standard-classroom.png',
+                description: 'Standard classroom furniture reference for delivery consistency and project acceptance review.',
+                attributes: ['delivery consistency', 'acceptance criteria', 'batch supply']
+            },
+            {
+                title: 'Library & Learning Space',
+                subtitle: 'Shared campus areas',
+                image: '/static/images/partners/jobo-library-zone.png',
+                description: 'Furniture references for library, reading, and shared learning-space projects.',
+                attributes: ['space planning', 'after-use feedback', 'resource matching']
+            }
+        ];
+
+        function renderJoboFamilies(searchTerm = '') {
+            const normalized = searchTerm.toLowerCase();
+            const filtered = joboProductFamilies.filter(item => {
+                const haystack = `${item.title} ${item.subtitle} ${item.description} ${item.attributes.join(' ')}`.toLowerCase();
+                return !normalized || haystack.includes(normalized) || 'jobo education furniture school desks chairs project'.includes(normalized);
+            });
+            if (!filtered.length) return '';
+            let html = '<div class="partner-section-title">JOBO education furniture families</div>';
+            html += '<div class="partner-note">JOBO uses an education-project path: school furniture families, procurement timing, resource needs, and classroom deployment are managed separately from HOSUN configuration rules.</div>';
+            filtered.forEach(item => {
+                html += `<div class="group-card jobo-card" onclick="window.location.href='/reference-center#jobo-resources'">`;
+                html += `<div class="group-card-image"><div class="group-card-image-preview"><img src="${item.image}" alt="${item.title}" onerror="handleImageError(this);"></div></div>`;
+                html += '<div class="group-card-content">';
+                html += `<div class="group-name">${item.title}</div>`;
+                html += `<div class="group-name-en">${item.subtitle}</div>`;
+                html += `<div class="group-description">${item.description}</div>`;
+                html += `<div class="group-attribute-list">${item.attributes.map(attr => `<span>${attr}</span>`).join('')}</div>`;
+                html += '<div class="group-status">View JOBO resources</div>';
+                html += '</div></div>';
+            });
+            return html;
+        }
+
+        function displayGroups(groups) {
+            if (groups.length === 0) {
+                document.getElementById('groupsContainer').innerHTML = '<div class="empty-state">No product families found</div>';
+                return;
+            }
+
+            const searchTerm = document.getElementById('groupSearch')?.value || '';
+            const hosunGroups = groups.filter(group => group.group_name !== 'Education Furniture');
+            const renderGroup = (group) => {
+                const encodedGroupName = encodeURIComponent(group.group_name);
+                const isAvailable = group.is_available !== false && Number(group.product_count || 0) > 0;
+                const cardClick = isAvailable ? `onclick="window.location.href='/product-models/${encodedGroupName}'"` : '';
+                const imageMap = {
+                    'Standalone Frames': 'standalone-frames.png',
+                    'Multi-User Benching': 'multi-user-benching.png',
+                    'Electric Columns': 'electric-columns.png',
+                    'Accessories': 'accessories.png',
+                    'Education Furniture': 'placeholder.png'
+                };
+                const imageFilename = imageMap[group.group_name] || `${encodedGroupName.toLowerCase().replace(/\s+/g, '-')}.png`;
+                const imageBase = group.group_name === 'Education Furniture' ? '/static/images/' : '/static/images/products/';
+                const cloudImageUrl = group.image_url || `${imageBase}${imageFilename}`;
+                let html = `<div class="group-card ${isAvailable ? '' : 'is-disabled'}" ${cardClick}>`;
+                html += `<div class="group-card-image" id="img-${group.group_name.replace(/\s+/g, '-')}">`;
+                html += `<div class="group-card-image-preview"><img src="${cloudImageUrl}" alt="${group.group_name}" onerror="handleImageError(this);"></div>`;
+                html += `</div>`;
+                html += `<div class="group-card-content">`;
+                html += `<div class="group-name">${group.group_name}</div>`;
+                if (group.name_en) html += `<div class="group-name-en">${group.name_en}</div>`;
+                if (group.description) html += `<div class="group-description">${group.description}</div>`;
+                html += `<div class="group-count">${group.product_count} models available</div>`;
+                html += `<div class="group-status">${isAvailable ? 'View models' : 'Reserved / pending data'}</div>`;
+                html += `</div></div>`;
+                return html;
+            };
+
+            let html = '<div class="groups-grid">';
+            html += '<div class="partner-section-title">HOSUN lifting-system families</div>';
+            hosunGroups.forEach(group => { html += renderGroup(group); });
+            html += renderJoboFamilies(searchTerm);
+            html += '</div>';
+            document.getElementById('groupsContainer').innerHTML = html;
+        }
+
+        function filterGroups() {
+            const searchTerm = document.getElementById('groupSearch').value.toLowerCase();
+            
+            if (!searchTerm) {
+                displayGroups(allGroups);
+                return;
+            }
+
+            const filtered = allGroups.filter(group =>
+                group.group_name.toLowerCase().includes(searchTerm) ||
+                (group.name_en && group.name_en.toLowerCase().includes(searchTerm))
+            );
+
+            displayGroups(filtered);
+        }
+
+        // Event listeners
+        document.getElementById('groupSearch').addEventListener('input', filterGroups);
+
+        function handleImageError(img) {
+            const container = img.parentElement;
+            img.style.display = 'none';
+            if (!container.querySelector('span')) {
+                const placeholder = document.createElement('span');
+                placeholder.textContent = 'Image Coming Soon';
+                placeholder.style.color = 'var(--text-secondary)';
+                placeholder.style.fontSize = '14px';
+                container.appendChild(placeholder);
+            }
+        }
+
+        // Cart functions
+        async function loadCartCount() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/cart/count`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const badge = document.getElementById('cartBadge');
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.textContent = data.count;
+                            badge.style.display = 'flex';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading cart count:', error);
+            }
+        }
+
+        // Initialize
+        updatePublicHeader();
+        if (!getToken()) {
+            document.getElementById('groupsContainer').innerHTML = '<div class="empty-state">Sign in to view selectable model families. The supplier program overview remains available above.</div>';
+        } else {
+            loadProductGroups();
+            loadCartCount();
+        }
+    </script>
+
+<footer class="portal-footer">
+    <div class="portal-footer-inner">
+        <div class="portal-footer-brand">
+            <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+            <div>
+                <div class="portal-footer-title">IntelliOpus Portal</div>
+                <div class="portal-footer-copy">An independent cross-border operating bridge for qualified supplier programs, customer resources, order visibility, and feedback-driven execution.</div>
+            </div>
+        </div>
+        <div class="portal-footer-col">
+            <h3>About</h3>
+            <a href="/about">About</a>
+            <a href="/service-history">Service history</a>
+            <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+            <a href="/manufacturers">Supplier Network</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Customer Workspace</h3>
+            <a href="/products">Product Programs</a>
+            <a href="/inventory">Local Samples</a>
+            <a href="/dashboard">Dashboard</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Resources</h3>
+            <a href="/reference-center">Resources</a>
+            <a href="/customer-service">Support</a>
+            <a href="/cart">Cart</a>
+        </div>
+    </div>
+    <div class="portal-footer-note">Customer-facing pages show approved product, resource, order, shipment, and feedback information only. Supplier coordination records stay separate from the customer workspace.</div>
+</footer>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Samples - IntelliOpus Portal</title>
+    <link rel="stylesheet" href="/css/apple-style.css">
+    <style>
+        body {
+            background: var(--background);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--background);
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--spacing-md) var(--spacing-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: saturate(180%) blur(20px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .header-logo a {
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .header-logo a img {
+            height: 40px;
+            max-width: 160px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .header-logo img:last-child {
+            height: 110px;
+            max-width: 560px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+
+        .cart-icon {
+            position: relative;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            background: var(--background-secondary);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: background 0.2s;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        .cart-icon:hover {
+            background: #E8E8ED;
+        }
+
+        .cart-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #FF3B30;
+            color: white;
+            border-radius: 10px;
+            min-width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 0 4px;
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-xl) var(--spacing-lg);
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 17px;
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .filter-section {
+            background: var(--background);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .filter-row {
+            display: flex;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: var(--spacing-xs);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .inventory-brand-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--spacing-md); margin: var(--spacing-lg) 0; }
+        .inventory-brand-card { background: #FFFFFF; border: 1px solid #DDE7F4; border-radius: 18px; padding: var(--spacing-md); box-shadow: 0 10px 26px rgba(36, 75, 130, 0.05); }
+        .inventory-brand-status { display: inline-flex; padding: 4px 8px; border-radius: 999px; background: #EAF3FF; color: #2569D8; font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+        .inventory-brand-name { font-size: 18px; font-weight: 700; color: #122033; margin-bottom: 4px; }
+        .inventory-brand-desc { font-size: 13px; color: #607086; line-height: 1.45; }
+        .inventory-partner-heading { margin: var(--spacing-lg) 0 var(--spacing-sm); font-size: 20px; color: #122033; font-weight: 700; }
+        .inventory-workflow-note { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--spacing-md); align-items: center; margin: 0 0 var(--spacing-lg); padding: var(--spacing-md) var(--spacing-lg); border: 1px solid #DDE7F4; border-radius: 18px; background: linear-gradient(135deg, #F8FBFF 0%, #FFFFFF 100%); color: #52637A; }
+        .inventory-workflow-note strong { display: block; color: #122033; margin-bottom: 4px; }
+        .inventory-workflow-note a { color: #2569D8; font-weight: 700; text-decoration: none; }
+        @media (max-width: 900px) { .inventory-brand-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } .inventory-workflow-note { grid-template-columns: 1fr; } }
+        @media (max-width: 560px) { .inventory-brand-strip { grid-template-columns: 1fr; } }
+
+        .inventory-grid {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .inventory-card {
+            background: var(--background);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .inventory-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+            color: var(--text-primary);
+        }
+
+        .product-sku {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .color-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 500;
+            margin-top: var(--spacing-xs);
+        }
+
+        .color-basic {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .color-ral {
+            background: #FFF3E0;
+            color: #E65100;
+            border-left: 3px solid #FF9500;
+        }
+
+        .quantity-section {
+            margin-top: var(--spacing-md);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .quantity-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-xs);
+            font-size: 14px;
+        }
+
+        .quantity-label {
+            color: var(--text-secondary);
+        }
+
+        .quantity-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .quantity-available {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-top: var(--spacing-sm);
+        }
+
+        .lead-time {
+            margin-top: var(--spacing-sm);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            background: var(--background-secondary);
+            border-radius: var(--radius-md);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .lead-time.warning {
+            background: #FFF3E0;
+            color: #E65100;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--text-secondary);
+        }
+
+        .loading {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--text-secondary);
+        }
+
+        
+        
+        
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            color: var(--text-primary);
+            z-index: 101;
+        }
+
+        
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .mobile-nav.active {
+            opacity: 1;
+        }
+
+        .mobile-nav-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 280px;
+            max-width: 85vw;
+            height: 100%;
+            background: var(--background);
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+            transition: right 0.3s ease;
+            overflow-y: auto;
+            z-index: 1001;
+        }
+
+        .mobile-nav.active .mobile-nav-menu {
+            right: 0;
+        }
+
+        .mobile-nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .mobile-nav-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--text-primary);
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mobile-nav-items {
+            padding: var(--spacing-md);
+        }
+
+        .mobile-nav-item {
+            display: block;
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-xs);
+            text-decoration: none;
+            color: var(--text-primary);
+            border-radius: var(--radius-md);
+            transition: background 0.2s;
+            font-size: 16px;
+        }
+
+        .mobile-nav-item:hover,
+        .mobile-nav-item:active {
+            background: var(--background-secondary);
+        }
+
+        .mobile-nav-item.cart-icon {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        
+        @media (max-width: 768px) {
+            
+            .header {
+                padding: var(--spacing-sm) var(--spacing-md);
+            }
+
+            .header-content {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                gap: var(--spacing-sm);
+            }
+
+            .header-logo {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .header-logo a img,
+            .header-logo img:first-of-type {
+                height: 32px;
+                max-width: 100px;
+            }
+
+            .header-logo img:last-child {
+                height: 50px;
+                max-width: 150px;
+            }
+
+            .mobile-menu-toggle {
+                display: block !important;
+                flex-shrink: 0;
+                order: 2; 
+            }
+
+            .header-nav {
+                display: none !important;
+            }
+
+            
+            .mobile-nav {
+                display: block !important;
+            }
+
+            
+            .main-content {
+                padding: var(--spacing-md) var(--spacing-sm);
+            }
+
+            .page-title {
+                font-size: 24px;
+                margin-bottom: var(--spacing-sm);
+            }
+
+            .page-subtitle {
+                font-size: 15px;
+                margin-bottom: var(--spacing-md);
+            }
+
+            
+            .filter-section {
+                padding: var(--spacing-md);
+            }
+
+            .filter-row {
+                flex-direction: column;
+                gap: var(--spacing-sm);
+            }
+
+            .filter-group {
+                min-width: 100%;
+            }
+
+            
+            .inventory-card {
+                padding: var(--spacing-md);
+            }
+
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--spacing-sm);
+            }
+
+            .product-name {
+                font-size: 16px;
+            }
+
+            .product-sku {
+                font-size: 13px;
+            }
+
+            .quantity-available {
+                font-size: 20px;
+            }
+
+            
+            .btn {
+                min-height: 44px;
+                font-size: 16px;
+                padding: 12px 20px;
+            }
+        }
+
+        
+        @media (max-width: 480px) {
+            .header-logo img:last-child {
+                height: 40px;
+                max-width: 120px;
+            }
+
+            .page-title {
+                font-size: 20px;
+            }
+
+            .inventory-card {
+                padding: var(--spacing-sm);
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="/css/customer-theme.css">
+</head>
+<body>
+    <header class="site-header portal-header">
+    <div class="site-header-inner portal-header-inner">
+        <a class="portal-brand" href="/">
+    <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+    <span>
+        <strong>IntelliOpus</strong>
+        <small>Service Portal</small>
+    </span>
+</a>
+        <nav class="portal-nav portal-nav-main" aria-label="Primary navigation">
+    <div class="portal-nav-cluster" aria-label="Public site navigation">
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/about">About</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">IntelliOpus</span>
+                <a href="/about">Company overview</a>
+                <a href="/service-history">Service history</a>
+                <a href="/about#operating-bridge">U.S.-China operating bridge</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/services">Services</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Service scope</span>
+                <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+                <a href="/services#connected-workflow">From catalog to delivery</a>
+                <a href="/services#safety-boundary">Customer-safe boundary</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/manufacturers">Supplier Network</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Supplier network</span>
+                <a href="/manufacturers#hosun">HOSUN lifting systems</a>
+                <a href="/manufacturers#jobo">JOBO education furniture</a>
+                <a href="/manufacturers#future-suppliers">Future supplier programs</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link is-active" href="/products">Product Programs</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Product programs</span>
+                <a href="/products">Browse by supplier</a>
+                <a href="/inventory">Local Samples</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/reference-center">Resources</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Resources</span>
+                <a href="/reference-center">Resource library</a>
+                <a href="/reference-center#ral">RAL color guide</a>
+                <a href="/reference-center#hosun-resources">HOSUN resources</a>
+                <a href="/reference-center#jobo-resources">JOBO resources</a>
+            </div>
+        </div>
+    </div>
+</nav>
+        <div class="portal-user">
+            <div class="portal-nav-group portal-workspace-menu">
+                <a class="portal-nav-link portal-workspace-link" href="/dashboard">Customer Workspace</a>
+                <div class="portal-dropdown portal-dropdown-right">
+                    <a href="/dashboard">Workspace overview</a>
+                    <a href="/dashboard#ordersContainer">Orders and tracking</a>
+                    <a href="/inventory">Local samples</a>
+                    <a href="/customer-service">Support and feedback</a>
+                    <a href="/cart">Cart</a>
+                </div>
+            </div>
+            <a href="/cart" class="cart-icon" id="cartIcon" aria-label="Cart">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+    </svg>
+    <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
+</a>
+            <button class="btn btn-logout" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
+</header>
+
+    <div class="main-content">
+        <section class="portal-context-band workspace-context-band">
+            <div>
+                <div class="portal-context-kicker">Local samples</div>
+                <h1>Local samples by supplier program.</h1>
+                <p>Check available samples and finish references before product confirmation.</p>
+            </div>
+            <div class="workspace-status-list" aria-label="Local samples scope">
+                <span><b>HOSUN</b> active sample stock</span>
+                <span><b>JOBO</b> pending approved samples</span>
+                <span><b>Resources</b> color and supplier files</span>
+            </div>
+        </section>
+
+        <section class="workspace-page-summary" aria-label="Local samples focus">
+            <div>
+                <strong>Supplier-separated stock</strong>
+                <span>Local samples are organized by supplier program so HOSUN, JOBO, and future suppliers can stay clearly separated.</span>
+            </div>
+            <div>
+                <strong>Finish and material review</strong>
+                <span>Use this page for local sample checks, then use the Resource library for RAL color references and supplier documents.</span>
+            </div>
+            <div>
+                <strong>Order follow-through</strong>
+                <span>Sample availability supports product selection; confirmed orders and shipment updates remain in the customer dashboard.</span>
+            </div>
+        </section>
+        <section class="workspace-path-mini portal-flow-path" aria-label="Customer portal flow">
+            <a href="/products"><strong>1. Supplier products</strong><small>Choose the supplier program and product family.</small></a>
+            <span class="is-current"><strong>2. Local samples</strong><small>Check finish and sample availability.</small></span>
+            <a href="/reference-center"><strong>3. Approved resources</strong><small>Review color guides, catalogs, and support files.</small></a>
+            <a href="/dashboard"><strong>4. Customer workspace</strong><small>Follow orders, delivery updates, and feedback.</small></a>
+        </section>
+        <section class="page-transition-strip functional-focus-strip" aria-label="Local samples page use">
+            <div class="page-transition-copy">
+                <span>Sample review</span>
+                <strong>Check local samples before product confirmation.</strong>
+                <p>Sample availability supports finish, material, and product decisions. Orders and shipment updates stay in the customer workspace after a project moves forward.</p>
+            </div>
+            <div class="page-transition-actions">
+                <a href="/products">Product programs</a>
+                <a href="/reference-center">Resources</a>
+                <a href="/order-swatch-set">Sample set</a>
+            </div>
+        </section>
+
+<div class="filter-section" style="display: none;">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="productSearch">Search samples</label>
+                    <input type="text" id="productSearch" class="form-input" placeholder="Sample name or SKU...">
+                </div>
+            </div>
+        </div>
+
+        <div class="inventory-workflow-note">
+            <div><strong>Sample workflow</strong>Use this page to check local sample availability. Orders stay in the customer workspace.</div>
+            <a href="/order-swatch-set">Request finish sample set</a>
+        </div>
+
+        <div class="inventory-brand-strip">
+            <div class="inventory-brand-card">
+                <div class="inventory-brand-status">Available now</div>
+                <div class="inventory-brand-name">HOSUN</div>
+                <div class="inventory-brand-desc">Height-adjustable systems, hand controls, and finish samples currently managed in local stock.</div>
+            </div>
+            <div class="inventory-brand-card">
+                <div class="inventory-brand-status">Program separated</div>
+                <div class="inventory-brand-name">JOBO</div>
+                <div class="inventory-brand-desc">Education furniture samples will appear under their own program once approved.</div>
+            </div>
+            <div class="inventory-brand-card">
+                <div class="inventory-brand-status">Future program</div>
+                <div class="inventory-brand-name">Future suppliers</div>
+                <div class="inventory-brand-desc">New suppliers can use separate product, sample, and resource rules.</div>
+            </div>
+        </div>
+
+        <div id="inventoryContainer" class="loading">Loading local samples...</div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin;
+        let allInventory = [];
+
+        function getToken() {
+            return localStorage.getItem('access_token');
+        }
+
+        function removeToken() {
+            localStorage.removeItem('access_token');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to sign out?')) {
+                removeToken();
+                window.location.href = '/login';
+            }
+        }
+
+        async function loadInventory() {
+            try {
+                const token = getToken();
+                const headers = {};
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/api/site/inventory/products`, {
+                    headers: headers
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        removeToken();
+                        window.location.href = '/login';
+                        return;
+                    }
+                    const errorText = await response.text();
+                    console.error('API Error:', response.status, errorText);
+                    document.getElementById('inventoryContainer').innerHTML = `<div class="empty-state">Unable to load local samples (${response.status})</div>`;
+                    return;
+                }
+
+                allInventory = await response.json();
+                if (!allInventory || allInventory.length === 0) {
+                    document.getElementById('inventoryContainer').innerHTML = '<div class="empty-state">No local samples are available yet</div>';
+                    return;
+                }
+                filterAndDisplayInventory();
+            } catch (error) {
+                console.error('Unable to load local samples:', error);
+                document.getElementById('inventoryContainer').innerHTML = `<div class="empty-state">Unable to load local samples: ${error.message}</div>`;
+            }
+        }
+
+        function inferInventoryPartner(item) {
+            const sku = String(item.product_sku || '').toUpperCase();
+            const name = String(item.product_name || '').toUpperCase();
+            const legacyJoboSignals = ['JO' + 'OBO', 'HUI' + 'JU'];
+            if (sku.includes('JOBO') || sku.startsWith('JO-') || name.includes('JOBO') || legacyJoboSignals.some(signal => sku.includes(signal) || name.includes(signal))) return 'JOBO';
+            if (sku.includes('DRUM') || name.includes('DRUM')) return 'Future suppliers';
+            return 'HOSUN';
+        }
+
+        function filterAndDisplayInventory() {
+            const productSearch = document.getElementById('productSearch') ? document.getElementById('productSearch').value.toLowerCase() : '';
+
+            // Only show basic colors (White, Black, Gray, Beige)
+            let filtered = allInventory.filter(item => item.color_type === 'basic');
+
+            // Filter by product search
+            if (productSearch) {
+                filtered = filtered.filter(item =>
+                    item.product_name.toLowerCase().includes(productSearch) ||
+                    item.product_sku.toLowerCase().includes(productSearch)
+                );
+            }
+
+            if (filtered.length === 0) {
+                document.getElementById('inventoryContainer').innerHTML = '<div class="empty-state">No matching samples found</div>';
+                return;
+            }
+
+            // Group by product
+            const grouped = {};
+            filtered.forEach(item => {
+                const partnerName = inferInventoryPartner(item);
+                const groupKey = `${partnerName}::${item.product_id}`;
+                if (!grouped[groupKey]) {
+                    grouped[groupKey] = {
+                        product_id: item.product_id,
+                        product_name: item.product_name,
+                        product_sku: item.product_sku,
+                        product_image: item.product_image,  // Store product image
+                        partner_name: partnerName,
+                        colors: []
+                    };
+                }
+                grouped[groupKey].colors.push(item);
+            });
+
+            // Use unified layout: single column list instead of grid
+            let html = '<div style="display: flex; flex-direction: column; gap: var(--spacing-md);">';
+            const groupedProducts = Object.values(grouped).sort((a, b) => String(a.partner_name).localeCompare(String(b.partner_name)) || String(a.product_name).localeCompare(String(b.product_name)));
+            let currentPartner = null;
+            groupedProducts.forEach(product => {
+                if (product.partner_name !== currentPartner) {
+                    currentPartner = product.partner_name;
+                    html += `<div class="inventory-partner-heading">${currentPartner}</div>`;
+                }
+                product.colors.forEach(item => {
+                    // Unified layout: same as new-order.html and cart.html
+                    html += '<div style="display: grid; grid-template-columns: 1fr 180px; gap: var(--spacing-md); padding: var(--spacing-md); background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); align-items: center;">';
+                    
+                    // Left side: Image + Product Info
+                    html += '<div style="display: flex; gap: var(--spacing-md); align-items: center;">';
+                    // Use product_image from API response
+                    const imageUrl = item.product_image || product.product_image || '/static/images/placeholder.png';
+                    html += `<img src="${imageUrl}" alt="${item.product_name}" style="width: 80px; height: 80px; object-fit: contain; border-radius: var(--radius-sm); flex-shrink: 0; background: #f5f5f5; padding: 4px;" onerror="this.src='/static/images/placeholder.png'">`;
+                    html += '<div style="flex: 1; min-width: 0;">';
+                    html += `<div style="font-weight: 600; margin-bottom: 4px; font-size: 16px; line-height: 1.4;">${item.product_name}</div>`;
+                    html += `<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">SKU: ${item.product_sku}</div>`;
+                    html += `<div style="display: inline-block; padding: 4px 8px; background: var(--background-secondary); border-radius: var(--radius-sm); font-size: 12px; color: var(--text-primary); margin-right: 6px; margin-bottom: 4px;">${item.color_name}${item.color_code ? ` (${item.color_code})` : ''}</div>`;
+                    html += '<div style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: linear-gradient(135deg, #34C759 0%, #30D158 100%); color: white; border-radius: var(--radius-sm); font-size: 11px; font-weight: 600;">Local sample</div>';
+                    html += '</div>'; // Close product info
+                    html += '</div>'; // Close left side
+                    
+                    // Right side: Stock Info + Add to Cart
+                    html += '<div style="display: flex; flex-direction: column; align-items: flex-end; gap: var(--spacing-sm);">';
+                    html += '<div style="text-align: right; font-size: 12px; color: var(--text-secondary); width: 100%;">';
+                    html += `<div style="margin-bottom: 2px;">Total stock: <span style="font-weight: 600; color: var(--text-primary);">${item.quantity}</span></div>`;
+                    html += `<div style="margin-bottom: 2px;">Reserved: <span style="font-weight: 600; color: var(--text-primary);">${item.reserved_quantity}</span></div>`;
+                    html += `<div style="font-size: 18px; font-weight: 600; color: var(--primary-color); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border-color);">Available: ${item.available_quantity}</div>`;
+                    html += '</div>';
+                    html += `<button onclick="addToCartFromInventory(${item.id}, ${item.product_id}, ${item.available_quantity})" style="padding: 10px 16px; background: var(--primary-color); color: white; border: none; border-radius: var(--radius-md); cursor: pointer; font-size: 14px; font-weight: 500; width: 100%; transition: all 0.2s;" onmouseover="this.style.background='#0051D5'" onmouseout="this.style.background='var(--primary-color)'">Add sample</button>`;
+                    html += '</div>'; // Close right side
+                    
+                    html += '</div>'; // Close item container
+                });
+            });
+            html += '</div>';
+
+            document.getElementById('inventoryContainer').innerHTML = html;
+        }
+
+        // Cart functions
+        async function loadCartCount() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/cart/count`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const badge = document.getElementById('cartBadge');
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.textContent = data.count;
+                            badge.style.display = 'flex';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                    // Sync cart badge to mobile menu
+                    syncCartBadgeToMobile();
+                }
+            } catch (error) {
+                console.error('Error loading cart count:', error);
+            }
+        }
+
+        async function addToCartFromInventory(inventoryId, productId, availableQuantity) {
+            if (!inventoryId || !productId) {
+                alert('This sample record is unavailable');
+                return;
+            }
+
+            // Prompt for quantity
+            const quantity = prompt(`Enter quantity (Available: ${availableQuantity}):`, '1');
+            if (!quantity || Number.isNaN(Number(quantity)) || parseInt(quantity) <= 0) {
+                return;
+            }
+
+            const qty = parseInt(quantity);
+            if (qty > availableQuantity) {
+                alert(`Quantity exceeds available stock (${availableQuantity})`);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/cart/items`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        inventory_id: inventoryId,
+                        quantity: qty
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Item added to cart!');
+                    loadCartCount();
+                    // Optionally reload inventory to update available quantities
+                    loadInventory();
+                } else {
+                    let errorMessage = 'Unable to add sample to cart';
+                    try {
+                        const error = await response.json();
+                        // Handle different error response formats
+                        if (error.detail) {
+                            errorMessage = typeof error.detail === 'string' ? error.detail : JSON.stringify(error.detail);
+                        } else if (error.message) {
+                            errorMessage = error.message;
+                        } else if (typeof error === 'string') {
+                            errorMessage = error;
+                        } else {
+                            errorMessage = JSON.stringify(error);
+                        }
+                    } catch (parseError) {
+                        // If JSON parsing fails, try to get text
+                        const text = await response.text();
+                        errorMessage = text || `Error ${response.status}: ${response.statusText}`;
+                    }
+                    alert(errorMessage);
+                }
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                const errorMessage = error.message || 'Network error. Please try again.';
+                alert(errorMessage);
+            }
+        }
+
+        // Event listeners
+        const productSearchEl = document.getElementById('productSearch');
+        if (productSearchEl) {
+            productSearchEl.addEventListener('input', filterAndDisplayInventory);
+        }
+
+        function openMobileNav() {
+            const mobileNav = document.getElementById('mobileNav');
+            if (mobileNav) {
+                mobileNav.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                mobileNav.style.display = 'block';
+            }
+        }
+
+        function closeMobileNav() {
+            const mobileNav = document.getElementById('mobileNav');
+            if (mobileNav) {
+                mobileNav.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileNavClose = document.getElementById('mobileNavClose');
+        const mobileNav = document.getElementById('mobileNav');
+
+        if (mobileMenuToggle) {
+            mobileMenuToggle.addEventListener('click', openMobileNav);
+        }
+
+        if (mobileNavClose) {
+            mobileNavClose.addEventListener('click', closeMobileNav);
+        }
+
+        if (mobileNav) {
+            mobileNav.addEventListener('click', function(e) {
+                if (e.target === mobileNav) {
+                    closeMobileNav();
+                }
+            });
+        }
+
+        function syncCartBadgeToMobile() {
+            const desktopBadge = document.getElementById('cartBadge');
+            const mobileBadge = document.getElementById('mobileCartBadge');
+            if (desktopBadge && mobileBadge) {
+                const count = desktopBadge.textContent || '0';
+                mobileBadge.textContent = count;
+                if (parseInt(count) > 0) {
+                    mobileBadge.style.display = 'flex';
+                } else {
+                    mobileBadge.style.display = 'none';
+                }
+            }
+        }
+
+        // Initialize
+        if (!getToken()) {
+            window.location.href = '/login';
+        } else {
+            loadInventory();
+            loadCartCount();
+        }
+    </script>
+
+<footer class="portal-footer">
+    <div class="portal-footer-inner">
+        <div class="portal-footer-brand">
+            <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+            <div>
+                <div class="portal-footer-title">IntelliOpus Portal</div>
+                <div class="portal-footer-copy">An independent cross-border operating bridge for qualified supplier programs, customer resources, order visibility, and feedback-driven execution.</div>
+            </div>
+        </div>
+        <div class="portal-footer-col">
+            <h3>About</h3>
+            <a href="/about">About</a>
+            <a href="/service-history">Service history</a>
+            <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+            <a href="/manufacturers">Supplier Network</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Customer Workspace</h3>
+            <a href="/products">Product Programs</a>
+            <a href="/inventory">Local Samples</a>
+            <a href="/dashboard">Dashboard</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Resources</h3>
+            <a href="/reference-center">Resources</a>
+            <a href="/customer-service">Support</a>
+            <a href="/cart">Cart</a>
+        </div>
+    </div>
+    <div class="portal-footer-note">Customer-facing pages show approved product, resource, order, shipment, and feedback information only. Supplier coordination records stay separate from the customer workspace.</div>
+</footer>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

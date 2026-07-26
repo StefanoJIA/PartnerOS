@@ -1,227 +1,139 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { UploadRequestOptions } from 'element-plus'
-import { uploadFile } from '@/api/objects'
-import { fetchFeedbackTickets, type FeedbackTicket } from '@/api/feedbackTickets'
 import {
-  ORDER_STATUS_LABELS,
-  PRODUCTION_STATUS_LABELS,
-  RESOURCE_STATUS_LABELS,
-  SHIPMENT_STATUS_LABELS,
-  SUPPLIER_CONFIRMATION_LABELS,
-  zhLabel,
-} from '@/copy/zhCN'
-import {
-  addSupplierConfirmation,
-  cancelOrder,
-  confirmOrderCustomer,
-  confirmationTypeWarning,
-  createOrderResource,
-  createShipmentPlan,
-  ensurePartnerSplits,
   ensureProductionMilestones,
   fetchOrder,
   fetchOrderConfirmations,
-  fetchOrderResources,
-  fetchOrderTimeline,
   fetchPartnerSplits,
-  fetchPartnerSplitDetail,
   fetchProductionMilestones,
   fetchShipmentPlans,
-  updateOrderResource,
   updateProductionMilestone,
   updateShipmentPlan,
-  strengthTagType,
-  SUPPLIER_SAFETY_NOTE,
-  PRODUCTION_SAFETY_NOTE,
-  SHIPMENT_SAFETY_NOTE,
-  voidOrderConfirmation,
   type OrderConfirmationRecord,
   type OrderDetail,
-  type OrderResource,
-  type OrderTimelineItem,
   type PartnerSplit,
   type ProductionMilestone,
   type ShipmentPlan,
 } from '@/api/orders'
-import AccountExecutionCard from '@/components/business/AccountExecutionCard.vue'
 
 const route = useRoute()
 const router = useRouter()
+
 const loading = ref(true)
+const actionLoading = ref(false)
 const error = ref('')
+const successMsg = ref('')
 const order = ref<OrderDetail | null>(null)
 const confirmations = ref<OrderConfirmationRecord[]>([])
 const partnerSplits = ref<PartnerSplit[]>([])
-const expandedSplitId = ref<string | null>(null)
-const splitDetails = ref<Record<string, PartnerSplit>>({})
-const timelineItems = ref<OrderTimelineItem[]>([])
-const actionLoading = ref(false)
-const successMsg = ref('')
-const showAddForm = ref(false)
-const showSupplierFormFor = ref<string | null>(null)
-const milestonesBySplit = ref<Record<string, ProductionMilestone[]>>({})
+const milestones = ref<ProductionMilestone[]>([])
 const shipmentPlans = ref<ShipmentPlan[]>([])
-const orderResources = ref<OrderResource[]>([])
-const feedbackTickets = ref<FeedbackTicket[]>([])
-const resourceUploading = ref(false)
-const editingMilestoneId = ref<string | null>(null)
-const milestoneForm = reactive({
-  status: 'planned',
-  planned_date: '',
-  actual_date: '',
-  responsible_party: '',
-  notes: '',
-})
-const shipmentForm = reactive({
-  partner_split_id: '',
-  shipment_method: 'sea',
-  incoterm: '',
-  origin: '',
-  destination: '',
-  estimated_ship_date: '',
-  estimated_arrival_date: '',
-  tracking_number: '',
-  status: 'draft',
-  notes: '',
-})
-const resourceForm = reactive({
-  title: '',
-  category: 'general',
-  description: '',
-  customer_visible: false,
-})
 
-const SAFETY =
-  '记录客户确认不会通知供应商、启动生产、创建物流、确认库存、确认认证或确认交期。'
-const RESOURCE_SAFETY_NOTE =
-  '订单资料是人工发布给客户的文件。发布只创建签名下载链接，不发送邮件、不暴露存储路径，也不会自动通知 Portal。'
-
-const supplierForm = reactive({
-  confirmation_status: 'confirmed',
-  confirmed_by_name: '',
-  confirmed_by_email: '',
-  confirmation_channel: 'email',
-  inventory_confirmed: false,
-  certification_confirmed: false,
-  lead_time_confirmed: false,
-  production_capacity_confirmed: false,
-  expected_production_start: '',
-  expected_ready_date: '',
-  supplier_reference: '',
-  note: '',
-})
-
-const confirmForm = reactive({
-  confirmation_type: 'email',
-  confirmed_by_name: '',
-  confirmed_by_email: '',
-  confirmed_by_company: '',
-  source_channel: '',
-  evidence_reference: '',
-  note: '',
-})
-
-const cancelReason = ref('')
-
-const canAddConfirmation = computed(() => order.value?.status !== 'cancelled')
-const canEnsureSplits = computed(() => order.value?.status !== 'cancelled')
-const canAddSupplierConfirmation = computed(() => order.value?.status === 'confirmed')
-const canEnsureMilestones = computed(() => order.value?.status === 'confirmed')
-const canManageShipments = computed(() => {
-  const allowed = [
-    'confirmed',
-    'internal_review',
-    'supplier_confirmation_pending',
-    'supplier_confirmed',
-    'production_pending',
-    'in_production',
-    'ready_to_ship',
-    'shipped',
-    'delivered',
-    'on_hold',
-  ]
-  return !!order.value && allowed.includes(order.value.status)
-})
-const canCancel = computed(() => order.value && ['pending_customer_confirmation', 'confirmed'].includes(order.value.status))
-const typeWarning = computed(() => confirmationTypeWarning(confirmForm.confirmation_type))
-const orderWarnings = computed(() => order.value?.warnings || order.value?.confirmation_summary?.warnings || [])
-const openFeedbackTickets = computed(() => feedbackTickets.value.filter((ticket) => ticket.operation?.open))
-const visibleResourceCount = computed(() => orderResources.value.filter((resource) => resource.customer_visible && resource.status === 'published').length)
-const orderCompanyId = computed(() => order.value?.company_id ?? null)
-const fulfillmentIntel = computed(() => order.value?.fulfillment_intelligence ?? null)
-const partnerExecutionReadiness = computed(() => fulfillmentIntel.value?.partner_execution_readiness ?? null)
-const customerVisibleSummary = computed(() => {
-  const production = order.value?.production_summary
-  const shipment = order.value?.shipment_summary
-  const totalMilestones = production?.total_milestones ?? 0
-  const completedMilestones = production?.completed_milestones ?? 0
-  const stage =
-    shipment?.delivered_plans ? '已交付'
-    : shipment?.shipped_plans ? '运输中'
-    : production?.ready_to_ship_completed ? '待发运'
-    : production?.in_progress_milestones ? '生产中'
-    : order.value?.status === 'confirmed' ? '订单已确认'
-    : '订单录入'
-  const nextAction =
-    shipment?.delivered_plans ? '收集反馈并关闭运营闭环。'
-    : shipment?.shipped_plans ? '跟踪物流和客户收货反馈。'
-    : production?.ready_to_ship_completed ? '确认物流计划和客户可见物流信息。'
-    : production?.in_progress_milestones ? '复核生产里程碑和预计完成日期。'
-    : order.value?.status === 'confirmed' ? '确认 partner 分单、供应商 readiness 和生产计划。'
-    : '先记录客户确认，再规划生产或物流。'
-  return {
-    stage,
-    nextAction,
-    production: totalMilestones ? `${completedMilestones}/${totalMilestones} 个里程碑完成` : '暂无生产里程碑',
-    shipment: shipment?.total_plans ? `${shipment.active_plans} 个进行中 / ${shipment.total_plans} 个物流计划` : '暂无物流计划',
-    resources: `${visibleResourceCount.value} 个客户可见资料`,
-    feedback: `${openFeedbackTickets.value.length} 个未结反馈`,
-  }
-})
-
-function riskTagType(level: string) {
-  if (level === 'high') return 'danger'
-  if (level === 'medium') return 'warning'
-  return 'success'
+const ORDER_STATUS: Record<string, string> = {
+  pending_customer_confirmation: '待客户确认',
+  confirmed: '已确认',
+  supplier_confirmation_pending: '待供应商确认',
+  supplier_confirmed: '供应商已确认',
+  production_pending: '待生产',
+  in_production: '生产中',
+  ready_to_ship: '待发运',
+  shipped: '已发运',
+  delivered: '已交付',
+  on_hold: '暂停',
+  cancelled: '已取消',
 }
 
-function executionStageLabel(stage: string) {
-  const labels: Record<string, string> = {
-    quote_to_order: '报价转订单',
-    supplier_confirmation: '供应商确认',
-    production_planning: '生产计划',
-    shipment_planning: '物流计划',
-    risk_review: '风险复核',
-    delivery_follow_up: '交付跟进',
-    order_execution: '订单执行',
-  }
-  return labels[stage] || stage
+const SHIPMENT_STATUS: Record<string, string> = {
+  draft: '草稿',
+  planned: '已计划',
+  booked: '已订舱',
+  in_transit: '运输中',
+  shipped: '已发运',
+  delivered: '已交付',
+  delayed: '延误',
+  cancelled: '已取消',
 }
 
-async function loadPartnerSplits() {
-  if (!order.value) return
-  const ps = await fetchPartnerSplits(order.value.id)
-  partnerSplits.value = ps.items
+const SUPPLIER_STATUS: Record<string, string> = {
+  pending: '待确认',
+  confirmed: '已确认',
+  partially_confirmed: '部分确认',
+  needs_clarification: '需澄清',
+  rejected: '已拒绝',
+  in_production: '生产中',
 }
 
-async function loadShipmentPlans() {
-  if (!order.value) return
-  const plans = await fetchShipmentPlans(order.value.id)
-  shipmentPlans.value = plans.items
+const MILESTONE_TYPE_LABELS: Record<string, string> = {
+  order_received: '订单接收',
+  supplier_confirmed: '供应商确认',
+  materials_prepared: '备料',
+  cutting: '切割',
+  welding: '焊接 / 打磨',
+  painting: '喷涂',
+  assembly: '组装',
+  quality_check: '测试 / 质检',
+  packing: '打包',
+  ready_to_ship: '出厂 / 待发运',
+  production_started: '生产开始',
+  production_pending: '待生产',
 }
 
-async function loadOrderResources() {
-  if (!order.value) return
-  const resources = await fetchOrderResources(order.value.id)
-  orderResources.value = resources.items
+const safetyNote =
+  '本页只维护内部订单执行记录。更新生产或物流状态不会自动通知客户/供应商，不会调用承运商 API，也不会自动改变客户订单状态。'
+
+const visibleMilestones = computed(() =>
+  [...milestones.value].sort((a, b) => Number(a.sequence || 0) - Number(b.sequence || 0)),
+)
+
+const currentMilestone = computed(() => {
+  return (
+    visibleMilestones.value.find((item) => item.status === 'in_progress') ||
+    visibleMilestones.value.find((item) => ['planned', 'pending', 'delayed', 'blocked'].includes(item.status)) ||
+    visibleMilestones.value[visibleMilestones.value.length - 1] ||
+    null
+  )
+})
+
+const completedMilestoneCount = computed(() => visibleMilestones.value.filter((item) => item.status === 'completed').length)
+
+const activeShipment = computed(() => {
+  return shipmentPlans.value.find((item) => item.status !== 'cancelled') || shipmentPlans.value[0] || null
+})
+
+const executionStage = computed(() => {
+  if (!order.value) return '未加载'
+  if (activeShipment.value?.status === 'delivered') return '已交付'
+  if (['shipped', 'in_transit'].includes(activeShipment.value?.status || '')) return '运输中'
+  if (currentMilestone.value?.milestone_type === 'ready_to_ship' && currentMilestone.value.status === 'completed') return '待发运'
+  if (currentMilestone.value) return `生产节点：${milestoneName(currentMilestone.value)}`
+  return label(ORDER_STATUS, order.value.status)
+})
+
+function label(map: Record<string, string>, value: string | null | undefined, fallback = '未设置') {
+  if (!value) return fallback
+  return map[value] || value
 }
 
-async function loadFeedbackTickets() {
-  if (!order.value) return
-  const tickets = await fetchFeedbackTickets({ order_id: order.value.id, limit: 20 })
-  feedbackTickets.value = tickets.items
+function milestoneName(item: ProductionMilestone) {
+  return MILESTONE_TYPE_LABELS[item.milestone_type] || item.milestone_label || item.milestone_type
+}
+
+function formatMoney(value: string | number | null | undefined, currency = 'USD') {
+  const n = Number(value || 0)
+  return `${currency} ${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+function formatDate(value: string | null | undefined) {
+  if (!value) return '-'
+  return value.slice(0, 10)
+}
+
+function statusClass(status: string | null | undefined) {
+  if (status === 'completed' || status === 'delivered' || status === 'confirmed') return 'is-done'
+  if (status === 'in_progress' || status === 'planned' || status === 'shipped' || status === 'in_transit') return 'is-active'
+  if (status === 'delayed' || status === 'blocked') return 'is-risk'
+  return 'is-muted'
 }
 
 async function load() {
@@ -230,14 +142,16 @@ async function load() {
   try {
     const id = route.params.orderId as string
     order.value = await fetchOrder(id)
-    const conf = await fetchOrderConfirmations(id)
-    confirmations.value = conf.items
-    await loadPartnerSplits()
-    await loadShipmentPlans()
-    await loadOrderResources()
-    await loadFeedbackTickets()
-    const tl = await fetchOrderTimeline(id)
-    timelineItems.value = tl.items
+    const [confirmationData, splitData, milestoneData, shipmentData] = await Promise.all([
+      fetchOrderConfirmations(id),
+      fetchPartnerSplits(id),
+      fetchProductionMilestones(id),
+      fetchShipmentPlans(id),
+    ])
+    confirmations.value = confirmationData.items
+    partnerSplits.value = splitData.items
+    milestones.value = milestoneData.items
+    shipmentPlans.value = shipmentData.items
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : '订单加载失败'
   } finally {
@@ -245,285 +159,49 @@ async function load() {
   }
 }
 
-async function onUploadOrderResource(opt: UploadRequestOptions) {
-  if (!order.value) return
-  resourceUploading.value = true
-  error.value = ''
-  try {
-    const raw = opt.file as File
-    const meta = await uploadFile(raw)
-    await createOrderResource(order.value.id, {
-      file_id: meta.id,
-      title: resourceForm.title || meta.original_filename,
-      category: resourceForm.category,
-      description: resourceForm.description || undefined,
-      customer_visible: resourceForm.customer_visible,
-    })
-    resourceForm.title = ''
-    resourceForm.description = ''
-    resourceForm.customer_visible = false
-    await loadOrderResources()
-    const tl = await fetchOrderTimeline(order.value.id)
-    timelineItems.value = tl.items
-    successMsg.value = 'Order resource created.'
-    opt.onSuccess?.({} as never)
-  } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Upload order resource failed'
-    const uploadError = Object.assign(e instanceof Error ? e : new Error('Upload order resource failed'), {
-      status: 0,
-      method: 'POST',
-      url: '',
-    }) as Parameters<NonNullable<UploadRequestOptions['onError']>>[0]
-    opt.onError?.(uploadError)
-  } finally {
-    resourceUploading.value = false
-  }
-}
-
-async function onPatchOrderResource(resource: OrderResource, patch: Partial<OrderResource>) {
+async function onEnsureMilestones(split: PartnerSplit) {
   if (!order.value) return
   actionLoading.value = true
   error.value = ''
   try {
-    await updateOrderResource(order.value.id, resource.id, {
-      title: patch.title,
-      category: patch.category,
-      description: patch.description ?? undefined,
-      status: patch.status,
-      customer_visible: patch.customer_visible,
-    })
-    await loadOrderResources()
-    successMsg.value = 'Order resource updated.'
+    await ensureProductionMilestones(order.value.id, split.id)
+    const data = await fetchProductionMilestones(order.value.id)
+    milestones.value = data.items
+    successMsg.value = '生产节点已生成。'
   } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Update order resource failed'
+    error.value = e instanceof Error ? e.message : '生成生产节点失败'
   } finally {
     actionLoading.value = false
   }
 }
 
-async function onCreateShipmentPlan() {
-  if (!order.value) return
+async function onMilestoneStatusChange(item: ProductionMilestone, status: string) {
+  if (!order.value || item.status === status) return
   actionLoading.value = true
   error.value = ''
   try {
-    await createShipmentPlan(order.value.id, {
-      partner_split_id: shipmentForm.partner_split_id || undefined,
-      shipment_method: shipmentForm.shipment_method || undefined,
-      incoterm: shipmentForm.incoterm || undefined,
-      origin: shipmentForm.origin || undefined,
-      destination: shipmentForm.destination || undefined,
-      estimated_ship_date: shipmentForm.estimated_ship_date || undefined,
-      estimated_arrival_date: shipmentForm.estimated_arrival_date || undefined,
-      tracking_number: shipmentForm.tracking_number || undefined,
-      status: shipmentForm.status,
-      notes: shipmentForm.notes || undefined,
-    })
-    await loadShipmentPlans()
-    order.value = await fetchOrder(order.value.id)
-    const tl = await fetchOrderTimeline(order.value.id)
-    timelineItems.value = tl.items
-    successMsg.value = 'Shipment plan created.'
+    await updateProductionMilestone(order.value.id, item.id, { status })
+    const data = await fetchProductionMilestones(order.value.id)
+    milestones.value = data.items
+    successMsg.value = '生产节点状态已更新。'
   } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Create shipment plan failed'
+    error.value = e instanceof Error ? e.message : '更新生产节点失败'
   } finally {
     actionLoading.value = false
   }
 }
 
-async function onPatchShipmentStatus(plan: ShipmentPlan, status: string) {
-  if (!order.value) return
+async function onShipmentStatusChange(plan: ShipmentPlan, status: string) {
+  if (!order.value || plan.status === status) return
   actionLoading.value = true
   error.value = ''
   try {
     await updateShipmentPlan(order.value.id, plan.id, { status })
-    await loadShipmentPlans()
-    order.value = await fetchOrder(order.value.id)
-    const tl = await fetchOrderTimeline(order.value.id)
-    timelineItems.value = tl.items
-    successMsg.value = status === 'cancelled' ? '物流计划已取消。' : '物流状态已更新。'
+    const data = await fetchShipmentPlans(order.value.id)
+    shipmentPlans.value = data.items
+    successMsg.value = '物流状态已更新。'
   } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Update shipment plan failed'
-  } finally {
-    actionLoading.value = false
-  }
-}
-
-async function onEnsureSplits() {
-  if (!order.value) return
-  actionLoading.value = true
-  error.value = ''
-  try {
-    const result = await ensurePartnerSplits(order.value.id)
-    order.value = result
-    partnerSplits.value = result.splits || (await fetchPartnerSplits(order.value.id)).items
-    successMsg.value = 'Partner splits ensured.'
-  } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Ensure splits failed'
-  } finally {
-    actionLoading.value = false
-  }
-}
-
-async function toggleSplitDetail(split: PartnerSplit) {
-  if (expandedSplitId.value === split.id) {
-    expandedSplitId.value = null
-    return
-  }
-  expandedSplitId.value = split.id
-  if (!order.value) return
-  if (!splitDetails.value[split.id]) {
-    splitDetails.value[split.id] = await fetchPartnerSplitDetail(order.value.id, split.id)
-  }
-  await loadMilestonesForSplit(split.id)
-}
-
-async function loadMilestonesForSplit(splitId: string) {
-  if (!order.value) return
-  const ms = await fetchProductionMilestones(order.value.id, splitId)
-  milestonesBySplit.value[splitId] = ms.items
-}
-
-async function onEnsureMilestones(splitId: string) {
-  if (!order.value) return
-  actionLoading.value = true
-  error.value = ''
-  try {
-    order.value = await ensureProductionMilestones(order.value.id, splitId)
-    await loadMilestonesForSplit(splitId)
-    await loadPartnerSplits()
-    successMsg.value = 'Production milestones ensured.'
-  } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Ensure milestones failed'
-  } finally {
-    actionLoading.value = false
-  }
-}
-
-function startEditMilestone(m: ProductionMilestone) {
-  editingMilestoneId.value = m.id
-  milestoneForm.status = m.status
-  milestoneForm.planned_date = m.planned_date || ''
-  milestoneForm.actual_date = m.actual_date || ''
-  milestoneForm.responsible_party = m.responsible_party || ''
-  milestoneForm.notes = m.notes || ''
-}
-
-async function onUpdateMilestone(m: ProductionMilestone) {
-  if (!order.value) return
-  actionLoading.value = true
-  error.value = ''
-  try {
-    await updateProductionMilestone(order.value.id, m.id, {
-      status: milestoneForm.status,
-      planned_date: milestoneForm.planned_date || undefined,
-      actual_date: milestoneForm.actual_date || undefined,
-      responsible_party: milestoneForm.responsible_party || undefined,
-      notes: milestoneForm.notes || undefined,
-    })
-    await loadMilestonesForSplit(m.partner_split_id)
-    order.value = await fetchOrder(order.value.id)
-    const tl = await fetchOrderTimeline(order.value.id)
-    timelineItems.value = tl.items
-    editingMilestoneId.value = null
-    successMsg.value = 'Milestone updated.'
-  } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Update milestone failed'
-  } finally {
-    actionLoading.value = false
-  }
-}
-
-async function onAddSupplierConfirmation(splitId: string) {
-  if (!order.value) return
-  actionLoading.value = true
-  error.value = ''
-  try {
-    const result = await addSupplierConfirmation(order.value.id, splitId, {
-      confirmation_status: supplierForm.confirmation_status,
-      confirmed_by_name: supplierForm.confirmed_by_name || undefined,
-      confirmed_by_email: supplierForm.confirmed_by_email || undefined,
-      confirmation_channel: supplierForm.confirmation_channel || undefined,
-      inventory_confirmed: supplierForm.inventory_confirmed,
-      certification_confirmed: supplierForm.certification_confirmed,
-      lead_time_confirmed: supplierForm.lead_time_confirmed,
-      production_capacity_confirmed: supplierForm.production_capacity_confirmed,
-      expected_production_start: supplierForm.expected_production_start || undefined,
-      expected_ready_date: supplierForm.expected_ready_date || undefined,
-      supplier_reference: supplierForm.supplier_reference || undefined,
-      note: supplierForm.note || undefined,
-    })
-    splitDetails.value[splitId] = result
-    await loadPartnerSplits()
-    order.value = await fetchOrder(order.value.id)
-    const tl = await fetchOrderTimeline(order.value.id)
-    timelineItems.value = tl.items
-    showSupplierFormFor.value = null
-    successMsg.value = 'Supplier confirmation recorded.'
-  } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Supplier confirmation failed'
-  } finally {
-    actionLoading.value = false
-  }
-}
-
-async function onConfirm() {
-  if (!order.value) return
-  actionLoading.value = true
-  successMsg.value = ''
-  error.value = ''
-  try {
-    const result = await confirmOrderCustomer(order.value.id, {
-      confirmation_type: confirmForm.confirmation_type,
-      confirmed_by_name: confirmForm.confirmed_by_name || undefined,
-      confirmed_by_email: confirmForm.confirmed_by_email || undefined,
-      confirmed_by_company: confirmForm.confirmed_by_company || undefined,
-      source_channel: confirmForm.source_channel || undefined,
-      evidence_reference: confirmForm.evidence_reference || undefined,
-      note: confirmForm.note || undefined,
-    })
-    order.value = result
-    const conf = await fetchOrderConfirmations(order.value.id)
-    confirmations.value = conf.items
-    const tl = await fetchOrderTimeline(order.value.id)
-    timelineItems.value = tl.items
-    showAddForm.value = false
-    successMsg.value = result.status_changed ? 'Order confirmed.' : 'Confirmation recorded.'
-  } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Confirm failed'
-  } finally {
-    actionLoading.value = false
-  }
-}
-
-async function onVoid(conf: OrderConfirmationRecord) {
-  if (!order.value || conf.status !== 'active') return
-  actionLoading.value = true
-  error.value = ''
-  try {
-    order.value = await voidOrderConfirmation(order.value.id, conf.id, 'Voided from order detail')
-    const list = await fetchOrderConfirmations(order.value.id)
-    confirmations.value = list.items
-    const tl = await fetchOrderTimeline(order.value.id)
-    timelineItems.value = tl.items
-    successMsg.value = 'Confirmation voided.'
-  } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Void failed'
-  } finally {
-    actionLoading.value = false
-  }
-}
-
-async function onCancel() {
-  if (!order.value) return
-  actionLoading.value = true
-  successMsg.value = ''
-  try {
-    order.value = await cancelOrder(order.value.id, cancelReason.value || undefined)
-    successMsg.value = 'Order cancelled.'
-    const tl = await fetchOrderTimeline(order.value.id)
-    timelineItems.value = tl.items
-  } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Cancel failed'
+    error.value = e instanceof Error ? e.message : '更新物流状态失败'
   } finally {
     actionLoading.value = false
   }
@@ -533,710 +211,448 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="page">
-    <el-button link type="primary" @click="router.push({ name: 'orders' })">← 返回订单</el-button>
+  <div class="order-page">
+    <button class="back-button" type="button" @click="router.push({ name: 'orders' })">返回订单列表</button>
 
-    <div v-if="loading" v-loading="true" style="min-height: 160px" />
+    <div v-if="loading" v-loading="true" class="loading-panel" />
+
     <template v-else-if="order">
-      <h1>{{ order.order_number }}</h1>
-      <el-alert type="warning" :closable="false" show-icon title="确认安全边界" :description="SAFETY" class="mb" />
+      <header class="order-hero">
+        <div>
+          <p class="eyebrow">订单执行</p>
+          <h1>{{ order.order_number }}</h1>
+          <p class="hero-copy">{{ order.bill_to_company || '未填写客户公司' }} · {{ executionStage }}</p>
+        </div>
+        <div class="hero-metrics">
+          <div>
+            <span>状态</span>
+            <strong>{{ label(ORDER_STATUS, order.status) }}</strong>
+          </div>
+          <div>
+            <span>金额</span>
+            <strong>{{ formatMoney(order.grand_total, order.currency) }}</strong>
+          </div>
+          <div>
+            <span>报价来源</span>
+            <router-link v-if="order.source_quote" :to="{ name: 'quote-detail', params: { id: order.source_quote.quote_id } }">
+              {{ order.source_quote.quote_number }}
+            </router-link>
+            <strong v-else>-</strong>
+          </div>
+        </div>
+      </header>
+
       <el-alert v-if="error" type="error" :title="error" show-icon class="mb" @close="error = ''" />
       <el-alert v-if="successMsg" type="success" :title="successMsg" show-icon class="mb" @close="successMsg = ''" />
-      <el-alert
-        v-for="(w, i) in orderWarnings"
-        :key="i"
-        type="warning"
-        :title="w"
-        show-icon
-        class="mb"
-      />
 
-      <el-descriptions :column="2" border class="mb">
-        <el-descriptions-item label="状态">{{ zhLabel(ORDER_STATUS_LABELS, order.status) }}</el-descriptions-item>
-        <el-descriptions-item label="有效确认">{{ order.confirmation_summary?.active_count ?? 0 }}</el-descriptions-item>
-        <el-descriptions-item label="总金额">{{ order.currency }} {{ order.grand_total }}</el-descriptions-item>
-        <el-descriptions-item label="来源报价">
-          <router-link
-            v-if="order.source_quote"
-            class="link"
-            :to="{ name: 'quote-detail', params: { id: order.source_quote.quote_id } }"
-          >
-            {{ order.source_quote.quote_number }}
-          </router-link>
-          <span v-else>—</span>
-        </el-descriptions-item>
-      </el-descriptions>
-
-      <AccountExecutionCard
-        :company-id="orderCompanyId"
-        context-label="当前订单会影响交付风险、售后反馈和复购判断"
-      />
-
-      <section v-if="fulfillmentIntel" class="section mb fulfillment-intel">
-        <div class="fulfillment-intel__head">
-          <div>
-            <h3>商业履约判断</h3>
-            <p>把源报价学习、生产、物流和反馈合并为订单交付后的下一步经营动作。</p>
-          </div>
-          <div class="fulfillment-intel__tags">
-            <el-tag :type="riskTagType(fulfillmentIntel.risk_level)" effect="plain">{{ fulfillmentIntel.risk_level }}</el-tag>
-            <el-tag type="primary" effect="plain">{{ fulfillmentIntel.business_focus }}</el-tag>
-            <el-tag effect="plain">{{ fulfillmentIntel.quote_business_focus || '报价承接' }}</el-tag>
-          </div>
-        </div>
-        <p class="fulfillment-intel__action">{{ fulfillmentIntel.next_best_action }}</p>
-        <div class="fulfillment-intel__grid">
-          <div>
-            <div class="summary-label">报价维度缺口</div>
-            <div class="fulfillment-intel__chips">
-              <el-tag v-for="item in fulfillmentIntel.quote_dimension_gaps.slice(0, 8)" :key="item" size="small" effect="plain">
-                {{ item }}
-              </el-tag>
-              <span v-if="!fulfillmentIntel.quote_dimension_gaps.length" class="fulfillment-intel__empty">暂无报价维度缺口</span>
-            </div>
-          </div>
-          <div>
-            <div class="summary-label">运营缺口</div>
-            <div class="fulfillment-intel__chips">
-              <el-tag
-                v-for="item in fulfillmentIntel.missing_operating_inputs.slice(0, 6)"
-                :key="item"
-                size="small"
-                type="warning"
-                effect="plain"
-              >
-                {{ item }}
-              </el-tag>
-              <span v-if="!fulfillmentIntel.missing_operating_inputs.length" class="fulfillment-intel__empty">暂无关键运营缺口</span>
-            </div>
-          </div>
-          <div>
-            <div class="summary-label">Readiness / 复购影响</div>
-            <div class="fulfillment-intel__chips">
-              <el-tag
-                v-for="item in fulfillmentIntel.readiness_impact"
-                :key="item"
-                size="small"
-                type="danger"
-                effect="plain"
-              >
-                {{ item }}
-              </el-tag>
-              <span v-if="!fulfillmentIntel.readiness_impact.length" class="fulfillment-intel__empty">暂无明显影响</span>
-            </div>
-          </div>
-        </div>
-        <div v-if="partnerExecutionReadiness" class="partner-execution">
-          <div class="partner-execution__head">
-            <div>
-              <div class="summary-label">Partner 订单承接判断</div>
-              <p>{{ partnerExecutionReadiness.next_best_action }}</p>
-            </div>
-            <div class="fulfillment-intel__tags">
-              <el-tag type="warning" effect="plain">{{ partnerExecutionReadiness.priority }}</el-tag>
-              <el-tag effect="plain">{{ partnerExecutionReadiness.health }}</el-tag>
-            </div>
-          </div>
-          <div class="partner-execution__cards">
-            <div v-for="partner in partnerExecutionReadiness.partners" :key="partner.partner_id" class="partner-execution__card">
-              <div class="partner-execution__card-head">
-                <div>
-                  <strong>{{ partner.partner_name }}</strong>
-                  <p>{{ executionStageLabel(partner.handoff_stage) }} · {{ partner.next_best_action }}</p>
-                </div>
-                <el-tag size="small" effect="plain">score {{ partner.readiness_score }}</el-tag>
-              </div>
-              <div class="partner-execution__metrics">
-                <span>分单：{{ partner.split_created ? '已创建' : '待创建' }}</span>
-                <span>确认：{{ partner.supplier_confirmation_count }}</span>
-                <span>生产：{{ partner.production_milestone_count }}</span>
-                <span>物流：{{ partner.shipment_plan_count }}</span>
-              </div>
-              <div class="fulfillment-intel__chips">
-                <el-tag
-                  v-for="item in partner.missing_execution_inputs.slice(0, 5)"
-                  :key="`missing-${partner.partner_id}-${item}`"
-                  size="small"
-                  type="warning"
-                  effect="plain"
-                >
-                  {{ item }}
-                </el-tag>
-                <el-tag
-                  v-for="item in partner.risk_signals.slice(0, 4)"
-                  :key="`risk-${partner.partner_id}-${item}`"
-                  size="small"
-                  type="danger"
-                  effect="plain"
-                >
-                  {{ item }}
-                </el-tag>
-                <span
-                  v-if="!partner.missing_execution_inputs.length && !partner.risk_signals.length"
-                  class="fulfillment-intel__empty"
-                >
-                  暂无 Partner 执行缺口
-                </span>
-              </div>
-            </div>
-          </div>
-          <el-alert
-            class="mt"
-            type="info"
-            :closable="false"
-            show-icon
-            :title="partnerExecutionReadiness.customer_safe_boundary"
-          />
-        </div>
-        <el-alert class="mt" type="warning" :closable="false" show-icon :title="fulfillmentIntel.customer_safe_boundary" />
+      <section class="compact-section safety-strip">
+        <span>安全边界</span>
+        <p>{{ safetyNote }}</p>
       </section>
 
-      <section class="section mb">
+      <section class="overview-grid">
+        <article class="overview-card">
+          <span>客户确认</span>
+          <strong>{{ order.confirmation_summary?.active_count ?? confirmations.length }} 条有效确认</strong>
+          <p>{{ confirmations[0]?.confirmation_type || '暂无确认方式' }}</p>
+        </article>
+        <article class="overview-card">
+          <span>Partner 承接</span>
+          <strong>{{ partnerSplits.length }} 个分单</strong>
+          <p>{{ partnerSplits.map((item) => item.partner_name).join(' / ') || '暂无 Partner 分单' }}</p>
+        </article>
+        <article class="overview-card">
+          <span>生产进度</span>
+          <strong>{{ completedMilestoneCount }} / {{ visibleMilestones.length }}</strong>
+          <p>{{ currentMilestone ? milestoneName(currentMilestone) : '暂无生产节点' }}</p>
+        </article>
+        <article class="overview-card">
+          <span>物流计划</span>
+          <strong>{{ activeShipment ? label(SHIPMENT_STATUS, activeShipment.status) : '暂无物流' }}</strong>
+          <p>{{ activeShipment?.tracking_number || activeShipment?.destination || '未维护 tracking' }}</p>
+        </article>
+      </section>
+
+      <section class="compact-section">
         <div class="section-head">
-          <h3>客户可见运营摘要</h3>
-          <div class="flex gap-2">
-            <el-button size="small" @click="router.push({ name: 'portal-customer-bridge', query: { order_id: order.id } })">
-              Portal 预览
-            </el-button>
-            <el-button size="small" @click="router.push({ name: 'feedback-tickets', query: { order_id: order.id } })">
-              反馈队列
-            </el-button>
-          </div>
-        </div>
-        <el-alert
-          type="info"
-          :closable="false"
-          class="mb"
-          title="客户可见摘要只使用白名单内的生产、物流、资料和反馈元数据。"
-        />
-        <div class="customer-stage mb">
           <div>
-            <div class="summary-label">当前客户可见阶段</div>
-            <div class="customer-stage-title">{{ customerVisibleSummary.stage }}</div>
-            <p class="customer-stage-copy">{{ customerVisibleSummary.nextAction }}</p>
-          </div>
-          <el-tag effect="plain">Portal 安全</el-tag>
-        </div>
-        <div class="summary-grid">
-          <div class="summary-tile">
-            <div class="summary-label">生产</div>
-            <div class="summary-value">{{ customerVisibleSummary.production }}</div>
-          </div>
-          <div class="summary-tile">
-            <div class="summary-label">物流</div>
-            <div class="summary-value">{{ customerVisibleSummary.shipment }}</div>
-          </div>
-          <div class="summary-tile">
-            <div class="summary-label">资料</div>
-            <div class="summary-value">{{ customerVisibleSummary.resources }}</div>
-          </div>
-          <div class="summary-tile">
-            <div class="summary-label">反馈</div>
-            <div class="summary-value">{{ customerVisibleSummary.feedback }}</div>
+            <p class="eyebrow">Order Items</p>
+            <h2>订单产品</h2>
           </div>
         </div>
-      </section>
-
-      <section class="section mb">
-        <h3>订单行</h3>
         <el-table :data="order.line_items" stripe>
-          <el-table-column prop="product_name" label="产品" />
-          <el-table-column prop="quantity" label="数量" width="80" />
-          <el-table-column prop="unit_price" label="单价" width="120" />
-          <el-table-column prop="total_price" label="合计" width="120" />
+          <el-table-column prop="product_name" label="产品" min-width="260" />
+          <el-table-column prop="quantity" label="数量" width="90" />
+          <el-table-column label="单价" width="140">
+            <template #default="{ row }">{{ formatMoney(row.unit_price, row.currency) }}</template>
+          </el-table-column>
+          <el-table-column label="合计" width="140">
+            <template #default="{ row }">{{ formatMoney(row.total_price, row.currency) }}</template>
+          </el-table-column>
           <el-table-column label="状态" width="120">
-            <template #default="{ row }">{{ zhLabel(ORDER_STATUS_LABELS, row.status) }}</template>
+            <template #default="{ row }">{{ label(ORDER_STATUS, row.status) }}</template>
           </el-table-column>
         </el-table>
       </section>
 
-      <section class="section mb">
+      <section class="compact-section">
         <div class="section-head">
-          <h3>客户确认</h3>
-          <el-button v-if="canAddConfirmation" type="primary" @click="showAddForm = !showAddForm">
-            添加确认
+          <div>
+            <p class="eyebrow">Production Flow</p>
+            <h2>生产节点</h2>
+          </div>
+          <el-button
+            v-if="!visibleMilestones.length && partnerSplits[0]"
+            type="primary"
+            :loading="actionLoading"
+            @click="onEnsureMilestones(partnerSplits[0])"
+          >
+            生成标准节点
           </el-button>
         </div>
 
-        <el-table :data="confirmations" stripe class="mb">
-          <el-table-column prop="confirmation_type" label="类型" width="140" />
-          <el-table-column label="强度" width="100">
-            <template #default="{ row }">
-              <el-tag :type="strengthTagType(row.confirmation_strength)" size="small">{{ row.confirmation_strength }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="confirmed_at" label="确认时间" width="180" />
-          <el-table-column prop="confirmed_by_name" label="确认人" width="120" />
-          <el-table-column prop="evidence_reference" label="证据" />
-          <el-table-column prop="status" label="状态" width="90" />
-          <el-table-column label="" width="100">
-            <template #default="{ row }">
-              <el-button v-if="row.status === 'active'" size="small" @click="onVoid(row)">作废</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-
-        <el-form v-if="showAddForm && canAddConfirmation" label-width="160px" @submit.prevent="onConfirm">
-          <el-form-item label="Type">
-            <el-select v-model="confirmForm.confirmation_type" style="width: 220px">
-              <el-option label="Email" value="email" />
-              <el-option label="Purchase Order" value="purchase_order" />
-              <el-option label="Signed Quote" value="signed_quote" />
-              <el-option label="Verbal" value="verbal" />
-              <el-option label="Internal Note" value="internal_note" />
-              <el-option label="Other" value="other" />
+        <div v-if="visibleMilestones.length" class="production-flow">
+          <article
+            v-for="item in visibleMilestones"
+            :key="item.id"
+            class="flow-node"
+            :class="statusClass(item.status)"
+          >
+            <div class="node-index">{{ item.sequence }}</div>
+            <div class="node-body">
+              <strong>{{ milestoneName(item) }}</strong>
+              <p>计划 {{ formatDate(item.planned_date) }} · 实际 {{ formatDate(item.actual_date) }}</p>
+              <p v-if="item.notes" class="node-note">{{ item.notes }}</p>
+            </div>
+            <el-select
+              :model-value="item.status"
+              size="small"
+              class="node-select"
+              :disabled="actionLoading"
+              @change="(status: string) => onMilestoneStatusChange(item, status)"
+            >
+              <el-option label="待开始" value="planned" />
+              <el-option label="进行中" value="in_progress" />
+              <el-option label="已完成" value="completed" />
+              <el-option label="延误" value="delayed" />
+              <el-option label="阻塞" value="blocked" />
             </el-select>
-          </el-form-item>
-          <el-alert v-if="typeWarning" type="warning" :title="typeWarning" show-icon class="mb" />
-          <el-form-item label="Confirmed By">
-            <el-input v-model="confirmForm.confirmed_by_name" />
-          </el-form-item>
-          <el-form-item label="Email">
-            <el-input v-model="confirmForm.confirmed_by_email" />
-          </el-form-item>
-          <el-form-item label="Company">
-            <el-input v-model="confirmForm.confirmed_by_company" />
-          </el-form-item>
-          <el-form-item label="Evidence Reference">
-            <el-input v-model="confirmForm.evidence_reference" type="textarea" :rows="2" />
-          </el-form-item>
-          <el-form-item label="Note">
-            <el-input v-model="confirmForm.note" type="textarea" :rows="2" />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" :loading="actionLoading" @click="onConfirm">Record Confirmation</el-button>
-          </el-form-item>
-        </el-form>
+          </article>
+        </div>
+        <el-empty v-else description="暂无生产节点" />
       </section>
 
-      <section class="section mb">
+      <section class="compact-section">
         <div class="section-head">
-          <h3>Partner Splits</h3>
-          <el-button v-if="canEnsureSplits" type="primary" :loading="actionLoading" @click="onEnsureSplits">
-            Ensure Partner Splits
-          </el-button>
-        </div>
-        <el-alert type="warning" :closable="false" show-icon title="供应商安全边界" :description="SUPPLIER_SAFETY_NOTE" class="mb" />
-        <el-alert
-          v-if="order.status === 'pending_customer_confirmation'"
-          type="warning"
-          title="Customer confirmation is not recorded; supplier actions should be reviewed."
-          show-icon
-          class="mb"
-        />
-        <el-descriptions v-if="order.partner_splits_summary" :column="4" border class="mb">
-          <el-descriptions-item label="Total Splits">{{ order.partner_splits_summary.total_splits }}</el-descriptions-item>
-          <el-descriptions-item label="Confirmed">{{ order.partner_splits_summary.confirmed_splits }}</el-descriptions-item>
-          <el-descriptions-item label="Pending">{{ order.partner_splits_summary.pending_splits }}</el-descriptions-item>
-          <el-descriptions-item label="需澄清">{{ order.partner_splits_summary.needs_clarification_splits }}</el-descriptions-item>
-        </el-descriptions>
-        <el-table :data="partnerSplits" stripe class="mb">
-          <el-table-column prop="split_number" label="Split" width="100" />
-          <el-table-column prop="partner_name" label="Partner" width="160" />
-          <el-table-column label="分单状态" width="180">
-            <template #default="{ row }">{{ zhLabel(SUPPLIER_CONFIRMATION_LABELS, row.split_status) }}</template>
-          </el-table-column>
-          <el-table-column label="供应商确认" width="140">
-            <template #default="{ row }">{{ zhLabel(SUPPLIER_CONFIRMATION_LABELS, row.supplier_confirmation_status) }}</template>
-          </el-table-column>
-          <el-table-column prop="line_item_count" label="Lines" width="80" />
-          <el-table-column label="Subtotal" width="120">
-            <template #default="{ row }">{{ row.currency }} {{ row.subtotal }}</template>
-          </el-table-column>
-          <el-table-column prop="expected_ready_date" label="预计就绪" width="120" />
-          <el-table-column label="" width="120">
-            <template #default="{ row }">
-              <el-button size="small" @click="toggleSplitDetail(row)">Details</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-        <div v-for="split in partnerSplits" :key="split.id">
-          <div v-if="expandedSplitId === split.id" class="split-detail mb">
-            <h4>{{ split.partner_name }} — {{ split.split_number }}</h4>
-            <el-table :data="(splitDetails[split.id]?.line_items || [])" stripe size="small" class="mb">
-              <el-table-column prop="product_name" label="Product" />
-              <el-table-column prop="quantity" label="Qty" width="80" />
-              <el-table-column prop="total_price" label="Total" width="100" />
-            </el-table>
-            <h5>Supplier Confirmations</h5>
-            <el-table :data="splitDetails[split.id]?.supplier_confirmations || []" stripe size="small" class="mb">
-              <el-table-column label="状态" width="120">
-                <template #default="{ row }">{{ zhLabel(SUPPLIER_CONFIRMATION_LABELS, row.confirmation_status) }}</template>
-              </el-table-column>
-              <el-table-column prop="confirmed_at" label="Confirmed At" width="160" />
-              <el-table-column prop="confirmed_by_name" label="By" width="120" />
-              <el-table-column label="Flags" width="200">
-                <template #default="{ row }">
-                  <el-tag v-if="row.inventory_confirmed" size="small" type="success">Inventory</el-tag>
-                  <el-tag v-if="row.lead_time_confirmed" size="small" type="success">Lead Time</el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column prop="status" label="Record" width="90" />
-            </el-table>
-            <el-button
-              v-if="canAddSupplierConfirmation"
-              size="small"
-              @click="showSupplierFormFor = showSupplierFormFor === split.id ? null : split.id"
-            >
-              新增供应商确认
-            </el-button>
-            <el-form
-              v-if="showSupplierFormFor === split.id && canAddSupplierConfirmation"
-              label-width="200px"
-              class="mt"
-              @submit.prevent="onAddSupplierConfirmation(split.id)"
-            >
-              <el-form-item label="状态">
-                <el-select v-model="supplierForm.confirmation_status" style="width: 220px">
-                  <el-option label="Confirmed" value="confirmed" />
-                  <el-option label="Partially Confirmed" value="partially_confirmed" />
-                  <el-option label="需澄清" value="needs_clarification" />
-                  <el-option label="Rejected" value="rejected" />
-                </el-select>
-              </el-form-item>
-              <el-form-item label="Confirmed By"><el-input v-model="supplierForm.confirmed_by_name" /></el-form-item>
-              <el-form-item label="Email"><el-input v-model="supplierForm.confirmed_by_email" /></el-form-item>
-              <el-form-item label="Channel"><el-input v-model="supplierForm.confirmation_channel" /></el-form-item>
-              <el-form-item label="Inventory Confirmed"><el-checkbox v-model="supplierForm.inventory_confirmed" /></el-form-item>
-              <el-form-item label="Certification Confirmed"><el-checkbox v-model="supplierForm.certification_confirmed" /></el-form-item>
-              <el-form-item label="Lead Time Confirmed"><el-checkbox v-model="supplierForm.lead_time_confirmed" /></el-form-item>
-              <el-form-item label="Production Capacity"><el-checkbox v-model="supplierForm.production_capacity_confirmed" /></el-form-item>
-              <el-form-item label="Expected Production Start"><el-input v-model="supplierForm.expected_production_start" placeholder="YYYY-MM-DD" /></el-form-item>
-              <el-form-item label="预计就绪日期"><el-input v-model="supplierForm.expected_ready_date" placeholder="YYYY-MM-DD" /></el-form-item>
-              <el-form-item label="Supplier Reference"><el-input v-model="supplierForm.supplier_reference" /></el-form-item>
-              <el-form-item label="Note"><el-input v-model="supplierForm.note" type="textarea" :rows="2" /></el-form-item>
-              <el-form-item>
-                <el-button type="primary" :loading="actionLoading" @click="onAddSupplierConfirmation(split.id)">Record</el-button>
-              </el-form-item>
-            </el-form>
-            <h5 class="mt">Production Milestones</h5>
-            <el-alert type="info" :closable="false" :description="PRODUCTION_SAFETY_NOTE" class="mb" />
-            <el-button
-              v-if="canEnsureMilestones"
-              size="small"
-              class="mb"
-              :loading="actionLoading"
-              @click="onEnsureMilestones(split.id)"
-            >
-              生成里程碑
-            </el-button>
-            <el-table :data="milestonesBySplit[split.id] || []" stripe size="small" class="mb">
-              <el-table-column prop="sequence" label="#" width="50" />
-              <el-table-column prop="milestone_label" label="里程碑" />
-              <el-table-column label="状态" width="110">
-                <template #default="{ row }">{{ zhLabel(PRODUCTION_STATUS_LABELS, row.status) }}</template>
-              </el-table-column>
-              <el-table-column prop="planned_date" label="计划日期" width="110" />
-              <el-table-column prop="actual_date" label="实际日期" width="110" />
-              <el-table-column label="" width="90">
-                <template #default="{ row }">
-                  <el-button v-if="canEnsureMilestones" size="small" @click="startEditMilestone(row)">更新</el-button>
-                </template>
-              </el-table-column>
-            </el-table>
-            <el-form
-              v-if="editingMilestoneId && (milestonesBySplit[split.id] || []).some(m => m.id === editingMilestoneId)"
-              label-width="140px"
-              class="mt"
-            >
-              <el-form-item label="状态">
-                <el-select v-model="milestoneForm.status" style="width: 200px">
-                  <el-option label="已计划" value="planned" />
-                  <el-option label="进行中" value="in_progress" />
-                  <el-option label="已完成" value="completed" />
-                  <el-option label="延误" value="delayed" />
-                  <el-option label="阻塞" value="blocked" />
-                </el-select>
-              </el-form-item>
-              <el-form-item label="Planned Date"><el-input v-model="milestoneForm.planned_date" placeholder="YYYY-MM-DD" /></el-form-item>
-              <el-form-item label="Actual Date"><el-input v-model="milestoneForm.actual_date" placeholder="YYYY-MM-DD" /></el-form-item>
-              <el-form-item label="Responsible"><el-input v-model="milestoneForm.responsible_party" /></el-form-item>
-              <el-form-item label="Notes"><el-input v-model="milestoneForm.notes" type="textarea" :rows="2" /></el-form-item>
-              <el-form-item>
-                <el-button
-                  type="primary"
-                  :loading="actionLoading"
-                  @click="onUpdateMilestone((milestonesBySplit[split.id] || []).find(m => m.id === editingMilestoneId)!)"
-                >
-                  Save Milestone
-                </el-button>
-              </el-form-item>
-            </el-form>
+          <div>
+            <p class="eyebrow">Shipment</p>
+            <h2>物流节点</h2>
           </div>
         </div>
-      </section>
-
-      <section v-if="order.production_summary" class="section mb">
-        <h3>生产摘要</h3>
-        <el-descriptions :column="4" border>
-          <el-descriptions-item label="总数">{{ order.production_summary.total_milestones }}</el-descriptions-item>
-          <el-descriptions-item label="已完成">{{ order.production_summary.completed_milestones }}</el-descriptions-item>
-          <el-descriptions-item label="进行中">{{ order.production_summary.in_progress_milestones }}</el-descriptions-item>
-          <el-descriptions-item label="已创建物流">{{ order.production_summary.shipment_created ? '是' : '否' }}</el-descriptions-item>
-        </el-descriptions>
-      </section>
-
-      <section class="section mb">
-        <div class="section-head">
-          <h3>物流计划</h3>
-          <el-tag type="info">人工维护</el-tag>
-        </div>
-        <el-alert type="info" :closable="false" :description="SHIPMENT_SAFETY_NOTE" class="mb" />
-        <el-table :data="shipmentPlans" stripe class="mb">
-          <el-table-column label="状态" width="110">
-            <template #default="{ row }">{{ zhLabel(SHIPMENT_STATUS_LABELS, row.status) }}</template>
-          </el-table-column>
-          <el-table-column prop="shipment_method" label="方式" width="110" />
-          <el-table-column prop="origin" label="起运地" />
-          <el-table-column prop="destination" label="目的地" />
-          <el-table-column prop="estimated_ship_date" label="ETD" width="120" />
-          <el-table-column prop="estimated_arrival_date" label="ETA" width="120" />
-          <el-table-column prop="tracking_number" label="Tracking" width="140" />
-          <el-table-column label="" width="180">
-            <template #default="{ row }">
-              <el-select
-                :model-value="row.status"
-                size="small"
-                style="width: 150px"
-                :disabled="!canManageShipments || actionLoading"
-                @change="(status: string) => onPatchShipmentStatus(row, status)"
-              >
-                <el-option label="草稿" value="draft" />
-                <el-option label="已计划" value="planned" />
-                <el-option label="已发运" value="shipped" />
-                <el-option label="已交付" value="delivered" />
-                <el-option label="已取消" value="cancelled" />
-              </el-select>
-            </template>
-          </el-table-column>
-        </el-table>
-        <el-collapse v-if="shipmentPlans.length" class="mb">
-          <el-collapse-item title="客户可见物流摘要预览" name="shipment-summary">
-            <el-table :data="shipmentPlans.map(p => p.portal_visible_fields || p)" stripe size="small">
-              <el-table-column label="状态" width="110">
-                <template #default="{ row }">{{ zhLabel(SHIPMENT_STATUS_LABELS, row.status) }}</template>
-              </el-table-column>
-              <el-table-column prop="shipment_method" label="方式" width="110" />
-              <el-table-column prop="estimated_ship_date" label="ETD" width="120" />
-              <el-table-column prop="estimated_arrival_date" label="ETA" width="120" />
-              <el-table-column prop="tracking_number" label="Tracking" />
-            </el-table>
-          </el-collapse-item>
-        </el-collapse>
-        <el-alert
-          v-if="!canManageShipments"
-          type="warning"
-          title="物流计划需要订单已完成客户确认。"
-          show-icon
-          class="mb"
-        />
-        <el-form v-else label-width="150px" class="shipment-form" @submit.prevent="onCreateShipmentPlan">
-          <el-form-item label="Partner Split">
-            <el-select v-model="shipmentForm.partner_split_id" clearable placeholder="Optional" style="width: 260px">
-              <el-option
-                v-for="split in partnerSplits"
-                :key="split.id"
-                :label="`${split.split_number} - ${split.partner_name}`"
-                :value="split.id"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="方式">
-            <el-select v-model="shipmentForm.shipment_method" style="width: 180px">
-              <el-option label="海运" value="sea" />
-              <el-option label="空运" value="air" />
-              <el-option label="快递" value="express" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="状态">
-            <el-select v-model="shipmentForm.status" style="width: 180px">
+        <div v-if="shipmentPlans.length" class="shipment-list">
+          <article v-for="plan in shipmentPlans" :key="plan.id" class="shipment-card">
+            <div>
+              <strong>{{ plan.shipment_method || '物流计划' }} · {{ plan.incoterm || '未设置条款' }}</strong>
+              <p>{{ plan.origin || '未设置起运地' }} → {{ plan.destination || '未设置目的地' }}</p>
+              <p>ETD {{ formatDate(plan.estimated_ship_date) }} · ETA {{ formatDate(plan.estimated_arrival_date) }}</p>
+              <p v-if="plan.tracking_number">Tracking: {{ plan.tracking_number }}</p>
+            </div>
+            <el-select
+              :model-value="plan.status"
+              size="small"
+              class="shipment-select"
+              :disabled="actionLoading"
+              @change="(status: string) => onShipmentStatusChange(plan, status)"
+            >
               <el-option label="草稿" value="draft" />
               <el-option label="已计划" value="planned" />
+              <el-option label="已订舱" value="booked" />
+              <el-option label="运输中" value="in_transit" />
+              <el-option label="已发运" value="shipped" />
+              <el-option label="已交付" value="delivered" />
+              <el-option label="延误" value="delayed" />
+              <el-option label="已取消" value="cancelled" />
             </el-select>
-          </el-form-item>
-          <el-form-item label="Incoterm"><el-input v-model="shipmentForm.incoterm" /></el-form-item>
-          <el-form-item label="Origin"><el-input v-model="shipmentForm.origin" /></el-form-item>
-          <el-form-item label="Destination"><el-input v-model="shipmentForm.destination" /></el-form-item>
-          <el-form-item label="ETD"><el-input v-model="shipmentForm.estimated_ship_date" placeholder="YYYY-MM-DD" /></el-form-item>
-          <el-form-item label="ETA"><el-input v-model="shipmentForm.estimated_arrival_date" placeholder="YYYY-MM-DD" /></el-form-item>
-          <el-form-item label="Tracking"><el-input v-model="shipmentForm.tracking_number" /></el-form-item>
-          <el-form-item label="Notes"><el-input v-model="shipmentForm.notes" type="textarea" :rows="2" /></el-form-item>
-          <el-form-item>
-            <el-button type="primary" :loading="actionLoading" @click="onCreateShipmentPlan">创建计划</el-button>
-          </el-form-item>
-        </el-form>
+          </article>
+        </div>
+        <el-empty v-else description="暂无物流计划" />
       </section>
 
-      <section class="section mb">
+      <section class="compact-section">
         <div class="section-head">
-          <h3>资料中心</h3>
-          <el-tag type="info">人工发布</el-tag>
+          <div>
+            <p class="eyebrow">Partner</p>
+            <h2>Partner 承接</h2>
+          </div>
         </div>
-        <el-alert type="info" :closable="false" :description="RESOURCE_SAFETY_NOTE" class="mb" />
-        <el-table :data="orderResources" stripe class="mb">
-          <el-table-column prop="title" label="标题" min-width="180" />
-          <el-table-column prop="filename" label="文件" min-width="180" />
-          <el-table-column prop="category" label="分类" width="130" />
-          <el-table-column label="状态" width="110">
-            <template #default="{ row }">
-              <el-tag :type="row.status === 'published' ? 'success' : row.status === 'archived' ? 'info' : 'warning'" size="small">
-                {{ zhLabel(RESOURCE_STATUS_LABELS, row.status) }}
-              </el-tag>
-            </template>
+        <el-table :data="partnerSplits" stripe>
+          <el-table-column prop="partner_name" label="Partner" min-width="160" />
+          <el-table-column prop="split_number" label="分单号" min-width="180" />
+          <el-table-column label="分单状态" width="140">
+            <template #default="{ row }">{{ label(SUPPLIER_STATUS, row.split_status) }}</template>
           </el-table-column>
-          <el-table-column label="客户可见" width="120">
-            <template #default="{ row }">
-              <el-tag :type="row.customer_visible ? 'success' : 'info'" size="small">
-                {{ row.customer_visible ? '可见' : '隐藏' }}
-              </el-tag>
-            </template>
+          <el-table-column label="供应商确认" width="140">
+            <template #default="{ row }">{{ label(SUPPLIER_STATUS, row.supplier_confirmation_status) }}</template>
           </el-table-column>
-          <el-table-column prop="published_at" label="Published" width="180" />
-          <el-table-column label="" width="220">
-            <template #default="{ row }">
-              <el-button
-                v-if="!(row.status === 'published' && row.customer_visible)"
-                size="small"
-                type="primary"
-                :loading="actionLoading"
-                @click="onPatchOrderResource(row, { status: 'published', customer_visible: true })"
-              >
-                Publish
-              </el-button>
-              <el-button
-                v-else
-                size="small"
-                :loading="actionLoading"
-                @click="onPatchOrderResource(row, { status: 'draft', customer_visible: false })"
-              >
-                Unpublish
-              </el-button>
-              <el-button
-                size="small"
-                type="danger"
-                plain
-                :loading="actionLoading"
-                @click="onPatchOrderResource(row, { status: 'archived', customer_visible: false })"
-              >
-                Archive
-              </el-button>
-            </template>
+          <el-table-column prop="expected_ready_date" label="预计完成" width="130" />
+          <el-table-column label="金额" width="140">
+            <template #default="{ row }">{{ formatMoney(row.subtotal, row.currency) }}</template>
           </el-table-column>
         </el-table>
-        <el-collapse v-if="orderResources.some(r => r.customer_visible && r.status === 'published')" class="mb">
-          <el-collapse-item title="Customer visible resource preview" name="resource-preview">
-            <el-table :data="orderResources.filter(r => r.customer_visible && r.status === 'published')" stripe size="small">
-              <el-table-column prop="title" label="Title" />
-              <el-table-column prop="category" label="Category" width="130" />
-              <el-table-column prop="filename" label="File" />
-              <el-table-column label="Safety" width="170">
-                <template #default="{ row }">
-                  <el-tag v-if="row.safety?.file_location_exposed === false" size="small" type="success">No path leak</el-tag>
-                </template>
-              </el-table-column>
-            </el-table>
-          </el-collapse-item>
-        </el-collapse>
-        <el-form label-width="150px" class="resource-form">
-          <el-form-item label="Title">
-            <el-input v-model="resourceForm.title" placeholder="Defaults to uploaded filename" />
-          </el-form-item>
-          <el-form-item label="Category">
-            <el-select v-model="resourceForm.category" style="width: 220px">
-              <el-option label="General" value="general" />
-              <el-option label="Quote PDF" value="quote_pdf" />
-              <el-option label="Packing List" value="packing_list" />
-              <el-option label="Spec Sheet" value="spec_sheet" />
-              <el-option label="Certificate" value="certificate" />
-              <el-option label="Shipment" value="shipment" />
-              <el-option label="Other" value="other" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="Description">
-            <el-input v-model="resourceForm.description" type="textarea" :rows="2" />
-          </el-form-item>
-          <el-form-item label="Publish now">
-            <el-checkbox v-model="resourceForm.customer_visible" />
-          </el-form-item>
-          <el-form-item>
-            <el-upload :show-file-list="false" :http-request="onUploadOrderResource">
-              <template #trigger>
-                <el-button type="primary" :loading="resourceUploading">Upload Resource</el-button>
-              </template>
-            </el-upload>
-          </el-form-item>
-        </el-form>
-      </section>
-
-      <section v-if="canCancel" class="section mb">
-        <h3>Cancel Order</h3>
-        <el-input v-model="cancelReason" placeholder="Reason (optional)" class="mb" style="max-width: 400px" />
-        <el-button type="danger" :loading="actionLoading" @click="onCancel">Cancel Order</el-button>
-      </section>
-
-      <section class="section mb">
-        <h3>Timeline</h3>
-        <el-empty v-if="!timelineItems.length" description="No events" />
-        <el-timeline v-else>
-          <el-timeline-item v-for="(item, idx) in timelineItems" :key="idx" :timestamp="item.timestamp || ''">
-            <strong>{{ item.title }}</strong>
-          </el-timeline-item>
-        </el-timeline>
       </section>
     </template>
-    <el-empty v-else description="Order not found" />
+
+    <el-empty v-else description="订单不存在" />
   </div>
 </template>
 
 <style scoped>
-.page { padding: 16px; }
-.mb { margin-bottom: 16px; }
-.section { margin-top: 24px; }
-.section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.link { color: var(--el-color-primary); }
-.split-detail { padding: 12px; border: 1px solid var(--el-border-color); border-radius: 4px; }
-.mt { margin-top: 12px; }
-.summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.summary-tile { border: 1px solid var(--el-border-color); border-radius: 4px; padding: 12px; background: #f8fafc; }
-.summary-label { font-size: 12px; color: #64748b; text-transform: uppercase; }
-.summary-value { margin-top: 6px; font-weight: 600; color: #0f172a; }
-.fulfillment-intel { border: 1px solid var(--el-border-color); border-radius: 8px; padding: 14px; background: var(--el-fill-color-lighter); }
-.fulfillment-intel__head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-.fulfillment-intel__head h3 { margin: 0 0 4px; }
-.fulfillment-intel__head p { margin: 0; color: var(--el-text-color-secondary); font-size: 13px; }
-.fulfillment-intel__tags,
-.fulfillment-intel__chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.fulfillment-intel__action { margin: 12px 0; color: var(--el-text-color-primary); font-weight: 600; }
-.fulfillment-intel__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.fulfillment-intel__empty { color: var(--el-text-color-placeholder); font-size: 12px; }
-.partner-execution { margin-top: 14px; border: 1px solid #fed7aa; border-radius: 6px; background: #fff7ed; padding: 12px; }
-.partner-execution__head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-.partner-execution__head p,
-.partner-execution__card p { margin: 4px 0 0; color: #475569; font-size: 12px; line-height: 1.5; }
-.partner-execution__cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin-top: 10px; }
-.partner-execution__card { border: 1px solid #ffedd5; border-radius: 6px; background: #fff; padding: 10px; }
-.partner-execution__card-head { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
-.partner-execution__metrics { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 8px 0; color: #64748b; font-size: 12px; }
-.customer-stage {
+.order-page {
+  min-height: 100vh;
+  padding: 24px;
+  background: #f5f7fb;
+  color: #102033;
+}
+
+.back-button {
+  border: 0;
+  background: transparent;
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+
+.loading-panel {
+  min-height: 240px;
+}
+
+.order-hero {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
+  gap: 24px;
+  padding: 28px;
+  border: 1px solid #dbe4f0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ffffff 0%, #eef5ff 100%);
+  box-shadow: 0 12px 34px rgba(15, 35, 70, 0.08);
+  margin-bottom: 18px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #3b82f6;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1,
+h2 {
+  margin: 0;
+}
+
+h1 {
+  font-size: 34px;
+  letter-spacing: 0;
+}
+
+h2 {
+  font-size: 20px;
+}
+
+.hero-copy {
+  margin: 10px 0 0;
+  color: #62748d;
+}
+
+.hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
   gap: 12px;
-  border: 1px solid var(--el-border-color);
-  border-radius: 4px;
+  min-width: 460px;
+}
+
+.hero-metrics > div,
+.overview-card,
+.compact-section {
+  border: 1px solid #dbe4f0;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.hero-metrics > div {
+  padding: 14px;
+}
+
+.hero-metrics span,
+.overview-card span {
+  display: block;
+  color: #71839a;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.hero-metrics strong,
+.hero-metrics a,
+.overview-card strong {
+  color: #102033;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.mb {
+  margin-bottom: 16px;
+}
+
+.safety-strip {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  background: #f8fbff;
+}
+
+.safety-strip span {
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.safety-strip p {
+  margin: 0;
+  color: #64748b;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.overview-card {
+  padding: 18px;
+}
+
+.overview-card p {
+  margin: 8px 0 0;
+  color: #64748b;
+}
+
+.compact-section {
+  padding: 20px;
+  margin-bottom: 18px;
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.production-flow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.flow-node {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 132px;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid #dbe4f0;
+  border-left: 4px solid #9aa9bb;
+  border-radius: 10px;
   padding: 12px;
-  background: #f8fafc;
+  background: #ffffff;
 }
-.customer-stage-title { margin-top: 4px; font-size: 18px; font-weight: 700; color: #0f172a; }
-.customer-stage-copy { margin: 6px 0 0; color: #475569; }
-@media (max-width: 900px) {
-  .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .fulfillment-intel__grid { grid-template-columns: 1fr; }
-  .partner-execution__head,
-  .partner-execution__card-head { flex-direction: column; }
+
+.flow-node.is-done {
+  border-left-color: #16a34a;
+  background: #f5fff8;
 }
-@media (max-width: 560px) {
-  .summary-grid { grid-template-columns: 1fr; }
-  .fulfillment-intel__head { flex-direction: column; }
+
+.flow-node.is-active {
+  border-left-color: #2563eb;
+  background: #f7fbff;
+}
+
+.flow-node.is-risk {
+  border-left-color: #dc2626;
+  background: #fff7f7;
+}
+
+.node-index {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #eaf2ff;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
+.node-body strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.node-body p {
+  margin: 0;
+  color: #65758b;
+  font-size: 13px;
+}
+
+.node-note {
+  margin-top: 5px !important;
+}
+
+.node-select,
+.shipment-select {
+  width: 128px;
+}
+
+.shipment-list {
+  display: grid;
+  gap: 12px;
+}
+
+.shipment-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+  border: 1px solid #dbe4f0;
+  border-radius: 12px;
+  padding: 16px;
+  background: #ffffff;
+}
+
+.shipment-card p {
+  margin: 6px 0 0;
+  color: #64748b;
+}
+
+@media (max-width: 1100px) {
+  .order-hero {
+    flex-direction: column;
+  }
+
+  .hero-metrics {
+    min-width: 0;
+    grid-template-columns: 1fr;
+  }
+
+  .overview-grid,
+  .production-flow {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

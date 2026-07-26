@@ -65,7 +65,7 @@ def _rating_average(partner: ManufacturingPartner) -> int | None:
 def _partner_counts(db: Session, partner: ManufacturingPartner) -> dict[str, int]:
     product_count = (
         db.query(func.count(ProductCatalog.id))
-        .filter(ProductCatalog.partner_id == partner.id)
+        .filter(ProductCatalog.partner_id == partner.id, ProductCatalog.status == "active")
         .scalar()
         or 0
     )
@@ -78,7 +78,7 @@ def _partner_counts(db: Session, partner: ManufacturingPartner) -> dict[str, int
     price_tier_count = (
         db.query(func.count(ProductPriceTier.id))
         .join(ProductCatalog, ProductCatalog.id == ProductPriceTier.product_id)
-        .filter(ProductCatalog.partner_id == partner.id)
+        .filter(ProductCatalog.partner_id == partner.id, ProductCatalog.status == "active")
         .scalar()
         or 0
     )

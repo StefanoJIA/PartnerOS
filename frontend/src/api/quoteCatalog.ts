@@ -13,9 +13,14 @@ export interface CatalogProduct {
   product_category: string
   product_family: string | null
   description_customer: string | null
+  description_internal?: string | null
   status: string
+  default_uom?: string
+  base_currency?: string
+  default_incoterm?: string | null
   image_url: string | null
   attributes_json: Record<string, unknown> | null
+  notes?: string | null
   quote_interval_count?: number
   has_interval_pricing?: boolean
   configuration_summary?: Record<string, unknown> | null
@@ -33,6 +38,14 @@ export interface ProductListData {
   total: number
   page: number
   limit: number
+}
+
+export interface ProductPartnerOption {
+  id: string
+  partner_code: string | null
+  partner_name: string
+  default_incoterm: string | null
+  default_currency: string | null
 }
 
 export interface PricingPreviewRequest {
@@ -142,6 +155,11 @@ export async function postPricingPreview(body: PricingPreviewRequest) {
   return data.data
 }
 
+export async function fetchProductPartnerOptions() {
+  const { data } = await http.get<V1Envelope<{ items: ProductPartnerOption[] }>>('/v1/products/partner-options')
+  return data.data
+}
+
 export async function fetchPricingAssumptions() {
   const { data } = await http.get<V1Envelope<PricingAssumptionSnapshot>>('/v1/quotes/pricing/assumptions')
   return data.data
@@ -161,5 +179,31 @@ export async function updateOceanFreightAssumption(body: {
 
 export async function updateCatalogProduct(productId: string, body: Partial<CatalogProduct>) {
   const { data } = await http.patch<V1Envelope<CatalogProduct>>(`/v1/products/${productId}`, body)
+  return data.data
+}
+
+export async function createCatalogProduct(body: {
+  partner_id: string
+  internal_sku: string
+  partner_product_code?: string | null
+  product_name: string
+  product_category: string
+  product_family?: string | null
+  description_customer?: string | null
+  description_internal?: string | null
+  status?: string
+  default_uom?: string
+  base_currency?: string
+  default_incoterm?: string | null
+  image_url?: string | null
+  attributes_json?: Record<string, unknown> | null
+  notes?: string | null
+}) {
+  const { data } = await http.post<V1Envelope<CatalogProduct>>('/v1/products', body)
+  return data.data
+}
+
+export async function deleteCatalogProduct(productId: string) {
+  const { data } = await http.delete<V1Envelope<CatalogProduct>>(`/v1/products/${productId}`)
   return data.data
 }

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { createOrderFromQuote, fetchOrders, type OrderSummary } from '@/api/orders'
+import { useRoute } from 'vue-router'
 import {
   createQuoteLearning,
+  deleteQuotePdfExport,
+  downloadQuotePdf,
   exportQuotePdf,
   fetchDeliveryLogs,
-  fetchOrderReadiness,
   fetchQuote,
   fetchQuoteLearning,
   fetchQuotePdfExports,
@@ -15,10 +15,8 @@ import {
   markQuoteReady,
   markQuoteSent,
   promoteQuoteLearningToMarketResponse,
-  quotePdfDownloadUrl,
   SENT_CHANNELS,
   type DeliveryLog,
-  type OrderReadiness,
   type PdfExportRecord,
   type QuoteDetail,
   type QuoteLearningRecord,
@@ -27,7 +25,6 @@ import {
 } from '@/api/quotes'
 
 const route = useRoute()
-const router = useRouter()
 
 const loading = ref(true)
 const error = ref('')
@@ -39,6 +36,8 @@ const pdfExports = ref<PdfExportRecord[]>([])
 const pdfLoading = ref(false)
 const pdfError = ref('')
 const pdfExporting = ref(false)
+const pdfDownloadingId = ref('')
+const pdfDeletingId = ref('')
 
 const deliveryLogs = ref<DeliveryLog[]>([])
 const deliveryLoading = ref(false)
@@ -49,16 +48,6 @@ const showDeliveryForm = ref(false)
 const timelineItems = ref<TimelineItem[]>([])
 const timelineLoading = ref(false)
 const versions = ref<QuoteVersionSummary[]>([])
-
-const readiness = ref<OrderReadiness | null>(null)
-const readinessLoading = ref(false)
-const readinessError = ref('')
-const copyMsg = ref('')
-const activeOrder = ref<OrderSummary | null>(null)
-const createOrderLoading = ref(false)
-const showCreateOrderModal = ref(false)
-const createWithConfirmation = ref(false)
-const createOrderNote = ref('')
 
 const learningRecords = ref<QuoteLearningRecord[]>([])
 const learningLoading = ref(false)
@@ -106,10 +95,6 @@ const SAFETY =
 const PDF_SAFETY = '导出 PDF 只生成客户报价文件，不会自动发送，也不会自动承诺库存、认证或交期。'
 const DELIVERY_SAFETY =
   '人工发送记录只用于留档；系统不会自动发送邮件、LinkedIn、附件或客户通知。'
-const READINESS_SAFETY =
-  '转订单检查只用于人工判断，不会自动创建订单、启动生产、创建物流或确认客户接受。'
-const CREATE_ORDER_SAFETY =
-  '从报价创建订单不会自动启动生产、通知供应商、创建物流、承诺库存、认证或交期。'
 const LEARNING_SAFETY =
   '报价复盘只记录内部人工判断；不自动发送消息，不改变报价/订单状态，不写入客户 Portal。'
 
@@ -136,7 +121,17 @@ const reasonCategoryOptions = [
   { value: 'unknown', label: '未知 / 待确认' },
 ]
 
-const warnings = computed(() => quote.value?.warnings ?? [])
+const warnings = computed(() => {
+  const raw = quote.value?.warnings ?? []
+  const mapped = raw.map((item) => {
+    if (/^line \d+ requires review$/.test(item)) {
+      return '该报价存在人工改价或待复核项目；发送前请人工确认区间价格。'
+    }
+    if (item === 'estimated_from_cost_model') return '该报价基于产品成本模型生成，请确认产品区间价后再发送。'
+    return item
+  })
+  return Array.from(new Set(mapped))
+})
 const quoteIntervalLines = computed(() =>
   (quote.value?.line_items ?? []).filter((line) => (line.interval_quote_table ?? []).length > 0),
 )
@@ -144,43 +139,17 @@ const latestLearning = computed(() => quote.value?.latest_learning || learningRe
 const canMarkSent = computed(
   () => quote.value && (quote.value.status === 'ready_to_send' || quote.value.status === 'sent') && !quote.value.derived_expired,
 )
-const canCreateOrder = computed(
-  () =>
-    quote.value?.status === 'sent' &&
-    !quote.value.derived_expired &&
-    !activeOrder.value &&
-    readiness.value &&
-    readiness.value.blocking_items.length === 0,
-)
-
 function quoteStatusLabel(status: string) {
   const labels: Record<string, string> = {
     draft: '草稿',
     internal_review: '内部审核',
-    ready_to_send: '待人工发送',
+    ready_to_send: '待人工确认发送',
     sent: '已人工发送',
     accepted: '客户接受',
     expired: '已过期',
     cancelled: '已取消',
   }
-  return labels[status] || status
-}
-
-function readinessStatusLabel(status: string) {
-  const labels: Record<string, string> = {
-    ready_for_order_review: '可进入订单人工复核',
-    needs_customer_confirmation: '需要客户确认',
-    needs_internal_review: '需要内部复核',
-    not_ready: '暂不可转订单',
-  }
-  return labels[status] || status
-}
-
-function statusTagType(status: string) {
-  if (status === 'ready_for_order_review') return 'success'
-  if (status === 'needs_customer_confirmation') return 'warning'
-  if (status === 'needs_internal_review') return 'danger'
-  return 'info'
+  return labels[status] || '待确认状态'
 }
 
 function formatIntervalPrice(value: string | null | undefined, currency = 'USD') {
@@ -192,16 +161,6 @@ function splitLabels(value: string) {
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean)
-}
-
-async function loadActiveOrder() {
-  if (!quote.value) return
-  try {
-    const data = await fetchOrders({ quote_id: quote.value.id })
-    activeOrder.value = data.items.find((o) => o.status !== 'cancelled') ?? null
-  } catch {
-    activeOrder.value = null
-  }
 }
 
 async function loadPdfExports() {
@@ -275,19 +234,6 @@ async function loadVersions() {
   }
 }
 
-async function loadReadiness() {
-  if (!quote.value) return
-  readinessLoading.value = true
-  readinessError.value = ''
-  try {
-    readiness.value = await fetchOrderReadiness(quote.value.id)
-  } catch (e: unknown) {
-    readinessError.value = e instanceof Error ? e.message : '转订单检查加载失败'
-  } finally {
-    readinessLoading.value = false
-  }
-}
-
 function prefillDeliveryForm() {
   if (!quote.value) return
   deliveryForm.sent_to_name = deliveryForm.sent_to_name || quote.value.bill_to_company || ''
@@ -307,8 +253,6 @@ async function load() {
       loadLearning(),
       loadTimeline(),
       loadVersions(),
-      loadReadiness(),
-      loadActiveOrder(),
     ])
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : '报价详情加载失败'
@@ -330,6 +274,43 @@ async function onExportPdf() {
     pdfError.value = e instanceof Error ? e.message : 'PDF 导出失败'
   } finally {
     pdfExporting.value = false
+  }
+}
+
+async function onDownloadPdf(row: PdfExportRecord) {
+  if (!quote.value || pdfDownloadingId.value) return
+  pdfDownloadingId.value = row.export_id
+  pdfError.value = ''
+  try {
+    const blob = await downloadQuotePdf(quote.value.id, row.export_id)
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = row.file_name || `${quote.value.quote_number}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  } catch (e: unknown) {
+    pdfError.value = e instanceof Error ? e.message : 'PDF 下载失败，请确认登录状态后重试。'
+  } finally {
+    pdfDownloadingId.value = ''
+  }
+}
+
+async function onDeletePdf(row: PdfExportRecord) {
+  if (!quote.value || pdfDeletingId.value) return
+  pdfDeletingId.value = row.export_id
+  pdfError.value = ''
+  successMsg.value = ''
+  try {
+    await deleteQuotePdfExport(quote.value.id, row.export_id)
+    await loadPdfExports()
+    successMsg.value = 'PDF 文件已删除，后端存储空间已释放；报价状态未改变。'
+  } catch (e: unknown) {
+    pdfError.value = e instanceof Error ? e.message : 'PDF 删除失败，请确认登录状态后重试。'
+  } finally {
+    pdfDeletingId.value = ''
   }
 }
 
@@ -369,7 +350,7 @@ async function onSubmitDelivery() {
       ? `人工发送已记录。${result.warnings.join(' ')}`
       : '人工发送已记录，报价状态已更新为已发送。'
     showDeliveryForm.value = false
-    await Promise.all([loadDeliveryLogs(), loadTimeline(), loadReadiness()])
+    await Promise.all([loadDeliveryLogs(), loadTimeline()])
   } catch (e: unknown) {
     deliveryError.value = e instanceof Error ? e.message : '人工发送记录保存失败'
   } finally {
@@ -427,7 +408,7 @@ async function onSaveLearning() {
   try {
     await createQuoteLearning(quote.value.id, learningPayload())
     quote.value = await fetchQuote(quote.value.id)
-    await Promise.all([loadLearning(), loadTimeline(), loadReadiness()])
+    await Promise.all([loadLearning(), loadTimeline()])
     resetLearningForm()
     successMsg.value = '报价复盘已保存；报价状态和订单状态未自动改变。'
   } catch (e: unknown) {
@@ -454,41 +435,6 @@ async function onPromoteLearning(row: QuoteLearningRecord) {
   }
 }
 
-async function copyOrderSummary() {
-  if (!readiness.value) return
-  await navigator.clipboard.writeText(JSON.stringify(readiness.value.order_input_contract, null, 2))
-  copyMsg.value = '订单输入摘要已复制'
-}
-
-async function copyMissingItems() {
-  if (!readiness.value) return
-  const items = [...readiness.value.blocking_items, ...readiness.value.warning_items]
-  await navigator.clipboard.writeText(items.join('\n'))
-  copyMsg.value = '阻塞/提醒项已复制'
-}
-
-async function onCreateOrder() {
-  if (!quote.value) return
-  createOrderLoading.value = true
-  readinessError.value = ''
-  try {
-    const payload: Parameters<typeof createOrderFromQuote>[0] = { quote_id: quote.value.id }
-    if (createWithConfirmation.value) {
-      payload.customer_confirmation = {
-        type: 'email',
-        note: createOrderNote.value || 'Customer confirmed by email.',
-      }
-    }
-    const result = await createOrderFromQuote(payload)
-    showCreateOrderModal.value = false
-    router.push({ name: 'order-detail', params: { orderId: result.id } })
-  } catch (e: unknown) {
-    readinessError.value = e instanceof Error ? e.message : '创建订单失败'
-  } finally {
-    createOrderLoading.value = false
-  }
-}
-
 onMounted(load)
 </script>
 
@@ -498,7 +444,7 @@ onMounted(load)
       <div>
         <el-button link class="back-link" @click="$router.push({ name: 'quotes' })">返回报价列表</el-button>
         <h1 v-if="quote">报价详情 {{ quote.quote_number }}</h1>
-        <p>这里仅处理该报价本身：客户报价、区间价格、PDF、人工发送记录和转订单检查。</p>
+        <p>这里仅处理该报价本身：客户报价、区间价格、PDF、人工发送记录和内部复盘。</p>
       </div>
       <div v-if="quote" class="head-actions">
         <el-tag :type="quote.status === 'sent' ? 'success' : 'info'" size="large">{{ quoteStatusLabel(quote.status) }}</el-tag>
@@ -529,7 +475,6 @@ onMounted(load)
           <el-descriptions-item label="人工发送时间">{{ quote.sent_at || '-' }}</el-descriptions-item>
           <el-descriptions-item label="付款条款">{{ quote.payment_terms || '-' }}</el-descriptions-item>
           <el-descriptions-item label="贸易条款">{{ quote.shipping_terms || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="内部参考总额">{{ quote.currency }} {{ quote.grand_total }}</el-descriptions-item>
         </el-descriptions>
       </section>
 
@@ -544,7 +489,6 @@ onMounted(load)
               <strong>{{ line.product_name }}</strong>
               <p>{{ line.pricing_source || 'pricing model' }}</p>
             </div>
-            <el-tag effect="plain">参考数量 {{ line.quantity }}</el-tag>
           </div>
           <el-table :data="line.interval_quote_table ?? []" size="small" border>
             <el-table-column prop="quantity_label" label="Quantity" width="150" />
@@ -559,21 +503,6 @@ onMounted(load)
             </el-table-column>
           </el-table>
         </div>
-      </section>
-
-      <section class="section">
-        <div class="section-title">
-          <h2>报价产品明细</h2>
-          <span>用于内部核对产品、参考数量和当前报价快照；成本与利润不在客户侧展示。</span>
-        </div>
-        <el-table :data="quote.line_items" stripe>
-          <el-table-column prop="line_number" label="#" width="56" />
-          <el-table-column prop="product_name" label="产品" min-width="260" />
-          <el-table-column prop="quantity" label="参考数量" width="110" />
-          <el-table-column prop="final_unit_price" label="参考单价" width="130" />
-          <el-table-column prop="total_price" label="参考小计" width="130" />
-          <el-table-column prop="pricing_source" label="计价来源" width="160" />
-        </el-table>
       </section>
 
       <section class="section two-column">
@@ -592,7 +521,23 @@ onMounted(load)
             <el-table-column prop="exported_at" label="导出时间" width="170" />
             <el-table-column label="下载" width="90">
               <template #default="{ row }">
-                <el-link :href="quotePdfDownloadUrl(quote.id, row.export_id)" target="_blank" type="primary">下载</el-link>
+                <el-button link type="primary" :loading="pdfDownloadingId === row.export_id" @click="onDownloadPdf(row)">
+                  下载
+                </el-button>
+              </template>
+            </el-table-column>
+            <el-table-column label="删除" width="90">
+              <template #default="{ row }">
+                <el-popconfirm
+                  title="确认删除这份 PDF？该操作只删除导出文件，不会删除报价。"
+                  confirm-button-text="删除"
+                  cancel-button-text="取消"
+                  @confirm="onDeletePdf(row)"
+                >
+                  <template #reference>
+                    <el-button link type="danger" :loading="pdfDeletingId === row.export_id">删除</el-button>
+                  </template>
+                </el-popconfirm>
               </template>
             </el-table-column>
           </el-table>
@@ -660,62 +605,6 @@ onMounted(load)
             <el-table-column prop="follow_up_date" label="跟进" width="110" />
           </el-table>
         </div>
-      </section>
-
-      <section class="section">
-        <div class="section-title">
-          <h2>转订单准备</h2>
-          <span>只做人工检查；是否创建订单由操作员明确执行。</span>
-        </div>
-        <el-alert type="warning" :closable="false" show-icon title="转订单安全边界" :description="READINESS_SAFETY" class="mb" />
-        <el-alert v-if="readinessError" type="error" :title="readinessError" show-icon class="mb" />
-        <el-alert v-if="copyMsg" type="success" :title="copyMsg" show-icon class="mb" @close="copyMsg = ''" />
-        <div class="actions mb">
-          <el-button :loading="readinessLoading" @click="loadReadiness">刷新检查</el-button>
-          <el-button v-if="readiness" @click="copyOrderSummary">复制订单输入摘要</el-button>
-          <el-button v-if="readiness" @click="copyMissingItems">复制阻塞/提醒项</el-button>
-          <el-button v-if="canCreateOrder" type="primary" @click="showCreateOrderModal = true">创建订单</el-button>
-          <el-button
-            v-else-if="activeOrder"
-            type="primary"
-            @click="router.push({ name: 'order-detail', params: { orderId: activeOrder.id } })"
-          >
-            查看订单 {{ activeOrder.order_number }}
-          </el-button>
-        </div>
-
-        <div v-if="readinessLoading" v-loading="true" class="small-loading" />
-        <template v-else-if="readiness">
-          <div class="readiness-bar">
-            <el-tag :type="statusTagType(readiness.readiness_status)" size="large">
-              {{ readinessStatusLabel(readiness.readiness_status) }}
-            </el-tag>
-            <strong>评分 {{ readiness.readiness_score }}</strong>
-            <span>{{ readiness.recommended_next_action }}</span>
-          </div>
-          <el-alert
-            v-if="readiness.blocking_items.length"
-            type="error"
-            title="阻塞项"
-            :description="readiness.blocking_items.join(', ')"
-            show-icon
-            class="mb"
-          />
-          <el-alert
-            v-if="readiness.warning_items.length"
-            type="warning"
-            title="提醒项"
-            :description="readiness.warning_items.slice(0, 8).join(', ')"
-            show-icon
-            class="mb"
-          />
-          <el-table :data="readiness.checklist" stripe max-height="300">
-            <el-table-column prop="label" label="检查项" min-width="220" />
-            <el-table-column prop="status" label="状态" width="100" />
-            <el-table-column prop="details" label="说明" min-width="280" />
-          </el-table>
-        </template>
-        <el-empty v-else description="暂无转订单检查数据" class="mt" />
       </section>
 
       <section class="section internal-section">
@@ -894,23 +783,6 @@ onMounted(load)
         </el-collapse>
       </section>
 
-      <el-dialog v-model="showCreateOrderModal" title="从报价创建订单" width="540px">
-        <el-alert type="warning" :closable="false" show-icon title="安全边界" :description="CREATE_ORDER_SAFETY" class="mb" />
-        <el-checkbox v-model="createWithConfirmation">包含客户确认记录，订单状态进入 confirmed</el-checkbox>
-        <p v-if="!createWithConfirmation" class="hint">未包含客户确认时，订单会保持 pending_customer_confirmation。</p>
-        <el-input
-          v-if="createWithConfirmation"
-          v-model="createOrderNote"
-          class="mt"
-          type="textarea"
-          placeholder="客户确认备注"
-          :rows="2"
-        />
-        <template #footer>
-          <el-button @click="showCreateOrderModal = false">取消</el-button>
-          <el-button type="primary" :loading="createOrderLoading" @click="onCreateOrder">创建订单</el-button>
-        </template>
-      </el-dialog>
     </template>
   </div>
 </template>
@@ -1045,18 +917,6 @@ onMounted(load)
   border-radius: 8px;
   padding: 16px;
   background: #f8fafc;
-}
-
-.readiness-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.readiness-bar span {
-  color: #475569;
 }
 
 .internal-section {

@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Detail - IntelliOpus Portal</title>
+    <link rel="stylesheet" href="/css/apple-style.css">
+    <style>
+        body {
+            background: #FFFFFF;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--spacing-md) var(--spacing-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: saturate(180%) blur(20px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .header-logo a {
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .header-logo a img,
+        .header-logo img:first-of-type {
+            height: 40px;
+            max-width: 160px;
+        }
+
+        .header-logo img:last-child {
+            height: 110px;
+            max-width: 560px;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-xl) var(--spacing-lg);
+            background: #FFFFFF;
+        }
+
+        .page-header {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .order-number {
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+
+        .order-info-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        .info-item {
+            padding: var(--spacing-sm);
+        }
+
+        .info-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-xs);
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .items-section {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .items-table th {
+            padding: var(--spacing-md);
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .items-table td {
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .items-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .timeline-container {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-xl);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .timeline {
+            position: relative;
+            padding: var(--spacing-lg) 0;
+            padding-left: 2rem; 
+        }
+        
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 24px; 
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, 
+                rgba(40, 167, 69, 0.2) 0%,
+                rgba(40, 167, 69, 0.3) 20%,
+                rgba(40, 167, 69, 0.3) 80%,
+                rgba(200, 200, 200, 0.2) 100%
+            );
+            border-radius: 2px;
+            z-index: 0;
+        }
+
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .step-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #000000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .step-icon {
+            font-size: 20px;
+        }
+
+        .step-date {
+            font-size: 14px;
+            color: #999999;
+            margin-top: 4px;
+        }
+        
+        .step-status {
+            font-size: 14px;
+            color: #999999;
+            margin-top: 4px;
+            font-weight: 400;
+        }
+
+        .step-details {
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .step-notes {
+            margin-top: var(--spacing-sm);
+            padding: var(--spacing-sm);
+            background: var(--background-secondary);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .status-badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .status-pending {
+            background: linear-gradient(135deg, #FFF3CD 0%, #FFE69C 100%);
+            color: #856404;
+            border: 1px solid #FFC107;
+        }
+
+        .status-confirmed {
+            background: linear-gradient(135deg, #D1ECF1 0%, #B8E0E8 100%);
+            color: #0C5460;
+            border: 1px solid #17A2B8;
+        }
+
+        .status-processing {
+            background: linear-gradient(135deg, #D4EDDA 0%, #C3E6CB 100%);
+            color: #155724;
+            border: 1px solid #28A745;
+        }
+
+        .status-shipped {
+            background: linear-gradient(135deg, #CCE5FF 0%, #99CCFF 100%);
+            color: #004085;
+            border: 1px solid #007BFF;
+        }
+
+        .status-delivered {
+            background: linear-gradient(135deg, #D4EDDA 0%, #C3E6CB 100%);
+            color: #155724;
+            border: 1px solid #28A745;
+        }
+
+        .status-cancelled {
+            background: linear-gradient(135deg, #F8D7DA 0%, #F5C6CB 100%);
+            color: #721C24;
+            border: 1px solid #DC3545;
+        }
+
+        
+        .status-ready_to_ship {
+            background: linear-gradient(135deg, #E7F3FF 0%, #D0E7FF 100%);
+            color: #004085;
+            border: 1px solid #007BFF;
+        }
+
+        .status-in_transit {
+            background: linear-gradient(135deg, #FFF3CD 0%, #FFE69C 100%);
+            color: #856404;
+            border: 1px solid #FFC107;
+        }
+
+        .status-out_for_delivery {
+            background: linear-gradient(135deg, #D1ECF1 0%, #B8E0E8 100%);
+            color: #0C5460;
+            border: 1px solid #17A2B8;
+        }
+
+        .loading {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--text-secondary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--text-secondary);
+        }
+
+        
+        
+        
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            color: var(--text-primary);
+            z-index: 101;
+        }
+
+        .mobile-menu-toggle:focus {
+            outline: none;
+        }
+
+        
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .mobile-nav.active {
+            display: block !important;
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .mobile-nav-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 280px;
+            max-width: 85vw;
+            height: 100vh;
+            background: var(--background);
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+            transition: right 0.3s ease;
+            overflow-y: auto;
+            z-index: 10001;
+        }
+
+        .mobile-nav.active .mobile-nav-menu {
+            right: 0;
+        }
+
+        .mobile-nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .mobile-nav-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--text-primary);
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mobile-nav-items {
+            padding: var(--spacing-md);
+        }
+
+        .mobile-nav-item {
+            display: block;
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-xs);
+            text-decoration: none;
+            color: var(--text-primary);
+            border-radius: var(--radius-md);
+            transition: background 0.2s;
+            font-size: 16px;
+        }
+
+        .mobile-nav-item:hover,
+        .mobile-nav-item:active {
+            background: var(--background-secondary);
+        }
+
+        .mobile-nav-item.cart-icon {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        
+        @media (max-width: 768px) {
+            
+            .header {
+                padding: var(--spacing-sm) var(--spacing-md);
+            }
+
+            .header-content {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                gap: var(--spacing-sm);
+            }
+
+            .header-logo {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .header-logo a img,
+            .header-logo img:first-of-type {
+                height: 32px;
+                max-width: 100px;
+            }
+
+            .header-logo img:last-child {
+                height: 50px;
+                max-width: 150px;
+            }
+
+            
+            .mobile-menu-toggle {
+                display: block !important;
+                flex-shrink: 0;
+                order: 2; 
+            }
+
+            
+            .header-nav {
+                display: none !important;
+            }
+
+            
+            .mobile-nav {
+                display: block !important;
+            }
+
+            
+            .main-content {
+                padding: var(--spacing-md) var(--spacing-sm);
+            }
+
+            .page-header {
+                margin-bottom: var(--spacing-md);
+            }
+
+            .page-header > div {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: var(--spacing-sm);
+            }
+
+            .page-title {
+                font-size: 24px;
+                margin-bottom: var(--spacing-xs);
+            }
+
+            .order-number {
+                font-size: 16px;
+            }
+
+            #downloadInvoiceBtn {
+                width: 100%;
+                justify-content: center;
+                margin-top: var(--spacing-sm) !important;
+            }
+
+            
+            .order-info-card {
+                padding: var(--spacing-md);
+                margin-bottom: var(--spacing-md);
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-sm);
+            }
+
+            .info-item {
+                padding: var(--spacing-sm) 0;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .info-item:last-child {
+                border-bottom: none;
+            }
+
+            .info-label {
+                font-size: 12px;
+                margin-bottom: 4px;
+            }
+
+            .info-value {
+                font-size: 16px;
+            }
+
+            
+            .items-section {
+                padding: var(--spacing-md);
+                margin-bottom: var(--spacing-md);
+                overflow-x: visible;
+            }
+
+            .items-section h2 {
+                font-size: 18px;
+                margin-bottom: var(--spacing-sm);
+            }
+
+            .items-table {
+                display: none; 
+            }
+
+            
+            .items-table-mobile {
+                display: block;
+            }
+
+            .item-card {
+                background: var(--background-secondary);
+                border: 1px solid var(--border-color);
+                border-radius: var(--radius-md);
+                padding: var(--spacing-md);
+                margin-bottom: var(--spacing-md);
+            }
+
+            .item-card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: var(--spacing-sm);
+                padding-bottom: var(--spacing-sm);
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .item-card-title {
+                font-weight: 600;
+                font-size: 16px;
+                color: var(--text-primary);
+                flex: 1;
+                margin-right: var(--spacing-sm);
+            }
+
+            .item-card-sku {
+                font-size: 12px;
+                color: var(--text-secondary);
+                font-family: 'Courier New', monospace;
+            }
+
+            .item-card-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: var(--spacing-xs) 0;
+                font-size: 14px;
+            }
+
+            .item-card-label {
+                color: var(--text-secondary);
+                font-weight: 500;
+            }
+
+            .item-card-value {
+                color: var(--text-primary);
+                font-weight: 600;
+            }
+
+            .item-card-subtotal {
+                margin-top: var(--spacing-sm);
+                padding-top: var(--spacing-sm);
+                border-top: 2px solid var(--border-color);
+                font-size: 16px;
+            }
+
+            .item-card-subtotal .item-card-value {
+                font-size: 18px;
+                color: var(--primary-color);
+            }
+
+            
+            .timeline-container {
+                padding: var(--spacing-md);
+            }
+
+            .timeline-container h2 {
+                font-size: 20px;
+                margin-bottom: var(--spacing-md);
+            }
+
+            .timeline {
+                padding-left: 1.5rem; 
+            }
+
+            .timeline::before {
+                left: 12px; 
+                width: 2px; 
+            }
+
+            
+            .timeline-card {
+                margin-bottom: var(--spacing-md) !important;
+                padding: var(--spacing-md) !important;
+                transform: scale(1) !important; 
+            }
+
+            .timeline-card-current {
+                padding: var(--spacing-md) !important;
+                transform: scale(1) !important; 
+            }
+
+            
+            .step-title {
+                font-size: 16px;
+            }
+
+            .step-date {
+                font-size: 12px;
+            }
+
+            .step-details {
+                font-size: 14px;
+            }
+
+            
+            .btn {
+                min-height: 44px;
+                font-size: 16px;
+                padding: 12px 20px;
+            }
+
+            .status-badge {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+        }
+
+        
+        @media (max-width: 480px) {
+            .header-logo img:last-child {
+                height: 50px;
+                max-width: 160px;
+            }
+
+            .page-title {
+                font-size: 20px;
+            }
+
+            .order-info-card,
+            .items-section,
+            .timeline-container {
+                padding: var(--spacing-sm);
+            }
+
+            .item-card {
+                padding: var(--spacing-sm);
+            }
+
+            .timeline {
+                padding-left: 1rem;
+            }
+
+            .timeline::before {
+                left: 8px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="/css/customer-theme.css">
+</head>
+<body>
+    <header class="site-header portal-header">
+    <div class="site-header-inner portal-header-inner">
+        <a class="portal-brand" href="/">
+    <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+    <span>
+        <strong>IntelliOpus</strong>
+        <small>Service Portal</small>
+    </span>
+</a>
+        <nav class="portal-nav portal-nav-main" aria-label="Primary navigation">
+    <div class="portal-nav-cluster" aria-label="Public site navigation">
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/about">About</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">IntelliOpus</span>
+                <a href="/about">Company overview</a>
+                <a href="/service-history">Service history</a>
+                <a href="/about#operating-bridge">U.S.-China operating bridge</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/services">Services</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Service scope</span>
+                <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+                <a href="/services#connected-workflow">From catalog to delivery</a>
+                <a href="/services#safety-boundary">Customer-safe boundary</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/manufacturers">Supplier Network</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Supplier network</span>
+                <a href="/manufacturers#hosun">HOSUN lifting systems</a>
+                <a href="/manufacturers#jobo">JOBO education furniture</a>
+                <a href="/manufacturers#future-suppliers">Future supplier programs</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/products">Product Programs</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Product programs</span>
+                <a href="/products">Browse by supplier</a>
+                <a href="/inventory">Local Samples</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/reference-center">Resources</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Resources</span>
+                <a href="/reference-center">Resource library</a>
+                <a href="/reference-center#ral">RAL color guide</a>
+                <a href="/reference-center#hosun-resources">HOSUN resources</a>
+                <a href="/reference-center#jobo-resources">JOBO resources</a>
+            </div>
+        </div>
+    </div>
+</nav>
+        <div class="portal-user">
+            <div class="portal-nav-group portal-workspace-menu">
+                <a class="portal-nav-link portal-workspace-link" href="/dashboard">Customer Workspace</a>
+                <div class="portal-dropdown portal-dropdown-right">
+                    <a href="/dashboard">Workspace overview</a>
+                    <a href="/dashboard#ordersContainer">Orders and tracking</a>
+                    <a href="/inventory">Local samples</a>
+                    <a href="/customer-service">Support and feedback</a>
+                    <a href="/cart">Cart</a>
+                </div>
+            </div>
+            <a href="/cart" class="cart-icon" id="cartIcon" aria-label="Cart">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+    </svg>
+    <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
+</a>
+            <button class="btn btn-logout" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
+</div>
+
+        <section class="portal-context-band workspace-context-band">
+        <div>
+            <div class="portal-context-kicker">Order progress</div>
+            <h1>Follow one order from production to delivery.</h1>
+            <p>View Customer-safe order progress, approved production milestones, shipment updates, documents, and support actions without internal operating notes.</p>
+        </div>
+        <div class="workspace-status-list" aria-label="Order detail visibility rules">
+            <span><b>Order</b> customer-safe detail</span>
+            <span><b>Production</b> approved milestones</span>
+            <span><b>Shipment</b> visible tracking updates</span>
+        </div>
+    </section>
+
+    <section class="workspace-path-mini" aria-label="Customer workspace path">
+        <a href="/products"><strong>1. Product review</strong><small>Compare supplier programs and options.</small></a>
+        <a href="/cart"><strong>2. Selected products</strong><small>Review items before order creation.</small></a>
+        <a href="/new-order"><strong>3. Create order</strong><small>Submit customer-safe order details.</small></a>
+        <span class="is-current"><strong>4. Order progress</strong><small>Follow production and shipment updates.</small></span>
+        <a href="/customer-service"><strong>5. Support</strong><small>Ask questions or send feedback.</small></a>
+    </section>
+
+<div class="main-content">
+        <div class="page-header">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div>
+                    <h1 class="page-title">Order progress detail</h1>
+                    <div class="order-number" id="orderNumber">Preparing customer-safe order progress...</div>
+                </div>
+                <a id="downloadInvoiceBtn" href="#" class="btn btn-primary" style="display: none; margin-top: 0;">
+                    Download document
+                </a>
+            </div>
+        </div>
+
+        <div class="order-info-card">
+            <div class="info-grid" id="orderInfo">
+                <div class="info-item">
+                    <div class="info-label">Order date</div>
+                    <div class="info-value" id="orderDate">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Order status</div>
+                    <div class="info-value" id="orderStatus">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Shipment status</div>
+                    <div class="info-value" id="shippingStatus">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Order value</div>
+                    <div class="info-value" id="totalAmount">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Tracking reference</div>
+                    <div class="info-value" id="trackingNumber">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Shipping Address</div>
+                    <div class="info-value" id="shippingAddress">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="items-section">
+            <h2 style="margin-bottom: var(--spacing-md); font-size: 20px; font-weight: 600;">Order Items</h2>
+            
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Color</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody id="itemsTableBody">
+                    <tr><td colspan="6" class="loading">Preparing order items...</td></tr>
+                </tbody>
+            </table>
+            
+            <div class="items-table-mobile" id="itemsTableMobile" style="display: none;">
+                <div class="loading">Preparing order items...</div>
+            </div>
+        </div>
+
+        <div class="timeline-container">
+            <h2 style="margin-bottom: var(--spacing-lg); font-size: 24px; font-weight: 600;">Production and shipment progress</h2>
+            <div class="timeline" id="timeline">
+                <div class="loading">Preparing customer-safe progress updates...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin;
+        const ORDER_STEPS = [
+            { code: 'order_placed', name: 'Customer Order', icon: 'Order' },
+            { code: 'factory_order_created', name: 'Factory Order Created', icon: 'Factory' },
+            { code: 'material_prepared', name: 'Material Preparation/Production', icon: 'Material' },
+            { code: 'painting_started', name: 'Painting', icon: 'Paint' },
+            { code: 'assembly_started', name: 'Assembly', icon: 'Assembly' },
+            { code: 'testing_shipping', name: 'Testing/Shipping', icon: 'Test' },
+            { code: 'container_packed', name: 'Container Packing', icon: 'Pack' },
+            { code: 'shipment_departed', name: 'Vessel Departure', icon: 'Vessel' },
+            { code: 'arrived_port', name: 'Port Arrival', icon: 'Port' },
+            { code: 'land_transport', name: 'Land Transport', icon: 'Truck' },
+            { code: 'order_completed', name: 'Order Completion', icon: 'Done' }
+        ];
+
+        function getToken() {
+            return localStorage.getItem('access_token');
+        }
+
+        function removeToken() {
+            localStorage.removeItem('access_token');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to sign out?')) {
+                removeToken();
+                window.location.href = '/login';
+            }
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount);
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            try {
+                const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+                if (isNaN(date.getTime())) return '-';
+                return date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                console.error('Error formatting date:', e, dateString);
+                return '-';
+            }
+        }
+
+        function getOrderStatusClass(status) {
+            if (!status) return 'status-pending';
+            const statusLower = status.toLowerCase();
+            const statusMap = {
+                'pending': 'status-pending',
+                'confirmed': 'status-confirmed',
+                'processing': 'status-processing',
+                'shipped': 'status-shipped',
+                'delivered': 'status-delivered',
+                'cancelled': 'status-cancelled',
+                'ready_to_ship': 'status-ready_to_ship',
+                'in_transit': 'status-in_transit',
+                'out_for_delivery': 'status-out_for_delivery'
+            };
+            return statusMap[statusLower] || 'status-pending';
+        }
+
+        function getOrderStatusLabel(status) {
+            if (!status) return 'Pending';
+            const statusLower = status.toLowerCase();
+            const labelMap = {
+                'pending': 'Pending',
+                'confirmed': 'Confirmed',
+                'processing': 'Processing',
+                'shipped': 'Shipped',
+                'delivered': 'Delivered',
+                'cancelled': 'Cancelled',
+                'ready_to_ship': 'Ready to Ship',
+                'in_transit': 'In Transit',
+                'out_for_delivery': 'Out for Delivery'
+            };
+            return labelMap[statusLower] || status;
+        }
+
+        function getOrderNumberFromLocation() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryOrder = urlParams.get('order') || urlParams.get('orderNumber');
+            if (queryOrder) {
+                return queryOrder;
+            }
+
+            const pathParts = window.location.pathname.split('/').filter(Boolean);
+            const detailIndex = pathParts.findIndex(part => part === 'order-detail');
+            if (detailIndex >= 0 && pathParts[detailIndex + 1]) {
+                return decodeURIComponent(pathParts[detailIndex + 1]);
+            }
+            return null;
+        }
+
+        async function getFallbackOrderNumber() {
+            const response = await fetch(`${API_BASE_URL}/api/site/customer/orders`, {
+                headers: {
+                    'Authorization': `Bearer ${getToken()}`
+                }
+            });
+            if (!response.ok) {
+                return null;
+            }
+            const orders = await response.json();
+            if (Array.isArray(orders) && orders.length === 1) {
+                return orders[0].order_number;
+            }
+            return null;
+        }
+
+        async function loadOrderDetail() {
+            let orderNumber = getOrderNumberFromLocation();
+            if (!orderNumber) {
+                orderNumber = await getFallbackOrderNumber();
+                if (orderNumber) {
+                    const nextUrl = `/order-detail?order=${encodeURIComponent(orderNumber)}`;
+                    window.history.replaceState({}, '', nextUrl);
+                }
+            }
+
+            console.log('Loading order detail for:', orderNumber);
+            
+            if (!orderNumber) {
+                console.error('Order number not provided in URL');
+                document.querySelector('.main-content').innerHTML = '<div class="empty-state">No order was selected. Please return to the order dashboard and open an order from the list.</div>';
+                return;
+            }
+
+            try {
+                const token = getToken();
+                console.log('Token available:', !!token);
+                
+                const url = `${API_BASE_URL}/api/site/customer/orders/by-number/${encodeURIComponent(orderNumber)}`;
+                console.log('Fetching from:', url);
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                console.log('Response status:', response.status, response.statusText);
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        console.error('Unauthorized - redirecting to login');
+                        removeToken();
+                        window.location.href = '/login';
+                        return;
+                    }
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    document.querySelector('.main-content').innerHTML = '<div class="empty-state">This order is not available in the customer workspace. Please return to the order dashboard or contact IntelliOpus support.</div>';
+                    return;
+                }
+
+                const order = await response.json();
+                console.log('Order data received:', order);
+                
+                if (!order || !order.order_number) {
+                    console.error('Invalid order data:', order);
+                    document.querySelector('.main-content').innerHTML = '<div class="empty-state">The order record is temporarily incomplete. Please contact IntelliOpus support.</div>';
+                    return;
+                }
+                
+                displayOrderInfo(order);
+                await loadTracking(orderNumber);
+            } catch (error) {
+                console.error('Error loading order:', error);
+                console.error('Error stack:', error.stack);
+                document.querySelector('.main-content').innerHTML = '<div class="empty-state">Order details are temporarily unavailable. Please refresh the page or contact IntelliOpus support.</div>';
+            }
+        }
+
+        function displayOrderInfo(order) {
+            console.log('Displaying order:', order);  // Debug log
+            
+            if (!order) {
+                console.error('Order data is null or undefined');
+                document.querySelector('.main-content').innerHTML = '<div class="empty-state">The order record is temporarily incomplete. Please contact IntelliOpus support.</div>';
+                return;
+            }
+            
+            try {
+                // Check if all required elements exist
+                const orderNumberEl = document.getElementById('orderNumber');
+                const orderDateEl = document.getElementById('orderDate');
+                const orderStatusEl = document.getElementById('orderStatus');
+                const shippingStatusEl = document.getElementById('shippingStatus');
+                const totalAmountEl = document.getElementById('totalAmount');
+                const trackingNumberEl = document.getElementById('trackingNumber');
+                
+                if (!orderNumberEl || !orderDateEl || !orderStatusEl || !shippingStatusEl || !totalAmountEl || !trackingNumberEl) {
+                    console.error('Required DOM elements not found:', {
+                        orderNumber: !!orderNumberEl,
+                        orderDate: !!orderDateEl,
+                        orderStatus: !!orderStatusEl,
+                        shippingStatus: !!shippingStatusEl,
+                        totalAmount: !!totalAmountEl,
+                        trackingNumber: !!trackingNumberEl
+                    });
+                    return;
+                }
+                
+                orderNumberEl.textContent = order.order_number || '-';
+                
+                // Handle order_date (could be ISO string or Date object)
+                let orderDate = order.order_date;
+                if (orderDate) {
+                    if (typeof orderDate === 'string') {
+                        orderDate = new Date(orderDate);
+                    }
+                    orderDateEl.textContent = formatDate(orderDate);
+                } else {
+                    orderDateEl.textContent = '-';
+                }
+                
+                orderStatusEl.innerHTML = `<span class="status-badge ${getOrderStatusClass(order.status)}">${getOrderStatusLabel(order.status)}</span>`;
+                shippingStatusEl.innerHTML = `<span class="status-badge ${getOrderStatusClass(order.shipping_status)}">${getOrderStatusLabel(order.shipping_status)}</span>`;
+                totalAmountEl.textContent = formatCurrency(order.total_amount || 0);
+                // Tracking number will be updated after tracking data is loaded
+                trackingNumberEl.textContent = '-';
+                
+                // Format shipping address display
+                let shippingAddr = order.shipping_address || '-';
+                if (shippingAddr && shippingAddr !== '-') {
+                    try {
+                        const addr = JSON.parse(shippingAddr);
+                        if (typeof addr === 'object') {
+                            const parts = [];
+                            if (addr.name) parts.push(addr.name);
+                            if (addr.address1) parts.push(addr.address1);
+                            if (addr.address2) parts.push(addr.address2);
+                            if (addr.city) parts.push(addr.city);
+                            if (addr.state) parts.push(addr.state);
+                            if (addr.zip) parts.push(addr.zip);
+                            if (addr.country) parts.push(addr.country);
+                            shippingAddr = parts.join(', ') || shippingAddr;
+                        }
+                    } catch (e) {
+                        // Not JSON, use as-is
+                    }
+                }
+                const shippingAddressEl = document.getElementById('shippingAddress');
+                if (shippingAddressEl) {
+                    shippingAddressEl.textContent = shippingAddr;
+                }
+                
+                // Format billing address display (same logic as shipping)
+                let billingAddr = order.billing_address || '-';
+                if (billingAddr && billingAddr !== '-') {
+                    try {
+                        const addr = JSON.parse(billingAddr);
+                        if (typeof addr === 'object') {
+                            const parts = [];
+                            if (addr.name) parts.push(addr.name);
+                            if (addr.address1) parts.push(addr.address1);
+                            if (addr.address2) parts.push(addr.address2);
+                            if (addr.city) parts.push(addr.city);
+                            if (addr.state) parts.push(addr.state);
+                            if (addr.zip) parts.push(addr.zip);
+                            if (addr.country) parts.push(addr.country);
+                            billingAddr = parts.join(', ') || billingAddr;
+                        }
+                    } catch (e) {
+                        // Not JSON, use as-is
+                    }
+                }
+                const billingAddressEl = document.getElementById('billingAddress');
+                if (billingAddressEl) {
+                    billingAddressEl.textContent = billingAddr;
+                }
+                
+                // Show invoice download button
+                const invoiceBtn = document.getElementById('downloadInvoiceBtn');
+                if (invoiceBtn) {
+                    invoiceBtn.onclick = async (e) => {
+                        e.preventDefault();
+                        try {
+                            const response = await fetch(`${API_BASE_URL}/api/orders/${encodeURIComponent(order.order_number)}/invoice`, {
+                                headers: {
+                                    'Authorization': `Bearer ${getToken()}`
+                                }
+                            });
+                            if (response.ok) {
+                                const blob = await response.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `invoice_${order.order_number}.pdf`;
+                                document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                                document.body.removeChild(a);
+                            } else {
+                                alert('Failed to download invoice');
+                            }
+                        } catch (error) {
+                            console.error('Error downloading invoice:', error);
+                            alert('Error downloading invoice');
+                        }
+                    };
+                    invoiceBtn.style.display = 'inline-block';
+                }
+
+                // Display items
+                const tbody = document.getElementById('itemsTableBody');
+                const mobileContainer = document.getElementById('itemsTableMobile');
+                console.log('Order items:', order.items);  // Debug log
+                
+                if (order.items && Array.isArray(order.items) && order.items.length > 0) {
+
+                    if (tbody) {
+                        tbody.innerHTML = order.items.map(item => {
+                            const colorDisplay = item.color_name || item.color || item.color_code || '-';
+                            return `
+                            <tr>
+                                <td>${item.product_name || 'Unknown Product'}</td>
+                                <td>${item.final_sku || item.product_sku || '-'}</td>
+                                <td>${colorDisplay}</td>
+                                <td>${item.quantity || 0}</td>
+                                <td>${formatCurrency(item.unit_price || 0)}</td>
+                                <td><strong>${formatCurrency(item.subtotal || 0)}</strong></td>
+                            </tr>
+                        `;
+                        }).join('');
+                    }
+
+                    // Mobile layout note
+                    if (mobileContainer) {
+                        mobileContainer.innerHTML = order.items.map(item => {
+                            const colorDisplay = item.color_name || item.color || item.color_code || '-';
+                            return `
+                                <div class="item-card">
+                                    <div class="item-card-header">
+                                        <div class="item-card-title">${item.product_name || 'Unknown Product'}</div>
+                                        <div class="item-card-sku">${item.final_sku || item.product_sku || '-'}</div>
+                                    </div>
+                                    <div class="item-card-row">
+                                        <span class="item-card-label">Color:</span>
+                                        <span class="item-card-value">${colorDisplay}</span>
+                                    </div>
+                                    <div class="item-card-row">
+                                        <span class="item-card-label">Quantity:</span>
+                                        <span class="item-card-value">${item.quantity || 0}</span>
+                                    </div>
+                                    <div class="item-card-row">
+                                        <span class="item-card-label">Unit Price:</span>
+                                        <span class="item-card-value">${formatCurrency(item.unit_price || 0)}</span>
+                                    </div>
+                                    <div class="item-card-row item-card-subtotal">
+                                        <span class="item-card-label">Subtotal:</span>
+                                        <span class="item-card-value">${formatCurrency(item.subtotal || 0)}</span>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                } else {
+                    if (tbody) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No order items have been published yet.</td></tr>';
+                    }
+                    if (mobileContainer) {
+                        mobileContainer.innerHTML = '<div class="empty-state">No order items have been published yet.</div>';
+                    }
+                }
+
+                updateTableDisplay();
+                
+                console.log('Order info displayed successfully');
+            } catch (error) {
+                console.error('Error displaying order info:', error);
+                console.error('Error stack:', error.stack);
+            }
+        }
+
+        async function loadTracking(orderNumber) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/customer/orders/by-number/${encodeURIComponent(orderNumber)}/tracking`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+
+                if (!response.ok) {
+                    document.getElementById('timeline').innerHTML = '<div class="empty-state">Customer-safe production and shipment updates have not been published yet.</div>';
+                    return;
+                }
+
+                const data = await response.json();
+                console.log('Tracking data received:', data);
+                console.log('Steps:', data.steps);
+                if (data.steps && data.steps.length > 0) {
+                    console.log('First step images:', data.steps[0].images);
+                    console.log('First step images type:', typeof data.steps[0].images);
+                    console.log('First step images isArray:', Array.isArray(data.steps[0].images));
+                    // Log all steps with images
+                    data.steps.forEach((step, idx) => {
+                        console.log(`Step ${idx} (${step.step}):`, {
+                            images: step.images,
+                            imagesType: typeof step.images,
+                            isArray: Array.isArray(step.images),
+                            length: Array.isArray(step.images) ? step.images.length : 'N/A',
+                            hasImages: step.images && (Array.isArray(step.images) ? step.images.length > 0 : true)
+                        });
+                    });
+                }
+                // Update tracking number based on tracking steps
+                updateTrackingNumber(data.steps);
+                displayTracking(data.steps);
+            } catch (error) {
+                console.error('Error loading tracking:', error);
+                document.getElementById('timeline').innerHTML = '<div class="empty-state">Production and shipment updates are temporarily unavailable. Please check again later.</div>';
+            }
+        }
+
+        function updateTrackingNumber(trackingSteps) {
+            const trackingNumberEl = document.getElementById('trackingNumber');
+            if (!trackingNumberEl) return;
+            
+            if (!trackingSteps || trackingSteps.length === 0) {
+                trackingNumberEl.textContent = 'Not published yet';
+                return;
+            }
+            
+            // Create a map of steps for easy lookup
+            const stepsMap = {};
+            trackingSteps.forEach(step => {
+                stepsMap[step.step] = step;
+            });
+            
+            // Check if land transport has started (completed or in_progress)
+            const landTransportStep = stepsMap['land_transport'];
+            if (landTransportStep && 
+                (landTransportStep.status === 'completed' || landTransportStep.status === 'in_progress') &&
+                landTransportStep.transport_number) {
+                trackingNumberEl.textContent = landTransportStep.transport_number;
+                return;
+            }
+            
+            // Check if vessel has departed (completed or in_progress)
+            const vesselDepartureStep = stepsMap['shipment_departed'];
+            if (vesselDepartureStep && 
+                (vesselDepartureStep.status === 'completed' || vesselDepartureStep.status === 'in_progress') &&
+                vesselDepartureStep.vessel_number) {
+                trackingNumberEl.textContent = vesselDepartureStep.vessel_number;
+                return;
+            }
+            
+            // If no vessel departure or land transport, show "Not Published"
+            trackingNumberEl.textContent = 'Not published yet';
+        }
+
+        function displayTracking(trackingSteps) {
+            const timeline = document.getElementById('timeline');
+            if (!timeline) return;
+
+            const stepsMap = {};
+            if (Array.isArray(trackingSteps)) {
+                trackingSteps.forEach((step) => {
+                    if (step && step.step) stepsMap[step.step] = step;
+                });
+            }
+
+            const hasUpdates = Object.keys(stepsMap).length > 0;
+            const statusLabels = {
+                completed: 'Completed',
+                in_progress: 'In progress',
+                pending: 'Pending',
+                not_started: 'Not started'
+            };
+
+            const safeText = (value) => String(value || '').replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[char]));
+
+            if (!hasUpdates) {
+                timeline.innerHTML = '<div class="empty-state">Customer-safe production and shipment updates have not been published yet.</div>';
+                return;
+            }
+
+            const findCurrentIndex = () => {
+                const inProgressIndex = ORDER_STEPS.findIndex((stepDef) => stepsMap[stepDef.code]?.status === 'in_progress');
+                if (inProgressIndex >= 0) return inProgressIndex;
+                let lastCompleted = -1;
+                ORDER_STEPS.forEach((stepDef, index) => {
+                    if (stepsMap[stepDef.code]?.status === 'completed') lastCompleted = index;
+                });
+                if (lastCompleted >= 0) return lastCompleted;
+                return 0;
+            };
+
+            const currentStepIndex = findCurrentIndex();
+            const timelineHtml = ORDER_STEPS.map((stepDef, index) => {
+                const stepData = stepsMap[stepDef.code];
+                const status = stepData?.status || (index < currentStepIndex ? 'completed' : 'not_started');
+                const isCurrent = index === currentStepIndex;
+                const isDone = status === 'completed';
+                const badgeClass = isCurrent ? 'status-in_transit' : (isDone ? 'status-delivered' : 'status-pending');
+                const dateText = stepData?.update_date ? formatDate(stepData.update_date) : 'Date not published';
+                const description = stepData?.description || stepData?.notes || 'This update will appear after IntelliOpus publishes customer-safe progress information.';
+                const publicRef = stepData?.transport_number || stepData?.vessel_number || stepData?.tracking_number || '';
+                const refHtml = publicRef ? `<div class="step-notes">Reference: ${safeText(publicRef)}</div>` : '';
+
+                return `
+                    <div class="timeline-item ${isCurrent ? 'is-current' : ''}">
+                        <div class="timeline-dot ${isDone ? 'is-done' : ''}"></div>
+                        <div class="timeline-card">
+                            <div class="step-header">
+                                <div>
+                                    <div class="step-title">${safeText(stepDef.name)}</div>
+                                    <div class="step-date">${safeText(dateText)}</div>
+                                </div>
+                                <span class="status-badge ${badgeClass}">${safeText(statusLabels[status] || status)}</span>
+                            </div>
+                            <div class="step-details">${safeText(description)}</div>
+                            ${refHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            timeline.innerHTML = timelineHtml;
+        }
+        
+        function generateStepCard(stepDef, stepData, isCompleted, isCurrent) {
+            // Current step is already wrapped in a special container, so use simpler style
+            if (isCurrent) {
+                const cardStyle = 'background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); color: white;';
+                const iconStyle = 'background: rgba(255,255,255,0.3); color: white;';
+                
+                let html = `
+                    <div style="padding: 1.5rem; border-radius: 12px; ${cardStyle}">
+            `;
+                
+                if (stepData && stepData.update_date) {
+                    html += `
+                        <div style="font-size: 0.875rem; margin-bottom: 1rem; color: rgba(255,255,255,0.9); font-weight: 500;">
+                            ${formatDate(stepData.update_date)}
+                        </div>
+                    `;
+                }
+                
+                if (stepData) {
+
+                    // Check if images exists and is not null/undefined/empty
+                    if (stepData.images && (Array.isArray(stepData.images) ? stepData.images.length > 0 : true)) {
+                        try {
+                            console.log('Step images raw:', stepData.images, 'Type:', typeof stepData.images, 'IsArray:', Array.isArray(stepData.images));
+                            let images = null;
+                            if (typeof stepData.images === 'string') {
+                                // Try to parse as JSON
+                                try {
+                                    const parsed = JSON.parse(stepData.images);
+                                    images = Array.isArray(parsed) ? parsed : [parsed];
+                                } catch (e) {
+                                    // If parsing fails, might be a single URL string
+                                    images = [stepData.images];
+                                }
+                            } else if (Array.isArray(stepData.images)) {
+                                images = stepData.images;
+                            } else if (stepData.images) {
+                                images = [stepData.images];
+                            }
+                            
+                            console.log('Parsed images:', images, 'Length:', images ? images.length : 0);
+                            
+                            if (images && Array.isArray(images) && images.length > 0) {
+                                html += `<div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem;">`;
+                                images.forEach((imgUrl, idx) => {
+                                    if (imgUrl && imgUrl.trim()) { // Only add if URL is not null/undefined/empty
+                                        // Escape single quotes in the URL for HTML attribute
+                                        const escapedUrl = imgUrl.replace(/'/g, "&#39;");
+                                        html += `<img src="${escapedUrl}" alt="Step image ${idx + 1}" style="max-width: 150px; max-height: 150px; border-radius: 10px; object-fit: cover; cursor: pointer; border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" onclick="window.open('${escapedUrl}', '_blank')" onerror="console.error('Image load error for step ${stepDef.name}:', this.src); this.style.display='none';">`;
+                                    }
+                                });
+                                html += `</div>`;
+                            } else {
+                                console.log('No valid images found for step:', stepDef.name, 'images:', images);
+                            }
+                        } catch (e) {
+                            console.error('Error parsing images:', e, stepData.images);
+                        }
+                    } else {
+                        console.log('No images property for step:', stepDef.name);
+                    }
+                    
+                    if (stepData.details) {
+                        html += `<div style="margin-top: 0.75rem; font-size: 0.9375rem; line-height: 1.7; color: rgba(255,255,255,0.95);">${stepData.details}</div>`;
+                    }
+                    if (stepData.notes) {
+                        html += `<div style="margin-top: 0.75rem; font-size: 0.875rem; line-height: 1.6; color: rgba(255,255,255,0.85); padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.2);">${stepData.notes}</div>`;
+                    }
+
+                    if (stepData.vessel_name) {
+                        html += `<div style="margin-top: 1rem; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">`;
+                        html += `<div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: rgba(255,255,255,0.95);">Vessel Information</div>`;
+                        html += `<div style="font-size: 0.8125rem; color: rgba(255,255,255,0.9);">${stepData.vessel_name}${stepData.vessel_number ? ` (${stepData.vessel_number})` : ''}</div>`;
+                        if (stepData.departure_port && stepData.arrival_port) {
+                            html += `<div style="font-size: 0.8125rem; margin-top: 0.25rem; color: rgba(255,255,255,0.8);">${stepData.departure_port} ->${stepData.arrival_port}</div>`;
+                        }
+                        if (stepData.vessel_finder_url) {
+                            html += `<div style="margin-top: 0.5rem;"><a href="${stepData.vessel_finder_url}" target="_blank" style="color: rgba(255,255,255,0.9); text-decoration: underline; font-size: 0.75rem;">Track on VesselFinder</a></div>`;
+                        }
+                        html += `</div>`;
+                    }
+
+                    if (stepData.transport_company) {
+                        html += `<div style="margin-top: 0.75rem; font-size: 0.875rem; color: rgba(255,255,255,0.9);"><strong>Transport:</strong> ${stepData.transport_company}${stepData.transport_number ? ` (${stepData.transport_number})` : ''}</div>`;
+                    }
+                }
+                
+                html += `</div>`;
+                return html;
+            }
+            
+            // For non-current steps
+            const cardStyle = isCompleted
+                ? 'background: #f8f9fa; border: 2px solid #e9ecef; color: var(--text-primary);'
+                : 'background: #ffffff; border: 2px solid #e9ecef; color: var(--text-secondary); opacity: 0.7;';
+            
+            const iconStyle = isCompleted
+                ? 'background: #28a745; color: white;'
+                : 'background: #e9ecef; color: #6c757d;';
+            
+            let html = `
+                <div class="timeline-card" style="padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; ${cardStyle} transition: all 0.3s ease; position: relative; z-index: 1; margin-left: 0;">
+                    <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                        <div style="flex-shrink: 0; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; ${iconStyle}">
+                            ${stepDef.icon}
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">
+                                ${stepDef.name}
+                            </div>
+            `;
+            
+            if (stepData && stepData.update_date) {
+                html += `
+                    <div style="font-size: 0.875rem; margin-bottom: 0.75rem; ${isCurrent ? 'color: rgba(255,255,255,0.9);' : 'color: var(--text-secondary);'}">
+                        ${formatDate(stepData.update_date)}
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div style="font-size: 0.875rem; margin-bottom: 0.75rem; ${isCurrent ? 'color: rgba(255,255,255,0.7);' : 'color: var(--text-secondary);'}">
+                        ${isCompleted ? 'Completed' : 'Pending'}
+                    </div>
+                `;
+            }
+            
+            if (stepData) {
+
+                // Check if images exists and is not null/undefined/empty
+                if (stepData.images && (Array.isArray(stepData.images) ? stepData.images.length > 0 : true)) {
+                    try {
+                        console.log('Step images raw (non-current):', stepData.images, 'Type:', typeof stepData.images, 'IsArray:', Array.isArray(stepData.images));
+                        let images = null;
+                        if (typeof stepData.images === 'string') {
+                            // Try to parse as JSON
+                            try {
+                                const parsed = JSON.parse(stepData.images);
+                                images = Array.isArray(parsed) ? parsed : [parsed];
+                            } catch (e) {
+                                // If parsing fails, might be a single URL string
+                                images = [stepData.images];
+                            }
+                        } else if (Array.isArray(stepData.images)) {
+                            images = stepData.images;
+                        } else if (stepData.images) {
+                            images = [stepData.images];
+                        }
+                        
+                        console.log('Parsed images (non-current):', images, 'Length:', images ? images.length : 0);
+                        
+                        if (images && Array.isArray(images) && images.length > 0) {
+                            html += `<div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem;">`;
+                            images.forEach((imgUrl, idx) => {
+                                if (imgUrl && imgUrl.trim()) { // Only add if URL is not null/undefined/empty
+                                    // Escape single quotes in the URL for HTML attribute
+                                    const escapedUrl = imgUrl.replace(/'/g, "&#39;");
+                                    html += `<img src="${escapedUrl}" alt="Step image ${idx + 1}" style="max-width: 150px; max-height: 150px; border-radius: 10px; object-fit: cover; cursor: pointer; border: 2px solid ${isCurrent ? 'rgba(255,255,255,0.3)' : '#e9ecef'}; box-shadow: 0 4px 8px rgba(0,0,0,0.15); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" onclick="window.open('${escapedUrl}', '_blank')" onerror="console.error('Image load error for step ${stepDef.name}:', this.src); this.style.display='none';">`;
+                                }
+                            });
+                            html += `</div>`;
+                        } else {
+                            console.log('No valid images found for step:', stepDef.name, 'images:', images);
+                        }
+                    } catch (e) {
+                        console.error('Error parsing images:', e, stepData.images);
+                    }
+                } else {
+                    console.log('No images property for step:', stepDef.name);
+                }
+                
+                if (stepData.details) {
+                    html += `<div style="margin-top: 0.75rem; font-size: 0.875rem; line-height: 1.6; ${isCurrent ? 'color: rgba(255,255,255,0.95);' : 'color: var(--text-primary);'}">${stepData.details}</div>`;
+                }
+                
+                if (stepData.notes) {
+                    html += `<div style="margin-top: 0.5rem; font-size: 0.8125rem; line-height: 1.5; ${isCurrent ? 'color: rgba(255,255,255,0.85);' : 'color: var(--text-secondary);'}">${stepData.notes}</div>`;
+                }
+
+                if (stepData.vessel_name) {
+                    html += `<div style="margin-top: 1rem; padding: 1rem; background: ${isCurrent ? 'rgba(255,255,255,0.15)' : '#f8f9fa'}; border-radius: 8px;">`;
+                    html += `<div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; ${isCurrent ? 'color: rgba(255,255,255,0.95);' : ''}">Vessel Information</div>`;
+                    html += `<div style="font-size: 0.8125rem; ${isCurrent ? 'color: rgba(255,255,255,0.9);' : 'color: var(--text-primary);'}">${stepData.vessel_name}${stepData.vessel_number ? ` (${stepData.vessel_number})` : ''}</div>`;
+                    if (stepData.departure_port && stepData.arrival_port) {
+                        html += `<div style="font-size: 0.8125rem; margin-top: 0.25rem; ${isCurrent ? 'color: rgba(255,255,255,0.8);' : 'color: var(--text-secondary);'}">${stepData.departure_port} ->${stepData.arrival_port}</div>`;
+                    }
+                    if (stepData.vessel_finder_url) {
+                        html += `<div style="margin-top: 0.5rem;"><a href="${stepData.vessel_finder_url}" target="_blank" style="color: ${isCurrent ? 'rgba(255,255,255,0.9)' : 'var(--primary)'}; text-decoration: underline; font-size: 0.75rem;">Track on VesselFinder</a></div>`;
+                    }
+                    html += `</div>`;
+                }
+
+                if (stepData.transport_company) {
+                    html += `<div style="margin-top: 0.75rem; font-size: 0.875rem; ${isCurrent ? 'color: rgba(255,255,255,0.9);' : 'color: var(--text-primary);'}"><strong>Transport:</strong> ${stepData.transport_company}${stepData.transport_number ? ` (${stepData.transport_number})` : ''}</div>`;
+                }
+            }
+            
+            html += `
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return html;
+        }
+
+        // Cart functions
+        async function loadCartCount() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/cart/count`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const badge = document.getElementById('cartBadge');
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.textContent = data.count;
+                            badge.style.display = 'flex';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                    // Sync cart badge to mobile menu
+                    syncCartBadgeToMobile();
+                }
+            } catch (error) {
+                console.error('Error loading cart count:', error);
+            }
+        }
+
+        function openMobileNav() {
+            const mobileNav = document.getElementById('mobileNav');
+            if (mobileNav) {
+                mobileNav.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                mobileNav.style.display = 'block';
+            }
+        }
+
+        function closeMobileNav() {
+            const mobileNav = document.getElementById('mobileNav');
+            if (mobileNav) {
+                mobileNav.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function initMobileMenu() {
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const mobileNavClose = document.getElementById('mobileNavClose');
+            const mobileNav = document.getElementById('mobileNav');
+
+            if (mobileMenuToggle) {
+                const newToggle = mobileMenuToggle.cloneNode(true);
+                mobileMenuToggle.parentNode.replaceChild(newToggle, mobileMenuToggle);
+                newToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openMobileNav();
+                });
+            }
+
+            if (mobileNavClose) {
+                mobileNavClose.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeMobileNav();
+                });
+            }
+
+            if (mobileNav) {
+                mobileNav.addEventListener('click', function(e) {
+                    if (e.target === mobileNav) {
+                        closeMobileNav();
+                    }
+                });
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initMobileMenu);
+        } else {
+            initMobileMenu();
+        }
+
+        function syncCartBadgeToMobile() {
+            const desktopBadge = document.getElementById('cartBadge');
+            const mobileBadge = document.getElementById('mobileCartBadge');
+            if (desktopBadge && mobileBadge) {
+                const count = desktopBadge.textContent || '0';
+                mobileBadge.textContent = count;
+                if (parseInt(count) > 0) {
+                    mobileBadge.style.display = 'flex';
+                } else {
+                    mobileBadge.style.display = 'none';
+                }
+            }
+        }
+
+        function updateTableDisplay() {
+            const isMobile = window.innerWidth <= 768;
+            const desktopTable = document.querySelector('.items-table');
+            const mobileTable = document.getElementById('itemsTableMobile');
+            
+            if (desktopTable && mobileTable) {
+                if (isMobile) {
+                    desktopTable.style.display = 'none';
+                    mobileTable.style.display = 'block';
+                } else {
+                    desktopTable.style.display = 'table';
+                    mobileTable.style.display = 'none';
+                }
+            }
+        }
+
+        window.addEventListener('resize', updateTableDisplay);
+        window.addEventListener('load', updateTableDisplay);
+
+        // Check authentication
+        if (!getToken()) {
+            window.location.href = '/login';
+        } else {
+            loadOrderDetail();
+            loadCartCount();
+
+            setTimeout(updateTableDisplay, 100);
+        }
+    </script>
+
+<footer class="portal-footer">
+    <div class="portal-footer-inner">
+        <div class="portal-footer-brand">
+            <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+            <div>
+                <div class="portal-footer-title">IntelliOpus Portal</div>
+                <div class="portal-footer-copy">An independent cross-border operating bridge for qualified supplier programs, customer resources, order visibility, and feedback-driven execution.</div>
+            </div>
+        </div>
+        <div class="portal-footer-col">
+            <h3>About</h3>
+            <a href="/about">About</a>
+            <a href="/service-history">Service history</a>
+            <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+            <a href="/manufacturers">Supplier Network</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Customer Workspace</h3>
+            <a href="/products">Product Programs</a>
+            <a href="/inventory">Local Samples</a>
+            <a href="/dashboard">Dashboard</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Resources</h3>
+            <a href="/reference-center">Resources</a>
+            <a href="/customer-service">Support</a>
+            <a href="/cart">Cart</a>
+        </div>
+    </div>
+    <div class="portal-footer-note">Customer-facing pages show approved product, resource, order, shipment, and feedback information only. Supplier coordination records stay separate from the customer workspace.</div>
+</footer>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

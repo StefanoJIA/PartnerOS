@@ -32,14 +32,31 @@ FORBIDDEN_TEXT_MARKERS = (
 )
 
 
+FORBIDDEN_KEY_SUBSTRINGS = (
+    "margin",
+    "internal_cost",
+    "cost_snapshot",
+    "pricing_breakdown",
+    "supplier_private",
+    "supplier_reference",
+    "supplier_note",
+)
+
+
+def _key_is_forbidden(key: str) -> bool:
+    lowered = str(key).lower()
+    if lowered in FORBIDDEN_FIELD_NAMES:
+        return True
+    if any(marker in lowered for marker in ("token", "secret", "password")):
+        return True
+    return any(marker in lowered for marker in FORBIDDEN_KEY_SUBSTRINGS)
+
+
 def strip_forbidden_internal_fields(value: Any) -> Any:
     if isinstance(value, dict):
         cleaned: dict[str, Any] = {}
         for key, item in value.items():
-            lowered = key.lower()
-            if lowered in FORBIDDEN_FIELD_NAMES:
-                continue
-            if any(marker in lowered for marker in ("token", "secret", "password")):
+            if _key_is_forbidden(key):
                 continue
             cleaned[key] = strip_forbidden_internal_fields(item)
         return cleaned
@@ -49,7 +66,12 @@ def strip_forbidden_internal_fields(value: Any) -> Any:
 
 
 def assert_no_forbidden_internal_fields(value: Any) -> None:
-    text = str(value).lower()
-    for marker in FORBIDDEN_TEXT_MARKERS:
-        if marker in text:
-            raise ValueError(f"Forbidden customer portal field leaked: {marker}")
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if _key_is_forbidden(key):
+                raise ValueError(f"Forbidden customer portal field leaked: {key}")
+            assert_no_forbidden_internal_fields(item)
+        return
+    if isinstance(value, list):
+        for item in value:
+            assert_no_forbidden_internal_fields(item)

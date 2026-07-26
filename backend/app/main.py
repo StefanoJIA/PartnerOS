@@ -13,6 +13,7 @@ from app.api.routes import (
     company_enrichment,
     container_calc,
     contacts,
+    customer_site_compat,
     dashboard,
     field_visits,
     files,
@@ -122,6 +123,8 @@ def create_app() -> FastAPI:
     api.include_router(market.router)
     api.include_router(knowledge.router)
     api.include_router(container_calc.router)
+    if settings.CUSTOMER_SITE_COMPAT_ENABLED:
+        api.include_router(customer_site_compat.router)
 
     app.include_router(api)
     app.include_router(v1_router, prefix="/api/v1")

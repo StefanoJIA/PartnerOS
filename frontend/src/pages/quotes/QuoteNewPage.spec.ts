@@ -6,12 +6,25 @@ import { flushPromises, mount } from '@vue/test-utils'
 import ElementPlus from 'element-plus'
 import QuoteNewPage from '@/pages/quotes/QuoteNewPage.vue'
 import * as catalogApi from '@/api/quoteCatalog'
+import * as quotesApi from '@/api/quotes'
 import { http } from '@/api/http'
 
 const push = vi.fn()
 
 vi.mock('vue-router', () => ({
   useRouter: () => ({ push }),
+  useRoute: () => ({ query: {} }),
+}))
+
+vi.mock('@/api/quotes', () => ({
+  exportQuotePdf: vi.fn().mockResolvedValue({ export_id: 'pdf-1' }),
+  fetchQuoteCustomerOptions: vi.fn().mockResolvedValue({ companies: [], contacts: [] }),
+  fetchQuoteDraftSeed: vi.fn().mockResolvedValue({ quote_number: 'Q-TEST-001', valid_days: 21 }),
+  createQuoteFromContract: vi.fn(),
+}))
+
+vi.mock('@/api/quoteInputContract', () => ({
+  fetchQuoteInputContract: vi.fn(),
 }))
 
 vi.mock('@/api/quoteCatalog', () => ({
@@ -111,6 +124,10 @@ describe('QuoteNewPage', () => {
       },
     })
     vi.mocked(http.post).mockResolvedValue({ data: { ok: true, data: { id: 'q1' } } })
+    vi.mocked(quotesApi.exportQuotePdf).mockResolvedValue({
+      export_id: 'pdf-1',
+      download_url: '/api/v1/quotes/q1/pdf-exports/pdf-1/download',
+    } as never)
   })
 
   it('builds an editable English quote sheet and submits interval rows', async () => {
@@ -151,12 +168,12 @@ describe('QuoteNewPage', () => {
     expect(wrapper.text()).toContain('DF0402')
     expect(wrapper.text()).toContain('1 ~ 49')
     expect(wrapper.text()).toContain('50 ~ 99')
+    const addButtonAfter = wrapper.findAll('button').find((button) => button.text().includes('添加产品'))
+    expect(addButtonAfter?.attributes('disabled')).toBeDefined()
 
     const vm = wrapper.vm as unknown as {
       paymentTermsText: string
-      blocks: Array<{ rows: Array<{ ddp_unit_price: string }> }>
     }
-    vm.blocks[0].rows[1].ddp_unit_price = '78.50'
     vm.paymentTermsText = '40% deposit upon order placement;'
 
     const saveButton = wrapper.findAll('button').find((button) => button.text().includes('保存报价'))
@@ -175,14 +192,12 @@ describe('QuoteNewPage', () => {
             product_id: 'p1',
             quantity: 50,
             incoterm: 'DDP',
-            manual_interval_quote_table: [
-              expect.objectContaining({ quantity_label: '1-49', ddp_unit_price: '82.74' }),
-              expect.objectContaining({ quantity_label: '50-99', ddp_unit_price: '78.50' }),
-            ],
+            manual_interval_quote_table: null,
           }),
         ],
       }),
     )
+    expect(quotesApi.exportQuotePdf).toHaveBeenCalledWith('q1')
     expect(push).toHaveBeenCalledWith({ name: 'quote-detail', params: { id: 'q1' } })
   })
 })

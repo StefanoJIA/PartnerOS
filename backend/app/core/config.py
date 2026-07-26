@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     PORTAL_CUSTOMER_API_TOKEN: str = ""
     PORTAL_CUSTOMER_API_REQUIRE_TOKEN: bool = True
     PORTAL_CUSTOMER_ALLOWED_ORIGINS: str = ""
+    CUSTOMER_SITE_COMPAT_ENABLED: bool = False
     REDIS_URL: str = ""
     STORAGE_BACKEND: str = "local"
     LOCAL_STORAGE_PATH: str = ""

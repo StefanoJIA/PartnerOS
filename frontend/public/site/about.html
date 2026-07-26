@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company overview - IntelliOpus Portal</title>
+    <link rel="stylesheet" href="/css/apple-style.css">
+    <link rel="stylesheet" href="/css/customer-theme.css">
+</head>
+<body>
+<header class="site-header portal-header">
+    <div class="site-header-inner portal-header-inner">
+        <a class="portal-brand" href="/">
+    <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+    <span>
+        <strong>IntelliOpus</strong>
+        <small>Service Portal</small>
+    </span>
+</a>
+        <nav class="portal-nav portal-nav-main" aria-label="Primary navigation">
+    <div class="portal-nav-cluster" aria-label="Public site navigation">
+        <div class="portal-nav-group">
+            <a class="portal-nav-link is-active" href="/about">About</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">IntelliOpus</span>
+                <a href="/about">Company overview</a>
+                <a href="/service-history">Service history</a>
+                <a href="/about#operating-bridge">U.S.-China operating bridge</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/services">Services</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Service scope</span>
+                <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+                <a href="/services#connected-workflow">From catalog to delivery</a>
+                <a href="/services#safety-boundary">Customer-safe boundary</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/manufacturers">Supplier Network</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Supplier network</span>
+                <a href="/manufacturers#hosun">HOSUN lifting systems</a>
+                <a href="/manufacturers#jobo">JOBO education furniture</a>
+                <a href="/manufacturers#future-suppliers">Future supplier programs</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/products">Product Programs</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Product programs</span>
+                <a href="/products">Browse by supplier</a>
+                <a href="/inventory">Local Samples</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/reference-center">Resources</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Resources</span>
+                <a href="/reference-center">Resource library</a>
+                <a href="/reference-center#ral">RAL color guide</a>
+                <a href="/reference-center#hosun-resources">HOSUN resources</a>
+                <a href="/reference-center#jobo-resources">JOBO resources</a>
+            </div>
+        </div>
+    </div>
+</nav>
+        <div class="portal-user portal-public-actions">
+            <div class="portal-nav-group portal-workspace-menu">
+                <a class="portal-nav-link portal-workspace-link" href="/dashboard">Customer Workspace</a>
+                <div class="portal-dropdown portal-dropdown-right">
+                    <a href="/dashboard">Workspace overview</a>
+                    <a href="/dashboard#ordersContainer">Orders and tracking</a>
+                    <a href="/inventory">Local samples</a>
+                    <a href="/customer-service">Support and feedback</a>
+                    <a href="/cart">Cart</a>
+                </div>
+            </div>
+            <a href="/login" class="btn btn-login-header" id="signInBtn">Sign In</a>
+            <div id="welcomeUser" class="portal-user-session" style="display: none;">
+                <span class="portal-user-label">Welcome, <strong id="userName">User</strong></span>
+                <button class="btn btn-logout" onclick="logout()">Sign Out</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="company-page">
+    <section class="company-hero" id="company-overview">
+        <div class="company-hero-copy">
+            <div class="eyebrow">Company overview</div>
+            <h1>U.S. demand. Trusted manufacturing. One bridge.</h1>
+            <p>IntelliOpus helps U.S. buyers move from product interest to quotes, samples, orders, delivery visibility, and feedback with qualified manufacturing partners.</p>
+            <div class="hero-actions">
+                <a class="btn btn-login-header" href="/services">View services</a>
+                <a class="btn btn-secondary" href="/manufacturers">Supplier network</a>
+            </div>
+        </div>
+        <div class="hero-panel">
+            <img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1300&q=82" onerror="this.onerror=null;this.src='/intelliopus-logo.png';this.classList.add('image-fallback');" alt="Modern office project environment">
+            <div class="hero-panel-caption">A cleaner path from sourcing interest to delivery follow-through.</div>
+        </div>
+    </section>
+    <section class="public-page-summary" aria-label="IntelliOpus operating summary">
+        <div><strong>Position</strong><span>An independent bridge between U.S. project demand and qualified manufacturing programs.</span></div>
+        <div><strong>Scope</strong><span>Furniture is the first operating vertical; the same service model can support more product categories.</span></div>
+        <div><strong>Customer Workspace</strong><span>Customers use one approved place for catalog review, resources, orders, logistics, and feedback.</span></div>
+    </section>
+    <section class="page-transition-strip" aria-label="IntelliOpus page focus">
+        <div class="page-transition-copy">
+            <span>Company role</span>
+            <strong>IntelliOpus is the operating bridge before it is a catalog.</strong>
+            <p>Start with the company model, then move into service history, supplier programs, product review, and the customer workspace when a project needs action.</p>
+        </div>
+        <div class="page-transition-actions">
+            <a href="/service-history">Service history</a>
+            <a href="/services">Service model</a>
+            <a href="/manufacturers">Supplier network</a>
+        </div>
+    </section>
+<section class="content-band" id="operating-bridge">
+        <div class="section-label">What we are building</div>
+        <h2>Built as a bridge, not a single-brand catalog.</h2>
+        <p>HOSUN and JOBO are current supplier programs. Future manufacturers can join the same customer path while keeping their own product rules, resources, quoting logic, and delivery requirements.</p>
+        <div class="feature-grid">
+            <article class="feature-card"><b>01</b><h3>Customer clarity</h3><p>Catalog, samples, resources, order visibility, and feedback stay in one customer-facing workspace.</p></article>
+            <article class="feature-card"><b>02</b><h3>Supplier coordination</h3><p>Each supplier keeps its own product and delivery rules while IntelliOpus coordinates the buyer journey.</p></article>
+            <article class="feature-card"><b>03</b><h3>Commercial memory</h3><p>Quote experience, feedback, and delivery signals become reusable product and supplier learning.</p></article>
+        </div>
+    </section>
+    <section class="content-band" id="operating-history">
+        <div class="section-label">Service history</div>
+        <h2>Service history: from one program to a broader platform.</h2>
+        <p>The first workflow came from real promotion, quoting, order intake, and delivery follow-up. That experience now becomes IntelliOpus: a supplier-neutral service layer for HOSUN, JOBO, and future qualified manufacturers.</p>
+        <div class="timeline">
+            <div class="timeline-row"><b>Product promotion</b><p>HOSUN lifting systems provided the first structured path for catalog review, local samples, customer quoting, and order follow-up.</p></div>
+            <div class="timeline-row"><b>Quote discipline</b><p>Interval pricing, customer-safe PDF output, quote history, and internal cost boundaries became core operating requirements.</p></div>
+            <div class="timeline-row"><b>Supplier expansion</b><p>JOBO education furniture introduced a different project model: school procurement timing, classroom deployment, resource files, and delivery consistency.</p></div>
+            <div class="timeline-row"><b>Portal separation</b><p>The customer portal now separates public product and order visibility from internal supplier coordination, cost, margin, and operating records.</p></div>
+            <div class="timeline-row"><b>Current direction</b><p>IntelliOpus is being prepared as a local-server operating platform for supplier programs, customer resources, orders, logistics, feedback, and commercial memory.</p></div>
+        </div>
+    </section>
+
+    <section class="content-band" id="operating-principles">
+        <div class="section-label">Operating principles</div>
+        <h2>Clear public pages. Controlled workspace data.</h2>
+        <p>Public pages explain who we are and how the service works. The signed-in workspace carries catalog review, resources, sample checks, order visibility, and feedback.</p>
+        <div class="principle-grid">
+            <article class="principle-card"><span>01</span><h3>Supplier-neutral entry</h3><p>HOSUN, JOBO, and future programs enter as peer supplier programs, not as platform defaults.</p></article>
+            <article class="principle-card"><span>02</span><h3>Customer-safe workspace</h3><p>Customers see approved product, resource, order, shipment, and feedback information only.</p></article>
+            <article class="principle-card"><span>03</span><h3>Project-ready service</h3><p>The portal supports catalog review, sample checks, quote preparation, order follow-up, and delivery coordination.</p></article>
+            <article class="principle-card"><span>04</span><h3>Reusable learning</h3><p>Feedback, quote experience, and delivery signals can later improve product and supplier decisions inside IntelliOpus.</p></article>
+        </div>
+    </section>
+    <section class="next-step-panel" id="customer-workspace-path">
+        <div>
+            <div class="section-label">Next step</div>
+            <h2>Move from company context into the working portal.</h2>
+            <p>Use the supplier network, product programs, resources, and local samples before continuing into the signed-in customer workspace.</p>
+        </div>
+        <div class="next-step-links">
+            <a href="/manufacturers">Supplier network</a>
+            <a href="/products">Product programs</a>
+            <a href="/reference-center">Resources</a>
+            <a href="/inventory">Local samples</a>
+            <a href="/dashboard">Customer workspace</a>
+        </div>
+    </section>
+</main>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                const currentUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+                const signInBtn = document.getElementById('signInBtn');
+                const welcomeUser = document.getElementById('welcomeUser');
+                if (currentUser && welcomeUser) {
+                    if (signInBtn) signInBtn.style.display = 'none';
+                    welcomeUser.style.display = 'flex';
+                    const userName = document.getElementById('userName');
+                    if (userName) userName.textContent = currentUser.name || currentUser.email || 'User';
+                }
+            } catch (error) { console.warn('Auth state unavailable', error); }
+        });
+    </script>
+
+<footer class="portal-footer">
+    <div class="portal-footer-inner">
+        <div class="portal-footer-brand">
+            <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+            <div>
+                <div class="portal-footer-title">IntelliOpus Portal</div>
+                <div class="portal-footer-copy">An independent cross-border operating bridge for qualified supplier programs, customer resources, order visibility, and feedback-driven execution.</div>
+            </div>
+        </div>
+        <div class="portal-footer-col">
+            <h3>About</h3>
+            <a href="/about">About</a>
+            <a href="/service-history">Service history</a>
+            <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+            <a href="/manufacturers">Supplier Network</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Customer Workspace</h3>
+            <a href="/products">Product Programs</a>
+            <a href="/inventory">Local Samples</a>
+            <a href="/dashboard">Dashboard</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Resources</h3>
+            <a href="/reference-center">Resources</a>
+            <a href="/customer-service">Support</a>
+            <a href="/cart">Cart</a>
+        </div>
+    </div>
+    <div class="portal-footer-note">Customer-facing pages show approved product, resource, order, shipment, and feedback information only. Supplier coordination records stay separate from the customer workspace.</div>
+</footer>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

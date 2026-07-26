@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Workspace - IntelliOpus Portal</title>
+    <link rel="stylesheet" href="/css/apple-style.css">
+    <link rel="stylesheet" href="/css/customer-theme.css">
+</head>
+<body>
+<header class="site-header portal-header">
+    <div class="site-header-inner portal-header-inner">
+        <a class="portal-brand" href="/">
+            <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+            <span><strong>IntelliOpus</strong><small>Service Portal</small></span>
+        </a>
+        <nav class="portal-nav portal-nav-main" aria-label="Primary navigation">
+            <div class="portal-nav-cluster" aria-label="Public site navigation">
+                <div class="portal-nav-group"><a class="portal-nav-link" href="/about">About</a></div>
+                <div class="portal-nav-group"><a class="portal-nav-link" href="/services">Services</a></div>
+                <div class="portal-nav-group"><a class="portal-nav-link" href="/manufacturers">Supplier Network</a></div>
+                <div class="portal-nav-group"><a class="portal-nav-link" href="/products">Product Programs</a></div>
+                <div class="portal-nav-group"><a class="portal-nav-link" href="/reference-center">Resources</a></div>
+            </div>
+        </nav>
+        <div class="portal-user portal-public-actions">
+            <div class="portal-nav-group portal-workspace-menu"><a class="portal-nav-link portal-workspace-link" href="/dashboard">Customer Workspace</a></div>
+            <a href="/login" class="btn btn-login-header" id="signInBtn">Sign In</a>
+        </div>
+    </div>
+</header>
+
+<main class="workspace-shell">
+    <section class="portal-context-band workspace-context-band">
+        <div>
+            <div class="portal-context-label">Workspace compatibility path</div>
+            <h1>Order status now lives inside the customer workspace.</h1>
+            <p>Old order-status links are kept as compatibility links. Current order progress, production milestones, shipment updates, resources, and support requests should be reviewed from the customer workspace dashboard.</p>
+        </div>
+        <div class="portal-context-links">
+            <a href="/dashboard">Open workspace <small>orders and shipment status</small></a>
+            <a href="/reference-center">Resources <small>approved support files</small></a>
+            <a href="/customer-service">Support <small>ask about an order</small></a>
+        </div>
+    </section>
+
+    <section class="workspace-page-summary order-workspace-summary" aria-label="Order workspace path">
+        <div><strong>One order area</strong><span>Use the dashboard for order list, detail, production progress, shipment status, and feedback.</span></div>
+        <div><strong>Customer-safe view</strong><span>The customer workspace only shows approved progress, resource, shipment, and support information.</span></div>
+        <div><strong>Supplier coordination stays internal</strong><span>Supplier notes, internal risks, cost, margin, and private operating records are not shown here.</span></div>
+    </section>
+
+    <section class="content-band">
+        <div class="section-label">Why this changed</div>
+        <h2>Order visibility should not be separated from the rest of the customer journey.</h2>
+        <p>Customers need product context, resources, sample status, order progress, shipment updates, and feedback in one place. The workspace is now the correct entry point for that complete path.</p>
+        <div class="hero-actions">
+            <a class="btn btn-login-header" href="/dashboard">Go to workspace</a>
+            <a class="btn btn-secondary" href="/products">Browse catalog</a>
+        </div>
+    </section>
+</main>
+
+<footer class="portal-footer">
+    <div class="portal-footer-inner">
+        <div class="portal-footer-brand">
+            <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+            <div>
+                <div class="portal-footer-title">IntelliOpus Portal</div>
+                <div class="portal-footer-copy">An independent cross-border operating bridge for qualified supplier programs, customer resources, order visibility, and feedback-driven execution.</div>
+            </div>
+        </div>
+        <div class="portal-footer-col"><h3>About</h3><a href="/about">About</a><a href="/service-history">Service history</a><a href="/services">Services</a><a href="/manufacturers">Supplier Network</a></div>
+        <div class="portal-footer-col"><h3>Customer Workspace</h3><a href="/products">Product Programs</a><a href="/inventory">Local Samples</a><a href="/dashboard">Dashboard</a></div>
+        <div class="portal-footer-col"><h3>Resources</h3><a href="/reference-center">Resources</a><a href="/customer-service">Support</a><a href="/cart">Cart</a></div>
+    </div>
+    <div class="portal-footer-note">Customer-facing pages show approved product, resource, order, shipment, and feedback information only. Supplier coordination records stay separate from the customer workspace.</div>
+</footer>
+</body>
+</html>
+
+
+
+

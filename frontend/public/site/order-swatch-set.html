@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request 4-Color RAL Swatch Sample Set - IntelliOpus Portal</title>
+    <link rel="stylesheet" href="/css/apple-style.css">
+    <style>
+        body {
+            background: var(--background);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--background);
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--spacing-md) var(--spacing-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: saturate(180%) blur(20px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .header-logo a {
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .header-logo a img {
+            height: 40px;
+            max-width: 160px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .header-logo img:last-child {
+            height: 110px;
+            max-width: 560px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing-xl) var(--spacing-lg);
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+            color: var(--text-primary);
+        }
+
+        .order-container {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: var(--spacing-xl);
+            margin-top: var(--spacing-xl);
+        }
+
+        .product-info-card {
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-xl);
+            color: white;
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 100px;
+            height: fit-content;
+        }
+
+        .product-image {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .product-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .product-description {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: var(--spacing-lg);
+            opacity: 0.95;
+        }
+
+        .product-features {
+            list-style: none;
+            padding: 0;
+            margin: var(--spacing-lg) 0;
+        }
+
+        .product-features li {
+            padding: var(--spacing-sm) 0;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .product-features li::before {
+            content: "OK";
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .product-price {
+            font-size: 32px;
+            font-weight: 600;
+            margin-top: var(--spacing-lg);
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .order-form-card {
+            background: var(--background);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-xl);
+            box-shadow: var(--shadow-md);
+        }
+
+        .form-section {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: var(--spacing-xs);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--background);
+            color: var(--text-primary);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: #007AFF !important;
+            color: white !important;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: var(--spacing-md);
+        }
+
+        .btn-submit:hover {
+            background: #0051D5 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+
+        .btn-submit:disabled {
+            background: var(--text-secondary);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .alert {
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-md);
+            display: none;
+        }
+
+        .alert-error {
+            background: #FFEBEE;
+            color: #C62828;
+            border: 1px solid #EF5350;
+        }
+
+        .alert-success {
+            background: #E8F5E9;
+            color: #2E7D32;
+            border: 1px solid #4CAF50;
+        }
+
+        .order-summary {
+            background: var(--background-secondary);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-top: var(--spacing-lg);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--spacing-sm) 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+            font-weight: 600;
+            font-size: 18px;
+            margin-top: var(--spacing-sm);
+            padding-top: var(--spacing-md);
+        }
+
+        @media (max-width: 768px) {
+            .order-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .product-info-card {
+                position: static;
+            }
+        }
+    </style>
+    <script src="/js/address-data.js"></script>
+    <link rel="stylesheet" href="/css/customer-theme.css">
+</head>
+<body>
+    <header class="site-header portal-header">
+    <div class="site-header-inner portal-header-inner">
+        <a class="portal-brand" href="/">
+    <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+    <span>
+        <strong>IntelliOpus</strong>
+        <small>Service Portal</small>
+    </span>
+</a>
+        <nav class="portal-nav portal-nav-main" aria-label="Primary navigation">
+    <div class="portal-nav-cluster" aria-label="Public site navigation">
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/about">About</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">IntelliOpus</span>
+                <a href="/about">Company overview</a>
+                <a href="/service-history">Service history</a>
+                <a href="/about#operating-bridge">U.S.-China operating bridge</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/services">Services</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Service scope</span>
+                <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+                <a href="/services#connected-workflow">From catalog to delivery</a>
+                <a href="/services#safety-boundary">Customer-safe boundary</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/manufacturers">Supplier Network</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Supplier network</span>
+                <a href="/manufacturers#hosun">HOSUN lifting systems</a>
+                <a href="/manufacturers#jobo">JOBO education furniture</a>
+                <a href="/manufacturers#future-suppliers">Future supplier programs</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link is-active" href="/products">Product Programs</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Product programs</span>
+                <a href="/products">Browse by supplier</a>
+                <a href="/inventory">Local Samples</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/reference-center">Resources</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Resources</span>
+                <a href="/reference-center">Resource library</a>
+                <a href="/reference-center#ral">RAL color guide</a>
+                <a href="/reference-center#hosun-resources">HOSUN resources</a>
+                <a href="/reference-center#jobo-resources">JOBO resources</a>
+            </div>
+        </div>
+    </div>
+</nav>
+        <div class="portal-user">
+            <div class="portal-nav-group portal-workspace-menu">
+                <a class="portal-nav-link portal-workspace-link" href="/dashboard">Customer Workspace</a>
+                <div class="portal-dropdown portal-dropdown-right">
+                    <a href="/dashboard">Workspace overview</a>
+                    <a href="/dashboard#ordersContainer">Orders and tracking</a>
+                    <a href="/inventory">Local samples</a>
+                    <a href="/customer-service">Support and feedback</a>
+                    <a href="/cart">Cart</a>
+                </div>
+            </div>
+            <a href="/cart" class="cart-icon" id="cartIcon" aria-label="Cart">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+    </svg>
+    <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
+</a>
+            <button class="btn btn-logout" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
+</div>
+
+        <section class="portal-context-band workspace-context-band">
+        <div>
+            <div class="portal-context-kicker">Sample request</div>
+            <h1>Finish color sample request.</h1>
+            <p>Request finish samples and color references before confirming product finish decisions for quote or order preparation.</p>
+        </div>
+        <div class="portal-context-links">
+                <a href="/reference-center">Resources <small>color resources</small></a>
+                <a href="/inventory">Local samples <small>sample availability</small></a>
+                <a href="/products">Product Programs <small>program context</small></a>
+        </div>
+    </section>
+    <section class="workspace-path-mini product-decision-path" aria-label="Product decision path">
+        <a href="/manufacturers"><strong>1. Supplier program</strong><small>Understand the supplier and product family.</small></a>
+        <span class="is-current"><strong>2. Product options</strong><small>Review model details or configuration choices.</small></span>
+        <a href="/reference-center"><strong>3. Samples & resources</strong><small>Confirm colors, manuals, and support files.</small></a>
+        <a href="/cart"><strong>4. Selected products</strong><small>Keep chosen items together before order creation.</small></a>
+        <a href="/dashboard"><strong>5. Order workspace</strong><small>Follow submitted orders and support actions.</small></a>
+    </section><div class="main-content">
+        <h1 class="page-title">Request 4-Color RAL Swatch Sample Set</h1>
+        
+        <div class="order-container">
+            <!-- Product Information -->
+            <div class="product-info-card">
+                <img src="/docs/reference/Sample/Sample_Kit.png" alt="4-Color RAL Swatch Sample Set" class="product-image" onerror="this.style.display='none';">
+                <div class="product-title">4-Color RAL Swatch Sample Set</div>
+                <div class="product-description">
+                    Request a physical color reference before confirming finish choices for quote or order preparation.
+                </div>
+                <ul class="product-features">
+                    <li>Four Standard Colors: RAL 9016, RAL 9006, RAL 7016, RAL 9005</li>
+                    <li>Free Shipping</li>
+                    <li>Fast Delivery: Within 5 days</li>
+                    <li>Perfect for Color Matching</li>
+                </ul>
+                <div class="product-price">$9.99</div>
+            </div>
+
+            <!-- Order Form -->
+            <div class="order-form-card">
+                <div id="error" class="alert alert-error" style="display: none;"></div>
+                <div id="success" class="alert alert-success" style="display: none;"></div>
+
+                <form id="orderForm">
+                    <div class="form-section">
+                        <h2 class="section-title">Shipping Information</h2>
+                        
+                        <div class="form-group">
+                            <label for="shippingName" class="form-label">Full Name *</label>
+                            <input type="text" id="shippingName" class="form-input" required placeholder="First and Last Name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="shippingPhone" class="form-label">Phone Number</label>
+                            <input type="text" id="shippingPhone" class="form-input" placeholder="Phone Number">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="shippingAddress1" class="form-label">Street Address *</label>
+                            <input type="text" id="shippingAddress1" class="form-input" required placeholder="Street address, P.O. box, company name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="shippingAddress2" class="form-label">Address Line 2 (Optional)</label>
+                            <input type="text" id="shippingAddress2" class="form-input" placeholder="Apartment, suite, unit, building, floor, etc.">
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--spacing-md);">
+                            <div class="form-group">
+                                <label for="shippingCity" class="form-label">City *</label>
+                                <input type="text" id="shippingCity" class="form-input" required placeholder="City">
+                            </div>
+                            <div class="form-group">
+                                <label for="shippingState" class="form-label">State/Province *</label>
+                                <select id="shippingState" class="form-input" required>
+                                    <option value="">Select State/Province</option>
+                                    <!-- States will be populated dynamically based on country -->
+                                </select>
+                                <input type="text" id="shippingStateText" class="form-input" style="display: none; margin-top: 0.5rem;" placeholder="State/Province (for other countries)">
+                            </div>
+                            <div class="form-group">
+                                <label for="shippingZip" class="form-label">ZIP/Postal Code *</label>
+                                <input type="text" id="shippingZip" class="form-input" required placeholder="ZIP/Postal Code">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="shippingCountry" class="form-label">Country *</label>
+                            <select id="shippingCountry" class="form-input" required>
+                                <option value="">Select Country</option>
+                                <!-- Countries will be populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2 class="section-title">Billing Information</h2>
+                        
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: var(--spacing-sm); cursor: pointer;">
+                                <input type="checkbox" id="sameAsShipping" checked onchange="toggleBillingAddress()" style="width: 18px; height: 18px; cursor: pointer;">
+                                <span>Same as shipping address</span>
+                            </label>
+                        </div>
+                        
+                        <div id="billingAddressFields" style="display: none;">
+                            <div class="form-group">
+                                <label for="billingName" class="form-label">Full Name *</label>
+                                <input type="text" id="billingName" class="form-input" placeholder="First and Last Name">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="billingPhone" class="form-label">Phone Number</label>
+                                <input type="text" id="billingPhone" class="form-input" placeholder="Phone Number">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="billingAddress1" class="form-label">Street Address *</label>
+                                <input type="text" id="billingAddress1" class="form-input" placeholder="Street address, P.O. box, company name">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="billingAddress2" class="form-label">Address Line 2 (Optional)</label>
+                                <input type="text" id="billingAddress2" class="form-input" placeholder="Apartment, suite, unit, building, floor, etc.">
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--spacing-md);">
+                                <div class="form-group">
+                                    <label for="billingCity" class="form-label">City *</label>
+                                    <input type="text" id="billingCity" class="form-input" placeholder="City">
+                                </div>
+                                <div class="form-group">
+                                    <label for="billingState" class="form-label">State/Province *</label>
+                                    <select id="billingState" class="form-input">
+                                        <option value="">Select State/Province</option>
+                                        <!-- States will be populated dynamically based on country -->
+                                    </select>
+                                    <input type="text" id="billingStateText" class="form-input" style="display: none; margin-top: 0.5rem;" placeholder="State/Province (for other countries)">
+                                </div>
+                                <div class="form-group">
+                                    <label for="billingZip" class="form-label">ZIP/Postal Code *</label>
+                                    <input type="text" id="billingZip" class="form-input" placeholder="ZIP/Postal Code">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="billingCountry" class="form-label">Country *</label>
+                                <select id="billingCountry" class="form-input">
+                                    <option value="">Select Country</option>
+                                    <!-- Countries will be populated dynamically -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2 class="section-title">Payment & Additional Information</h2>
+                        
+                        <div class="form-group">
+                            <label for="paymentMethod" class="form-label">Preferred Payment Method *</label>
+                            <select id="paymentMethod" class="form-input" required>
+                                <option value="">Select Payment Method</option>
+                                <option value="bank_transfer">Bank Transfer / Wire Transfer</option>
+                                <option value="credit_card">Credit Card</option>
+                                <option value="paypal">PayPal</option>
+                                <option value="check">Check</option>
+                                <option value="other">Other (Please specify in notes)</option>
+                            </select>
+                            <p style="margin-top: var(--spacing-xs); font-size: 12px; color: var(--text-secondary);">
+                                Payment terms: 30% initial payment, 70% on shipment. Payment details will be provided after order confirmation.
+                            </p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="orderNotes" class="form-label">Order Notes (Optional)</label>
+                            <textarea id="orderNotes" class="form-input" rows="3" placeholder="Any additional notes or requirements"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="order-summary">
+                        <div class="summary-row">
+                            <span>Product:</span>
+                            <span>4-Color RAL Swatch Sample Set</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Quantity:</span>
+                            <span>1</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span>$9.99</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Shipping:</span>
+                            <span>Free</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Total:</span>
+                            <span>$9.99</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="submitBtn">Place Order</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin;
+
+        function getToken() {
+            return localStorage.getItem('access_token');
+        }
+
+        function removeToken() {
+            localStorage.removeItem('access_token');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to sign out?')) {
+                removeToken();
+                window.location.href = '/login';
+            }
+        }
+
+        function checkAuth() {
+            if (!getToken()) {
+                window.location.href = '/login';
+                return false;
+            }
+            return true;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            const successDiv = document.getElementById('success');
+            successDiv.style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            const errorDiv = document.getElementById('error');
+            errorDiv.style.display = 'none';
+        }
+
+        function toggleBillingAddress() {
+            const checkbox = document.getElementById('sameAsShipping');
+            const billingFields = document.getElementById('billingAddressFields');
+            const billingInputs = billingFields.querySelectorAll('input, select, textarea');
+            
+            if (checkbox.checked) {
+                billingFields.style.display = 'none';
+                billingInputs.forEach(input => {
+                    input.removeAttribute('required');
+                });
+            } else {
+                billingFields.style.display = 'block';
+                billingInputs.forEach(input => {
+                    if (input.id !== 'billingAddress2' && input.id !== 'billingPhone') {
+                        input.setAttribute('required', 'required');
+                    }
+                });
+            }
+        }
+
+        // Initialize address dropdowns
+        function initializeAddressDropdowns() {
+            // Wait for address data to load
+            function initAfterAddressData() {
+                if (typeof COUNTRIES !== 'undefined' && typeof getStatesForCountry !== 'undefined') {
+                    // Populate shipping country dropdown
+                    const shippingCountrySelect = document.getElementById('shippingCountry');
+                    if (shippingCountrySelect) {
+                        COUNTRIES.forEach(country => {
+                            const option = document.createElement('option');
+                            option.value = country.code;
+                            option.textContent = country.name;
+                            shippingCountrySelect.appendChild(option);
+                        });
+                        
+                        // Set default to US
+                        shippingCountrySelect.value = 'US';
+                        updateStateDropdown('shipping', 'US');
+                        
+                        // Add change listener
+                        shippingCountrySelect.addEventListener('change', function() {
+                            updateStateDropdown('shipping', this.value);
+                        });
+                    }
+                    
+                    // Populate billing country dropdown
+                    const billingCountrySelect = document.getElementById('billingCountry');
+                    if (billingCountrySelect) {
+                        COUNTRIES.forEach(country => {
+                            const option = document.createElement('option');
+                            option.value = country.code;
+                            option.textContent = country.name;
+                            billingCountrySelect.appendChild(option);
+                        });
+                        
+                        // Set default to US
+                        billingCountrySelect.value = 'US';
+                        updateStateDropdown('billing', 'US');
+                        
+                        // Add change listener
+                        billingCountrySelect.addEventListener('change', function() {
+                            updateStateDropdown('billing', this.value);
+                        });
+                    }
+                } else {
+                    // Retry after a short delay
+                    setTimeout(initAfterAddressData, 100);
+                }
+            }
+            
+            initAfterAddressData();
+        }
+        
+        // Update state dropdown based on country
+        function updateStateDropdown(prefix, countryCode) {
+            const stateSelect = document.getElementById(`${prefix}State`);
+            const stateText = document.getElementById(`${prefix}StateText`);
+            
+            if (!stateSelect || !stateText) return;
+            
+            if (typeof getStatesForCountry === 'undefined') {
+                stateSelect.style.display = 'none';
+                stateText.style.display = 'block';
+                return;
+            }
+            
+            const states = getStatesForCountry(countryCode);
+            
+            if (states.length > 0) {
+                // Show dropdown, hide text input
+                stateSelect.style.display = 'block';
+                stateText.style.display = 'none';
+                stateText.required = false;
+                stateSelect.required = true;
+                
+                // Clear and populate dropdown
+                stateSelect.innerHTML = '<option value="">Select State/Province</option>';
+                states.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state.code;
+                    option.textContent = `${state.code} - ${state.name}`;
+                    stateSelect.appendChild(option);
+                });
+            } else {
+                // Hide dropdown, show text input
+                stateSelect.style.display = 'none';
+                stateText.style.display = 'block';
+                stateSelect.required = false;
+                stateText.required = true;
+            }
+        }
+
+        document.getElementById('orderForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+
+            // Build shipping address in structured JSON format
+            const shippingName = document.getElementById('shippingName').value;
+            const shippingPhone = document.getElementById('shippingPhone')?.value || null;
+            const shippingAddress1 = document.getElementById('shippingAddress1').value;
+            const shippingAddress2 = document.getElementById('shippingAddress2').value;
+            const shippingCity = document.getElementById('shippingCity').value;
+            const shippingStateSelect = document.getElementById('shippingState');
+            const shippingStateText = document.getElementById('shippingStateText');
+            const shippingState = (shippingStateSelect && shippingStateSelect.style.display !== 'none') ? shippingStateSelect.value : (shippingStateText ? shippingStateText.value : '');
+            const shippingZip = document.getElementById('shippingZip').value;
+            const shippingCountrySelect = document.getElementById('shippingCountry');
+            const shippingCountry = shippingCountrySelect ? shippingCountrySelect.value : '';
+            
+            const shippingAddress = JSON.stringify({
+                name: shippingName,
+                phone: shippingPhone,
+                address1: shippingAddress1,
+                address2: shippingAddress2 || null,
+                city: shippingCity,
+                state: shippingState,
+                zip: shippingZip,
+                country: shippingCountry,
+                country_name: (typeof COUNTRIES !== 'undefined' && COUNTRIES.find(c => c.code === shippingCountry)?.name) || shippingCountry
+            });
+            
+            // Build billing address
+            const sameAsShipping = document.getElementById('sameAsShipping').checked;
+            let billingAddress = '';
+            let billingName = '';
+            
+            if (sameAsShipping) {
+                billingAddress = shippingAddress;
+                billingName = shippingName;
+            } else {
+                const billingNameInput = document.getElementById('billingName').value;
+                const billingPhone = document.getElementById('billingPhone')?.value || null;
+                const billingAddress1 = document.getElementById('billingAddress1').value;
+                const billingAddress2 = document.getElementById('billingAddress2').value;
+                const billingCity = document.getElementById('billingCity').value;
+                const billingStateSelect = document.getElementById('billingState');
+                const billingStateText = document.getElementById('billingStateText');
+                const billingState = (billingStateSelect && billingStateSelect.style.display !== 'none') ? billingStateSelect.value : (billingStateText ? billingStateText.value : '');
+                const billingZip = document.getElementById('billingZip').value;
+                const billingCountrySelect = document.getElementById('billingCountry');
+                const billingCountry = billingCountrySelect ? billingCountrySelect.value : '';
+                
+                if (!billingAddress1 || !billingCity || !billingState || !billingZip || !billingCountry) {
+                    showError('Please complete all required billing address fields');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Place Order';
+                    return;
+                }
+                
+                billingAddress = JSON.stringify({
+                    name: billingNameInput,
+                    phone: billingPhone,
+                    address1: billingAddress1,
+                    address2: billingAddress2 || null,
+                    city: billingCity,
+                    state: billingState,
+                    zip: billingZip,
+                    country: billingCountry,
+                    country_name: (typeof COUNTRIES !== 'undefined' && COUNTRIES.find(c => c.code === billingCountry)?.name) || billingCountry
+                });
+                billingName = billingNameInput;
+            }
+
+            // Try to find the swatch set product
+            let swatchProductId = null;
+            try {
+                const productResponse = await fetch(`${API_BASE_URL}/api/site/products`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                
+                if (productResponse.ok) {
+                    const products = await productResponse.json();
+                    const swatchProduct = products.find(p => p.sku === 'SWATCH-4COLOR');
+                    if (swatchProduct) {
+                        swatchProductId = swatchProduct.id;
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking product:', error);
+            }
+
+            // Build order data
+            // Note: delivery_method defaults to DDP for swatch orders (door-to-door delivery)
+            const orderData = {
+                items: swatchProductId ? [{
+                    product_id: swatchProductId,
+                    quantity: 1,
+                    unit_price: 9.99
+                }] : [{
+                    product_name: "4-Color RAL Swatch Sample Set",
+                    product_sku: "SWATCH-4COLOR",
+                    quantity: 1,
+                    unit_price: 9.99
+                }],
+                delivery_method: 'DDP',  // Default to DDP (Delivered Duty Paid) for swatch orders
+                shipping_address: shippingAddress,
+                shipping_name: shippingName,
+                billing_address: billingAddress,
+                billing_name: billingName,
+                payment_method: document.getElementById('paymentMethod').value || null,
+                notes: (document.getElementById('orderNotes').value || '') + '\n[4-Color RAL Swatch Sample Set Order - DDP Delivery]'
+            };
+
+            // Use standard order API if product exists, otherwise use custom order API
+            const apiEndpoint = swatchProductId 
+                ? `${API_BASE_URL}/api/site/customer/orders`
+                : `${API_BASE_URL}/api/site/customer/custom-order`;
+
+            try {
+                const response = await fetch(apiEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify(orderData)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showError(data.detail || 'Failed to create order');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Place Order';
+                    return;
+                }
+
+                showSuccess(`Order created successfully! Order Number: ${data.order_number}`);
+                
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 2000);
+
+            } catch (error) {
+                console.error('Error creating order:', error);
+                showError('Network error. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Place Order';
+            }
+        });
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            if (checkAuth()) {
+                initializeAddressDropdowns();
+            }
+        });
+    </script>
+
+<footer class="portal-footer">
+    <div class="portal-footer-inner">
+        <div class="portal-footer-brand">
+            <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+            <div>
+                <div class="portal-footer-title">IntelliOpus Portal</div>
+                <div class="portal-footer-copy">An independent cross-border operating bridge for qualified supplier programs, customer resources, order visibility, and feedback-driven execution.</div>
+            </div>
+        </div>
+        <div class="portal-footer-col">
+            <h3>About</h3>
+            <a href="/about">About</a>
+            <a href="/service-history">Service history</a>
+            <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+            <a href="/manufacturers">Supplier Network</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Customer Workspace</h3>
+            <a href="/products">Product Programs</a>
+            <a href="/inventory">Local Samples</a>
+            <a href="/dashboard">Dashboard</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Resources</h3>
+            <a href="/reference-center">Resources</a>
+            <a href="/customer-service">Support</a>
+            <a href="/cart">Cart</a>
+        </div>
+    </div>
+    <div class="portal-footer-note">Customer-facing pages show approved product, resource, order, shipment, and feedback information only. Supplier coordination records stay separate from the customer workspace.</div>
+</footer>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

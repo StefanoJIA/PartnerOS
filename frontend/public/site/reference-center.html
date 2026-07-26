@@ -1,0 +1,1115 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resources - IntelliOpus Portal</title>
+    <link rel="stylesheet" href="/css/apple-style.css">
+    <link rel="stylesheet" href="/css/customer-theme.css">
+    <style>
+        body {
+            min-height: 100vh;
+            background: var(--background);
+        }
+
+        .header {
+            background: var(--background);
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--spacing-md) var(--spacing-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: saturate(180%) blur(20px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .header-logo a {
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .header-logo a img {
+            height: 40px;
+            max-width: 160px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .header-logo img:last-child {
+            height: 110px;
+            max-width: 560px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+        }
+
+        .cart-icon {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            background: var(--background-secondary);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: background 0.2s;
+        }
+
+        .cart-icon:hover {
+            background: #E8E8ED;
+        }
+
+        .cart-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #FF3B30;
+            color: white;
+            border-radius: 10px;
+            min-width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 0 4px;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing-xl) var(--spacing-lg);
+        }
+
+        .page-title {
+            font-size: 36px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+        }
+
+        .page-subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .reference-section {
+            background: var(--background);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
+            box-shadow: 0 8px 28px rgba(20, 40, 80, 0.05);
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+            color: var(--text-primary);
+        }
+
+        .section-description {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-lg);
+            line-height: 1.6;
+        }
+
+        .download-card {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-lg);
+            background: #FFFFFF;
+            border: 1px solid #D9E2EF;
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-md);
+            transition: all 0.2s;
+        }
+
+        .download-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.1);
+        }
+
+        .download-icon {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #EAF2FF;
+            border: 1px solid #BFD5FF;
+            color: #1E5BC6;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.15;
+            padding: 6px;
+            border-radius: var(--radius-md);
+            flex-shrink: 0;
+        }
+
+        .download-icon svg {
+            width: 34px;
+            height: 34px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .download-icon-label {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        .download-info {
+            flex: 1;
+        }
+
+        .download-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+            color: var(--text-primary);
+        }
+
+        .download-description {
+            font-size: 14px;
+            color: #4D5B6C;
+            margin-bottom: var(--spacing-xs);
+            line-height: 1.5;
+        }
+
+        .download-meta {
+            font-size: 12px;
+            color: #66758A;
+            font-weight: 500;
+        }
+
+        .btn-download {
+            padding: 10px 20px;
+            background: var(--primary-color);
+            color: white;
+            border: 2px solid var(--primary-color);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 2px 4px rgba(0, 122, 255, 0.2);
+        }
+
+        .btn-download:hover {
+            background: #0051D5;
+            border-color: #0051D5;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
+        }
+
+        .btn-download.secondary {
+            background: #FFFFFF;
+            color: #1E5BC6;
+            border-color: #BFD5FF;
+            box-shadow: none;
+        }
+
+        .btn-download.secondary:hover {
+            background: #EAF2FF;
+            border-color: #7DA7F7;
+            box-shadow: 0 3px 10px rgba(30, 91, 198, 0.16);
+        }
+
+        .ral-hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+            gap: var(--spacing-lg);
+            align-items: stretch;
+            padding: var(--spacing-lg);
+            border: 1px solid #D9E2EF;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(135deg, #F7FAFF 0%, #EEF5FF 100%);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .ral-hero-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #132238;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .ral-hero-text {
+            color: #405064;
+            line-height: 1.65;
+            font-size: 15px;
+        }
+
+        .ral-guidance {
+            display: grid;
+            gap: var(--spacing-sm);
+            background: #FFFFFF;
+            border: 1px solid #D9E2EF;
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+        }
+
+        .ral-guidance-item {
+            display: grid;
+            grid-template-columns: 28px 1fr;
+            gap: var(--spacing-sm);
+            align-items: start;
+            color: #304257;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .ral-guidance-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #EAF2FF;
+            color: #1E5BC6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .official-download-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+
+        .official-download-grid .download-card {
+            margin-bottom: 0;
+            align-items: flex-start;
+        }
+
+        .official-badge {
+            display: inline-flex;
+            align-items: center;
+            width: fit-content;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: #EAF2FF;
+            color: #1E5BC6;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .color-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+
+        .color-card {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        .color-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .color-swatch {
+            height: 80px;
+            width: 100%;
+        }
+
+        .color-info {
+            padding: var(--spacing-sm);
+            background: var(--background);
+        }
+
+        .color-code {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .color-name {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .info-box {
+            background: #FFF8E8;
+            border-left: 4px solid var(--primary);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            margin-top: var(--spacing-lg);
+        }
+
+        .info-box p {
+            margin: 0;
+            font-size: 14px;
+            color: #253449;
+            line-height: 1.6;
+        }
+
+        .resource-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+
+        /* Swatch Sample Set Card */
+        .swatch-sample-card {
+            background: var(--background);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-xl);
+            margin-top: var(--spacing-xl);
+        }
+
+        .reference-section h3 {
+            color: #132238;
+        }
+
+        .swatch-sample-header {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .swatch-sample-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 var(--spacing-sm) 0;
+        }
+
+        .swatch-sample-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .swatch-sample-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--spacing-lg);
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .swatch-sample-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .swatch-info-item {
+            display: flex;
+            align-items: baseline;
+            gap: var(--spacing-sm);
+            font-size: 14px;
+        }
+
+        .swatch-info-label {
+            font-weight: 500;
+            color: var(--text-primary);
+            min-width: 100px;
+        }
+
+        .swatch-info-value {
+            color: var(--text-secondary);
+        }
+
+        .swatch-price {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 16px;
+        }
+
+        .swatch-sample-action {
+            flex-shrink: 0;
+        }
+
+        .swatch-order-btn {
+            display: inline-block;
+            padding: 12px 32px;
+            background: #007AFF !important;
+            color: white !important;
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .swatch-order-btn:hover {
+            background: #0051D5 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .ral-hero {
+                grid-template-columns: 1fr;
+            }
+
+            .swatch-sample-details {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .swatch-sample-action {
+                width: 100%;
+            }
+
+            .swatch-order-btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+        .section-heading-row { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--spacing-md); margin-bottom: var(--spacing-lg); }
+        .compact-copy { max-width: 720px; margin-bottom: 0; }
+        .ral-action-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-xl); }
+        .ral-action-card { display: grid; grid-template-columns: 58px 1fr auto; gap: var(--spacing-md); align-items: center; padding: var(--spacing-lg); border: 1px solid #D8E3F2; border-radius: 18px; background: #FFFFFF; color: inherit; text-decoration: none; box-shadow: 0 12px 30px rgba(36, 75, 130, 0.06); transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease; }
+        .ral-action-card:hover { transform: translateY(-2px); border-color: #8CB8F6; box-shadow: 0 16px 38px rgba(36, 75, 130, 0.12); }
+        .ral-action-icon { width: 58px; height: 58px; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: #EAF3FF; color: #2569D8; font-size: 13px; font-weight: 800; letter-spacing: 0.06em; }
+        .ral-action-title { font-size: 18px; font-weight: 700; color: #122033; margin-bottom: 4px; }
+        .ral-action-subtitle { font-size: 14px; color: #607086; line-height: 1.45; }
+        .ral-action-cta { color: #2569D8; font-weight: 700; font-size: 14px; white-space: nowrap; }
+        .basic-color-panel { border: 1px solid #DDE7F4; border-radius: 18px; background: #FFFFFF; padding: var(--spacing-lg); }
+        .basic-color-header { display: flex; justify-content: space-between; gap: var(--spacing-md); align-items: flex-start; margin-bottom: var(--spacing-md); }
+        .basic-color-header h3 { margin: 0 0 4px; font-size: 20px; color: #122033; }
+        .basic-color-header p, .custom-color-note { margin: 0; color: #607086; line-height: 1.55; font-size: 14px; }
+        .sample-link { display: inline-flex; align-items: center; justify-content: center; padding: 9px 14px; border: 1px solid #BFD5FF; border-radius: 999px; color: #2569D8; background: #F4F8FF; text-decoration: none; font-weight: 700; white-space: nowrap; }
+        .custom-color-note { margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid #E5ECF5; }
+        @media (max-width: 760px) { .ral-action-grid { grid-template-columns: 1fr; } .ral-action-card { grid-template-columns: 52px 1fr; } .ral-action-cta { grid-column: 2; } .basic-color-header { flex-direction: column; } }
+
+        .resource-program-map { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--spacing-md); margin: 0 0 var(--spacing-xl); }
+        .resource-program-card { position: relative; overflow: hidden; min-height: 180px; padding: var(--spacing-lg); border: 1px solid #DDE7F4; border-radius: 20px; background: linear-gradient(145deg, #FFFFFF 0%, #F7FAFF 100%); box-shadow: 0 12px 30px rgba(36, 75, 130, 0.055); text-decoration: none; color: inherit; }
+        .resource-program-card::after { content: ""; position: absolute; right: -28px; bottom: -28px; width: 104px; height: 104px; border-radius: 999px; background: rgba(47, 114, 217, 0.07); }
+        .resource-program-card img { width: 48px; height: 48px; object-fit: contain; margin-bottom: var(--spacing-md); display: block; }
+        .resource-program-card .program-mark { width: 48px; height: 48px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: var(--spacing-md); background: #EAF3FF; color: #2569D8; font-weight: 800; letter-spacing: 0.04em; }
+        .resource-program-card strong { display: block; margin-bottom: 8px; color: #122033; font-size: 17px; line-height: 1.25; }
+        .resource-program-card span { display: block; color: #607086; font-size: 14px; line-height: 1.5; }        .section-kicker { color: var(--primary); font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: var(--spacing-sm); }
+        .brand-resource-section { background: linear-gradient(180deg, #FFFFFF 0%, #F8FBFF 100%); }
+        .brand-resource-header { display: grid; grid-template-columns: 150px 1fr; gap: var(--spacing-lg); align-items: center; margin-bottom: var(--spacing-lg); padding: var(--spacing-lg); border: 1px solid #DDE7F4; border-radius: 20px; background: #FFFFFF; }
+        .brand-logo-card { min-height: 118px; display: flex; align-items: center; justify-content: center; border-radius: 18px; background: #F6F9FE; border: 1px solid #DDE7F4; }
+        .brand-logo-card img { max-width: 120px; max-height: 96px; object-fit: contain; }
+        .brand-resource-title { font-size: 24px; font-weight: 700; color: #122033; margin-bottom: 6px; }
+        .brand-resource-copy { color: #607086; line-height: 1.6; margin: 0; }
+        .resource-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--spacing-md); }
+        .resource-card-grid .download-card { margin-bottom: 0; align-items: flex-start; }
+        .resource-image-card { overflow: hidden; padding: 0; display: flex; flex-direction: column; }
+        .resource-preview { width: 100%; height: 170px; background: #F6F9FE; border-bottom: 1px solid #DDE7F4; display: flex; align-items: center; justify-content: center; }
+        .resource-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .resource-image-card .download-info { padding: var(--spacing-lg); }
+        .resource-actions { padding: 0 var(--spacing-lg) var(--spacing-lg); }
+        .resource-pill { display: inline-flex; align-items: center; justify-content: center; min-width: 58px; height: 58px; border-radius: 16px; background: #EAF3FF; color: #2569D8; font-size: 13px; font-weight: 800; letter-spacing: 0.06em; }
+        .future-resource-section { background: linear-gradient(135deg, #FFFFFF 0%, #F8FBFF 100%); }
+        .future-resource-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--spacing-md); }
+        .future-resource-card { padding: var(--spacing-lg); border: 1px solid #DDE7F4; border-radius: 18px; background: #FFFFFF; }
+        .future-resource-card strong { display: block; color: #122033; margin-bottom: 8px; font-size: 17px; }
+        .future-resource-card span { display: block; color: #607086; line-height: 1.55; font-size: 14px; }
+        @media (max-width: 960px) { .resource-program-map { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 620px) { .resource-program-map, .future-resource-grid { grid-template-columns: 1fr; } }
+        .brand-resource-header.is-jobo { grid-template-columns: 1fr 1.4fr; }
+        .jobo-preview-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--spacing-sm); }
+        .jobo-preview-strip img { width: 100%; height: 120px; object-fit: cover; border-radius: 14px; border: 1px solid #DDE7F4; background: #FFFFFF; }
+        @media (max-width: 760px) { .brand-resource-header.is-jobo { grid-template-columns: 1fr; } .jobo-preview-strip { grid-template-columns: 1fr; } }
+        @media (max-width: 680px) { .brand-resource-header { grid-template-columns: 1fr; } }
+
+    </style>
+</head>
+<body>
+    <header class="site-header portal-header">
+    <div class="site-header-inner portal-header-inner">
+        <a class="portal-brand" href="/">
+    <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+    <span>
+        <strong>IntelliOpus</strong>
+        <small>Service Portal</small>
+    </span>
+</a>
+        <nav class="portal-nav portal-nav-main" aria-label="Primary navigation">
+    <div class="portal-nav-cluster" aria-label="Public site navigation">
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/about">About</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">IntelliOpus</span>
+                <a href="/about">Company overview</a>
+                <a href="/service-history">Service history</a>
+                <a href="/about#operating-bridge">U.S.-China operating bridge</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/services">Services</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Service scope</span>
+                <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+                <a href="/services#connected-workflow">From catalog to delivery</a>
+                <a href="/services#safety-boundary">Customer-safe boundary</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/manufacturers">Supplier Network</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Supplier network</span>
+                <a href="/manufacturers#hosun">HOSUN lifting systems</a>
+                <a href="/manufacturers#jobo">JOBO education furniture</a>
+                <a href="/manufacturers#future-suppliers">Future supplier programs</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/products">Product Programs</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Product programs</span>
+                <a href="/products">Browse by supplier</a>
+                <a href="/inventory">Local Samples</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link is-active" href="/reference-center">Resources</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Resources</span>
+                <a href="/reference-center">Resource library</a>
+                <a href="/reference-center#ral">RAL color guide</a>
+                <a href="/reference-center#hosun-resources">HOSUN resources</a>
+                <a href="/reference-center#jobo-resources">JOBO resources</a>
+            </div>
+        </div>
+    </div>
+</nav>
+        <div class="portal-user">
+            <div class="portal-nav-group portal-workspace-menu">
+                <a class="portal-nav-link portal-workspace-link" href="/dashboard">Customer Workspace</a>
+                <div class="portal-dropdown portal-dropdown-right">
+                    <a href="/dashboard">Workspace overview</a>
+                    <a href="/dashboard#ordersContainer">Orders and tracking</a>
+                    <a href="/inventory">Local samples</a>
+                    <a href="/customer-service">Support and feedback</a>
+                    <a href="/cart">Cart</a>
+                </div>
+            </div>
+            <a href="/cart" class="cart-icon" id="cartIcon" aria-label="Cart">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+    </svg>
+    <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
+</a>
+            <a href="/login" class="btn btn-login-header" id="signInBtn" style="display: none;">Sign In</a>
+            <button class="btn btn-logout" id="logoutBtn" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
+</header>
+
+    <div class="main-content">
+        <section class="portal-context-band portal-showcase-hero resource-showcase-hero">
+            <div class="portal-showcase-copy">
+                <div class="section-label">Resources</div>
+                <h1>Approved resources for product decisions.</h1>
+                <p>Use this library for color references, supplier catalogs, sample-kit material, and approved support files.</p>
+                <div class="portal-showcase-actions">
+                    <a class="btn btn-login-header" href="#ral">Color references</a>
+                    <a class="btn btn-secondary" href="#hosun-resources">HOSUN files</a>
+                    <a class="btn btn-secondary" href="#jobo-resources">JOBO files</a>
+                </div>
+            </div>
+            <div class="portal-showcase-panel" aria-label="Resource preview">
+                <div class="showcase-card">
+                    <img src="/static/images/partners/hosun-finish-sample-kit.png" alt="HOSUN finish sample kit">
+                    <div><strong>Finish and color references</strong><span>RAL guidance and physical sample-kit context for customer color confirmation.</span></div>
+                </div>
+                <div class="showcase-card">
+                    <img src="/static/images/partners/jobo-catalog-cover.png" alt="JOBO education furniture catalog">
+                    <div><strong>Supplier catalog files</strong><span>Keep HOSUN lifting-system files and JOBO education-furniture documents separated by program.</span></div>
+                </div>
+                <div class="showcase-card">
+                    <img src="/intelliopus-logo.png" alt="Customer-safe resource governance">
+                    <div><strong>Customer-safe resource governance</strong><span>Only approved resources are published for product selection, order support, shipment context, and feedback.</span></div>
+                </div>
+            </div>
+        </section>
+                <div class="catalog-page-summary resource-page-summary">
+            <div><strong>Color confirmation</strong><span>Use the RAL guide and local finish samples before confirming custom or standard colors.</span></div>
+            <div><strong>Supplier resources</strong><span>Keep HOSUN lifting-system files and JOBO education-furniture catalogs separated by supplier program.</span></div>
+            <div><strong>Order support</strong><span>Resources support product selection, quote preparation, sample review, order tracking, and feedback.</span></div>
+        </div>
+                <div class="portal-flow-intro"><strong>Customer path</strong><span>Use resources after product review. Color references, supplier files, samples, and orders stay connected in one workspace.</span></div>
+        <section class="workspace-path-mini portal-flow-path" aria-label="Customer portal flow">
+            <a href="/products"><strong>1. Supplier products</strong><small>Choose the supplier program and product family.</small></a>
+            <a href="/inventory"><strong>2. Local samples</strong><small>Check finish and sample availability.</small></a>
+            <span class="is-current"><strong>3. Approved resources</strong><small>Review color guides, catalogs, and support files.</small></span>
+            <a href="/dashboard"><strong>4. Customer workspace</strong><small>Follow orders, delivery updates, and feedback.</small></a>
+        </section>
+        <section class="page-transition-strip functional-focus-strip" aria-label="Resource page use">
+            <div class="page-transition-copy">
+                <span>Resource review</span>
+                <strong>Use approved files to support product and order decisions.</strong>
+                <p>Color references, catalogs, sample-kit context, manuals, and supplier files stay separated by program so customers can download the right material without seeing internal records.</p>
+            </div>
+            <div class="page-transition-actions">
+                <a href="/products">Product programs</a>
+                <a href="/inventory">Local samples</a>
+                <a href="/dashboard">Workspace</a>
+            </div>
+        </section>
+        <section class="resource-program-map" id="resource-program-map" aria-label="Resource program map">
+            <a class="resource-program-card" href="#ral">
+                <div class="program-mark">RAL</div>
+                <strong>Universal color references</strong>
+                <span>Official color reference, local RAL guide, standard colors, and sample-set path for finish confirmation.</span>
+            </a>
+            <a class="resource-program-card" href="#hosun-resources">
+                <img src="/static/images/partners/hosun-logo.png" alt="HOSUN">
+                <strong>HOSUN lifting systems</strong>
+                <span>Finish sample kit, installation support, manuals, and lifting-system resource files.</span>
+            </a>
+            <a class="resource-program-card" href="#jobo-resources">
+                <img src="/static/images/partners/jobo-brochure-cover.png" alt="JOBO">
+                <strong>JOBO education furniture</strong>
+                <span>School desk and chair brochures, classroom catalogs, and project furniture references.</span>
+            </a>
+            <a class="resource-program-card" href="#future-resources">
+                <img src="/intelliopus-logo.png" alt="Future suppliers">
+                <strong>Future supplier resources</strong>
+                <span>New supplier programs keep their own approved customer-safe catalogs, manuals, samples, and delivery references.</span>
+            </a>
+        </section><div class="reference-section ral-clean-section" id="ral">
+            <div class="section-heading-row">
+                <div>
+                    <h2 class="section-title">Color references</h2>
+                    <p class="section-description compact-copy">Start with the standard finishes below. Other RAL colors can be customized on request after color confirmation.</p>
+                </div>
+            </div>
+
+            <div class="ral-action-grid">
+                <a class="ral-action-card" href="https://www.ral-farben.de/en/all-ral-colours" target="_blank" rel="noopener">
+                    <div class="ral-action-icon">WEB</div>
+                    <div>
+                        <div class="ral-action-title">Official RAL website</div>
+                        <div class="ral-action-subtitle">Open the official online RAL reference.</div>
+                    </div>
+                    <span class="ral-action-cta">Open</span>
+                </a>
+
+                <a class="ral-action-card" href="/static/documents/ral-color-reference.pdf" download>
+                    <div class="ral-action-icon">PDF</div>
+                    <div>
+                        <div class="ral-action-title">Download RAL guide</div>
+                        <div class="ral-action-subtitle">Use the local color reference file for quick finish comparison.</div>
+                    </div>
+                    <span class="ral-action-cta">Download</span>
+                </a>
+            </div>
+
+            <div class="basic-color-panel">
+                <div class="basic-color-header">
+                    <div>
+                        <h3>Standard colors</h3>
+                        <p>Standard finish choices for faster quote and order confirmation.</p>
+                    </div>
+                    <a class="sample-link" href="/order-swatch-set">Request sample set</a>
+                </div>
+                <div class="color-preview" id="basicColors">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+                <div class="custom-color-note">
+                    Other RAL colors can be customized on request. Please provide the RAL code and confirm with a physical sample before production.
+                </div>
+            </div>
+            <div class="color-preview" id="commonColors" style="display: none;"></div>
+        </div>
+        <div class="reference-section brand-resource-section" id="hosun-resources">
+            <div class="brand-resource-header">
+                <div class="brand-logo-card">
+                    <img src="/static/images/partners/hosun-logo.png" alt="HOSUN">
+                </div>
+                <div>
+                    <div class="section-kicker">Supplier resources</div>
+                    <div class="brand-resource-title">HOSUN lifting systems</div>
+                    <p class="brand-resource-copy">Approved support material for lifting systems, configurable frames, columns, hand controls, installation, finish samples, and catalogs.</p>
+                </div>
+            </div>
+
+            <div class="resource-card-grid">
+                <div class="download-card resource-image-card">
+                    <div class="resource-preview">
+                        <img src="/static/images/partners/hosun-finish-sample-kit.png" alt="HOSUN finish sample kit">
+                    </div>
+                    <div class="download-info">
+                        <div class="download-title">Finish Sample Kit</div>
+                        <div class="download-description">Spray finish sample kit for HOSUN standard colors and customer finish confirmation.</div>
+                        <div class="download-meta">Physical sample remains the final finish reference</div>
+                    </div>
+                    <div class="resource-actions">
+                        <a href="/order-swatch-set" class="btn-download">Request Sample Kit</a>
+                    </div>
+                </div>
+
+                <div class="download-card">
+                    <div class="resource-pill">CAT</div>
+                    <div class="download-info">
+                        <div class="download-title">HOSUN Catalog</div>
+                        <div class="download-description">Approved model list, specifications, and supporting catalog file for HOSUN products.</div>
+                        <div class="download-meta">Prepared for HOSUN</div>
+                    </div>
+                    <a href="#" class="btn-download" onclick="alert('This product resource is being prepared.'); return false;">Coming Soon</a>
+                </div>
+
+                <div class="download-card">
+                    <div class="resource-pill">MAN</div>
+                    <div class="download-info">
+                        <div class="download-title">Installation Manual</div>
+                        <div class="download-description">Assembly and installation reference for approved HOSUN systems.</div>
+                        <div class="download-meta">Download when file is available</div>
+                    </div>
+                    <a href="/static/documents/Installation_Manual.pdf" class="btn-download" download>Download</a>
+                </div>
+
+                <div class="download-card" style="cursor: pointer;" onclick="window.location.href='/user-manual'">
+                    <div class="resource-pill">HELP</div>
+                    <div class="download-info">
+                        <div class="download-title">User Manuals</div>
+                        <div class="download-description">Operation manuals, troubleshooting references, and support documents.</div>
+                        <div class="download-meta">HOSUN manual library</div>
+                    </div>
+                    <a href="/user-manual" class="btn-download">View Manuals</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="reference-section brand-resource-section" id="jobo-resources">
+            <div class="brand-resource-header is-jobo">
+                <div class="jobo-preview-strip">
+                    <img src="/static/images/partners/jobo-future-classroom.png" alt="JOBO future classroom">
+                    <img src="/static/images/partners/jobo-standard-classroom.png" alt="JOBO standard classroom">
+                    <img src="/static/images/partners/jobo-library-zone.png" alt="JOBO learning space">
+                </div>
+                <div>
+                    <div class="section-kicker">Supplier resources</div>
+                    <div class="brand-resource-title">JOBO education furniture</div>
+                    <p class="brand-resource-copy">Approved support material for school desks, chairs, project furniture, classroom deployment, durability review, and education procurement decisions.</p>
+                </div>
+            </div>
+
+            <div class="resource-card-grid">
+                <div class="download-card resource-image-card">
+                    <div class="resource-preview">
+                        <img src="/static/images/partners/jobo-brochure-cover.png" alt="JOBO school desks and chairs brochure">
+                    </div>
+                    <div class="download-info">
+                        <div class="download-title">School Desks & Chairs Brochure</div>
+                        <div class="download-description">Reference brochure for classroom desk and chair product selection.</div>
+                        <div class="download-meta">JOBO education furniture material</div>
+                    </div>
+                    <div class="resource-actions">
+                        <a href="/static/documents/jobo-school-desks-chairs-brochure.pdf" class="btn-download" download>Download</a>
+                    </div>
+                </div>
+
+                <div class="download-card resource-image-card">
+                    <div class="resource-preview">
+                        <img src="/static/images/partners/jobo-catalog-cover.png" alt="JOBO school furniture catalog">
+                    </div>
+                    <div class="download-info">
+                        <div class="download-title">School Furniture Catalog</div>
+                        <div class="download-description">Catalog reference for future classroom, lecture classroom, standard classroom, library, office, and dormitory scenarios.</div>
+                        <div class="download-meta">JOBO project furniture material</div>
+                    </div>
+                    <div class="resource-actions">
+                        <a href="/static/documents/jobo-school-furniture-catalog.pdf" class="btn-download" download>Download</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="reference-section future-resource-section" id="future-resources">
+            <div class="section-heading-row">
+                <div>
+                    <div class="section-kicker">Future supplier resources</div>
+                    <h2 class="section-title">A separate resource lane for each new supplier program.</h2>
+                    <p class="section-description compact-copy">Future manufacturers can enter the same IntelliOpus portal without mixing their catalogs, manuals, sample rules, quote references, or delivery expectations with HOSUN or JOBO.</p>
+                </div>
+            </div>
+            <div class="future-resource-grid">
+                <div class="future-resource-card">
+                    <strong>Program-specific files</strong>
+                    <span>Each supplier keeps its own customer-safe catalogs, product resources, installation references, sample guidance, and approved delivery documents.</span>
+                </div>
+                <div class="future-resource-card">
+                    <strong>Customer-safe publishing</strong>
+                    <span>Only approved public resources appear here. Internal cost, margin, supplier notes, private operations records, and unapproved files stay out of the customer portal.</span>
+                </div>
+            </div>
+        </div>    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin;
+
+        function getToken() {
+            return localStorage.getItem('access_token');
+        }
+
+        function removeToken() {
+            localStorage.removeItem('access_token');
+        }
+
+        function updatePublicHeader() {
+            const hasToken = Boolean(getToken());
+            const cartIcon = document.getElementById('cartIcon');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const signInBtn = document.getElementById('signInBtn');
+            if (cartIcon) cartIcon.style.display = hasToken ? 'inline-flex' : 'none';
+            if (logoutBtn) logoutBtn.style.display = hasToken ? 'inline-flex' : 'none';
+            if (signInBtn) signInBtn.style.display = hasToken ? 'none' : 'inline-flex';
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to sign out?')) {
+                removeToken();
+                window.location.href = '/login';
+            }
+        }
+
+        // Cart functions
+        async function loadCartCount() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/cart/count`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const badge = document.getElementById('cartBadge');
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.textContent = data.count;
+                            badge.style.display = 'flex';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading cart count:', error);
+            }
+        }
+
+        async function loadBasicColors() {
+            try {
+                // Try without auth first, then with auth if needed
+                let response = await fetch(`${API_BASE_URL}/api/site/inventory/colors`);
+                
+                if (!response.ok && response.status === 401) {
+                    // If unauthorized, try with token
+                    const token = getToken();
+                    if (token) {
+                        response = await fetch(`${API_BASE_URL}/api/site/inventory/colors`, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                    }
+                }
+
+                if (response.ok) {
+                    const colors = await response.json();
+                    const basicContainer = document.getElementById('basicColors');
+                    const commonContainer = document.getElementById('commonColors');
+                    
+                    if (!basicContainer || !commonContainer) {
+                        console.error('Container not found');
+                        return;
+                    }
+                    
+                    // Filter out NO_COLOR option (only for internal use, not displayed to users)
+                    const filteredColors = colors ? colors.filter(c => c.color_code !== 'NO_COLOR') : [];
+                    
+                    if (filteredColors && filteredColors.length > 0) {
+                        const renderColor = (color) => {
+                            const card = document.createElement('div');
+                            card.className = 'color-card';
+                            card.innerHTML = `
+                                <div class="color-swatch" style="background: ${color.hex_code || '#FFFFFF'}"></div>
+                                <div class="color-info">
+                                    <div class="color-code">${color.color_code}</div>
+                                    <div class="color-name">${color.color_name}</div>
+                                </div>
+                            `;
+                            return card;
+                        };
+                        basicContainer.innerHTML = '';
+                        commonContainer.innerHTML = '';
+                        filteredColors.filter(c => c.color_type === 'basic').forEach(color => {
+                            basicContainer.appendChild(renderColor(color));
+                        });
+                        filteredColors.forEach(color => {
+                            commonContainer.appendChild(renderColor(color));
+                        });
+                    } else {
+                        basicContainer.innerHTML = '<p style="color: var(--text-secondary);">No colors found.</p>';
+                        commonContainer.innerHTML = '';
+                    }
+                } else {
+                    console.error('Failed to load colors:', response.status, response.statusText);
+                    const basicContainer = document.getElementById('basicColors');
+                    const commonContainer = document.getElementById('commonColors');
+                    if (basicContainer) {
+                        basicContainer.innerHTML = '<p style="color: var(--text-secondary);">Unable to load colors. Please refresh later.</p>';
+                    }
+                    if (commonContainer) {
+                        commonContainer.innerHTML = '';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading colors:', error);
+                const basicContainer = document.getElementById('basicColors');
+                const commonContainer = document.getElementById('commonColors');
+                if (basicContainer) {
+                    basicContainer.innerHTML = '<p style="color: var(--text-secondary);">Unable to load color references. Please refresh the page.</p>';
+                }
+                if (commonContainer) {
+                    commonContainer.innerHTML = '';
+                }
+            }
+        }
+
+        function handleManualDownload(event) {
+            // Check if file exists by trying to fetch it
+            fetch('/static/documents/User_Manual.pdf', { method: 'HEAD' })
+                .then(response => {
+                    if (!response.ok) {
+                        event.preventDefault();
+                        alert('User Manual is coming soon. Please check back later.');
+                        return false;
+                    }
+                })
+                .catch(() => {
+                    event.preventDefault();
+                    alert('User Manual is coming soon. Please check back later.');
+                    return false;
+                });
+            return true;
+        }
+
+        // Initialize public-safe resources; cart count remains authenticated-only.
+        updatePublicHeader();
+        loadBasicColors();
+        if (getToken()) {
+            loadCartCount();
+        }
+    </script>
+
+<footer class="portal-footer">
+    <div class="portal-footer-inner">
+        <div class="portal-footer-brand">
+            <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+            <div>
+                <div class="portal-footer-title">IntelliOpus Portal</div>
+                <div class="portal-footer-copy">An independent cross-border operating bridge for qualified supplier programs, customer resources, order visibility, and feedback-driven execution.</div>
+            </div>
+        </div>
+        <div class="portal-footer-col">
+            <h3>About</h3>
+            <a href="/about">About</a>
+            <a href="/service-history">Service history</a>
+            <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+            <a href="/manufacturers">Supplier Network</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Customer Workspace</h3>
+            <a href="/products">Product Programs</a>
+            <a href="/inventory">Local Samples</a>
+            <a href="/dashboard">Dashboard</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Resources</h3>
+            <a href="/reference-center">Resources</a>
+            <a href="/customer-service">Support</a>
+            <a href="/cart">Cart</a>
+        </div>
+    </div>
+    <div class="portal-footer-note">Customer-facing pages show approved product, resource, order, shipment, and feedback information only. Supplier coordination records stay separate from the customer workspace.</div>
+</footer>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

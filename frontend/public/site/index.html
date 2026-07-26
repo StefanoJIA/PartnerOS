@@ -1,0 +1,1096 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IntelliOpus Portal</title>
+    <link rel="stylesheet" href="/css/apple-style.css">
+    <link rel="stylesheet" href="/css/customer-theme.css">
+    <style>
+        :root {
+            --io-blue: #173E75;
+            --io-blue-deep: #061932;
+            --io-blue-soft: #EAF2FF;
+            --io-gold: #B88A32;
+            --io-ink: #122033;
+            --io-muted: #66758A;
+            --io-line: #DCE5F2;
+            --io-panel: #FFFFFF;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #F5F7FB;
+            color: var(--io-ink);
+        }
+
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(220, 229, 242, 0.9);
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: saturate(180%) blur(20px);
+        }
+
+        .site-header-inner {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .brand-lockup {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--io-ink);
+            min-width: 230px;
+        }
+
+        .brand-lockup img {
+            width: 52px;
+            height: 52px;
+            object-fit: contain;
+        }
+
+        .brand-name {
+            display: block;
+            font-size: 20px;
+            font-weight: 850;
+            line-height: 1.05;
+        }
+
+        .brand-subtitle {
+            display: block;
+            font-size: 12px;
+            color: var(--io-muted);
+            margin-top: 4px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .header-link {
+            color: #304257;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 8px 10px;
+            border-radius: 8px;
+        }
+
+        .header-link:hover {
+            background: var(--io-blue-soft);
+            color: var(--io-blue);
+        }
+
+        .hero-wrap {
+            position: relative;
+            overflow: hidden;
+            background:
+                linear-gradient(120deg, rgba(6, 25, 50, 0.98) 0%, rgba(23, 62, 117, 0.95) 46%, rgba(246, 249, 253, 1) 46.2%, rgba(246, 249, 253, 1) 100%);
+        }
+
+        .hero-wrap::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(118deg, transparent 0 53%, rgba(184, 138, 50, 0.36) 53.2% 53.7%, transparent 54%),
+                linear-gradient(118deg, transparent 0 60%, rgba(255, 255, 255, 0.18) 60.1% 60.35%, transparent 60.6%);
+            pointer-events: none;
+        }
+
+        .hero {
+            position: relative;
+            max-width: 1240px;
+            min-height: 620px;
+            margin: 0 auto;
+            padding: 70px 24px 54px;
+            display: grid;
+            grid-template-columns: minmax(0, 0.82fr) minmax(430px, 1.18fr);
+            gap: 48px;
+            align-items: center;
+        }
+
+        .hero-kicker {
+            color: #D8E6FF;
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 18px;
+        }
+
+        .hero-title {
+            color: #FFFFFF;
+            font-size: 76px;
+            line-height: 0.96;
+            letter-spacing: 0;
+            margin: 0 0 22px;
+            max-width: 560px;
+        }
+
+        .hero-line {
+            width: 96px;
+            height: 3px;
+            background: var(--io-gold);
+            margin-bottom: 22px;
+        }
+
+        .hero-copy {
+            color: #D5E1F2;
+            font-size: 20px;
+            line-height: 1.5;
+            margin: 0 0 30px;
+            max-width: 500px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .primary-cta,
+        .secondary-cta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 46px;
+            padding: 12px 19px;
+            border-radius: 9px;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 850;
+        }
+
+        .primary-cta {
+            background: #FFFFFF;
+            color: var(--io-blue);
+            box-shadow: 0 12px 28px rgba(2, 10, 28, 0.28);
+        }
+
+        .secondary-cta {
+            background: rgba(255, 255, 255, 0.08);
+            color: #FFFFFF;
+            border: 1px solid rgba(255, 255, 255, 0.24);
+        }
+
+        .scene-stage {
+            position: relative;
+            min-height: 520px;
+        }
+
+        .scene-board {
+            position: relative;
+            min-height: 500px;
+            border-radius: 32px;
+            padding: 22px;
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid rgba(220, 229, 242, 0.92);
+            box-shadow: 0 30px 78px rgba(18, 35, 66, 0.16);
+            overflow: hidden;
+        }
+
+        .scene-board::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(135deg, rgba(23, 62, 117, 0.10), transparent 42%),
+                linear-gradient(35deg, transparent 58%, rgba(184, 138, 50, 0.13));
+            pointer-events: none;
+        }
+
+        .scene-photo {
+            position: absolute;
+            overflow: hidden;
+            border-radius: 24px;
+            background: #DCE5F2;
+            box-shadow: 0 18px 46px rgba(6, 25, 50, 0.16);
+        }
+
+        .scene-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            filter: saturate(0.92) contrast(1.02);
+        }
+
+        .scene-photo::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(6, 25, 50, 0.02), rgba(6, 25, 50, 0.24));
+        }
+
+        .scene-office {
+            left: 22px;
+            top: 22px;
+            right: 150px;
+            height: 260px;
+        }
+
+        .scene-education {
+            right: 22px;
+            top: 64px;
+            width: 210px;
+            height: 180px;
+        }
+
+        .scene-home {
+            left: 72px;
+            bottom: 28px;
+            width: 245px;
+            height: 174px;
+        }
+
+        .scene-overlay {
+            position: absolute;
+            right: 32px;
+            bottom: 34px;
+            width: 310px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(220, 229, 242, 0.96);
+            box-shadow: 0 18px 42px rgba(18, 35, 66, 0.14);
+            padding: 22px;
+        }
+
+        .scene-overlay b {
+            display: block;
+            color: var(--io-gold);
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .scene-overlay h2 {
+            color: var(--io-ink);
+            font-size: 28px;
+            line-height: 1.05;
+            margin: 0 0 10px;
+        }
+
+        .scene-overlay p {
+            color: var(--io-muted);
+            font-size: 14px;
+            line-height: 1.45;
+            margin: 0;
+        }
+
+        .scene-strip {
+            position: absolute;
+            left: 330px;
+            right: 356px;
+            bottom: 42px;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .scene-chip {
+            border-radius: 999px;
+            padding: 8px 10px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(220, 229, 242, 0.96);
+            color: var(--io-blue);
+            font-size: 11px;
+            font-weight: 850;
+            text-align: center;
+            white-space: nowrap;
+            box-shadow: 0 10px 24px rgba(18, 35, 66, 0.08);
+        }
+        .main-content {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 58px 24px 64px;
+        }
+
+        .section {
+            margin-top: 42px;
+        }
+
+        .section:first-child {
+            margin-top: 0;
+        }
+
+        .section-header {
+            display: grid;
+            grid-template-columns: minmax(0, 0.7fr) minmax(280px, 0.3fr);
+            gap: 24px;
+            align-items: end;
+            margin-bottom: 18px;
+        }
+
+        .section-kicker {
+            color: var(--io-blue);
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .section-title {
+            font-size: 34px;
+            line-height: 1.12;
+            font-weight: 850;
+            margin: 0;
+            color: var(--io-ink);
+            max-width: 760px;
+        }
+
+        .section-note {
+            color: var(--io-muted);
+            font-size: 15px;
+            line-height: 1.55;
+            margin: 0;
+        }
+
+        .capability-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .capability-card,
+        .program-card {
+            background: #FFFFFF;
+            border: 1px solid var(--io-line);
+            border-radius: 18px;
+            box-shadow: 0 12px 32px rgba(24, 46, 84, 0.055);
+        }
+
+        .capability-card {
+            min-height: 190px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .capability-card b {
+            color: var(--io-blue);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .capability-card h3 {
+            margin: 16px 0 8px;
+            color: var(--io-ink);
+            font-size: 21px;
+            line-height: 1.18;
+        }
+
+        .capability-card p {
+            color: #5B687A;
+            font-size: 14px;
+            line-height: 1.48;
+            margin: 0;
+        }
+
+
+        .bridge-flow-grid {
+            display: grid;
+            grid-template-columns: 0.95fr 1.1fr 0.95fr;
+            gap: 16px;
+            align-items: stretch;
+        }
+
+        .bridge-flow-card {
+            position: relative;
+            overflow: hidden;
+            min-height: 220px;
+            border: 1px solid var(--io-line);
+            border-radius: 22px;
+            padding: 24px;
+            background: linear-gradient(145deg, #FFFFFF 0%, #F7FAFF 100%);
+            box-shadow: 0 14px 38px rgba(24, 46, 84, 0.07);
+        }
+
+        .bridge-flow-card.primary {
+            background: linear-gradient(145deg, #0D2A52 0%, #225EA9 100%);
+            color: #FFFFFF;
+        }
+
+        .bridge-flow-card.primary h3,
+        .bridge-flow-card.primary p,
+        .bridge-flow-card.primary b {
+            color: #FFFFFF;
+        }
+
+        .bridge-flow-card b {
+            color: var(--io-blue);
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .bridge-flow-card h3 {
+            margin: 30px 0 10px;
+            color: var(--io-ink);
+            font-size: 26px;
+            line-height: 1.1;
+        }
+
+        .bridge-flow-card p {
+            color: #5B687A;
+            line-height: 1.55;
+            margin: 0;
+            max-width: 92%;
+        }
+
+        .bridge-flow-card::after {
+            content: "";
+            position: absolute;
+            width: 110px;
+            height: 110px;
+            right: -36px;
+            bottom: -36px;
+            border-radius: 999px;
+            background: rgba(47, 114, 217, 0.08);
+        }
+
+        .bridge-flow-card.primary::after {
+            background: rgba(184, 138, 50, 0.22);
+        }
+        .program-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 16px;
+        }
+
+        .program-card {
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 190px 1fr;
+            min-height: 230px;
+        }
+        .program-card-text {
+            display: block;
+            min-height: 210px;
+            background:
+                linear-gradient(150deg, rgba(255, 255, 255, 1) 0%, rgba(248, 251, 255, 1) 100%);
+        }
+
+        .program-card-text .program-body {
+            min-height: 210px;
+        }
+
+        .program-media {
+            background: linear-gradient(145deg, #F8FBFF 0%, #EEF4FC 100%);
+            border-right: 1px solid var(--io-line);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+        }
+
+        .program-media img {
+            width: 100%;
+            height: 160px;
+            object-fit: contain;
+            mix-blend-mode: multiply;
+        }
+
+        .program-body {
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .program-label {
+            color: var(--io-blue);
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            margin-bottom: 8px;
+        }
+
+        .program-body h3 {
+            margin: 0 0 9px;
+            font-size: 22px;
+            line-height: 1.2;
+        }
+
+        .program-body p {
+            margin: 0;
+            color: #4D5B6C;
+            line-height: 1.55;
+            font-size: 14px;
+        }
+
+        .future-note {
+            margin-top: 16px;
+            padding: 17px 19px;
+            border: 1px dashed #BFD5FF;
+            border-radius: 16px;
+            background: #FFFFFF;
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: center;
+        }
+
+        .future-note strong {
+            color: var(--io-ink);
+        }
+
+        .future-note span {
+            color: var(--io-muted);
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        .entry-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .entry-card {
+            background: #FFFFFF;
+            border: 1px solid var(--io-line);
+            border-radius: 16px;
+            padding: 20px;
+            min-height: 168px;
+            text-decoration: none;
+            color: var(--io-ink);
+            box-shadow: 0 10px 28px rgba(24, 46, 84, 0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .entry-card:hover {
+            border-color: #8BB3F4;
+            transform: translateY(-2px);
+            box-shadow: 0 16px 34px rgba(24, 46, 84, 0.09);
+        }
+
+        .entry-card b {
+            color: var(--io-blue);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .entry-card h3 {
+            margin: 14px 0 8px;
+            font-size: 19px;
+            line-height: 1.2;
+        }
+
+        .entry-card p {
+            margin: 0;
+            color: #5B687A;
+            font-size: 14px;
+            line-height: 1.48;
+        }
+.footer {
+            border-top: 1px solid var(--io-line);
+            color: var(--io-muted);
+            font-size: 13px;
+            padding: 28px 24px;
+            text-align: center;
+            background: #FFFFFF;
+        }
+
+        .footer a {
+            color: var(--io-blue);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        @media (max-width: 1080px) {
+.hero,
+            .section-header,
+            .program-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-wrap {
+                background: linear-gradient(180deg, var(--io-blue-deep) 0%, var(--io-blue) 58%, #F8FAFD 58.2%, #F8FAFD 100%);
+            }
+
+            .scene-stage {
+                min-height: auto;
+            }
+
+            .capability-grid,
+            .entry-grid,
+            .bridge-flow-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 760px) {
+.site-header-inner {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .hero {
+                padding-top: 44px;
+            }
+
+            .hero-title {
+                font-size: 48px;
+            }
+
+            .scene-board {
+                min-height: auto;
+                display: grid;
+                gap: 14px;
+            }
+
+            .scene-photo,
+            .scene-overlay,
+            .scene-strip {
+                position: relative;
+                inset: auto;
+                left: auto;
+                right: auto;
+                top: auto;
+                bottom: auto;
+                width: auto;
+            }
+
+            .scene-photo {
+                height: 190px;
+            }
+
+            .scene-strip,
+            .capability-grid,
+            .entry-grid,
+            .bridge-flow-grid,
+            .program-card {
+                grid-template-columns: 1fr;
+            }
+
+            .program-media {
+                border-right: none;
+                border-bottom: 1px solid var(--io-line);
+            }
+
+            .future-note {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header portal-header">
+    <div class="site-header-inner portal-header-inner">
+        <a class="portal-brand" href="/">
+    <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+    <span>
+        <strong>IntelliOpus</strong>
+        <small>Service Portal</small>
+    </span>
+</a>
+        <nav class="portal-nav portal-nav-main" aria-label="Primary navigation">
+    <div class="portal-nav-cluster" aria-label="Public site navigation">
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/about">About</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">IntelliOpus</span>
+                <a href="/about">Company overview</a>
+                <a href="/service-history">Service history</a>
+                <a href="/about#operating-bridge">U.S.-China operating bridge</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/services">Services</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Service scope</span>
+                <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+                <a href="/services#connected-workflow">From catalog to delivery</a>
+                <a href="/services#safety-boundary">Customer-safe boundary</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/manufacturers">Supplier Network</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Supplier network</span>
+                <a href="/manufacturers#hosun">HOSUN lifting systems</a>
+                <a href="/manufacturers#jobo">JOBO education furniture</a>
+                <a href="/manufacturers#future-suppliers">Future supplier programs</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/products">Product Programs</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Product programs</span>
+                <a href="/products">Browse by supplier</a>
+                <a href="/inventory">Local Samples</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/reference-center">Resources</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Resources</span>
+                <a href="/reference-center">Resource library</a>
+                <a href="/reference-center#ral">RAL color guide</a>
+                <a href="/reference-center#hosun-resources">HOSUN resources</a>
+                <a href="/reference-center#jobo-resources">JOBO resources</a>
+            </div>
+        </div>
+    </div>
+</nav>
+        <div class="portal-user portal-public-actions">
+            <div class="portal-nav-group portal-workspace-menu">
+                <a class="portal-nav-link portal-workspace-link" href="/dashboard">Customer Workspace</a>
+                <div class="portal-dropdown portal-dropdown-right">
+                    <a href="/dashboard">Workspace overview</a>
+                    <a href="/dashboard#ordersContainer">Orders and tracking</a>
+                    <a href="/inventory">Local samples</a>
+                    <a href="/customer-service">Support and feedback</a>
+                    <a href="/cart">Cart</a>
+                </div>
+            </div>
+            <a href="/login" class="btn btn-login-header" id="signInBtn">Sign In</a>
+            <div id="welcomeUser" class="portal-user-session" style="display: none;">
+                <span class="portal-user-label">Welcome, <strong id="userName">User</strong></span>
+                <button class="btn btn-logout" onclick="logout()">Sign Out</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div class="hero-wrap">
+        <section class="hero">
+            <div>
+                <div class="hero-kicker">Cross-border supplier network</div>
+                <h1 class="hero-title">Connect. Source. Deliver.</h1>
+                <div class="hero-line"></div>
+                <p class="hero-copy">Connecting American project demand with trusted manufacturers.</p>
+                <div class="hero-actions">
+                    <a class="primary-cta" href="/services">Explore Services</a>
+                    <a class="secondary-cta" href="/manufacturers">Supplier Network</a>
+                    <a class="secondary-cta" href="/products">Product Programs</a>
+                </div>
+            </div>
+
+            <div class="scene-stage" aria-label="IntelliOpus connects markets, suppliers, and project environments">
+                <div class="scene-board">
+                    <div class="scene-photo scene-office">
+                        <img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1100&q=82" onerror="this.onerror=null;this.src='/intelliopus-logo.png';this.classList.add('image-fallback');" alt="Modern office collaboration environment">
+                    </div>
+                    <div class="scene-photo scene-education">
+                        <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=700&q=82" onerror="this.onerror=null;this.src='/intelliopus-logo.png';this.classList.add('image-fallback');" alt="Education project environment">
+                    </div>
+                    <div class="scene-photo scene-home">
+                        <img src="https://images.unsplash.com/photo-1486946255434-2466348c2166?auto=format&fit=crop&w=700&q=82" onerror="this.onerror=null;this.src='/intelliopus-logo.png';this.classList.add('image-fallback');" alt="Home and workplace interior environment">
+                    </div>
+                    <div class="scene-strip" aria-label="IntelliOpus service model">
+                        <div class="scene-chip">Product programs</div>
+                        <div class="scene-chip">Order visibility</div>
+                        <div class="scene-chip">Resource library</div>
+                    </div>
+                    <div class="scene-overlay">
+                        <b>Operating bridge</b>
+                        <h2>Supplier programs, one customer path.</h2>
+                        <p>Catalog, samples, quotes, orders, logistics, resources, and feedback connect across approved supplier categories.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <section class="site-journey-ribbon" aria-label="IntelliOpus site journey">
+        <a href="/about"><span>01</span><strong>About IntelliOpus</strong><small>Independent bridge</small></a>
+        <a href="/services"><span>02</span><strong>Service model</strong><small>Source, quote, deliver</small></a>
+        <a href="/manufacturers"><span>03</span><strong>Manufacturers</strong><small>Peer supplier programs</small></a>
+        <a href="/products"><span>04</span><strong>Catalog & resources</strong><small>Products, samples, files</small></a>
+        <a href="/dashboard"><span>05</span><strong>Customer workspace</strong><small>Orders, tracking, feedback</small></a>
+    </section>
+    <main class="main-content">
+        <section class="section" id="about">
+            <div class="section-header">
+                <div>
+                    <div class="section-kicker">What IntelliOpus connects</div>
+                    <h2 class="section-title">One bridge from product interest to delivery visibility.</h2>
+                </div>
+                <p class="section-note">The portal is built for approved supplier programs, not a single brand. Each supplier keeps its own catalog, resources, quote logic, order rules, and feedback path inside one customer workspace.</p>
+            </div>
+
+            <div class="capability-grid">
+                <article class="capability-card">
+                    <div>
+                        <b>01 Discovery</b>
+                        <h3>Product programs</h3>
+                        <p>Present supplier product families in the way customers select, compare, and request support.</p>
+                    </div>
+                </article>
+                <article class="capability-card">
+                    <div>
+                        <b>02 Decision support</b>
+                        <h3>Samples & resources</h3>
+                        <p>Keep samples, color references, catalogs, manuals, and project documents in one customer-safe place.</p>
+                    </div>
+                </article>
+                <article class="capability-card">
+                    <div>
+                        <b>03 Execution</b>
+                        <h3>Orders & logistics</h3>
+                        <p>Show order, production, shipment, delivery, and feedback progress while supplier coordination stays separate.</p>
+                    </div>
+                </article>
+                <article class="capability-card">
+                    <div>
+                        <b>04 Memory</b>
+                        <h3>Feedback loops</h3>
+                        <p>Use feedback to improve supplier selection, product focus, and future quote decisions.</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+
+        <section class="section bridge-flow-section">
+            <div class="section-header">
+                <div>
+                    <div class="section-kicker">Operating bridge</div>
+                    <h2 class="section-title">The portal connects demand, supplier capability, and customer execution.</h2>
+                </div>
+                <p class="section-note">IntelliOpus turns product interest into a customer-safe workspace across HOSUN, JOBO, and future supplier programs.</p>
+            </div>
+            <div class="bridge-flow-grid">
+                <article class="bridge-flow-card">
+                    <b>Market side</b>
+                    <h3>Customers compare real project options.</h3>
+                    <p>Product families, sample availability, resources, and support requests are organized around how customers decide.</p>
+                </article>
+                <article class="bridge-flow-card primary">
+                    <b>IntelliOpus role</b>
+                    <h3>One operating bridge across suppliers.</h3>
+                    <p>We connect U.S. project demand with qualified manufacturing programs while keeping quote, order, logistics, and feedback data consistent.</p>
+                </article>
+                <article class="bridge-flow-card">
+                    <b>Manufacturer side</b>
+                    <h3>Each supplier keeps its own product logic.</h3>
+                    <p>HOSUN, JOBO, and future suppliers can use different product rules, resources, and delivery requirements inside one customer experience.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <div>
+                    <div class="section-kicker">Current programs</div>
+                    <h2 class="section-title">Furniture is the first vertical, not the final boundary.</h2>
+                </div>
+                <p class="section-note">The current catalog starts with configurable furniture systems. The same structure can support future manufacturing categories after supplier data is approved.</p>
+            </div>
+
+            <div class="program-layout program-layout-text">
+                <article class="program-card program-card-text">
+                    <div class="program-body">
+                        <div class="program-label">Active vertical</div>
+                        <h3>Workplace, education, and project interiors</h3>
+                        <p>Furniture is the first operating category because it combines product selection, samples, quote logic, delivery visibility, and after-sales feedback.</p>
+                    </div>
+                </article>
+                <article class="program-card program-card-text">
+                    <div class="program-body">
+                        <div class="program-label">Expansion model</div>
+                        <h3>More supplier categories can enter the same flow</h3>
+                        <p>Each approved supplier keeps its own product data, resources, delivery requirements, quote rules, and customer-safe information boundary.</p>
+                    </div>
+                </article>
+            </div>
+
+            <div class="future-note">
+                <div>
+                    <strong>Future categories</strong><br>
+                    <span>JOBO education furniture is active as a separate supplier program. Future manufacturing categories can be onboarded through the same supplier data and customer-safe field model.</span>
+                </div>
+                <a class="secondary-cta" style="color: var(--io-blue); border-color: #BFD5FF; background: #FFFFFF;" href="/products">View Programs</a>
+            </div>
+        </section>
+
+        <section class="section" id="site-reading-path">
+            <div class="section-header">
+                <div>
+                    <div class="section-kicker">How to use this site</div>
+                    <h2 class="section-title">Start with the business model, then enter the customer workspace.</h2>
+                </div>
+                <p class="section-note">The public pages explain IntelliOpus, the service model, and peer supplier programs. Signed-in customers then use one workspace for catalog review, samples, resources, orders, shipment updates, and feedback.</p>
+            </div>
+            <div class="entry-grid">
+                <a class="entry-card" href="/about">
+                    <div>
+                        <b>01 Company</b>
+                        <h3>Understand IntelliOpus</h3>
+                        <p>See why the portal is an independent operating bridge rather than a single-supplier catalog.</p>
+                    </div>
+                </a>
+                <a class="entry-card" href="/service-history">
+                    <div>
+                        <b>02 History</b>
+                        <h3>See the service history</h3>
+                        <p>Follow how product promotion, interval quoting, order tracking, and feedback became a reusable model.</p>
+                    </div>
+                </a>
+                <a class="entry-card" href="/services">
+                    <div>
+                        <b>03 Services</b>
+                        <h3>Review the operating loop</h3>
+                        <p>Understand how product interest moves through supplier fit, quote support, order visibility, and feedback.</p>
+                    </div>
+                </a>
+                <a class="entry-card" href="/manufacturers">
+                    <div>
+                        <b>04 Suppliers</b>
+                        <h3>Compare supplier programs</h3>
+                        <p>HOSUN, JOBO, and future suppliers stay peer-level while keeping distinct product and resource rules.</p>
+                    </div>
+                </a>
+                <a class="entry-card" href="/products">
+                    <div>
+                        <b>05 Products</b>
+                        <h3>Browse product programs</h3>
+                        <p>Move from supplier programs into approved product families, samples, and customer-safe resources.</p>
+                    </div>
+                </a>
+                <a class="entry-card" href="/dashboard">
+                    <div>
+                        <b>06 Workspace</b>
+                        <h3>Continue after sign-in</h3>
+                        <p>Use the customer-safe workspace for products, samples, documents, orders, shipment status, and support.</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+    </main>
+<script>
+        const API_BASE_URL = window.location.origin;
+
+        function getToken() {
+            return localStorage.getItem('access_token');
+        }
+
+        function removeToken() {
+            localStorage.removeItem('access_token');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to sign out?')) {
+                removeToken();
+                window.location.reload();
+            }
+        }
+
+        async function checkLoginStatus() {
+            const token = getToken();
+            if (!token) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const signInBtn = document.getElementById('signInBtn');
+                    const welcomeUser = document.getElementById('welcomeUser');
+                    if (signInBtn) signInBtn.style.display = 'none';
+                    if (welcomeUser) {
+                        welcomeUser.style.display = 'flex';
+                        welcomeUser.style.flexDirection = 'row';
+                    }
+                    const userName = document.getElementById('userName');
+                    if (userName) {
+                        const companyName = data.company || data.name || data.username || 'User';
+                        userName.textContent = companyName;
+                    }
+                } else {
+                    removeToken();
+                }
+            } catch (error) {
+                console.error('Error checking login status:', error);
+            }
+        }
+
+        checkLoginStatus();
+    </script>
+
+<footer class="portal-footer">
+    <div class="portal-footer-inner">
+        <div class="portal-footer-brand">
+            <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+            <div>
+                <div class="portal-footer-title">IntelliOpus Portal</div>
+                <div class="portal-footer-copy">An independent cross-border operating bridge for qualified supplier programs, customer resources, order visibility, and feedback-driven execution.</div>
+            </div>
+        </div>
+        <div class="portal-footer-col">
+            <h3>About</h3>
+            <a href="/about">About</a>
+            <a href="/service-history">Service history</a>
+            <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+            <a href="/manufacturers">Supplier Network</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Customer Workspace</h3>
+            <a href="/products">Product Programs</a>
+            <a href="/inventory">Local Samples</a>
+            <a href="/dashboard">Dashboard</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Resources</h3>
+            <a href="/reference-center">Resources</a>
+            <a href="/customer-service">Support</a>
+            <a href="/cart">Cart</a>
+        </div>
+    </div>
+    <div class="portal-footer-note">Customer-facing pages show approved product, resource, order, shipment, and feedback information only. Supplier coordination records stay separate from the customer workspace.</div>
+</footer>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

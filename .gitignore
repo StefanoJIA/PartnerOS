@@ -54,3 +54,6 @@ local_data/
 local_data/报价模型与格式.xlsx
 *.private.csv
 real_leads_*.csv
+
+# Large customer portal brochures (local/demo only — exceeds GitHub limit)
+frontend/public/static/documents/jobo-school-furniture-catalog.pdf

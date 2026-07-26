@@ -1,0 +1,2743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Models - IntelliOpus Portal</title>
+    <link rel="stylesheet" href="/css/apple-style.css">
+    <style>
+        body {
+            background: var(--background);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--background);
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--spacing-md) var(--spacing-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: saturate(180%) blur(20px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .header-logo a {
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .header-logo a img {
+            height: 40px;
+            max-width: 160px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .header-logo img:last-child {
+            height: 110px;
+            max-width: 560px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+
+        .cart-icon {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            background: var(--background-secondary);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: background 0.2s;
+        }
+
+        .cart-icon:hover {
+            background: #E8E8ED;
+        }
+
+        .cart-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #FF3B30;
+            color: white;
+            border-radius: 10px;
+            min-width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 0 4px;
+        }
+
+        .btn-logout {
+            padding: 8px 16px;
+            font-size: 15px;
+            background: var(--background-secondary);
+            color: var(--text-primary);
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+        }
+
+        .btn-logout:hover {
+            background: #E8E8ED;
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-xl) var(--spacing-lg);
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            color: var(--primary);
+            text-decoration: none;
+            margin-bottom: var(--spacing-lg);
+            font-size: 15px;
+            transition: opacity 0.2s;
+        }
+
+        .back-link:hover {
+            opacity: 0.7;
+        }
+
+        .group-header {
+            margin-bottom: var(--spacing-xl);
+            padding-bottom: var(--spacing-lg);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .group-name {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+        }
+
+        .group-name-en {
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+
+        .filter-section {
+            background: var(--background);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .filter-row {
+            display: flex;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: var(--spacing-xs);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: var(--spacing-lg);
+        }
+
+        
+        @media (max-width: 768px) {
+            .product-image {
+                height: 280px;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .product-image {
+                height: 380px;
+            }
+        }
+
+        .product-card {
+            background: var(--background);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 0;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 350px;
+            background: var(--background-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            padding: var(--spacing-md);
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        
+        .product-image[data-sku="HS65652LRPNTZ"] {
+            height: 350px; 
+            align-items: flex-start; 
+            padding-top: var(--spacing-sm); 
+        }
+
+        .product-image[data-sku="HS65652LRPNTZ"] img {
+            transform: scale(1.3) translateY(-10px); 
+            object-fit: contain;
+        }
+
+        .product-image span {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .product-content {
+            padding: var(--spacing-lg);
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+        }
+
+        .product-header {
+            margin-bottom: var(--spacing-md);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .product-sku {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-family: 'Monaco', 'Courier New', monospace;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .product-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.4;
+            word-wrap: break-word;
+            margin: 0;
+        }
+
+        .product-specs {
+            margin-top: var(--spacing-md);
+            flex: 1;
+        }
+
+        .spec-row {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--spacing-xs) 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .spec-row:last-child {
+            border-bottom: none;
+        }
+
+        .spec-label {
+            font-weight: 500;
+            color: var(--text-secondary);
+            flex: 0 0 180px;
+            white-space: nowrap;
+        }
+
+        .spec-value {
+            color: var(--text-primary);
+            text-align: right;
+            flex: 1;
+            font-weight: 400;
+        }
+
+        
+        
+
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--text-secondary);
+        }
+
+        .loading {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--text-secondary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            background: var(--background);
+            color: var(--text-primary);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        
+        .add-to-cart-btn {
+            width: 100%;
+            padding: 10px 16px;
+            background: var(--background-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: var(--spacing-md);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            min-height: 44px;
+        }
+
+        .add-to-cart-btn:hover {
+            background: #E8E8ED;
+            border-color: var(--primary);
+        }
+
+        .add-to-cart-btn:active {
+            transform: scale(0.98);
+        }
+
+        .add-to-cart-btn:disabled {
+            background: var(--background-secondary);
+            color: var(--text-secondary);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        
+        .product-config-selector {
+            margin-top: var(--spacing-md);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .config-group {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .config-group-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-xs);
+            display: block;
+        }
+
+        .config-buttons {
+            display: flex;
+            gap: var(--spacing-xs);
+            flex-wrap: wrap;
+        }
+
+        .config-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            background: var(--background);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            color: var(--text-primary);
+        }
+
+        .config-btn:hover {
+            border-color: var(--primary);
+            background: rgba(0, 122, 255, 0.05);
+        }
+
+        .config-btn.selected {
+            background: #007AFF !important;
+            color: white !important;
+            border-color: #007AFF !important;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0, 122, 255, 0.3);
+        }
+
+        
+        .desktop-size-section {
+            margin-top: var(--spacing-md);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .desktop-size-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .desktop-size-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .desktop-size-input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .desktop-size-input-group label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .desktop-size-input-group input {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            background: var(--background);
+            color: var(--text-primary);
+        }
+
+        .desktop-size-input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .calculated-specs {
+            margin-top: var(--spacing-sm);
+            padding: var(--spacing-sm);
+            background: rgba(0, 122, 255, 0.05);
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .calculated-specs.hidden {
+            display: none;
+        }
+
+        .calculated-specs-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .calculated-specs-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .calculated-specs-label {
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .calculated-specs-value {
+            color: var(--primary);
+            font-weight: 600;
+        }
+    </style>
+    <link rel="stylesheet" href="/css/customer-theme.css">
+</head>
+<body>
+    <header class="site-header portal-header">
+    <div class="site-header-inner portal-header-inner">
+        <a class="portal-brand" href="/">
+    <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+    <span>
+        <strong>IntelliOpus</strong>
+        <small>Service Portal</small>
+    </span>
+</a>
+        <nav class="portal-nav portal-nav-main" aria-label="Primary navigation">
+    <div class="portal-nav-cluster" aria-label="Public site navigation">
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/about">About</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">IntelliOpus</span>
+                <a href="/about">Company overview</a>
+                <a href="/service-history">Service history</a>
+                <a href="/about#operating-bridge">U.S.-China operating bridge</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/services">Services</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Service scope</span>
+                <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+                <a href="/services#connected-workflow">From catalog to delivery</a>
+                <a href="/services#safety-boundary">Customer-safe boundary</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/manufacturers">Supplier Network</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Supplier network</span>
+                <a href="/manufacturers#hosun">HOSUN lifting systems</a>
+                <a href="/manufacturers#jobo">JOBO education furniture</a>
+                <a href="/manufacturers#future-suppliers">Future supplier programs</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link is-active" href="/products">Product Programs</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Product programs</span>
+                <a href="/products">Browse by supplier</a>
+                <a href="/inventory">Local Samples</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/reference-center">Resources</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Resources</span>
+                <a href="/reference-center">Resource library</a>
+                <a href="/reference-center#ral">RAL color guide</a>
+                <a href="/reference-center#hosun-resources">HOSUN resources</a>
+                <a href="/reference-center#jobo-resources">JOBO resources</a>
+            </div>
+        </div>
+    </div>
+</nav>
+        <div class="portal-user">
+            <div class="portal-nav-group portal-workspace-menu">
+                <a class="portal-nav-link portal-workspace-link" href="/dashboard">Customer Workspace</a>
+                <div class="portal-dropdown portal-dropdown-right">
+                    <a href="/dashboard">Workspace overview</a>
+                    <a href="/dashboard#ordersContainer">Orders and tracking</a>
+                    <a href="/inventory">Local samples</a>
+                    <a href="/customer-service">Support and feedback</a>
+                    <a href="/cart">Cart</a>
+                </div>
+            </div>
+            <a href="/cart" class="cart-icon" id="cartIcon" aria-label="Cart">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+    </svg>
+    <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
+</a>
+            <button class="btn btn-logout" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
+</div>
+
+        <section class="portal-context-band workspace-context-band">
+        <div>
+            <div class="portal-context-kicker">Product configuration</div>
+            <h1>Frame option workspace.</h1>
+            <p>Choose frame options inside the HOSUN supplier program. Other supplier programs keep their own product rules and order paths.</p>
+        </div>
+        <div class="portal-context-links">
+                <a href="/products">Product Programs <small>program list</small></a>
+                <a href="/inventory">Samples <small>local review</small></a>
+                <a href="/reference-center">Resources <small>support files</small></a>
+        </div>
+    </section>
+    <section class="workspace-path-mini product-decision-path" aria-label="Product decision path">
+        <a href="/manufacturers"><strong>1. Supplier program</strong><small>Understand the supplier and product family.</small></a>
+        <span class="is-current"><strong>2. Product options</strong><small>Review model details or configuration choices.</small></span>
+        <a href="/reference-center"><strong>3. Samples & resources</strong><small>Confirm colors, manuals, and support files.</small></a>
+        <a href="/cart"><strong>4. Selected products</strong><small>Keep chosen items together before order creation.</small></a>
+        <a href="/dashboard"><strong>5. Order workspace</strong><small>Follow submitted orders and support actions.</small></a>
+    </section><div class="main-content">
+        <a href="/products" class="back-link">->Back to Product Categories</a>
+        
+        <div id="groupHeader" class="group-header">
+            <div class="loading">Loading...</div>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="productSearch">Search Products</label>
+                    <input type="text" id="productSearch" class="form-input" placeholder="Search by SKU, name, or specifications...">
+                </div>
+            </div>
+        </div>
+
+        <div id="productsContainer" class="loading">Loading product models...</div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin;
+        let allProducts = [];
+        let currentGroupName = '';
+
+        function getToken() {
+            return localStorage.getItem('access_token');
+        }
+
+        function removeToken() {
+            localStorage.removeItem('access_token');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to sign out?')) {
+                removeToken();
+                window.location.href = '/login';
+            }
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount);
+        }
+
+        // Unit conversion functions
+        function mmToInch(value) {
+            if (!value) return '';
+            const numbers = value.match(/\d+\.?\d*/g);
+            if (!numbers) return value;
+            
+            if (value.includes('~')) {
+                const parts = value.split('~');
+                const min = parseFloat(parts[0].match(/\d+\.?\d*/)?.[0] || 0);
+                const max = parseFloat(parts[1].match(/\d+\.?\d*/)?.[0] || 0);
+                return `${(min / 25.4).toFixed(2)}"~${(max / 25.4).toFixed(2)}"`;
+            }
+            
+            if (value.includes('*')) {
+                return numbers.map(n => (parseFloat(n) / 25.4).toFixed(2)).join('*') + '"';
+            }
+            
+            const num = parseFloat(numbers[0]);
+            return (num / 25.4).toFixed(2) + '"';
+        }
+
+        function kgToLbs(value, divideByTwo = false) {
+            if (!value && value !== 0) return '';
+            // Handle both string and number types
+            let num = typeof value === 'number' ? value : parseFloat(value);
+            if (isNaN(num)) {
+                // Try to extract number from string if it's not a pure number
+                const numbers = String(value).match(/\d+\.?\d*/g);
+                if (!numbers) return value;
+                num = parseFloat(numbers[0]);
+            }
+            if (isNaN(num)) return value;
+            
+            if (divideByTwo) {
+                num = num / 2;
+            }
+            return (num * 2.20462).toFixed(1) + ' lbs';
+        }
+
+        function convertAdjustableWidth(value) {
+            if (!value) return '';
+            if (value.includes('~') && value.includes('mm')) {
+                const parts = value.split('~');
+                const min = parseFloat(parts[0].match(/\d+/)?.[0] || 0);
+                const max = parseFloat(parts[1].match(/\d+/)?.[0] || 0);
+                return `${(min / 25.4).toFixed(2)}"~${(max / 25.4).toFixed(2)}"`;
+            }
+            return value;
+        }
+
+        function convertLiftingSpeed(value) {
+            if (!value && value !== 0) return '';
+            // Handle both string and number types
+            let num = typeof value === 'number' ? value : parseFloat(value);
+            if (isNaN(num)) {
+                // Try to extract number from string if it contains 'mm/s'
+                if (String(value).includes('mm/s')) {
+                    num = parseFloat(String(value).match(/\d+\.?\d*/)?.[0] || 0);
+                } else {
+                    return value;
+                }
+            }
+            if (isNaN(num)) return value;
+            return (num / 25.4).toFixed(2) + '"/s';
+        }
+
+        // Format SKU: replace middle 5 digits with ' **** * '
+        // Example: HS80502PRCWSZ -> HS **** 2PRCWSZ
+        // Example: HS80503PRFDF2 -> HS **** 3PRFDF2
+        // Special: Single Motor Desk Frame (2PRSDFZ) -> HS **** 2PRSDFZ
+        function formatSkuForDisplay(sku) {
+            if (!sku || !sku.startsWith('HS')) return sku;
+            
+            // Special handling for Single Motor Desk Frame (2PRSDFZ)
+            if (sku.includes('2PRSDFZ')) {
+                return `HS **** 2PRSDFZ`;
+            }
+            
+            // Match pattern: HS + 5 digits + rest
+            const match = sku.match(/^HS(\d{5})(.*)$/);
+            if (match) {
+                const fiveDigits = match[1]; // e.g., "80502"
+                const rest = match[2]; // e.g., "PRCWSZ"
+                const lastDigit = fiveDigits[4]; // Last digit of the 5 digits
+                return `HS **** ${lastDigit}${rest}`;
+            }
+            
+            return sku;
+        }
+
+        async function loadProducts() {
+            // Get group name from URL
+            const pathParts = window.location.pathname.split('/');
+            const encodedGroupName = pathParts[pathParts.length - 1];
+            currentGroupName = decodeURIComponent(encodedGroupName);
+
+            // Load colors in parallel
+            await loadColors();
+
+            try {
+                // Update header
+                document.getElementById('groupHeader').innerHTML = `
+                    <div class="group-name">${currentGroupName}</div>
+                `;
+
+                // Load products for this group
+                const token = getToken();
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                const response = await fetch(`${API_BASE_URL}/api/site/products/group/${encodeURIComponent(currentGroupName)}`, { headers });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        removeToken();
+                        window.location.href = '/login';
+                        return;
+                    }
+                    if (response.status === 404) {
+                        document.getElementById('productsContainer').innerHTML = '<div class="empty-state">Product group not found</div>';
+                        return;
+                    }
+                    document.getElementById('productsContainer').innerHTML = '<div class="empty-state">Failed to load products</div>';
+                    return;
+                }
+
+                allProducts = await response.json();
+                displayProducts(allProducts);
+                // Populate color selectors after products are displayed
+                setTimeout(populateColorSelectors, 200);
+            } catch (error) {
+                console.error('Error loading products:', error);
+                document.getElementById('productsContainer').innerHTML = '<div class="empty-state">Error loading products</div>';
+            }
+        }
+
+        function displayProducts(products) {
+            if (products.length === 0) {
+                document.getElementById('productsContainer').innerHTML = '<div class="empty-state">No products found in this category</div>';
+                return;
+            }
+
+            // Check if this is Standalone Frames or Multi-User Benching - always use product list template
+            if (currentGroupName === 'Standalone Frames') {
+                // For Standalone Frames, we need to load actual products grouped by base type
+                loadStandaloneFramesProducts();
+                return;
+            }
+            
+            if (currentGroupName === 'Multi-User Benching') {
+                // For Multi-User Benching, we need to load base products
+                loadMultiUserBenchingProducts();
+                return;
+            }
+
+            let html = '<div class="products-grid">';
+            
+            products.forEach(product => {
+                const imageFileName = product.sku.toLowerCase().replace(/\s+/g, '-');
+                // Use image_url from database if available, otherwise fallback to default path
+                let imageSrc = product.image_url || `/static/images/products/${imageFileName}.jpg`;
+                // Normalize legacy hosted paths to local customer-safe static assets.
+                if (imageSrc && imageSrc.startsWith('gs://')) {
+                    const filename = imageSrc.split('/').pop();
+                    imageSrc = filename ? '/static/images/products/' + decodeURIComponent(filename) : '/static/images/placeholder.png';
+                }
+                if (imageSrc && imageSrc.includes('googleapis.com/')) {
+                    const filename = imageSrc.split('/').pop();
+                    imageSrc = filename ? '/static/images/products/' + decodeURIComponent(filename) : '/static/images/placeholder.png';
+                }
+                // Normalize local static paths
+                if (imageSrc && (imageSrc.startsWith('/static/') || imageSrc.startsWith('./static/'))) {
+                    const filename = imageSrc.split('/').pop();
+                    imageSrc = `/static/images/products/${filename}`;
+                }
+                html += '<div class="product-card">';
+                html += `<div class="product-image" id="img-${product.sku.replace(/\s+/g, '-')}" data-sku="${product.sku}">`;
+                html += `<img src="${imageSrc}" alt="${product.name}" onerror="handleProductImageError(this);">`;
+                html += '</div>';
+                html += '<div class="product-content">';
+                html += '<div class="product-header">';
+                // Format SKU: replace middle 5 digits with ' **** * '
+                const formattedSku = formatSkuForDisplay(product.sku);
+                html += `<div class="product-sku">SKU: ${formattedSku}</div>`;
+                html += `<div class="product-name">${product.name}</div>`;
+                html += '</div>';
+                
+                html += '<div class="product-specs">';
+                
+                // For Accessories (hand control panels), parse specification string (format: "Label: Value | Label: Value")
+                if (currentGroupName === 'Accessories' && product.specification) {
+                    const specs = product.specification.split(' | ');
+                    const specMap = {};
+                    const specOrder = ['Control', 'Display', 'Memory', 'Power', 'Other'];
+                    
+                    // Parse all specs into a map
+                    specs.forEach(spec => {
+                        if (spec.trim()) {
+                            const parts = spec.split(':');
+                            if (parts.length === 2) {
+                                const label = parts[0].trim();
+                                const value = parts[1].trim();
+                                specMap[label] = value;
+                            }
+                        }
+                    });
+                    
+                    // Display specs in order (Control, Display, Memory, Power/Other)
+                    specOrder.forEach(label => {
+                        if (specMap[label]) {
+                            html += `<div class="spec-row"><span class="spec-label">${label}</span><span class="spec-value">${specMap[label]}</span></div>`;
+                            delete specMap[label];
+                        }
+                    });
+                    
+                    // Display any remaining specs that weren't in the order list
+                    Object.keys(specMap).forEach(label => {
+                        html += `<div class="spec-row"><span class="spec-label">${label}</span><span class="spec-value">${specMap[label]}</span></div>`;
+                    });
+                    
+                    // If no colon format found, treat as single value
+                    if (Object.keys(specMap).length === 0 && specs.length > 0) {
+                        specs.forEach(spec => {
+                            if (spec.trim() && !spec.includes(':')) {
+                                html += `<div class="spec-row"><span class="spec-label">Specification</span><span class="spec-value">${spec.trim()}</span></div>`;
+                            }
+                        });
+                    }
+                } else if (product.specification) {
+                    // For other products, use original format
+                    const spec = mmToInch(product.specification);
+                    html += `<div class="spec-row"><span class="spec-label">Specification</span><span class="spec-value">${spec}</span></div>`;
+                }
+                
+                if (product.stages) {
+                    html += `<div class="spec-row"><span class="spec-label">Stages</span><span class="spec-value">${product.stages}</span></div>`;
+                }
+                
+                if (product.lifting_range) {
+                    const range = mmToInch(product.lifting_range);
+                    html += `<div class="spec-row"><span class="spec-label">Lifting Range</span><span class="spec-value">${range}</span></div>`;
+                }
+                
+                // Adjustable Width removed - not displayed on product pages
+                
+                if (product.load_capacity) {
+                    // For Electric Columns, load capacity is per column (not divided by 2)
+                    // load_capacity is stored as number (kg) in database
+                    const capacity = kgToLbs(product.load_capacity, false);
+                    html += `<div class="spec-row"><span class="spec-label">Load Capacity</span><span class="spec-value">${capacity}</span></div>`;
+                }
+                
+                if (product.lifting_speed) {
+                    // lifting_speed is stored as number (mm/s) in database
+                    const speed = convertLiftingSpeed(product.lifting_speed);
+                    html += `<div class="spec-row"><span class="spec-label">Lifting Speed</span><span class="spec-value">${speed}</span></div>`;
+                }
+                
+                if (product.box_count) {
+                    html += `<div class="spec-row"><span class="spec-label">Packaging Boxes</span><span class="spec-value">${product.box_count}</span></div>`;
+                }
+                
+                if (product.box_dimensions) {
+                    html += `<div class="spec-row"><span class="spec-label">Box Dimensions</span><span class="spec-value">${product.box_dimensions}</span></div>`;
+                }
+                
+                html += '</div>'; // Close product-specs
+                
+                // Color selection - only for non-Accessories products
+                if (currentGroupName !== 'Accessories') {
+                    html += '<div class="color-selection-section" style="margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--border-color);">';
+                    html += '<label style="font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: var(--spacing-sm); display: block;">Color Selection:</label>';
+                    html += '<select id="color-select-' + product.id + '" class="form-input" style="margin-bottom: var(--spacing-sm); font-size: 14px;">';
+                    html += '<option value="">Select Color</option>';
+                    html += '<optgroup label="Basic Colors">';
+                    // Basic colors will be populated by JavaScript
+                    html += '</optgroup>';
+                    html += '<optgroup label="Other RAL Colors">';
+                    // Other RAL colors will be populated by JavaScript
+                    html += '</optgroup>';
+                    html += '<option value="custom">Custom RAL Color</option>';
+                    html += '</select>';
+                    html += '<input type="text" id="custom-ral-' + product.id + '" placeholder="Enter custom RAL code (e.g., RAL9010)" style="display: none; width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 13px; margin-top: var(--spacing-xs);" class="form-input">';
+                    html += '</div>';
+                }
+                
+                // Quantity selection for regular products (not Standalone Frames or Multi-User Benching)
+                html += '<div style="margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--border-color);">';
+                html += '<div style="display: flex; align-items: center; gap: var(--spacing-sm); margin-bottom: var(--spacing-md);">';
+                html += '<label style="font-size: 14px; font-weight: 500; color: var(--text-primary); white-space: nowrap;">Quantity:</label>';
+                html += `<input type="number" id="quantity-${product.id}" value="1" min="1" class="form-input" style="width: 80px; padding: 8px 12px; font-size: 14px;">`;
+                html += '</div>';
+                // For Electric Columns and other regular products (not Accessories), disable button until color is selected
+                const isAccessories = currentGroupName === 'Accessories';
+                const buttonDisabled = isAccessories ? '' : 'disabled';
+                html += `<button class="add-to-cart-btn" id="add-cart-btn-${product.id}" onclick="addToCartWithColor(${product.id}, '${product.sku}')" ${buttonDisabled}>Add to Cart</button>`;
+                html += '</div>';
+                
+                html += '</div>'; // Close product-content
+                html += '</div>'; // Close product-card
+            });
+            
+            html += '</div>';
+            document.getElementById('productsContainer').innerHTML = html;
+        }
+
+        function filterProducts() {
+            const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+            
+            if (!searchTerm) {
+                displayProducts(allProducts);
+                return;
+            }
+
+            const filtered = allProducts.filter(product =>
+                product.sku.toLowerCase().includes(searchTerm) ||
+                product.name.toLowerCase().includes(searchTerm) ||
+                (product.specification && product.specification.toLowerCase().includes(searchTerm)) ||
+                (product.keywords && product.keywords.toLowerCase().includes(searchTerm))
+            );
+
+            displayProducts(filtered);
+        }
+
+        // Event listeners
+        document.getElementById('productSearch').addEventListener('input', filterProducts);
+
+        function handleProductImageError(img) {
+            const container = img.parentElement;
+            img.style.display = 'none';
+            if (!container.querySelector('span')) {
+                const placeholder = document.createElement('span');
+                placeholder.textContent = 'Image Coming Soon';
+                placeholder.style.color = 'var(--text-secondary)';
+                placeholder.style.fontSize = '14px';
+                container.appendChild(placeholder);
+            }
+        }
+
+        // Global variables for colors and hand control panels
+        let allColors = [];
+        let allHandControls = [];
+        
+        async function loadColors() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/inventory/colors`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                if (response.ok) {
+                    allColors = await response.json();
+                    // Populate color selectors after products are loaded
+                    setTimeout(populateColorSelectors, 200);
+                }
+            } catch (error) {
+                console.error('Error loading colors:', error);
+            }
+        }
+        
+        async function loadHandControls() {
+            try {
+                console.log('[Hand Controls] Loading hand control panels...');
+                const response = await fetch(`${API_BASE_URL}/api/site/products/group/Accessories`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                if (response.ok) {
+                    const accessories = await response.json();
+                    console.log('[Hand Controls] Received accessories:', accessories);
+                    // Filter for hand control panels (HS11 series)
+                    allHandControls = accessories.filter(p => p.sku && p.sku.startsWith('HS11'));
+                    console.log('[Hand Controls] Filtered hand controls:', allHandControls);
+                    // Populate hand control selectors after products are loaded
+                    // Note: This will be called again after products are loaded
+                    setTimeout(populateHandControlSelectors, 200);
+                } else {
+                    console.error('[Hand Controls] Failed to load accessories:', response.status, response.statusText);
+                }
+            } catch (error) {
+                console.error('[Hand Controls] Error loading hand controls:', error);
+            }
+        }
+        
+        function populateHandControlSelectors() {
+            console.log('[Hand Controls] Populating selectors, allHandControls:', allHandControls);
+            if (!allHandControls || allHandControls.length === 0) {
+                console.warn('[Hand Controls] No hand controls available to populate');
+                return;
+            }
+            
+            // Find all hand control select elements
+            const selects = document.querySelectorAll('[id^="hand-control-select-"]');
+            console.log('[Hand Controls] Found', selects.length, 'select elements');
+            
+            selects.forEach(select => {
+                const productId = select.id.replace('hand-control-select-', '');
+                console.log('[Hand Controls] Populating selector for product:', productId);
+                
+                // Clear existing options (except the placeholder)
+                select.innerHTML = '<option value="">Select Hand Control Panel</option>';
+                
+                // Populate hand control options
+                allHandControls.forEach(hc => {
+                    const option = document.createElement('option');
+                    option.value = hc.id;
+                    option.textContent = `${hc.sku} - ${hc.name}`;
+                    option.dataset.sku = hc.sku;
+                    option.dataset.name = hc.name;
+                    option.dataset.imageUrl = hc.image_url || '';
+                    select.appendChild(option);
+                    console.log('[Hand Controls] Added option:', hc.sku, '-', hc.name);
+                });
+                
+                // Set default selection to first hand control (HS11A)
+                const defaultHC = allHandControls.find(hc => hc.sku === 'HS11A');
+                if (defaultHC && select.options.length > 1) {
+                    select.value = defaultHC.id;
+                    console.log('[Hand Controls] Set default to:', defaultHC.sku);
+                    // Update preview for default selection
+                    updateHandControlPreview(productId, defaultHC.id);
+                }
+                
+                // Remove existing event listeners by cloning the select element
+                const newSelect = select.cloneNode(true);
+                select.parentNode.replaceChild(newSelect, select);
+                
+                // Add change event listener to check button state
+                newSelect.addEventListener('change', function() {
+                    updateHandControlPreview(productId, this.value);
+                    checkAddToCartButtonState(productId);
+                });
+            });
+            
+            console.log('[Hand Controls] Finished populating selectors');
+        }
+        
+        function updateHandControlPreview(productId, handControlId) {
+            const previewDiv = document.getElementById('hand-control-preview-' + productId);
+            if (!previewDiv) return;
+            
+            const select = document.getElementById('hand-control-select-' + productId);
+            if (!select || !handControlId) {
+                previewDiv.innerHTML = '<div style="font-size: 11px; color: var(--text-secondary); text-align: center; padding: var(--spacing-sm);">Select to preview</div>';
+                // Check button state when selection is cleared
+                checkAddToCartButtonState(productId);
+                return;
+            }
+            
+            const selectedOption = select.options[select.selectedIndex];
+            if (!selectedOption) {
+                previewDiv.innerHTML = '<div style="font-size: 11px; color: var(--text-secondary); text-align: center; padding: var(--spacing-sm);">Select to preview</div>';
+                // Check button state when selection is cleared
+                checkAddToCartButtonState(productId);
+                return;
+            }
+            
+            const imageUrl = selectedOption.dataset.imageUrl || '';
+            const sku = selectedOption.dataset.sku || '';
+            
+            // Map SKU to local product image path
+            let imagePath = imageUrl;
+            if (!imagePath || imagePath.includes('googleapis.com/') || imagePath.startsWith('gs://')) {
+                // Fallback to default local image paths
+                const imageMap = {
+                    'HS11A': '/static/images/products/HS11A-Photoroom.png',
+                    'HS11B': '/static/images/products/HS11B-Photoroom.png',
+                    'HS11C': '/static/images/products/HS11C-Photoroom.png',
+                    'HS11D': '/static/images/products/HS11D-Photoroom.png',
+                    'HS11E': '/static/images/products/HS11E-Photoroom.png'
+                };
+                imagePath = imageMap[sku] || '/static/images/products/accessories.png';
+                // Normalize local static paths
+                if (imagePath.startsWith('/static/')) {
+                    const filename = imagePath.split('/').pop();
+                    imagePath = `/static/images/products/${filename}`;
+                }
+            }
+            
+            previewDiv.innerHTML = `<img src="${imagePath}" alt="${selectedOption.textContent}" style="max-width: 100%; max-height: 100%; object-fit: contain; padding: 8px;" onerror="this.parentElement.innerHTML='<div style=\\'font-size: 11px; color: var(--text-secondary); text-align: center; padding: var(--spacing-sm);\\'>Image not found</div>'">`;
+            
+            // Check button state when hand control is selected
+            checkAddToCartButtonState(productId);
+        }
+        
+        function checkAddToCartButtonState(productId) {
+            if (currentGroupName !== 'Standalone Frames' && currentGroupName !== 'Multi-User Benching') {
+                return;
+            }
+            
+            const config = productConfigs[productId] || {};
+            const productCard = document.querySelector(`[data-product-id="${productId}"]`);
+            const isHeavyDuty = productCard && productCard.dataset.baseType === 'Heavy-Duty';
+            const isDualMotorShort = productCard && productCard.dataset.baseType === 'Dual Motor Short';
+            const isSingleMotor = productCard && productCard.dataset.baseType === 'Single Motor';
+            
+            // Check configuration options
+            const configSelected = (isHeavyDuty || isDualMotorShort || isSingleMotor)
+                ? (config.column_type && config.dimensions)
+                : (config.stage && config.column_type && config.dimensions);
+            
+            // Check hand control panel selection (required)
+            const handControlSelect = document.getElementById(`hand-control-select-${productId}`);
+            const handControlSelected = handControlSelect && handControlSelect.value;
+            
+            // Check color selection (required for Standalone Frames and Multi-User Benching)
+            const colorSelect = document.getElementById(`color-select-${productId}`);
+            const customRalInput = document.getElementById(`custom-ral-${productId}`);
+            const selectedColor = colorSelect ? colorSelect.value : '';
+            const customRalCode = (selectedColor === 'custom' && customRalInput) ? customRalInput.value.trim() : null;
+            const colorSelected = selectedColor && (selectedColor !== 'custom' || customRalCode);
+            
+            const allSelected = configSelected && handControlSelected && colorSelected;
+            
+            // Enable add to cart button
+            const addCartBtn = document.getElementById(`add-cart-btn-${productId}`);
+            if (addCartBtn) {
+                addCartBtn.disabled = !allSelected;
+            }
+        }
+        
+        function checkColorSelectionState(productId) {
+            // Check color selection for Electric Columns and other regular products
+            if (currentGroupName === 'Accessories') {
+                return; // Accessories don't need color
+            }
+            
+            const colorSelect = document.getElementById(`color-select-${productId}`);
+            const customRalInput = document.getElementById(`custom-ral-${productId}`);
+            const addCartBtn = document.getElementById(`add-cart-btn-${productId}`);
+            
+            if (!addCartBtn) return;
+            
+            // Check if color is selected
+            const selectedColor = colorSelect ? colorSelect.value : '';
+            const customRalCode = (selectedColor === 'custom' && customRalInput) ? customRalInput.value.trim() : null;
+            const hasColor = selectedColor && (selectedColor !== 'custom' || customRalCode);
+            
+            // Enable/disable button based on color selection
+            addCartBtn.disabled = !hasColor;
+        }
+        
+        function populateColorSelectors() {
+            if (!allColors || allColors.length === 0) return;
+            
+            // Find all color select elements
+            document.querySelectorAll('[id^="color-select-"]').forEach(select => {
+                const productId = select.id.replace('color-select-', '');
+                const basicGroup = select.querySelector('optgroup[label="Basic Colors"]');
+                const ralGroup = select.querySelector('optgroup[label="Other RAL Colors"]');
+                const customInput = document.getElementById('custom-ral-' + productId);
+                
+                // Clear existing options (except the placeholder)
+                if (basicGroup) basicGroup.innerHTML = '';
+                if (ralGroup) ralGroup.innerHTML = '';
+                
+                // Populate basic colors (exclude NO_COLOR)
+                const basicColors = allColors.filter(c => c.color_type === 'basic' && c.color_code !== 'NO_COLOR');
+                basicColors.forEach(color => {
+                    if (basicGroup) {
+                        const option = document.createElement('option');
+                        option.value = color.color_code;
+                        option.textContent = `${color.color_name} (${color.color_code})`;
+                        basicGroup.appendChild(option);
+                    }
+                });
+                
+                // Populate other RAL colors (exclude NO_COLOR)
+                const ralColors = allColors.filter(c => 
+                    c.color_code !== 'NO_COLOR' && 
+                    (c.color_type === 'ral' || (c.color_type !== 'basic' && c.color_code && c.color_code.startsWith('RAL')))
+                );
+                ralColors.forEach(color => {
+                    if (ralGroup) {
+                        const option = document.createElement('option');
+                        option.value = color.color_code;
+                        option.textContent = `${color.color_name} (${color.color_code})`;
+                        ralGroup.appendChild(option);
+                    }
+                });
+                
+                // Handle color selection change
+                // Remove existing event listeners by cloning the select element
+                const newSelect = select.cloneNode(true);
+                select.parentNode.replaceChild(newSelect, select);
+                
+                newSelect.addEventListener('change', function() {
+                    const currentCustomInput = document.getElementById('custom-ral-' + productId);
+                    if (this.value === 'custom' && currentCustomInput) {
+                        currentCustomInput.style.display = 'block';
+                        // Add input listener for custom RAL code if not already added
+                        if (currentCustomInput && !currentCustomInput.dataset.listenerAdded) {
+                            currentCustomInput.addEventListener('input', function() {
+                                checkColorSelectionState(productId);
+                                // Also check button state for Standalone/Multi
+                                if (currentGroupName === 'Standalone Frames' || currentGroupName === 'Multi-User Benching') {
+                                    checkAddToCartButtonState(productId);
+                                }
+                            });
+                            currentCustomInput.dataset.listenerAdded = 'true';
+                        }
+                    } else if (currentCustomInput) {
+                        currentCustomInput.style.display = 'none';
+                        currentCustomInput.value = '';
+                    }
+                    // Check button state when color selection changes
+                    checkColorSelectionState(productId);
+                    // Also check button state for Standalone/Multi
+                    if (currentGroupName === 'Standalone Frames' || currentGroupName === 'Multi-User Benching') {
+                        checkAddToCartButtonState(productId);
+                    }
+                });
+                
+                // Add input listener for custom RAL code if it exists (in case it's already visible)
+                const currentCustomInput = document.getElementById('custom-ral-' + productId);
+                if (currentCustomInput && !currentCustomInput.dataset.listenerAdded) {
+                    currentCustomInput.addEventListener('input', function() {
+                        checkColorSelectionState(productId);
+                        // Also check button state for Standalone/Multi
+                        if (currentGroupName === 'Standalone Frames' || currentGroupName === 'Multi-User Benching') {
+                            checkAddToCartButtonState(productId);
+                        }
+                    });
+                    currentCustomInput.dataset.listenerAdded = 'true';
+                }
+                
+                // Also check button state after populating
+                setTimeout(() => {
+                    checkColorSelectionState(productId);
+                    // Also check button state for Standalone/Multi
+                    if (currentGroupName === 'Standalone Frames' || currentGroupName === 'Multi-User Benching') {
+                        checkAddToCartButtonState(productId);
+                    }
+                }, 100);
+            });
+        }
+        
+        async function addToCartWithColor(productId, sku) {
+            // Ensure productId is a number
+            const actualProductId = parseInt(productId);
+            if (isNaN(actualProductId)) {
+                alert('Invalid product ID. Please try again.');
+                return;
+            }
+            
+            // Check if product is Accessories (hand control panels don't need color)
+            const isAccessory = currentGroupName === 'Accessories' || sku.startsWith('HS11');
+            
+            // Get quantity
+            const quantityInput = document.getElementById('quantity-' + productId);
+            const quantity = quantityInput ? parseInt(quantityInput.value) || 1 : 1;
+            if (quantity < 1) {
+                alert('Quantity must be at least 1');
+                return;
+            }
+            
+            // Get selected color
+            const colorSelect = document.getElementById('color-select-' + productId);
+            const customRalInput = document.getElementById('custom-ral-' + productId);
+            const selectedColor = colorSelect ? colorSelect.value : '';
+            const customRalCode = (selectedColor === 'custom' && customRalInput) ? customRalInput.value.trim() : null;
+            
+            // Validate color selection for non-accessory products
+            if (!isAccessory && !selectedColor) {
+                alert('Please select a color before adding to cart.');
+                // Focus on color select
+                if (colorSelect) {
+                    colorSelect.focus();
+                    colorSelect.style.borderColor = '#FF3B30';
+                    setTimeout(() => {
+                        colorSelect.style.borderColor = '';
+                    }, 2000);
+                }
+                return;
+            }
+            
+            if (!isAccessory && selectedColor === 'custom' && !customRalCode) {
+                alert('Please enter a custom RAL color code.');
+                // Focus on custom RAL input
+                if (customRalInput) {
+                    customRalInput.focus();
+                    customRalInput.style.borderColor = '#FF3B30';
+                    setTimeout(() => {
+                        customRalInput.style.borderColor = '';
+                    }, 2000);
+                }
+                return;
+            }
+            
+            // Build configuration
+            const configuration = {};
+            if (selectedColor && selectedColor !== 'custom') {
+                const color = allColors.find(c => c.color_code === selectedColor);
+                if (color) {
+                    configuration.color_code = color.color_code;
+                    configuration.color_name = color.color_name;
+                }
+            } else if (customRalCode) {
+                configuration.color_code = 'custom';
+                configuration.custom_ral_code = customRalCode.toUpperCase();
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/cart/items`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({
+                        product_id: actualProductId,
+                        quantity: quantity,
+                        configuration: Object.keys(configuration).length > 0 ? configuration : undefined
+                    })
+                });
+                
+                if (response.ok) {
+                    alert('Product added to cart!');
+                    loadCartCount();
+                    // Reset form
+                    if (colorSelect) colorSelect.value = '';
+                    if (customRalInput) {
+                        customRalInput.value = '';
+                        customRalInput.style.display = 'none';
+                    }
+                } else {
+                    const error = await response.json();
+                    alert('Failed to add to cart: ' + (error.detail || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                alert('Failed to add to cart. Please try again.');
+            }
+        }
+        
+        // Keep the old addToCart function for backward compatibility
+        async function addToCart(productId, sku) {
+            await addToCartWithColor(productId, sku);
+        }
+
+        // Cart functions
+        async function loadCartCount() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/cart/count`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const badge = document.getElementById('cartBadge');
+                    if (data.count > 0) {
+                        badge.textContent = data.count;
+                        badge.style.display = 'flex';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading cart count:', error);
+            }
+        }
+
+        // Load actual Standalone Frames products (4 fixed products)
+        async function loadStandaloneFramesProducts() {
+            try {
+                console.log('loadStandaloneFramesProducts called');
+                // Load products from API
+                const token = getToken();
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                console.log('Fetching Standalone Frames products...');
+                const response = await fetch(`${API_BASE_URL}/api/site/products/group/Standalone%20Frames`, { headers });
+                
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    document.getElementById('productsContainer').innerHTML = '<div class="empty-state">Failed to load products</div>';
+                    return;
+                }
+                
+                const products = await response.json();
+                console.log('Received products:', products);
+                
+                if (!products || products.length === 0) {
+                    document.getElementById('productsContainer').innerHTML = '<div class="empty-state">No products found</div>';
+                    return;
+                }
+                
+                // Display the 4 fixed products
+                displayStandaloneFramesProducts(products);
+                // Populate hand control selectors and color selectors after products are displayed
+                setTimeout(() => {
+                    populateHandControlSelectors();
+                    populateColorSelectors();
+                }, 250);
+            } catch (error) {
+                console.error('Error loading Standalone Frames products:', error);
+                document.getElementById('productsContainer').innerHTML = '<div class="empty-state">Error loading products: ' + error.message + '</div>';
+            }
+        }
+
+        // Load actual Multi-User Benching products (2 fixed products)
+        async function loadMultiUserBenchingProducts() {
+            try {
+                console.log('loadMultiUserBenchingProducts called');
+                // Load products from API
+                const token = getToken();
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                console.log('Fetching Multi-User Benching products...');
+                const response = await fetch(`${API_BASE_URL}/api/site/products/group/Multi-User%20Benching`, { headers });
+                
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    document.getElementById('productsContainer').innerHTML = '<div class="empty-state">Failed to load products</div>';
+                    return;
+                }
+                
+                const products = await response.json();
+                console.log('Received products:', products);
+                
+                if (!products || products.length === 0) {
+                    document.getElementById('productsContainer').innerHTML = '<div class="empty-state">No products found</div>';
+                    return;
+                }
+                
+                // Display the 2 fixed products
+                displayMultiUserBenchingProducts(products);
+                // Populate hand control selectors and color selectors after products are displayed
+                setTimeout(() => {
+                    populateHandControlSelectors();
+                    populateColorSelectors();
+                }, 250);
+            } catch (error) {
+                console.error('Error loading Multi-User Benching products:', error);
+                document.getElementById('productsContainer').innerHTML = '<div class="empty-state">Error loading products: ' + error.message + '</div>';
+            }
+        }
+
+        function displayStandaloneFramesProducts(products) {
+            console.log('displayStandaloneFramesProducts called with:', products);
+            let html = '<div class="products-grid">';
+            
+            // Display the 3 fixed products
+            products.forEach(product => {
+                    // Use default image rules for Standalone Frames
+                    const isHeavyDuty = product.base_type === 'Heavy-Duty';
+                    const isSingleMotor = product.base_type === 'Single Motor';
+                    let imageSrc;
+                    
+                    if (isHeavyDuty) {
+                        imageSrc = "/static/images/placeholder.png";
+                    } else if (isSingleMotor) {
+                        imageSrc = "/static/images/placeholder.png";
+                    } else if (product.base_type === 'Dual Motor') {
+                        imageSrc = "/static/images/placeholder.png";
+                    } else if (product.base_type === 'Dual Motor Short') {
+                        imageSrc = "/static/images/placeholder.png";
+                    } else if (product.base_type === 'L-shape') {
+                        imageSrc = "/static/images/placeholder.png";
+                    } else {
+                        imageSrc = product.image_url || '/static/images/products/standalone-frames.png';
+                    }
+                    if (!imageSrc || typeof imageSrc !== 'string') {
+                        imageSrc = '/static/images/products/standalone-frames.png';
+                    }
+                    if (imageSrc.startsWith('/static/')) {
+                        const filename = imageSrc.split('/').pop();
+                        imageSrc = `/static/images/products/${filename}`;
+                    }
+                    
+                    // Use product.id (could be integer or string for fallback)
+                    const productIdStr = typeof product.id === 'number' ? product.id : product.id;
+                    const productSku = product.sku || 'N/A';
+                    
+                    // Mobile layout note
+                    let displaySku = productSku;
+                    if (product.base_type === 'Dual Motor') {
+                        // Dual Motor Desk Frame
+                        displaySku = 'HS **** * PRDDFZ';
+                    } else if (product.base_type === 'Dual Motor Short') {
+                        // Dual Motor Desk short Frame
+                        displaySku = 'HS **** 3PSDDFZ';
+                    } else if (product.base_type === 'L-shape') {
+                        // L-shape Standing Desk Frame
+                        displaySku = 'HS **** * PRTDFZ';
+                    } else if (product.base_type === 'Heavy-Duty') {
+                        // Heavy-Duty Desk Frame
+                        displaySku = 'HS **** 2HRDDFZ';
+                    } else if (product.base_type === 'Single Motor') {
+                        // Single Motor Desk Frame
+                        displaySku = 'HS **** * PRSDFZ';
+                    }
+                    
+                    html += '<div class="product-card" data-product-id="' + productIdStr + '" data-base-type="' + (product.base_type || '') + '">';
+                    html += `<div class="product-image" id="img-${productSku.replace(/\s+/g, '-')}" data-sku="${productSku}">`;
+                    // Add error handler for Single Motor products
+                    if (isSingleMotor) {
+                        html += `<img src="${imageSrc}" alt="${product.name}" onerror="this.src="/static/images/products/standalone-frames.png"; console.error('Failed to load Single Motor image:', '${imageSrc}');">`;
+                    } else {
+                        html += `<img src="${imageSrc}" alt="${product.name}" onerror="handleProductImageError(this);">`;
+                    }
+                    html += '</div>';
+                    html += '<div class="product-content">';
+                    html += '<div class="product-header">';
+                    // Format SKU: replace middle 5 digits with ' **** * '
+                    const formattedDisplaySku = formatSkuForDisplay(displaySku);
+                    html += `<div class="product-sku">SKU: ${formattedDisplaySku}</div>`;
+                    html += `<div class="product-name">${product.name}</div>`;
+                    html += '</div>';
+                    
+                    // Show product specs for Standalone Frames (like regular products)
+                    // Note: specification and stages are shown in the configuration section below, so we skip them here
+                    html += '<div class="product-specs">';
+                    
+                    // Lifting range - dynamic based on stage selection (for products that can choose 2 or 3 stage)
+                    // Note: isHeavyDuty and isSingleMotor already declared above
+                    const isDualMotorShort = product.base_type === 'Dual Motor Short';
+                    const canChooseStage = !isHeavyDuty && !isDualMotorShort && !isSingleMotor;
+                    
+                    if (canChooseStage) {
+                        // For products that can choose stage, show dynamic lifting range
+                        html += `<div class="spec-row" id="lifting-range-row-${product.id}"><span class="spec-label">Lifting Range</span><span class="spec-value" id="lifting-range-value-${product.id}">select to check</span></div>`;
+                    } else {
+                        // For Heavy-Duty (always 2-Stage), Dual Motor Short (always 3-Stage), and Single Motor (always 2-Stage), show fixed range
+                        if (product.lifting_range) {
+                            const range = mmToInch(product.lifting_range);
+                            html += `<div class="spec-row"><span class="spec-label">Lifting Range</span><span class="spec-value">${range}</span></div>`;
+                        }
+                    }
+                    
+                    // Always show load capacity if available (for entire desk frame, not divided by 2)
+                    if (product.load_capacity) {
+                        // Load capacity is stored as number (kg) in database
+                        const capacity = kgToLbs(product.load_capacity, false);
+                        html += `<div class="spec-row"><span class="spec-label">Load Capacity</span><span class="spec-value">${capacity}</span></div>`;
+                    }
+                    
+                    // Always show lifting speed if available
+                    if (product.lifting_speed) {
+                        // lifting_speed is stored as number (mm/s) in database
+                        const speed = convertLiftingSpeed(product.lifting_speed);
+                        html += `<div class="spec-row"><span class="spec-label">Lifting Speed</span><span class="spec-value">${speed}</span></div>`;
+                    }
+                    
+                    // Always show box count if available
+                    if (product.box_count !== null && product.box_count !== undefined) {
+                        html += `<div class="spec-row"><span class="spec-label">Packaging Boxes</span><span class="spec-value">${product.box_count}</span></div>`;
+                    }
+                    
+                    // Always show box dimensions if available
+                    if (product.box_dimensions) {
+                        html += `<div class="spec-row"><span class="spec-label">Box Dimensions</span><span class="spec-value">${product.box_dimensions}</span></div>`;
+                    }
+                    
+                    html += '</div>'; // Close product-specs
+                    
+                    // Product Configuration (only for Standalone Frames)
+                    if (currentGroupName === 'Standalone Frames') {
+                        const isHeavyDuty = product.base_type === 'Heavy-Duty';
+                        const isLShape = product.base_type === 'L-shape';
+                        const isDualMotorShort = product.base_type === 'Dual Motor Short';
+                        const isSingleMotor = product.base_type === 'Single Motor';
+                        
+                        html += '<div class="product-config-selector">';
+                        html += '<div class="config-group">';
+                        html += '<label class="config-group-label">Stages:</label>';
+                        html += '<div class="config-buttons">';
+                        if (isHeavyDuty) {
+                            // Heavy-Duty only has 2-Stage
+                            html += '<button class="config-btn selected" data-option="stage" data-value="2-Stage" onclick="selectConfigOption(' + productIdStr + ', \'stage\', \'2-Stage\', this)">2-Stage</button>';
+                            // Auto-select 2-Stage for Heavy-Duty
+                            if (!productConfigs[productIdStr]) {
+                                productConfigs[productIdStr] = {};
+                            }
+                            productConfigs[productIdStr].stage = '2-Stage';
+                            // Update lifting range display for auto-selected stage
+                            setTimeout(() => updateLiftingRangeDisplay(product.id, '2-Stage'), 0);
+                        } else if (isDualMotorShort) {
+                            // Dual Motor Short only has 3-Stage
+                            html += '<button class="config-btn selected" data-option="stage" data-value="3-Stage" onclick="selectConfigOption(' + productIdStr + ', \'stage\', \'3-Stage\', this)">3-Stage</button>';
+                            // Auto-select 3-Stage for Dual Motor Short
+                            if (!productConfigs[productIdStr]) {
+                                productConfigs[productIdStr] = {};
+                            }
+                            productConfigs[productIdStr].stage = '3-Stage';
+                            // Update lifting range display for auto-selected stage
+                            setTimeout(() => updateLiftingRangeDisplay(product.id, '3-Stage'), 0);
+                        } else if (isSingleMotor) {
+                            // Single Motor only has 2-Stage
+                            html += '<button class="config-btn selected" data-option="stage" data-value="2-Stage" onclick="selectConfigOption(' + productIdStr + ', \'stage\', \'2-Stage\', this)">2-Stage</button>';
+                            // Auto-select 2-Stage for Single Motor
+                            if (!productConfigs[productIdStr]) {
+                                productConfigs[productIdStr] = {};
+                            }
+                            productConfigs[productIdStr].stage = '2-Stage';
+                            // Update lifting range display for auto-selected stage
+                            setTimeout(() => updateLiftingRangeDisplay(product.id, '2-Stage'), 0);
+                        } else {
+                            html += '<button class="config-btn" data-option="stage" data-value="2-Stage" onclick="selectConfigOption(' + productIdStr + ', \'stage\', \'2-Stage\', this)">2-Stage</button>';
+                            html += '<button class="config-btn" data-option="stage" data-value="3-Stage" onclick="selectConfigOption(' + productIdStr + ', \'stage\', \'3-Stage\', this)">3-Stage</button>';
+                        }
+                        html += '</div>';
+                        html += '</div>';
+                        
+                        // Column Type & Dimensions are CORRELATED
+                        html += '<div class="config-group">';
+                        html += '<label class="config-group-label">Column Type & Dimensions:</label>';
+                        html += '<div class="config-buttons">';
+                        if (isHeavyDuty) {
+                            // Heavy-Duty only has 2 options: Rectangular 50*80mm and Square 70*70mm
+                            html += '<button class="config-btn" data-option="column_dim" data-column="Rectangular" data-dimensions="50*80mm" onclick="selectColumnDimPair(' + productIdStr + ', \'Rectangular\', \'50*80mm\', this)">Rectangular 2"x3.15" (50x80mm)</button>';
+                            html += '<button class="config-btn" data-option="column_dim" data-column="Square" data-dimensions="70*70mm" onclick="selectColumnDimPair(' + productIdStr + ', \'Square\', \'70*70mm\', this)">Square 2.76"x2.76" (70x70mm)</button>';
+                        } else if (isLShape) {
+                            // L-shape only opens two tube types: Rectangular 50*80mm and Square 70*70mm
+                            html += '<button class="config-btn" data-option="column_dim" data-column="Rectangular" data-dimensions="50*80mm" onclick="selectColumnDimPair(' + productIdStr + ', \'Rectangular\', \'50*80mm\', this)">Rectangular 2"x3.15" (50x80mm)</button>';
+                            html += '<button class="config-btn" data-option="column_dim" data-column="Square" data-dimensions="70*70mm" onclick="selectColumnDimPair(' + productIdStr + ', \'Square\', \'70*70mm\', this)">Square 2.76"x2.76" (70x70mm)</button>';
+                        } else if (isDualMotorShort) {
+                            // Dual Motor Short only has 2 options: Rectangular 60*90mm and Rectangular 50*80mm
+                            html += '<button class="config-btn" data-option="column_dim" data-column="Rectangular" data-dimensions="60*90mm" onclick="selectColumnDimPair(' + productIdStr + ', \'Rectangular\', \'60*90mm\', this)">Rectangular 2.36"x3.54" (60x90mm)</button>';
+                            html += '<button class="config-btn" data-option="column_dim" data-column="Rectangular" data-dimensions="50*80mm" onclick="selectColumnDimPair(' + productIdStr + ', \'Rectangular\', \'50*80mm\', this)">Rectangular 2"x3.15" (50x80mm)</button>';
+                        } else if (isSingleMotor) {
+                            // Single Motor has 5 options: Rectangular (60*90mm, 50*80mm), Square, Round, Oval
+                            html += '<button class="config-btn" data-option="column_dim" data-column="Rectangular" data-dimensions="60*90mm" onclick="selectColumnDimPair(' + productIdStr + ', \'Rectangular\', \'60*90mm\', this)">Rectangular 2.36"x3.54" (60x90mm)</button>';
+                            html += '<button class="config-btn" data-option="column_dim" data-column="Rectangular" data-dimensions="50*80mm" onclick="selectColumnDimPair(' + productIdStr + ', \'Rectangular\', \'50*80mm\', this)">Rectangular 2"x3.15" (50x80mm)</button>';
+                            html += '<button class="config-btn" data-option="column_dim" data-column="Square" data-dimensions="70*70mm" onclick="selectColumnDimPair(' + productIdStr + ', \'Square\', \'70*70mm\', this)">Square 2.76"x2.76" (70x70mm)</button>';
+                            html += '<button class="config-btn" data-option="column_dim" data-column="Round" data-dimensions="Ø70mm" onclick="selectColumnDimPair(' + productIdStr + ', \'Round\', \'Ø70mm\', this)">Round Ø 2.76" (70mm)</button>';
+                            html += '<button class="config-btn" data-option="column_dim" data-column="Oval" data-dimensions="83*50mm" onclick="selectColumnDimPair(' + productIdStr + ', \'Oval\', \'83*50mm\', this)">Oval 3.27"x1.97" (83x50mm)</button>';
+                        } else {
+                            // Standard Dual Motor have all 5 options
+                            html += '<button class="config-btn" data-option="column_dim" data-column="Rectangular" data-dimensions="60*90mm" onclick="selectColumnDimPair(' + productIdStr + ', \'Rectangular\', \'60*90mm\', this)">Rectangular 2.36"x3.54" (60x90mm)</button>';
+                            html += '<button class="config-btn" data-option="column_dim" data-column="Rectangular" data-dimensions="50*80mm" onclick="selectColumnDimPair(' + productIdStr + ', \'Rectangular\', \'50*80mm\', this)">Rectangular 2"x3.15" (50x80mm)</button>';
+                            html += '<button class="config-btn" data-option="column_dim" data-column="Square" data-dimensions="70*70mm" onclick="selectColumnDimPair(' + productIdStr + ', \'Square\', \'70*70mm\', this)">Square 2.76"x2.76" (70x70mm)</button>';
+                            html += '<button class="config-btn" data-option="column_dim" data-column="Round" data-dimensions="Ø70mm" onclick="selectColumnDimPair(' + productIdStr + ', \'Round\', \'Ø70mm\', this)">Round Ø 2.76" (70mm)</button>';
+                            html += '<button class="config-btn" data-option="column_dim" data-column="Oval" data-dimensions="83*50mm" onclick="selectColumnDimPair(' + productIdStr + ', \'Oval\', \'83*50mm\', this)">Oval 3.27"x1.97" (83x50mm)</button>';
+                        }
+                        html += '</div>';
+                        html += '</div>';
+                        html += '</div>'; // Close product-config-selector
+                        
+                        // Desktop Size Input for Side Panel & Foot Calculation
+                        html += '<div class="desktop-size-section">';
+                        html += '<div class="desktop-size-title">Desktop Size (for Side Panel & Foot)</div>';
+                        html += '<div class="desktop-size-inputs">';
+                        html += '<div class="desktop-size-input-group">';
+                        html += '<label>Depth (inches):</label>';
+                        html += '<input type="number" id="desktop-depth-' + product.id + '" placeholder="e.g., 28" step="0.1" min="20" max="45" onchange="calculateSidePanelAndFoot(' + product.id + ')">';
+                        html += '</div>';
+                        html += '<div class="desktop-size-input-group">';
+                        html += '<label>Width (inches):</label>';
+                        html += '<input type="number" id="desktop-width-' + product.id + '" placeholder="e.g., 60" step="0.1" min="35" max="90" onchange="calculateSidePanelAndFoot(' + product.id + ')">';
+                        html += '</div>';
+                        html += '</div>';
+                        html += '<div class="calculated-specs hidden" id="calculated-specs-' + productIdStr + '">';
+                        html += '<div class="calculated-specs-item">';
+                        html += '<span class="calculated-specs-label">Side Rail:</span>';
+                        html += '<span class="calculated-specs-value" id="side-rail-' + productIdStr + '">-</span>';
+                        html += '</div>';
+                        html += '<div class="calculated-specs-item">';
+                        html += '<span class="calculated-specs-label">Foot Plate:</span>';
+                        html += '<span class="calculated-specs-value" id="foot-plate-' + productIdStr + '">-</span>';
+                        html += '</div>';
+                        html += '<div class="calculated-specs-item">';
+                        html += '<span class="calculated-specs-label">Recommended Width:</span>';
+                        html += '<span class="calculated-specs-value" id="recommended-width-' + productIdStr + '">-</span>';
+                        html += '</div>';
+                        html += '</div>';
+                        html += '</div>'; // Close desktop-size-section
+                    }
+                    
+                    // Desktop Size Input for Multi-User Benching (simpler version)
+                    const isMultiUser = currentGroupName === 'Multi-User Benching';
+                    const isFaceToFaceOrTrio = product.name && (
+                        product.name.toLowerCase().includes('face-to-face') || 
+                        product.name.toLowerCase().includes('trio') ||
+                        product.name.toLowerCase().includes('120')
+                    );
+                    
+                    if (isMultiUser) {
+                        html += '<div class="desktop-size-section">';
+                        html += '<div class="desktop-size-title">Desktop Depth (for Side Panel)</div>';
+                        html += '<div class="desktop-size-inputs">';
+                        html += '<div class="desktop-size-input-group">';
+                        html += '<label>Depth (inches):</label>';
+                        html += '<input type="number" id="desktop-depth-' + product.id + '" placeholder="e.g., 28" step="0.1" min="20" max="45" onchange="calculateSidePanelAndFoot(' + product.id + ')">';
+                        html += '</div>';
+                        html += '</div>';
+                        html += '<div class="calculated-specs hidden" id="calculated-specs-' + product.id + '">';
+                        html += '<div class="calculated-specs-item">';
+                        html += '<span class="calculated-specs-label">Side Rail:</span>';
+                        html += '<span class="calculated-specs-value" id="side-rail-' + product.id + '">-</span>';
+                        html += '</div>';
+                        html += '</div>';
+                        html += '</div>'; // Close desktop-size-section
+                    }
+                    
+                    // Color selection for Standalone Frames (same format as regular products)
+                    html += '<div class="color-selection-section" style="margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--border-color);">';
+                    html += '<label style="font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: var(--spacing-sm); display: block;">Color Selection:</label>';
+                    html += '<select id="color-select-' + productIdStr + '" class="form-input" style="margin-bottom: var(--spacing-sm); font-size: 14px;">';
+                    html += '<option value="">Select Color</option>';
+                    html += '<optgroup label="Basic Colors">';
+                    // Basic colors will be populated by JavaScript
+                    html += '</optgroup>';
+                    html += '<optgroup label="Other RAL Colors">';
+                    // Other RAL colors will be populated by JavaScript
+                    html += '</optgroup>';
+                    html += '<option value="custom">Custom RAL Color</option>';
+                    html += '</select>';
+                    html += '<input type="text" id="custom-ral-' + productIdStr + '" placeholder="Enter custom RAL code (e.g., RAL9010)" style="display: none; width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 13px; margin-top: var(--spacing-xs);" class="form-input">';
+                    html += '</div>';
+                    
+                    // Hand Control Panel Selection (required for electric desk frames)
+                    html += '<div class="hand-control-selection-section" style="margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--border-color);">';
+                    html += '<label style="font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: var(--spacing-sm); display: block;">Hand Control Panel <span style="color: #FF3B30;">*</span>:</label>';
+                    html += '<div style="display: flex; gap: var(--spacing-md); align-items: flex-start;">';
+                    html += '<div style="flex: 1;">';
+                    html += '<select id="hand-control-select-' + productIdStr + '" class="form-input" style="font-size: 14px; width: 100%;" required onchange="updateHandControlPreview(' + productIdStr + ', this.value)">';
+                    html += '<option value="">Select Hand Control Panel</option>';
+                    // Hand control options will be populated by JavaScript
+                    html += '</select>';
+                    html += '<div style="font-size: 12px; color: var(--text-secondary); margin-top: var(--spacing-xs);">Required for electric desk frames. Can also be purchased separately.</div>';
+                    html += '</div>';
+                    html += '<div id="hand-control-preview-' + productIdStr + '" style="width: 120px; height: 120px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--background-secondary); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden;">';
+                    html += '<div style="font-size: 11px; color: var(--text-secondary); text-align: center; padding: var(--spacing-sm);">Select to preview</div>';
+                    html += '</div>';
+                    html += '</div>';
+                    html += '</div>';
+                    
+                    // Quantity selection and Add to cart button
+                    html += '<div style="margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--border-color);">';
+                    // Quantity input for Standalone Frames and Multi-User Benching
+                    if (currentGroupName === 'Standalone Frames' || isMultiUser) {
+                        html += '<div style="display: flex; align-items: center; gap: var(--spacing-sm); margin-bottom: var(--spacing-md);">';
+                        html += '<label style="font-size: 14px; font-weight: 500; color: var(--text-primary); white-space: nowrap;">Quantity:</label>';
+                        html += `<input type="number" id="quantity-${productIdStr}" value="1" min="1" class="form-input" style="width: 80px; padding: 8px 12px; font-size: 14px;">`;
+                        html += '</div>';
+                    }
+                    if (currentGroupName === 'Standalone Frames') {
+                        html += `<button class="add-to-cart-btn" id="add-cart-btn-${productIdStr}" onclick="addToCartWithOptions('${productIdStr}', '${productSku}')" disabled>Add to Cart</button>`;
+                    } else if (isMultiUser) {
+                        html += `<button class="add-to-cart-btn" onclick="addToCartWithOptions(${product.id}, '${product.sku}')">Add to Cart</button>`;
+                    } else {
+                        html += `<button class="add-to-cart-btn" onclick="addToCart(${product.id}, '${product.sku}')">Add to Cart</button>`;
+                    }
+                    html += '</div>';
+                    
+                    html += '</div>'; // Close product-content
+                    html += '</div>'; // Close product-card
+                });
+            
+            html += '</div>'; // Close products-grid
+            document.getElementById('productsContainer').innerHTML = html;
+        }
+
+        function displayMultiUserBenchingProducts(products) {
+            let html = '<div class="products-grid">';
+            
+            // Display the 2 fixed products
+            products.forEach(product => {
+                    let imageSrc = product.image_url || '/static/images/products/multi-user-benching.png';
+                    // Normalize local static paths
+                    if (imageSrc.startsWith('/static/')) {
+                        const filename = imageSrc.split('/').pop();
+                        imageSrc = `/static/images/products/${filename}`;
+                    }
+                    
+                    // Use product.id (could be integer or string for fallback)
+                    const productIdStr = typeof product.id === 'number' ? product.id : product.id;
+                    const productSku = product.sku || 'N/A';
+                    
+                    html += '<div class="product-card" data-product-id="' + productIdStr + '" data-base-type="' + (product.base_type || '') + '">';
+                    html += `<div class="product-image" id="img-${productSku.replace(/\s+/g, '-')}" data-sku="${productSku}">`;
+                    html += `<img src="${imageSrc}" alt="${product.name}" onerror="handleProductImageError(this);">`;
+                    html += '</div>';
+                    html += '<div class="product-content">';
+                    html += '<div class="product-header">';
+                    // Display SKU based on base_type (2 or 3 is determined by customer selection)
+                    let displaySku = productSku;
+                    if (product.base_type === 'Face-to-Face') {
+                        // Face-to-Face Workstation Frame
+                        displaySku = 'HS **** * PRCWSZ';
+                    } else if (product.base_type === 'Trio') {
+
+                        displaySku = 'HS **** * PRFDF2';
+                    }
+                    const formattedSku = formatSkuForDisplay(displaySku);
+                    html += `<div class="product-sku">SKU: ${formattedSku}</div>`;
+                    html += `<div class="product-name">${product.name}</div>`;
+                    html += '</div>';
+                    
+                    // Product specs for Multi-User Benching (like regular products)
+                    // Note: specification and stages are shown in the configuration section below, so we skip them here
+                    html += '<div class="product-specs">';
+                    
+                    // Lifting range - dynamic based on stage selection (all Multi-User Benching can choose 2 or 3 stage)
+                    html += `<div class="spec-row" id="lifting-range-row-${product.id}"><span class="spec-label">Lifting Range</span><span class="spec-value" id="lifting-range-value-${product.id}">select to check</span></div>`;
+                    
+                    // Always show load capacity (read from database, converted to lbs)
+                    if (product.load_capacity) {
+                        // For Multi-User Benching, load capacity is per unit
+                        // Convert from kg (stored in DB) to lbs
+                        let loadCapacityKg = parseFloat(product.load_capacity);
+                        if (!isNaN(loadCapacityKg)) {
+                            const loadCapacityLbs = (loadCapacityKg * 2.20462).toFixed(1);
+                            html += `<div class="spec-row"><span class="spec-label">Load Capacity (per unit)</span><span class="spec-value">${loadCapacityLbs} lbs</span></div>`;
+                        }
+                    }
+                    
+                    // Always show lifting speed (read from database, converted to "/s)
+                    if (product.lifting_speed) {
+                        // lifting_speed is stored as number (mm/s) in database
+                        let speedMmPerS = parseFloat(product.lifting_speed);
+                        if (!isNaN(speedMmPerS)) {
+                            const speedInchPerS = (speedMmPerS / 25.4).toFixed(2);
+                            html += `<div class="spec-row"><span class="spec-label">Lifting Speed</span><span class="spec-value">${speedInchPerS}"/s</span></div>`;
+                        }
+                    }
+                    
+                    // Always show box count if available
+                    if (product.box_count !== null && product.box_count !== undefined) {
+                        html += `<div class="spec-row"><span class="spec-label">Packaging Boxes</span><span class="spec-value">${product.box_count}</span></div>`;
+                    }
+                    
+                    // Always show box dimensions if available
+                    if (product.box_dimensions) {
+                        html += `<div class="spec-row"><span class="spec-label">Box Dimensions</span><span class="spec-value">${product.box_dimensions}</span></div>`;
+                    }
+                    
+                    html += '</div>'; // Close product-specs
+                    
+                    // Product Configuration for Multi-User Benching
+                    html += '<div class="product-config-selector">';
+                    html += '<div class="config-group">';
+                    html += '<label class="config-group-label">Stages:</label>';
+                    html += '<div class="config-buttons">';
+                    html += '<button class="config-btn" data-option="stage" data-value="2-Stage" onclick="selectConfigOption(' + productIdStr + ', \'stage\', \'2-Stage\', this)">2-Stage</button>';
+                    html += '<button class="config-btn" data-option="stage" data-value="3-Stage" onclick="selectConfigOption(' + productIdStr + ', \'stage\', \'3-Stage\', this)">3-Stage</button>';
+                    html += '</div>';
+                    html += '</div>';
+                    
+                    // Column Type & Dimensions - only 2 options: 50*80mm and 70*70mm
+                    html += '<div class="config-group">';
+                    html += '<label class="config-group-label">Column Type & Dimensions:</label>';
+                    html += '<div class="config-buttons">';
+                    html += '<button class="config-btn" data-option="column_dim" data-column="Rectangular" data-dimensions="50*80mm" onclick="selectColumnDimPair(' + productIdStr + ', \'Rectangular\', \'50*80mm\', this)">Rectangular 2"x3.15" (50x80mm)</button>';
+                    html += '<button class="config-btn" data-option="column_dim" data-column="Square" data-dimensions="70*70mm" onclick="selectColumnDimPair(' + productIdStr + ', \'Square\', \'70*70mm\', this)">Square 2.76"x2.76" (70x70mm)</button>';
+                    html += '</div>';
+                    html += '</div>';
+                    html += '</div>'; // Close product-config-selector
+                    
+                    // Desktop Size Input for Side Panel (no Foot for Multi-User Benching)
+                    html += '<div class="desktop-size-section">';
+                    html += '<div class="desktop-size-title">Desktop Size (for Side Panel)</div>';
+                    html += '<div class="desktop-size-inputs">';
+                    html += '<div class="desktop-size-input-group">';
+                    html += '<label>Depth (inches):</label>';
+                    html += '<input type="number" id="desktop-depth-' + product.id + '" placeholder="e.g., 28" step="0.1" min="20" max="45" onchange="calculateSidePanelAndFoot(' + product.id + ')">';
+                    html += '</div>';
+                    html += '<div class="desktop-size-input-group">';
+                    html += '<label>Width (inches):</label>';
+                    html += '<input type="number" id="desktop-width-' + product.id + '" placeholder="e.g., 60" step="0.1" min="35" max="90" onchange="calculateSidePanelAndFoot(' + product.id + ')">';
+                    html += '</div>';
+                    html += '</div>';
+                    html += '<div class="calculated-specs hidden" id="calculated-specs-' + productIdStr + '">';
+                    html += '<div class="calculated-specs-item">';
+                    html += '<span class="calculated-specs-label">Side Rail:</span>';
+                    html += '<span class="calculated-specs-value" id="side-rail-' + productIdStr + '">-</span>';
+                    html += '</div>';
+                    html += '</div>';
+                    html += '</div>'; // Close desktop-size-section
+                    
+                    // Color selection for Multi-User Benching (same format as regular products)
+                    html += '<div class="color-selection-section" style="margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--border-color);">';
+                    html += '<label style="font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: var(--spacing-sm); display: block;">Color Selection:</label>';
+                    html += '<select id="color-select-' + productIdStr + '" class="form-input" style="margin-bottom: var(--spacing-sm); font-size: 14px;">';
+                    html += '<option value="">Select Color</option>';
+                    html += '<optgroup label="Basic Colors">';
+                    // Basic colors will be populated by JavaScript
+                    html += '</optgroup>';
+                    html += '<optgroup label="Other RAL Colors">';
+                    // Other RAL colors will be populated by JavaScript
+                    html += '</optgroup>';
+                    html += '<option value="custom">Custom RAL Color</option>';
+                    html += '</select>';
+                    html += '<input type="text" id="custom-ral-' + productIdStr + '" placeholder="Enter custom RAL code (e.g., RAL9010)" style="display: none; width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 13px; margin-top: var(--spacing-xs);" class="form-input">';
+                    html += '</div>';
+                    
+                    // Hand Control Panel Selection (required for Multi-User Benching)
+                    html += '<div class="hand-control-selection-section" style="margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--border-color);">';
+                    html += '<label style="font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: var(--spacing-sm); display: block;">Hand Control Panel <span style="color: #FF3B30;">*</span>:</label>';
+                    html += '<div style="display: flex; gap: var(--spacing-md); align-items: flex-start;">';
+                    html += '<div style="flex: 1;">';
+                    html += '<select id="hand-control-select-' + productIdStr + '" class="form-input" style="font-size: 14px; width: 100%;" required onchange="updateHandControlPreview(' + productIdStr + ', this.value)">';
+                    html += '<option value="">Select Hand Control Panel</option>';
+                    // Hand control options will be populated by JavaScript
+                    html += '</select>';
+                    html += '<div style="font-size: 12px; color: var(--text-secondary); margin-top: var(--spacing-xs);">Required for electric desk frames. Can also be purchased separately.</div>';
+                    html += '</div>';
+                    html += '<div id="hand-control-preview-' + productIdStr + '" style="width: 120px; height: 120px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--background-secondary); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden;">';
+                    html += '<div style="font-size: 11px; color: var(--text-secondary); text-align: center; padding: var(--spacing-sm);">Select to preview</div>';
+                    html += '</div>';
+                    html += '</div>';
+                    html += '</div>';
+                    
+                    // Quantity selection and Add to cart button
+                    html += '<div style="margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--border-color);">';
+                    // Quantity input for Multi-User Benching
+                    html += '<div style="display: flex; align-items: center; gap: var(--spacing-sm); margin-bottom: var(--spacing-md);">';
+                    html += '<label style="font-size: 14px; font-weight: 500; color: var(--text-primary); white-space: nowrap;">Quantity:</label>';
+                    html += `<input type="number" id="quantity-${productIdStr}" value="1" min="1" class="form-input" style="width: 80px; padding: 8px 12px; font-size: 14px;">`;
+                    html += '</div>';
+                    html += `<button class="add-to-cart-btn" id="add-cart-btn-${productIdStr}" onclick="addToCartWithOptions('${productIdStr}', '${productSku}')" disabled>Add to Cart</button>`;
+                    html += '</div>';
+                    
+                    html += '</div>'; // Close product-content
+                    html += '</div>'; // Close product-card
+                });
+            
+            html += '</div>'; // Close products-grid
+            document.getElementById('productsContainer').innerHTML = html;
+        }
+
+        // Product configuration selection handler (for Standalone Frames)
+        let productConfigs = {}; // {productId: {stage, column_type, dimensions}}
+        
+        function selectConfigOption(productId, optionType, value, button) {
+            // Initialize config if not exists
+            if (!productConfigs[productId]) {
+                productConfigs[productId] = {};
+            }
+            
+            // Remove selected from siblings in the same group
+            const card = button.closest('.product-card');
+            const group = button.closest('.config-group');
+            group.querySelectorAll(`[data-option="${optionType}"]`).forEach(btn => btn.classList.remove('selected'));
+            
+            // Add selected to clicked button
+            button.classList.add('selected');
+            
+            // Store selection
+            productConfigs[productId][optionType] = value;
+            
+            // Update lifting range display when stage is selected
+            if (optionType === 'stage') {
+                updateLiftingRangeDisplay(productId, value);
+            }
+            
+            // Check if all required options are selected (for Standalone Frames and Multi-User Benching)
+            checkAddToCartButtonState(productId);
+        }
+        
+        // Update lifting range display based on stage selection
+        function updateLiftingRangeDisplay(productId, stage) {
+            const rangeValueEl = document.getElementById(`lifting-range-value-${productId}`);
+            if (!rangeValueEl) return;
+            
+            // Lifting range values based on stage
+            // 2-Stage: 27.95"~46.85" (710~1190mm)
+            // 3-Stage: 25.59"~51.18" (650~1300mm)
+            let rangeText = 'select to check';
+            if (stage === '2-Stage') {
+                rangeText = '27.95"~46.85"';
+            } else if (stage === '3-Stage') {
+                rangeText = '25.59"~51.18"';
+            }
+            
+            rangeValueEl.textContent = rangeText;
+        }
+        
+        // Select Column Type & Dimensions as a pair (for Standalone Frames and Multi-User Benching)
+        function selectColumnDimPair(productId, columnType, dimensions, button) {
+            // Initialize config if not exists
+            if (!productConfigs[productId]) {
+                productConfigs[productId] = {};
+            }
+            
+            // Remove selected from siblings in the same group
+            const group = button.closest('.config-group');
+            group.querySelectorAll(`[data-option="column_dim"]`).forEach(btn => btn.classList.remove('selected'));
+            
+            // Add selected to clicked button
+            button.classList.add('selected');
+            
+            // Store both column_type and dimensions together
+            productConfigs[productId].column_type = columnType;
+            productConfigs[productId].dimensions = dimensions;
+            
+            // Update image for Single Motor products based on column type
+            const productCard = document.querySelector(`[data-product-id="${productId}"]`);
+            if (productCard && productCard.dataset.baseType === 'Single Motor') {
+                const imgElement = productCard.querySelector('.product-image img');
+                if (imgElement) {
+                    let imageSrc = "/static/images/placeholder.png"; // Default
+                    
+                    if (columnType === 'Oval') {
+                        imageSrc = "/static/images/placeholder.png";
+                    } else if (columnType === 'Round') {
+                        imageSrc = "/static/images/placeholder.png";
+                    } else if (columnType === 'Rectangular' || columnType === 'Square') {
+                        // Rectangular (both 50*80mm and 60*90mm) and Square use the same image
+                        imageSrc = "/static/images/placeholder.png";
+                    }
+                    
+                    // Update image with error handling
+                    imgElement.onerror = function() {
+                        console.error('Failed to load image:', imageSrc);
+                        this.src = "/static/images/products/standalone-frames.png"; // Fallback
+                    };
+                    imgElement.src = imageSrc;
+                }
+            }
+            
+            // Check if all required options are selected (for Standalone Frames and Multi-User Benching)
+            checkAddToCartButtonState(productId);
+        }
+        
+        // Calculate Side Panel and Foot based on desktop size (Desktop Size Matching logic)
+        function calculateSidePanelAndFoot(productId) {
+            const depthInput = document.getElementById(`desktop-depth-${productId}`);
+            const widthInput = document.getElementById(`desktop-width-${productId}`);
+            const specsDiv = document.getElementById(`calculated-specs-${productId}`);
+            
+            if (!depthInput || !specsDiv) return;
+            
+            const depth = parseFloat(depthInput.value);
+            const width = widthInput ? parseFloat(widthInput.value) : null;
+            
+            // For Multi-User Benching, only depth is needed (side rail only)
+            if (currentGroupName === 'Multi-User Benching') {
+                if (!depth) {
+                    specsDiv.classList.add('hidden');
+                    return;
+                }
+                
+                // Calculate side rail based on depth only
+                let sideRail = '';
+                if (depth >= 23 && depth < 28) {
+                    sideRail = '19.7';
+                } else if (depth >= 28 && depth < 32) {
+                    sideRail = '23.6';
+                } else if (depth >= 32 && depth < 36) {
+                    sideRail = '27.6';
+                } else if (depth >= 36 && depth <= 40) {
+                    sideRail = '31.5';
+                } else {
+                    sideRail = 'Custom';
+                }
+                
+                const sideRailEl = document.getElementById(`side-rail-${productId}`);
+                if (sideRailEl) sideRailEl.textContent = sideRail + '"';
+                specsDiv.classList.remove('hidden');
+                return;
+            }
+            
+            // For Standalone Frames, both depth and width are needed
+            if (!depth || !width) {
+                specsDiv.classList.add('hidden');
+                return;
+            }
+            
+            // Desktop Size Matching logic based on the guide
+            let sideRail = '';
+            let footPlate = '';
+            let recommendedWidth = '';
+            
+            // Determine Side Rail and Foot Plate based on Depth (matching the provided table)
+            // Depth D(in) | Side Rail(in) | Foot Plate(in)
+            // 23-28       | 19.7          | 23.6
+            // 28-32       | 23.6          | 27.6
+            // 32-36       | 27.6          | 30.7
+            // 36-40       | 31.5          | 33.5
+            if (depth >= 23 && depth < 28) {
+                sideRail = '19.7';
+                footPlate = '23.6';
+            } else if (depth >= 28 && depth < 32) {
+                sideRail = '23.6';
+                footPlate = '27.6';
+            } else if (depth >= 32 && depth < 36) {
+                sideRail = '27.6';
+                footPlate = '30.7';
+            } else if (depth >= 36 && depth <= 40) {
+                sideRail = '31.5';
+                footPlate = '33.5';
+            } else {
+                sideRail = 'Custom';
+                footPlate = 'Custom';
+            }
+            
+            // Calculate recommended width
+            // Beam Range B: 37.0-64.6", Edge Clearance E: 2.0-4.0" per side
+            const minWidth = 37.0 + (2.0 * 2); // 40.9"
+            const maxWidth = 64.6 + (4.0 * 2); // 72.4"
+            const extendedMaxWidth = 86.6;
+            
+            if (width >= minWidth && width <= maxWidth) {
+                recommendedWidth = `${width}" (Recommended)`;
+            } else if (width > maxWidth && width <= extendedMaxWidth) {
+                recommendedWidth = `${width}" (Extended Fit*)`;
+            } else {
+                recommendedWidth = `${width}" (Out of Range)`;
+            }
+            
+            // Update display
+            const sideRailEl = document.getElementById(`side-rail-${productId}`);
+            const footPlateEl = document.getElementById(`foot-plate-${productId}`);
+            const recommendedWidthEl = document.getElementById(`recommended-width-${productId}`);
+            
+            if (sideRailEl) sideRailEl.textContent = sideRail + '"';
+            // For Standalone Frames, show foot plate if element exists
+            if (footPlateEl) {
+                footPlateEl.textContent = footPlate + '"';
+            }
+            if (recommendedWidthEl) recommendedWidthEl.textContent = recommendedWidth;
+            
+            specsDiv.classList.remove('hidden');
+        }
+
+
+        // Add to cart with options (for Standalone Frames and Multi-User Benching)
+        async function addToCartWithOptions(productId, sku) {
+            // Get quantity
+            const quantityInput = document.getElementById('quantity-' + productId);
+            const quantity = quantityInput ? parseInt(quantityInput.value) || 1 : 1;
+            if (quantity < 1) {
+                alert('Quantity must be at least 1');
+                return;
+            }
+            
+            const configuration = {};
+            let actualProductId = productId; // Will be used for non-Standalone products
+            
+            // For Standalone Frames and Multi-User Benching, get all configuration options and find matching product
+            if (currentGroupName === 'Standalone Frames' || currentGroupName === 'Multi-User Benching') {
+                const config = productConfigs[productId];
+                if (!config || !config.stage || !config.column_type || !config.dimensions) {
+                    alert('Please select all configuration options (Stage, Column Type, Dimensions)');
+                    return;
+                }
+                configuration.stage = config.stage;
+                configuration.column_type = config.column_type;
+                configuration.dimensions = config.dimensions;
+                
+                // Determine base_type from product
+                const productCard = document.querySelector(`[data-product-id="${productId}"]`);
+                let baseType = 'Dual Motor';
+                if (productCard) {
+                    const baseTypeAttr = productCard.dataset.baseType;
+                    if (baseTypeAttr) {
+                        baseType = baseTypeAttr;
+                    } else {
+                        // Fallback to product name parsing
+                        const productNameEl = productCard.querySelector('.product-name');
+                        if (productNameEl) {
+                            const productName = productNameEl.textContent.toLowerCase();
+                            if (productName.includes('l-shape') || productName.includes('lshape') || productName.includes('l shape')) {
+                                baseType = 'L-shape';
+                            } else if (productName.includes('short')) {
+                                baseType = 'Dual Motor Short';
+                            } else if (productName.includes('heavy') || productName.includes('heavy-duty')) {
+                                baseType = 'Heavy-Duty';
+                            } else if (productName.includes('face-to-face') || productName.includes('face to face')) {
+                                baseType = 'Face-to-Face';
+                            } else if (productName.includes('trio') || productName.includes('120')) {
+                                baseType = 'Trio';
+                            }
+                        }
+                    }
+                }
+                
+                // Find matching product using configuration API
+                try {
+                    const findResponse = await fetch(`${API_BASE_URL}/api/site/products/config/find`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${getToken()}`
+                        },
+                        body: JSON.stringify({
+                            base_type: baseType,
+                            stage: config.stage,
+                            column_type: config.column_type,
+                            dimensions: config.dimensions
+                        })
+                    });
+                    
+                    if (findResponse.ok) {
+                        const matchedProduct = await findResponse.json();
+                        actualProductId = matchedProduct.product_id;
+                        console.log('Found matching product:', matchedProduct);
+                    } else {
+                        // If no match found, try to parse the base product ID
+                        const baseProductId = parseInt(productId);
+                        if (!isNaN(baseProductId)) {
+                            actualProductId = baseProductId;
+                            console.warn('No matching product found, using base product ID:', actualProductId);
+                        } else {
+                            alert('Invalid product ID. Please try again.');
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error finding matching product:', error);
+                    // Continue with base product ID
+                }
+            }
+            
+            // Get desktop size and calculate side panel & foot
+            // For Multi-User Benching: only depth is needed for side rail
+            // For Standalone Frames: both depth and width are needed
+            const depthInput = document.getElementById(`desktop-depth-${productId}`);
+            const widthInput = document.getElementById(`desktop-width-${productId}`);
+            
+            // For Multi-User Benching, only depth is required (side rail only)
+            if (currentGroupName === 'Multi-User Benching' && depthInput) {
+                const depth = parseFloat(depthInput.value);
+                
+                if (depth) {
+                    configuration.desktop_depth = depth;
+                    if (widthInput && widthInput.value) {
+                        configuration.desktop_width = parseFloat(widthInput.value);
+                    }
+                    
+                    // Calculate side rail based on depth only (matching the provided table)
+                    // Depth D(in) | Side Rail(in)
+                    // 23-28       | 19.7
+                    // 28-32       | 23.6
+                    // 32-36       | 27.6
+                    // 36-40       | 31.5
+                    let sideRail = '';
+                    
+                    if (depth >= 23 && depth < 28) {
+                        sideRail = '19.7';
+                    } else if (depth >= 28 && depth < 32) {
+                        sideRail = '23.6';
+                    } else if (depth >= 32 && depth < 36) {
+                        sideRail = '27.6';
+                    } else if (depth >= 36 && depth <= 40) {
+                        sideRail = '31.5';
+                    } else {
+                        sideRail = 'Custom';
+                    }
+                    
+                    // Multi-User Benching always needs side rail (no foot plate)
+                    configuration.side_rail = sideRail;
+                }
+            }
+            // For Standalone Frames, both depth and width are needed
+            else if (depthInput && widthInput) {
+                const depth = parseFloat(depthInput.value);
+                const width = parseFloat(widthInput.value);
+                
+                if (depth && width) {
+                    configuration.desktop_depth = depth;
+                    configuration.desktop_width = width;
+                    
+                    // Calculate side rail and foot plate based on depth (matching the provided table)
+                    // Depth D(in) | Side Rail(in) | Foot Plate(in)
+                    // 23-28       | 19.7          | 23.6
+                    // 28-32       | 23.6          | 27.6
+                    // 32-36       | 27.6          | 30.7
+                    // 36-40       | 31.5          | 33.5
+                    let sideRail = '';
+                    let footPlate = '';
+                    
+                    if (depth >= 23 && depth < 28) {
+                        sideRail = '19.7';
+                        footPlate = '23.6';
+                    } else if (depth >= 28 && depth < 32) {
+                        sideRail = '23.6';
+                        footPlate = '27.6';
+                    } else if (depth >= 32 && depth < 36) {
+                        sideRail = '27.6';
+                        footPlate = '30.7';
+                    } else if (depth >= 36 && depth <= 40) {
+                        sideRail = '31.5';
+                        footPlate = '33.5';
+                    } else {
+                        sideRail = 'Custom';
+                        footPlate = 'Custom';
+                    }
+                    
+                    // Check if product needs side rail and foot plate
+                    // Exclude: single leg products, pneumatic products
+                    const productCard = document.querySelector(`[data-product-id="${productId}"]`);
+                    const productName = productCard ? (productCard.querySelector('.product-name')?.textContent || '').toLowerCase() : '';
+                    const productSku = productCard ? (productCard.querySelector('.product-sku')?.textContent || '').toLowerCase() : '';
+                    
+                    // Determine base_type (already determined earlier in the function)
+                    let baseType = 'Dual Motor';
+                    if (productCard) {
+                        const baseTypeAttr = productCard.dataset.baseType;
+                        if (baseTypeAttr) {
+                            baseType = baseTypeAttr;
+                        }
+                    }
+                    
+                    // Determine if product needs foot plate
+                    // Single leg products and pneumatic products don't need foot plate
+                    const isSingleLeg = productName.includes('single leg') || productName.includes('single-leg') || 
+                                       productSku.includes('single') || baseType === 'Single Leg';
+                    const isPneumatic = productName.includes('pneumatic') || productName.includes('gas lift') || productName.includes('pneumatic lift') ||
+                                       productSku.includes('pneumatic');
+                    const isFaceToFaceOrTrio = baseType === 'Face-to-Face' || baseType === 'Trio' || 
+                                               productName.includes('face-to-face') || productName.includes('trio') || productName.includes('120');
+                    
+                    // Side rail is needed for all STANDALONE products (except single leg and pneumatic)
+                    if (!isSingleLeg && !isPneumatic) {
+                        configuration.side_rail = sideRail;
+                    }
+                    
+                    // Foot plate is needed for STANDALONE products (except single leg, pneumatic, and face-to-face/trio)
+                    if (!isSingleLeg && !isPneumatic && !isFaceToFaceOrTrio) {
+                        configuration.foot_plate = footPlate;
+                    }
+                }
+            }
+            
+            // Get selected color (for Standalone Frames and Multi-User Benching)
+            const colorSelect = document.getElementById('color-select-' + productId);
+            const customRalInput = document.getElementById('custom-ral-' + productId);
+            const selectedColor = colorSelect ? colorSelect.value : '';
+            const customRalCode = (selectedColor === 'custom' && customRalInput) ? customRalInput.value.trim() : null;
+            
+            // Add color to configuration
+            if (selectedColor && selectedColor !== 'custom') {
+                const color = allColors.find(c => c.color_code === selectedColor);
+                if (color) {
+                    configuration.color_code = color.color_code;
+                    configuration.color_name = color.color_name;
+                }
+            } else if (customRalCode) {
+                configuration.color_code = 'custom';
+                configuration.custom_ral_code = customRalCode.toUpperCase();
+            }
+            
+            // Add hand control panel to configuration (required for electric desk frames)
+            const handControlSelect = document.getElementById('hand-control-select-' + productId);
+            if (handControlSelect && handControlSelect.value) {
+                const handControlId = parseInt(handControlSelect.value);
+                const selectedOption = handControlSelect.options[handControlSelect.selectedIndex];
+                if (selectedOption) {
+                    configuration.hand_control_panel_id = handControlId;
+                    configuration.hand_control_panel_sku = selectedOption.dataset.sku || '';
+                    configuration.hand_control_panel_name = selectedOption.dataset.name || '';
+                }
+            } else if (currentGroupName === 'Standalone Frames' || currentGroupName === 'Multi-User Benching') {
+                // Hand control panel is required for electric desk frames
+                alert('Please select a hand control panel. It is required for electric desk frames.');
+                return;
+            }
+            
+            // Ensure productId is a number
+            actualProductId = parseInt(actualProductId);
+            if (isNaN(actualProductId) || actualProductId <= 0) {
+                console.error('Invalid product ID:', actualProductId, 'from original:', productId);
+                alert('Invalid product ID: ' + actualProductId + '. Please try again.');
+                return;
+            }
+            
+            console.log('Final product ID to add to cart:', actualProductId);
+            
+            try {
+                // Debug: log the request
+                console.log('Adding to cart:', {
+                    product_id: actualProductId,
+                    quantity: quantity,
+                    configuration: configuration
+                });
+                
+                const response = await fetch(`${API_BASE_URL}/api/site/cart/items`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({
+                        product_id: actualProductId,
+                        quantity: quantity,
+                        configuration: Object.keys(configuration).length > 0 ? configuration : undefined
+                    })
+                });
+                
+                console.log('Cart response status:', response.status);
+                
+                if (response.ok) {
+                    alert('Product added to cart!');
+                    loadCartCount();
+                } else {
+                    const errorText = await response.text();
+                    let errorMsg = 'Unknown error';
+                    try {
+                        const error = JSON.parse(errorText);
+                        errorMsg = error.detail || error.message || errorText;
+                    } catch (e) {
+                        errorMsg = errorText || `HTTP ${response.status}`;
+                    }
+                    console.error('Cart error:', errorMsg);
+                    alert('Failed to add to cart: ' + errorMsg);
+                }
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                alert('Failed to add to cart: ' + error.message);
+            }
+        }
+
+        // Standalone Frames Configurator (deprecated - keeping for reference)
+        async function displayStandaloneFramesConfigurator_OLD(variants) {
+            let html = '<div class="configurator-container">';
+            
+            for (const variant of variants) {
+                html += `<div class="configurator-card" data-base-type="${variant.base_type}">`;
+                html += `<div class="configurator-image" id="img-${variant.id}">`;
+                html += `<img src="${variant.image_url}" alt="${variant.name}" onerror="this.parentElement.innerHTML='<span>Image Coming Soon</span>'">`;
+                html += '</div>';
+                html += `<div class="configurator-title">${variant.name}</div>`;
+                html += `<div class="configurator-description">${variant.description}</div>`;
+                html += '<div class="config-options">';
+                
+                // Stage selection
+                html += '<div class="config-option-group">';
+                html += '<label class="config-option-label">Stage</label>';
+                html += '<div class="config-option-buttons" data-option="stage">';
+                variant.variants.stages.forEach(stage => {
+                    html += `<button class="config-option-btn" data-value="${stage}">${stage}</button>`;
+                });
+                html += '</div>';
+                html += '</div>';
+                
+                // Column type selection
+                html += '<div class="config-option-group">';
+                html += '<label class="config-option-label">Column Type</label>';
+                html += '<div class="config-option-buttons" data-option="column_type">';
+                variant.variants.column_types.forEach(type => {
+                    html += `<button class="config-option-btn" data-value="${type}">${type}</button>`;
+                });
+                html += '</div>';
+                html += '</div>';
+                
+                // Dimensions selection
+                html += '<div class="config-option-group">';
+                html += '<label class="config-option-label">Dimensions</label>';
+                html += '<div class="config-option-buttons" data-option="dimensions">';
+                variant.variants.dimensions.forEach(dim => {
+                    html += `<button class="config-option-btn" data-value="${dim}">${dim}</button>`;
+                });
+                html += '</div>';
+                html += '</div>';
+                
+                html += '</div>'; // Close config-options
+                html += `<button class="add-to-cart-btn" onclick="addToCartFromConfigurator('${variant.base_type}', this)" disabled>Add to Cart</button>`;
+                html += '</div>'; // Close configurator-card
+            }
+            
+            html += '</div>';
+            document.getElementById('productsContainer').innerHTML = html;
+            
+            // Add event listeners for option buttons
+            document.querySelectorAll('.config-option-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const group = this.parentElement;
+                    const card = this.closest('.configurator-card');
+                    
+                    // Remove selected from siblings
+                    group.querySelectorAll('.config-option-btn').forEach(b => b.classList.remove('selected'));
+                    // Add selected to clicked button
+                    this.classList.add('selected');
+                    
+                    // Check if all options are selected
+                    const allGroups = card.querySelectorAll('.config-option-group');
+                    let allSelected = true;
+                    for (const group of allGroups) {
+                        if (!group.querySelector('.config-option-btn.selected')) {
+                            allSelected = false;
+                            break;
+                        }
+                    }
+                    
+                    const addToCartBtn = card.querySelector('.add-to-cart-btn');
+                    if (allSelected) {
+                        addToCartBtn.disabled = false;
+                        // Update image based on selection
+                        updateConfiguratorImage(card);
+                    } else {
+                        addToCartBtn.disabled = true;
+                    }
+                });
+            });
+        }
+
+        async function updateConfiguratorImage(card) {
+            const baseType = card.dataset.baseType;
+            const stage = card.querySelector('[data-option="stage"] .selected')?.dataset.value;
+            const columnType = card.querySelector('[data-option="column_type"] .selected')?.dataset.value;
+            const dimensions = card.querySelector('[data-option="dimensions"] .selected')?.dataset.value;
+            
+            if (!stage || !columnType || !dimensions) return;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/products/config/find`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({
+                        base_type: baseType,
+                        stage: stage,
+                        column_type: columnType,
+                        dimensions: dimensions
+                    })
+                });
+                
+                if (response.ok) {
+                    const product = await response.json();
+                    const imgContainer = card.querySelector('.configurator-image');
+                    if (product.image_url) {
+                        imgContainer.innerHTML = `<img src="${product.image_url}" alt="${product.name}">`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating image:', error);
+            }
+        }
+
+        async function addToCartFromConfigurator(baseType, button) {
+            const card = button.closest('.configurator-card');
+            const stage = card.querySelector('[data-option="stage"] .selected')?.dataset.value;
+            const columnType = card.querySelector('[data-option="column_type"] .selected')?.dataset.value;
+            const dimensions = card.querySelector('[data-option="dimensions"] .selected')?.dataset.value;
+            
+            if (!stage || !columnType || !dimensions) {
+                alert('Please select all options');
+                return;
+            }
+            
+            // Find matching product
+            try {
+                const findResponse = await fetch(`${API_BASE_URL}/api/site/products/config/find`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({
+                        base_type: baseType,
+                        stage: stage,
+                        column_type: columnType,
+                        dimensions: dimensions
+                    })
+                });
+                
+                if (!findResponse.ok) {
+                    throw new Error('Product not found');
+                }
+                
+                const product = await findResponse.json();
+                
+                // Add to cart
+                console.log('Adding to cart (Standalone Frames):', {
+                    product_id: product.product_id,
+                    base_type: baseType,
+                    stage: stage,
+                    column_type: columnType,
+                    dimensions: dimensions
+                });
+                
+                const cartResponse = await fetch(`${API_BASE_URL}/api/site/cart/items`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({
+                        product_id: product.product_id,
+                        quantity: 1,
+                        configuration: {
+                            base_type: baseType,
+                            stage: stage,
+                            column_type: columnType,
+                            dimensions: dimensions
+                        }
+                    })
+                });
+                
+                console.log('Cart response status:', cartResponse.status);
+                
+                if (cartResponse.ok) {
+                    alert('Product added to cart!');
+                    loadCartCount();
+                } else {
+                    const errorText = await cartResponse.text();
+                    let errorMsg = 'Unknown error';
+                    try {
+                        const error = JSON.parse(errorText);
+                        errorMsg = error.detail || error.message || errorText;
+                    } catch (e) {
+                        errorMsg = errorText || `HTTP ${cartResponse.status}`;
+                    }
+                    console.error('Cart error:', errorMsg);
+                    alert('Failed to add to cart: ' + errorMsg);
+                }
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                alert('Failed to add to cart. Please try again.');
+            }
+        }
+
+        // Initialize
+        if (!getToken()) {
+            window.location.href = '/login';
+        } else {
+            // Load colors and hand controls first, then products
+            Promise.all([
+                loadColors(),
+                loadHandControls()
+            ]).then(() => {
+                loadProducts();
+            });
+            loadCartCount();
+        }
+    </script>
+
+<footer class="portal-footer">
+    <div class="portal-footer-inner">
+        <div class="portal-footer-brand">
+            <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+            <div>
+                <div class="portal-footer-title">IntelliOpus Portal</div>
+                <div class="portal-footer-copy">An independent cross-border operating bridge for qualified supplier programs, customer resources, order visibility, and feedback-driven execution.</div>
+            </div>
+        </div>
+        <div class="portal-footer-col">
+            <h3>About</h3>
+            <a href="/about">About</a>
+            <a href="/service-history">Service history</a>
+            <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+            <a href="/manufacturers">Supplier Network</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Customer Workspace</h3>
+            <a href="/products">Product Programs</a>
+            <a href="/inventory">Local Samples</a>
+            <a href="/dashboard">Dashboard</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Resources</h3>
+            <a href="/reference-center">Resources</a>
+            <a href="/customer-service">Support</a>
+            <a href="/cart">Cart</a>
+        </div>
+    </div>
+    <div class="portal-footer-note">Customer-facing pages show approved product, resource, order, shipment, and feedback information only. Supplier coordination records stay separate from the customer workspace.</div>
+</footer>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

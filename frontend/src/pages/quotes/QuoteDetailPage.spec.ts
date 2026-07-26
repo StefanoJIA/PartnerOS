@@ -19,6 +19,8 @@ vi.mock('@/api/orders', () => ({
 vi.mock('@/api/quotes', () => ({
   SENT_CHANNELS: [{ value: 'email', label: 'Email (manual)' }],
   createQuoteLearning: vi.fn(),
+  deleteQuotePdfExport: vi.fn(),
+  downloadQuotePdf: vi.fn(),
   fetchQuote: vi.fn().mockResolvedValue({
     id: 'q1',
     quote_number: 'Q-2026-0001',
@@ -100,33 +102,10 @@ vi.mock('@/api/quotes', () => ({
   fetchDeliveryLogs: vi.fn().mockResolvedValue({ items: [], total: 0 }),
   fetchQuoteTimeline: vi.fn().mockResolvedValue({ items: [], total: 0 }),
   fetchQuoteVersions: vi.fn().mockResolvedValue({ items: [], total: 0 }),
-  fetchOrderReadiness: vi.fn().mockResolvedValue({
-    quote_id: 'q1',
-    quote_number: 'Q-2026-0001',
-    readiness_status: 'needs_customer_confirmation',
-    readiness_score: 80,
-    blocking_items: [],
-    warning_items: ['supplier_confirmation_needed'],
-    checklist: [{ key: 'quote_sent', label: 'Quote has been sent', status: 'pass', details: '' }],
-    order_input_contract: {
-      customer: { company_name: 'OCI Office Concepts Inc.' },
-      totals: { grand_total: '1000', currency: 'USD' },
-      line_items: [],
-      source_quote: { quote_number: 'Q-2026-0001' },
-    },
-    recommended_next_action: 'Obtain customer confirmation',
-    safety: {
-      order_created: false,
-      production_started: false,
-      shipment_created: false,
-      automatic_sending_enabled: false,
-    },
-  }),
   exportQuotePdf: vi.fn(),
   markQuoteReady: vi.fn(),
   markQuoteSent: vi.fn(),
   promoteQuoteLearningToMarketResponse: vi.fn(),
-  quotePdfDownloadUrl: (qid: string, eid: string) => `/api/v1/quotes/${qid}/pdf-exports/${eid}/download`,
 }))
 
 describe('QuoteDetailPage', () => {
@@ -143,11 +122,15 @@ describe('QuoteDetailPage', () => {
     expect(text).toContain('1-49')
     expect(text).toContain('50-99')
     expect(text).toContain('>=500')
-    expect(text).toContain('报价产品明细')
+    expect(text).not.toContain('报价产品明细')
+    expect(text).not.toContain('内部参考总额')
+    expect(text).not.toContain('参考数量')
+    expect(text).not.toContain('参考单价')
     expect(text).toContain('客户 PDF')
     expect(text).toContain('人工发送记录')
-    expect(text).toContain('转订单准备')
-    expect(text).toContain('刷新检查')
+    expect(text).not.toContain('转订单准备')
+    expect(text).not.toContain('刷新检查')
+    expect(text).not.toContain('创建订单')
     expect(text).toContain('内部记录：客户反馈 / 赢输原因 / Market Response')
     expect(text).not.toContain('Product / Partner Playbook Reference')
     expect(text).not.toContain('Quote Delivery')

@@ -41,10 +41,31 @@ def _safe_payload(payload: dict[str, Any]) -> dict[str, Any]:
     return cleaned
 
 
+PORTAL_PRODUCT_ATTRIBUTE_DROP_KEYS = frozenset(
+    {
+        "pricing_model",
+        "pricing_model_steps",
+        "source_workbook",
+        "cost_rmb",
+        "material_cost_rmb",
+        "target_margin",
+        "sales_margin_rate",
+        "pricing_assumption_source",
+    }
+)
+
+
+def _customer_product_attributes(attrs: dict[str, Any] | None) -> dict[str, Any]:
+    raw = attrs if isinstance(attrs, dict) else {}
+    trimmed = {k: v for k, v in raw.items() if k not in PORTAL_PRODUCT_ATTRIBUTE_DROP_KEYS}
+    return strip_forbidden_internal_fields(trimmed)
+
+
 def _product_to_customer_dict(row: ProductCatalog) -> dict[str, Any]:
+    attrs = _customer_product_attributes(row.attributes_json)
     return {
         "id": str(row.id),
-        "internal_sku": row.internal_sku,
+        "product_code": row.partner_product_code or row.internal_sku,
         "product_name": row.product_name,
         "product_category": row.product_category,
         "product_family": row.product_family,
@@ -54,7 +75,7 @@ def _product_to_customer_dict(row: ProductCatalog) -> dict[str, Any]:
         "currency": row.base_currency,
         "default_incoterm": row.default_incoterm,
         "image_url": row.image_url,
-        "attributes": row.attributes_json or {},
+        "attributes": attrs,
     }
 
 

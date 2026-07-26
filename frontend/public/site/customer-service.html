@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support - IntelliOpus Portal</title>
+    <link rel="stylesheet" href="/css/apple-style.css">
+    <style>
+        body {
+            background: var(--background);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--background);
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--spacing-md) var(--spacing-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: saturate(180%) blur(20px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .header-logo a {
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .header-logo a img {
+            height: 40px;
+            max-width: 160px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .header-logo img:last-child {
+            height: 110px;
+            max-width: 560px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+        }
+
+        .cart-icon {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            background: var(--background-secondary);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: background 0.2s;
+        }
+
+        .cart-icon:hover {
+            background: #E8E8ED;
+        }
+
+        .cart-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #FF3B30;
+            color: white;
+            border-radius: 10px;
+            min-width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 0 4px;
+        }
+
+        .main-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: var(--spacing-xl) var(--spacing-lg);
+        }
+
+        .page-title {
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 17px;
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .search-card {
+            background: var(--background);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .search-box {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .order-card {
+            background: var(--background);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-md);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .order-number {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .order-status {
+            display: flex;
+            gap: var(--spacing-sm);
+            flex-wrap: wrap;
+        }
+
+        .order-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-xs);
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-size: 17px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .items-section {
+            margin-top: var(--spacing-md);
+        }
+
+        .items-title {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .item-card {
+            background: var(--background-secondary);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .item-name {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .item-price {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .item-details {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: var(--spacing-xs);
+        }
+
+        .item-detail-row {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-xs);
+        }
+
+        .item-detail-label {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: var(--spacing-sm);
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            .order-header {
+                flex-direction: column;
+                align-items: start;
+                gap: var(--spacing-sm);
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="/css/customer-theme.css">
+</head>
+<body>
+    <header class="site-header portal-header">
+    <div class="site-header-inner portal-header-inner">
+        <a class="portal-brand" href="/">
+    <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+    <span>
+        <strong>IntelliOpus</strong>
+        <small>Service Portal</small>
+    </span>
+</a>
+        <nav class="portal-nav portal-nav-main" aria-label="Primary navigation">
+    <div class="portal-nav-cluster" aria-label="Public site navigation">
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/about">About</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">IntelliOpus</span>
+                <a href="/about">Company overview</a>
+                <a href="/service-history">Service history</a>
+                <a href="/about#operating-bridge">U.S.-China operating bridge</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/services">Services</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Service scope</span>
+                <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+                <a href="/services#connected-workflow">From catalog to delivery</a>
+                <a href="/services#safety-boundary">Customer-safe boundary</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/manufacturers">Supplier Network</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Supplier network</span>
+                <a href="/manufacturers#hosun">HOSUN lifting systems</a>
+                <a href="/manufacturers#jobo">JOBO education furniture</a>
+                <a href="/manufacturers#future-suppliers">Future supplier programs</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/products">Product Programs</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Product programs</span>
+                <a href="/products">Browse by supplier</a>
+                <a href="/inventory">Local Samples</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/reference-center">Resources</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Resources</span>
+                <a href="/reference-center">Resource library</a>
+                <a href="/reference-center#ral">RAL color guide</a>
+                <a href="/reference-center#hosun-resources">HOSUN resources</a>
+                <a href="/reference-center#jobo-resources">JOBO resources</a>
+            </div>
+        </div>
+    </div>
+</nav>
+        <div class="portal-user">
+            <div class="portal-nav-group portal-workspace-menu">
+                <a class="portal-nav-link portal-workspace-link" href="/dashboard">Customer Workspace</a>
+                <div class="portal-dropdown portal-dropdown-right">
+                    <a href="/dashboard">Workspace overview</a>
+                    <a href="/dashboard#ordersContainer">Orders and tracking</a>
+                    <a href="/inventory">Local samples</a>
+                    <a href="/customer-service">Support and feedback</a>
+                    <a href="/cart">Cart</a>
+                </div>
+            </div>
+            <a href="/login" class="btn btn-secondary">Sign In</a>
+            <a href="/cart" class="cart-icon" id="cartIcon" aria-label="Cart">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+    </svg>
+    <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
+</a>
+        </div>
+    </div>
+</div>
+
+        <section class="portal-context-band workspace-context-band">
+        <div>
+            <div class="portal-context-kicker">Support and feedback</div>
+            <h1>Customer questions connect back to orders.</h1>
+            <p>Search an order, ask a service question, or send delivery feedback from the same customer-safe workspace. This channel does not send automatic external messages.</p>
+        </div>
+        <div class="portal-context-links">
+                <a href="/dashboard">Workspace <small>orders and status</small></a>
+                <a href="/order-detail">Order detail <small>progress view</small></a>
+                <a href="/reference-center">Resources <small>approved files</small></a>
+        </div>
+    </section>
+
+    <section class="workspace-path-mini" aria-label="Customer workspace path">
+        <a href="/products"><strong>1. Product review</strong><small>Compare supplier programs and options.</small></a>
+        <a href="/cart"><strong>2. Selected products</strong><small>Review items before order creation.</small></a>
+        <a href="/new-order"><strong>3. Create order</strong><small>Submit customer-safe order details.</small></a>
+        <a href="/dashboard"><strong>4. Order progress</strong><small>Follow production and shipment updates.</small></a>
+        <span class="is-current"><strong>5. Support</strong><small>Ask questions or send feedback.</small></span>
+    </section>
+<div class="main-content">
+        <h1 class="page-title">Order support and feedback</h1>
+        <p class="page-subtitle">Use an order number to open the right customer-safe service record.</p>
+
+        <div class="search-card">
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="orderNumber" 
+                    class="input"
+                    placeholder="Enter order number"
+                    autocomplete="off"
+                >
+                <button id="searchBtn" class="btn">Search order</button>
+            </div>
+        </div>
+
+        <div id="loading" style="display: none; text-align: center; padding: var(--spacing-xl);">
+            <div class="spinner"></div>
+            <p style="margin-top: var(--spacing-md); color: var(--text-secondary);">Loading customer-safe order information...</p>
+        </div>
+
+        <div id="error" class="alert alert-error" style="display: none;"></div>
+
+        <div id="orderContent" style="display: none;">
+            <div class="order-card">
+                <div class="order-header">
+                    <div>
+                        <div class="order-number" id="orderNumberDisplay"></div>
+                        <div style="font-size: 14px; color: var(--text-secondary); margin-top: var(--spacing-xs);" id="orderDateDisplay"></div>
+                    </div>
+                    <div class="order-status">
+                        <span class="badge" id="orderStatusBadge"></span>
+                        <span class="badge" id="shippingStatusBadge"></span>
+                    </div>
+                </div>
+
+                <div class="order-info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Customer Name</div>
+                        <div class="info-value" id="customerName"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Total Amount</div>
+                        <div class="info-value" id="totalAmount"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Shipping Address</div>
+                        <div class="info-value" id="shippingAddress"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Tracking Number</div>
+                        <div class="info-value" id="trackingNumber"></div>
+                    </div>
+                </div>
+
+                <div class="items-section">
+                    <div class="items-title">Order Items</div>
+                    <div id="orderItems"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin;
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function formatCurrency(amount) {
+            return '$' + parseFloat(amount).toFixed(2);
+        }
+
+        function getToken() {
+            return localStorage.getItem('access_token');
+        }
+
+        // Cart functions
+        async function loadCartCount() {
+            try {
+                const token = getToken();
+                if (!token) return;
+                
+                const response = await fetch(`${API_BASE_URL}/api/site/cart/count`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const badge = document.getElementById('cartBadge');
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.textContent = data.count;
+                            badge.style.display = 'flex';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading cart count:', error);
+            }
+        }
+
+        // Load cart count on page load
+        if (getToken()) {
+            loadCartCount();
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('orderContent').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('orderContent').style.display = 'none';
+        }
+
+        function getStatusBadgeClass(status) {
+            const statusMap = {
+                'pending': 'badge-warning',
+                'processing': 'badge-info',
+                'completed': 'badge-success',
+                'cancelled': 'badge',
+                'pending': 'badge-warning',
+                'in_transit': 'badge-info',
+                'delivered': 'badge-success'
+            };
+            return statusMap[status] || 'badge';
+        }
+
+        async function searchOrder() {
+            const orderNumber = document.getElementById('orderNumber').value.trim();
+            
+            if (!orderNumber) {
+                showError('Please enter an order number');
+                return;
+            }
+
+            showLoading();
+            const searchBtn = document.getElementById('searchBtn');
+            searchBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/customer/orders/by-number/${encodeURIComponent(orderNumber)}`);
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        showError('Order not found. Please check the order number.');
+                    } else {
+                        showError('Failed to load order. Please try again.');
+                    }
+                    hideLoading();
+                    searchBtn.disabled = false;
+                    return;
+                }
+
+                const orderData = await response.json();
+
+                // Display order info
+                document.getElementById('orderNumberDisplay').textContent = orderData.order_number;
+                document.getElementById('orderDateDisplay').textContent = `Order Date: ${formatDate(orderData.order_date)}`;
+                document.getElementById('customerName').textContent = orderData.customer_name || '-';
+                document.getElementById('totalAmount').textContent = formatCurrency(orderData.total_amount);
+                document.getElementById('shippingAddress').textContent = orderData.shipping_address || '-';
+                document.getElementById('trackingNumber').textContent = orderData.tracking_number || '-';
+
+                // Status badges
+                const statusBadge = document.getElementById('orderStatusBadge');
+                statusBadge.textContent = orderData.status.replace('_', ' ').toUpperCase();
+                statusBadge.className = 'badge ' + getStatusBadgeClass(orderData.status);
+
+                const shippingBadge = document.getElementById('shippingStatusBadge');
+                shippingBadge.textContent = orderData.shipping_status.replace('_', ' ').toUpperCase();
+                shippingBadge.className = 'badge ' + getStatusBadgeClass(orderData.shipping_status);
+
+                // Order items
+                const itemsContainer = document.getElementById('orderItems');
+                itemsContainer.innerHTML = '';
+
+                if (orderData.items && orderData.items.length > 0) {
+                    orderData.items.forEach(item => {
+                        const itemCard = document.createElement('div');
+                        itemCard.className = 'item-card';
+                        
+                        let itemHtml = `
+                            <div class="item-header">
+                                <div>
+                                    <div class="item-name">${item.product_name || item.product_sku}</div>
+                                    <div class="item-details">SKU: ${item.product_sku}</div>
+                                </div>
+                                <div class="item-price">${formatCurrency(item.subtotal)}</div>
+                            </div>
+                            <div class="item-details">
+                                <div class="item-detail-row">
+                                    <span class="item-detail-label">Quantity:</span>
+                                    <span>${item.quantity}</span>
+                                </div>
+                                <div class="item-detail-row">
+                                    <span class="item-detail-label">Unit Price:</span>
+                                    <span>${formatCurrency(item.unit_price)}</span>
+                                </div>
+                        `;
+
+                        if (item.color) {
+                            itemHtml += `
+                                <div class="item-detail-row">
+                                    <span class="item-detail-label">Color:</span>
+                                    <span>${item.color}</span>
+                                </div>
+                            `;
+                        }
+
+                        if (item.notes) {
+                            itemHtml += `
+                                <div class="item-detail-row">
+                                    <span class="item-detail-label">Notes:</span>
+                                    <span>${item.notes}</span>
+                                </div>
+                            `;
+                        }
+
+                        itemHtml += `</div></div>`;
+                        itemCard.innerHTML = itemHtml;
+                        itemsContainer.appendChild(itemCard);
+                    });
+                }
+
+                document.getElementById('orderContent').style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Network error. Please check your connection and try again.');
+            } finally {
+                hideLoading();
+                searchBtn.disabled = false;
+            }
+        }
+
+        document.getElementById('searchBtn').addEventListener('click', searchOrder);
+        document.getElementById('orderNumber').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchOrder();
+            }
+        });
+    </script>
+
+<footer class="portal-footer">
+    <div class="portal-footer-inner">
+        <div class="portal-footer-brand">
+            <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+            <div>
+                <div class="portal-footer-title">IntelliOpus Portal</div>
+                <div class="portal-footer-copy">An independent cross-border operating bridge for qualified supplier programs, customer resources, order visibility, and feedback-driven execution.</div>
+            </div>
+        </div>
+        <div class="portal-footer-col">
+            <h3>About</h3>
+            <a href="/about">About</a>
+            <a href="/service-history">Service history</a>
+            <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+            <a href="/manufacturers">Supplier Network</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Customer Workspace</h3>
+            <a href="/products">Product Programs</a>
+            <a href="/inventory">Local Samples</a>
+            <a href="/dashboard">Dashboard</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Resources</h3>
+            <a href="/reference-center">Resources</a>
+            <a href="/customer-service">Support</a>
+            <a href="/cart">Cart</a>
+        </div>
+    </div>
+    <div class="portal-footer-note">Customer-facing pages show approved product, resource, order, shipment, and feedback information only. Supplier coordination records stay separate from the customer workspace.</div>
+</footer>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

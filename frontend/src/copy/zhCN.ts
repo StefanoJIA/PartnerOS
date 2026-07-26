@@ -15,7 +15,10 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
 
 export const QUOTE_STATUS_LABELS: Record<string, string> = {
   draft: '草稿',
+  internal_review: '内部待确认',
+  ready_to_send: '待人工确认发送',
   prepared: '已准备',
+  revised: '已修订',
   sent: '已发送',
   accepted: '已接受',
   rejected: '已拒绝',

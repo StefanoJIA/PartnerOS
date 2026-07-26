@@ -1,0 +1,64 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: partneros
+      POSTGRES_PASSWORD: partneros
+      POSTGRES_DB: partneros
+    ports:
+      - "5435:5432"
+    volumes:
+      - partneros_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U partneros -d partneros"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      APP_RUNTIME_MODE: future_cloud
+      DATABASE_URL: postgresql+psycopg://partneros:partneros@db:5432/partneros
+      BACKEND_CORS_ORIGINS: http://127.0.0.1:8080,http://localhost:8080
+      UPLOAD_DIR: /app/uploads
+      LOCAL_STORAGE_PATH: /app/storage
+      PORTAL_CUSTOMER_API_ENABLED: "false"
+      PORTAL_CUSTOMER_API_REQUIRE_TOKEN: "true"
+    command: >
+      sh -c "alembic upgrade head &&
+      uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8014:8000"
+    volumes:
+      - partneros_uploads:/app/uploads
+      - partneros_storage:/app/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)\"",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile.local-server
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  partneros_pgdata:
+  partneros_uploads:
+  partneros_storage:

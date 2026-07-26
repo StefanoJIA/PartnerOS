@@ -5,14 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
+    "build": "vue-tsc -b && vite build --logLevel silent",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
-    "sidecar:prepare": "node scripts/prepare-sidecar.mjs"
+    "sidecar:prepare": "node scripts/prepare-sidecar.mjs",
+    "site:check": "node scripts/check-customer-portal-site.mjs"
   },
   "dependencies": {
     "axios": "^1.7.9",

@@ -18,7 +18,7 @@
       >
         <el-sub-menu v-for="group in navGroups" :key="group.key" :index="group.key">
           <template #title>{{ group.label }}</template>
-          <el-menu-item v-for="item in group.items" :key="item.path" :index="item.path">
+          <el-menu-item v-for="item in group.items" :key="item.path" :index="adminPath(item.path)">
             {{ item.label }}
           </el-menu-item>
         </el-sub-menu>
@@ -65,9 +65,9 @@ const navGroups = [
     key: 'customer-development',
     label: '客户开发',
     items: [
-      { path: '/companies', label: '公司' },
+      { path: '/companies', label: '客户公司' },
       { path: '/contacts', label: '联系人' },
-      { path: '/lead-intelligence', label: '线索智能工作台' },
+      { path: '/lead-intelligence', label: '线索工作台' },
       { path: '/growth-operations', label: '增长运营' },
       { path: '/lead-intake', label: '线索录入' },
       { path: '/leads', label: '线索列表' },
@@ -93,8 +93,7 @@ const navGroups = [
     label: '订单交付',
     items: [
       { path: '/orders', label: '订单' },
-      { path: '/partner-operations', label: '交付协同' },
-      { path: '/portal-integration', label: '生产与物流摘要' },
+      { path: '/partner-operations', label: '生产与物流摘要' },
     ],
   },
   {
@@ -111,7 +110,7 @@ const navGroups = [
     label: '市场响应',
     items: [
       { path: '/market-intelligence', label: '市场响应' },
-      { path: '/market-response', label: '市场响应入口' },
+      { path: '/market-response', label: '市场入口' },
     ],
   },
   {
@@ -120,14 +119,13 @@ const navGroups = [
     items: [
       { path: '/partner-onboarding', label: 'Partner 接入' },
       { path: '/manufacturing-partners', label: '制造伙伴' },
-      { path: '/partner-operations', label: '分单与供应商确认' },
+      { path: '/external-execution', label: '外部执行 / Staging' },
     ],
   },
   {
     key: 'execution-docs',
     label: '执行与资料',
     items: [
-      { path: '/external-execution', label: '外部执行 / Staging' },
       { path: '/knowledge-base', label: '资料库' },
       { path: '/ai-assistant', label: 'AI 助手' },
       { path: '/ai-outputs', label: 'AI 输出' },
@@ -135,14 +133,22 @@ const navGroups = [
   },
 ] as const
 
+function adminPath(path: string): string {
+  if (path === '/') return '/admin'
+  return `/admin${path}`
+}
+
 const routeTitles = new Map<string, string>(
-  navGroups.flatMap((group) => group.items.map((item) => [item.path, item.label] as const)),
+  navGroups.flatMap((group) => group.items.map((item) => [adminPath(item.path), item.label] as const)),
 )
 
 const defaultOpeneds = computed(() => {
   const currentPath = route.path
   const group = navGroups.find((candidate) =>
-    candidate.items.some((item) => currentPath === item.path || (item.path !== '/' && currentPath.startsWith(`${item.path}/`))),
+    candidate.items.some((item) => {
+      const path = adminPath(item.path)
+      return currentPath === path || (path !== '/admin' && currentPath.startsWith(`${path}/`))
+    }),
   )
   return group ? [group.key] : ['workspace']
 })

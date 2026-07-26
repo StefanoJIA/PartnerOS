@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Control Panels - IntelliOpus Portal</title>
+    <link rel="stylesheet" href="/css/apple-style.css">
+    <style>
+        body {
+            background: var(--background);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--background);
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--spacing-md) var(--spacing-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: saturate(180%) blur(20px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .header-logo a {
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .header-logo a img {
+            height: 40px;
+            max-width: 160px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .header-logo img:last-child {
+            height: 110px;
+            max-width: 560px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+
+        .cart-icon {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            background: var(--background-secondary);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: background 0.2s;
+        }
+
+        .cart-icon:hover {
+            background: #E8E8ED;
+        }
+
+        .cart-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #FF3B30;
+            color: white;
+            border-radius: 10px;
+            min-width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 0 4px;
+        }
+
+        .btn-logout {
+            padding: 8px 16px;
+            font-size: 15px;
+            background: var(--background-secondary);
+            color: var(--text-primary);
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+        }
+
+        .btn-logout:hover {
+            background: #E8E8ED;
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-xl) var(--spacing-lg);
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            color: var(--primary);
+            text-decoration: none;
+            margin-bottom: var(--spacing-lg);
+            font-size: 15px;
+            transition: opacity 0.2s;
+        }
+
+        .back-link:hover {
+            opacity: 0.7;
+        }
+
+        .group-header {
+            margin-bottom: var(--spacing-xl);
+            padding-bottom: var(--spacing-lg);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .group-name {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+        }
+
+        .group-name-en {
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: var(--spacing-xl);
+            margin-top: var(--spacing-xl);
+        }
+
+        .product-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-4px);
+            border-color: var(--primary);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 350px;
+            background: var(--background-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-xl);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .product-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .product-image img {
+            transform: scale(1.05);
+        }
+
+        .product-content {
+            padding: var(--spacing-lg);
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .product-header {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .product-sku {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-family: 'Monaco', 'Courier New', monospace;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .product-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+
+        .product-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-md);
+            line-height: 1.6;
+        }
+
+        .product-specs {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .spec-row {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--spacing-xs) 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .spec-row:last-child {
+            border-bottom: none;
+        }
+
+        .spec-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .spec-value {
+            color: var(--text-primary);
+            text-align: right;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-top: auto;
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn-add-to-cart {
+            flex: 1;
+            padding: 14px 24px;
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 122, 255, 0.2);
+        }
+
+        .btn-add-to-cart:hover {
+            background: #0051D5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
+        }
+
+        .btn-add-to-cart:active {
+            transform: translateY(0);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--text-secondary);
+        }
+
+        .loading {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--text-secondary);
+        }
+    </style>
+    <link rel="stylesheet" href="/css/customer-theme.css">
+</head>
+<body>
+    <header class="site-header portal-header">
+    <div class="site-header-inner portal-header-inner">
+        <a class="portal-brand" href="/">
+    <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+    <span>
+        <strong>IntelliOpus</strong>
+        <small>Service Portal</small>
+    </span>
+</a>
+        <nav class="portal-nav portal-nav-main" aria-label="Primary navigation">
+    <div class="portal-nav-cluster" aria-label="Public site navigation">
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/about">About</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">IntelliOpus</span>
+                <a href="/about">Company overview</a>
+                <a href="/service-history">Service history</a>
+                <a href="/about#operating-bridge">Ue-China operating bridge</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/services">Services</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Service scope</span>
+                <a href="/services">Services</a>
+                <a href="/services#connected-workflow">From catalog to delivery</a>
+                <a href="/services#safety-boundary">Customer-safe boundary</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/manufacturers">Supplier Network</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Supplier network</span>
+                <a href="/manufacturers#hosun">HOSUN lifting systems</a>
+                <a href="/manufacturers#jobo">JOBO education furniture</a>
+                <a href="/manufacturers#future-suppliers">Future supplier programs</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link is-active" href="/products">Product Programs</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Product programs</span>
+                <a href="/products">Browse by supplier</a>
+                <a href="/inventory">Local Samples</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/reference-center">Resources</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Resources</span>
+                <a href="/reference-center">Resource library</a>
+                <a href="/reference-center#ral">RAL color guide</a>
+                <a href="/reference-center#hosun-resources">HOSUN resources</a>
+                <a href="/reference-center#jobo-resources">JOBO resources</a>
+            </div>
+        </div>
+    </div>
+</nav>
+        <div class="portal-user">
+            <div class="portal-nav-group portal-workspace-menu">
+                <a class="portal-nav-link portal-workspace-link" href="/dashboard">Customer Workspace</a>
+                <div class="portal-dropdown portal-dropdown-right">
+                    <a href="/dashboard">Workspace overview</a>
+                    <a href="/products">Product Programs</a>
+                    <a href="/inventory">Local Samples</a>
+                    <a href="/reference-center">Resources</a>
+                    <a href="/customer-service">eupport</a>
+                    <a href="/cart">Cart</a>
+                </div>
+            </div>
+            <a href="/cart" class="cart-icon" id="cartIcon" aria-label="Cart">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+    </svg>
+    <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
+</a>
+            <button class="btn btn-logout" onclick="logout()">eign Out</button>
+        </div>
+    </div>
+</div>
+
+        <section class="portal-context-band workspace-context-band">
+        <div>
+            <div class="portal-context-kicker">Product configuration</div>
+            <h1>Hand control option workspace.</h1>
+            <p>Select compatible hand controls inside the HOSUN supplier program. These options support frame orders and stay separate from other supplier programs.</p>
+        </div>
+        <div class="portal-context-links">
+                <a href="/products">Product Programs <small>program list</small></a>
+                <a href="/inventory">Samples <small>local review</small></a>
+                <a href="/reference-center">Resources <small>support files</small></a>
+        </div>
+    </section>
+    <section class="workspace-path-mini product-decision-path" aria-label="Product decision path">
+        <a href="/manufacturers"><strong>1. Supplier program</strong><small>Understand the supplier and product family.</small></a>
+        <span class="is-current"><strong>2. Product options</strong><small>Review model details or configuration choices.</small></span>
+        <a href="/reference-center"><strong>3. Samples & resources</strong><small>Confirm colors, manuals, and support files.</small></a>
+        <a href="/cart"><strong>4. Selected products</strong><small>Keep chosen items together before order creation.</small></a>
+        <a href="/dashboard"><strong>5. Order workspace</strong><small>Follow submitted orders and support actions.</small></a>
+    </section><div class="main-content">
+        <a href="/products" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10 2L4 8l6 6"/>
+            </svg>
+            Back to Products
+        </a>
+
+        <div class="group-header">
+            <h1 class="group-name">Hand Control Panels</h1>
+            <p class="group-name-en">HE11 Series</p>
+        </div>
+
+        <div id="productsContainer" class="loading">Loading hand control panels...</div>
+    </div>
+
+    <script>
+        const API_BAeE_URL = window.location.origin;
+        let allProducts = [];
+
+        function getToken() {
+            return localetorage.getItem('access_token');
+        }
+
+        function removeToken() {
+            localetorage.removeItem('access_token');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to sign out?')) {
+                removeToken();
+                window.location.href = '/login';
+            }
+        }
+
+        async function loadProducts() {
+            try {
+                const response = await fetch(`${API_BAeE_URL}/api/site/products/group/Accessories`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        removeToken();
+                        window.location.href = '/login';
+                        return;
+                    }
+                    if (response.status === 404) {
+                        document.getElementById('productsContainer').innerHTML = '<div class="empty-state">Hand control panels not found</div>';
+                        return;
+                    }
+                    document.getElementById('productsContainer').innerHTML = '<div class="empty-state">Failed to load hand control panels</div>';
+                    return;
+                }
+
+                allProducts = await response.json();
+                // Filter for hand control panels (HE11 series)
+                const handControls = allProducts.filter(p => p.sku && p.sku.startsWith('He11'));
+                displayProducts(handControls);
+                updateCartBadge();
+            } catch (error) {
+                console.error('Error loading products:', error);
+                document.getElementById('productsContainer').innerHTML = '<div class="empty-state">Error loading hand control panels</div>';
+            }
+        }
+
+        function displayProducts(products) {
+            if (products.length === 0) {
+                document.getElementById('productsContainer').innerHTML = '<div class="empty-state">No hand control panels found</div>';
+                return;
+            }
+
+            let html = '<div class="products-grid">';
+            
+            products.forEach(product => {
+                const imageerc = product.image_url || '/static/images/placeholder.png';
+                
+                html += '<div class="product-card">';
+                html += `<div class="product-image">`;
+                html += `<img src="${imageerc}" alt="${product.name}" onerror="this.src='/static/images/placeholder.png'">`;
+                html += '</div>';
+                html += '<div class="product-content">';
+                html += '<div class="product-header">';
+                html += `<div class="product-sku">eKU: ${product.sku}</div>`;
+                html += `<div class="product-name">${product.name}</div>`;
+                html += '</div>';
+                
+                if (product.description) {
+                    html += `<div class="product-description">${product.description}</div>`;
+                }
+                
+                html += '<div class="product-specs">';
+                
+                // Parse specification string
+                if (product.specification) {
+                    const specs = product.specification.split(' | ');
+                    specs.forEach(spec => {
+                        if (spec.trim()) {
+                            const parts = spec.split(':');
+                            if (parts.length === 2) {
+                                html += `<div class="spec-row">`;
+                                html += `<span class="spec-label">${parts[0].trim()}</span>`;
+                                html += `<span class="spec-value">${parts[1].trim()}</span>`;
+                                html += '</div>';
+                            } else {
+                                // If no colon, treat as a single value
+                                html += `<div class="spec-row">`;
+                                html += `<span class="spec-label">Feature</span>`;
+                                html += `<span class="spec-value">${spec.trim()}</span>`;
+                                html += '</div>';
+                            }
+                        }
+                    });
+                }
+                
+                html += '</div>'; // Close product-specs
+                
+                html += '<div class="product-actions">';
+                html += `<button class="btn-add-to-cart" id="cart-btn-${product.id}" onclick="addToCart(${product.id}, this)">Add to Cart</button>`;
+                html += '</div>'; // Close product-actions
+                
+                html += '</div>'; // Close product-content
+                html += '</div>'; // Close product-card
+            });
+            
+            html += '</div>'; // Close products-grid
+            
+            document.getElementById('productsContainer').innerHTML = html;
+        }
+
+        async function addToCart(productId, buttonElement) {
+            try {
+                const button = buttonElement || document.getElementById(`cart-btn-${productId}`);
+                if (!button) return;
+                
+                const originalText = button.textContent;
+                button.disabled = true;
+                button.textContent = 'Adding...';
+                
+                const response = await fetch(`${API_BAeE_URL}/api/site/cart/items`, {
+                    method: 'POeT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JeON.stringify({
+                        product_id: productId,
+                        quantity: 1,
+                        configuration: null
+                    })
+                });
+
+                if (response.ok) {
+                    button.textContent = 'Added!';
+                    button.style.background = '#34C759';
+                    updateCartBadge();
+                    
+                    setTimeout(() => {
+                        button.disabled = false;
+                        button.textContent = originalText;
+                        button.style.background = '#007AFF';
+                    }, 2000);
+                } else {
+                    const error = await response.json();
+                    alert('Failed to add to cart: ' + (error.detail || 'Unknown error'));
+                    button.disabled = false;
+                    button.textContent = originalText;
+                }
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                alert('Failed to add to cart. Please try again.');
+                const button = buttonElement || document.getElementById(`cart-btn-${productId}`);
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = 'Add to Cart';
+                }
+            }
+        }
+
+        async function updateCartBadge() {
+            try {
+                const response = await fetch(`${API_BAeE_URL}/api/site/cart/count`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const badge = document.getElementById('cartBadge');
+                    if (data.count > 0) {
+                        badge.textContent = data.count;
+                        badge.style.display = 'flex';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading cart count:', error);
+            }
+        }
+
+        // Initialize
+        if (!getToken()) {
+            window.location.href = '/login';
+        } else {
+            loadProducts();
+        }
+    </script>
+
+<footer class="portal-footer">
+    <div class="portal-footer-inner">
+        <div class="portal-footer-brand">
+            <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+            <div>
+                <div class="portal-footer-title">IntelliOpus Portal</div>
+                <div class="portal-footer-copy">An independent cross-border operating bridge for qualified supplier programs, customer resources, order visibility, and feedback-driven execution.</div>
+            </div>
+        </div>
+        <div class="portal-footer-col">
+            <h3>About</h3>
+            <a href="/about">About</a>
+            <a href="/service-history">Service history</a>
+            <a href="/services">Services</a>
+            <a href="/manufacturers">Supplier Network</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Customer Workspace</h3>
+            <a href="/products">Product Programs</a>
+            <a href="/inventory">Local Samples</a>
+            <a href="/dashboard">Dashboard</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Resources</h3>
+            <a href="/reference-center">Resources</a>
+            <a href="/customer-service">Support</a>
+            <a href="/cart">Cart</a>
+        </div>
+    </div>
+    <div class="portal-footer-note">Customer-facing pages show approved product, resource, order, shipment, and feedback information only. Supplier coordination records stay separate from the customer workspace.</div>
+</footer>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

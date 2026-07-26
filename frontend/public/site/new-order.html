@@ -1,0 +1,2314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Order - IntelliOpus Portal</title>
+    <link rel="stylesheet" href="/css/apple-style.css">
+    <style>
+        body {
+            background: var(--background);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--background);
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--spacing-md) var(--spacing-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: saturate(180%) blur(20px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .header-logo a {
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .header-logo a img,
+        .header-logo img:first-of-type {
+            height: 40px;
+            max-width: 160px;
+        }
+
+        .header-logo img:last-child {
+            height: 110px;
+            max-width: 560px;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+
+        .cart-icon {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            background: var(--background-secondary);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: background 0.2s;
+        }
+
+        .cart-icon:hover {
+            background: #E8E8ED;
+        }
+
+        .cart-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #FF3B30;
+            color: white;
+            border-radius: 10px;
+            min-width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 0 4px;
+        }
+
+        .btn-logout {
+            padding: 8px 16px;
+            font-size: 15px;
+            background: var(--background-secondary);
+            color: var(--text-primary);
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+        }
+
+        .btn-logout:hover {
+            background: #E8E8ED;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing-xl) var(--spacing-lg);
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .form-section {
+            background: var(--background);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: var(--spacing-xs);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .product-selector {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
+            gap: var(--spacing-sm);
+            align-items: end;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: 2fr 1.4fr 1fr 1fr 1fr 1fr 1fr auto;
+            gap: var(--spacing-md);
+            align-items: start;
+            padding: var(--spacing-md);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-md);
+            background: var(--background);
+        }
+
+        .item-row > * {
+            min-width: 0;
+            overflow: visible;
+        }
+
+        .item-row > *:nth-child(2) {
+            
+            min-width: 0;
+            overflow: visible;
+            width: 100%;
+        }
+
+        .item-row-header {
+            display: grid;
+            grid-template-columns: 2fr 1.4fr 1fr 1fr 1fr 1fr 1fr auto;
+            gap: var(--spacing-md);
+            padding: var(--spacing-sm) var(--spacing-md);
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .item-row-header > * {
+            min-width: 0;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: var(--spacing-xs);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--background);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .form-input select {
+            width: 100%;
+        }
+
+        .item-row-header {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 13px;
+            text-transform: uppercase;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .btn-remove {
+            background: #FF3B30;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-remove:hover {
+            background: #FF2D20;
+        }
+
+        .order-summary {
+            background: var(--background-secondary);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-top: var(--spacing-lg);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--spacing-sm) 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+            font-weight: 600;
+            font-size: 18px;
+            margin-top: var(--spacing-sm);
+            padding-top: var(--spacing-md);
+        }
+
+        .color-selector {
+            display: flex;
+            gap: var(--spacing-xs);
+            flex-wrap: wrap;
+        }
+
+        .color-option {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 13px;
+            background: var(--background);
+        }
+
+        .color-option:hover {
+            background: var(--background-secondary);
+        }
+
+        .color-option.selected {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .color-option.ral {
+            border-left: 3px solid #FF9500;
+        }
+
+        .color-btn {
+            transition: all 0.2s;
+        }
+
+        .color-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .color-btn.selected {
+            border: 2px solid var(--primary) !important;
+            box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2) !important;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--text-secondary);
+        }
+    </style>
+    <script src="/js/address-data.js"></script>
+        <link rel="stylesheet" href="/css/customer-theme.css">
+</head>
+<body>
+    <header class="site-header portal-header">
+    <div class="site-header-inner portal-header-inner">
+        <a class="portal-brand" href="/">
+    <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+    <span>
+        <strong>IntelliOpus</strong>
+        <small>Service Portal</small>
+    </span>
+</a>
+        <nav class="portal-nav portal-nav-main" aria-label="Primary navigation">
+    <div class="portal-nav-cluster" aria-label="Public site navigation">
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/about">About</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">IntelliOpus</span>
+                <a href="/about">Company overview</a>
+                <a href="/service-history">Service history</a>
+                <a href="/about#operating-bridge">U.S.-China operating bridge</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/services">Services</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Service scope</span>
+                <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+                <a href="/services#connected-workflow">From catalog to delivery</a>
+                <a href="/services#safety-boundary">Customer-safe boundary</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/manufacturers">Supplier Network</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Supplier network</span>
+                <a href="/manufacturers#hosun">HOSUN lifting systems</a>
+                <a href="/manufacturers#jobo">JOBO education furniture</a>
+                <a href="/manufacturers#future-suppliers">Future supplier programs</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/products">Product Programs</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Product programs</span>
+                <a href="/products">Browse by supplier</a>
+                <a href="/inventory">Local Samples</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/reference-center">Resources</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Resources</span>
+                <a href="/reference-center">Resource library</a>
+                <a href="/reference-center#ral">RAL color guide</a>
+                <a href="/reference-center#hosun-resources">HOSUN resources</a>
+                <a href="/reference-center#jobo-resources">JOBO resources</a>
+            </div>
+        </div>
+    </div>
+</nav>
+        <div class="portal-user">
+            <div class="portal-nav-group portal-workspace-menu">
+                <a class="portal-nav-link portal-workspace-link" href="/dashboard">Customer Workspace</a>
+                <div class="portal-dropdown portal-dropdown-right">
+                    <a href="/dashboard">Workspace overview</a>
+                    <a href="/dashboard#ordersContainer">Orders and tracking</a>
+                    <a href="/inventory">Local samples</a>
+                    <a href="/customer-service">Support and feedback</a>
+                    <a href="/cart">Cart</a>
+                </div>
+            </div>
+            <a href="/cart" class="cart-icon" id="cartIcon" aria-label="Cart">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+    </svg>
+    <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
+</a>
+            <button class="btn btn-logout" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
+</div>
+
+        <section class="portal-context-band workspace-context-band">
+        <div>
+            <div class="portal-context-kicker">Order placement</div>
+            <h1>Create an order from selected products.</h1>
+            <p>Use this step after product and sample decisions are clear. Submitted orders connect to the customer dashboard for production, shipment, resources, and feedback.</p>
+        </div>
+        <div class="portal-context-links">
+                <a href="/cart">Review cart <small>selected items</small></a>
+                <a href="/products">Product Programs <small>confirm options</small></a>
+                <a href="/dashboard">Workspace <small>order history</small></a>
+        </div>
+    </section>
+
+    <section class="workspace-path-mini" aria-label="Customer workspace path">
+        <a href="/products"><strong>1. Product review</strong><small>Compare supplier programs and options.</small></a>
+        <a href="/cart"><strong>2. Selected products</strong><small>Review items before order creation.</small></a>
+        <span class="is-current"><strong>3. Create order</strong><small>Submit customer-safe order details.</small></span>
+        <a href="/dashboard"><strong>4. Order progress</strong><small>Follow production and shipment updates.</small></a>
+        <a href="/customer-service"><strong>5. Support</strong><small>Ask questions or send feedback.</small></a>
+    </section>
+<div class="main-content">
+        <h1 class="page-title">Create customer order</h1>
+        
+        <div id="cartInfoBanner" style="display: none; margin-bottom: var(--spacing-lg); padding: var(--spacing-md); background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%); color: white; border-radius: var(--radius-md); box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);">
+            <div style="display: flex; align-items: center; gap: var(--spacing-md);">
+                <div style="font-size: 24px;">Cart</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; margin-bottom: 4px;">Selected products have been loaded</div>
+                    <div style="font-size: 13px; opacity: 0.9;">Review customer-safe product choices before submitting the order.</div>
+                </div>
+                <a href="/cart" style="padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: var(--radius-md); text-decoration: none; color: white; font-weight: 500; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">Review selected products</a>
+            </div>
+        </div>
+
+        <form id="orderForm">
+            <div class="form-section">
+                <h2 class="section-title">Order products</h2>
+                
+                
+                <div id="fastDeliverySection" style="display: none; margin-bottom: var(--spacing-lg);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+                        <h3 style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin: 0;">
+                            Local sample or stock items
+                        </h3>
+                    </div>
+                    <div id="inventoryItemsList"></div>
+                </div>
+                
+                
+                <div id="customProductionSection" style="display: none; margin-bottom: var(--spacing-lg);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+                        <h3 style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin: 0;">
+                            Supplier production items
+                        </h3>
+                    </div>
+                    <div id="itemsList"></div>
+                </div>
+                
+                
+                <div id="deliveryMethodSection" style="display: none; margin-top: var(--spacing-lg); padding: var(--spacing-md); background: var(--background-secondary); border-radius: var(--radius-md);">
+                    <div class="form-group">
+                        <label for="deliveryMethod" style="font-weight: 600; margin-bottom: var(--spacing-sm);">Delivery Method (for Supplier production items Items)</label>
+                        <select id="deliveryMethod" class="form-input" style="max-width: 300px;">
+                            <option value="DDP" selected>DDP (Delivered Duty Paid)</option>
+                            <option value="FOB">FOB (Free On Board)</option>
+                        </select>
+                        <p style="margin-top: var(--spacing-xs); font-size: 12px; color: var(--text-secondary);">
+                            FOB: Customer handles shipping and customs | DDP: We handle shipping and customs
+                        </p>
+                    </div>
+                </div>
+                
+                <div style="margin-top: var(--spacing-lg); padding: var(--spacing-md); background: var(--background-secondary); border-radius: var(--radius-md); border-left: 4px solid var(--primary);">
+                    <p style="margin: 0; font-size: 14px; color: var(--text-primary);">
+                        <strong>Color Reference:</strong> Need more color options? Check out our 
+                        <a href="/reference-center" style="color: var(--primary); text-decoration: underline; font-weight: 600;">RAL Color Guide</a> 
+                        for the complete official RAL color chart to help you choose the perfect color for your order.
+                    </p>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2 class="section-title">Shipping Information</h2>
+                
+                <div class="form-group">
+                    <label for="shippingName" class="form-label">Full Name *</label>
+                    <input type="text" id="shippingName" class="form-input" required placeholder="First and Last Name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="shippingPhone" class="form-label">Phone Number</label>
+                    <input type="text" id="shippingPhone" class="form-input" placeholder="Phone Number">
+                </div>
+                
+                <div class="form-group">
+                    <label for="shippingAddress1" class="form-label">Street Address *</label>
+                    <input type="text" id="shippingAddress1" class="form-input" required placeholder="Street address, P.O. box, company name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="shippingAddress2" class="form-label">Address Line 2 (Optional)</label>
+                    <input type="text" id="shippingAddress2" class="form-input" placeholder="Apartment, suite, unit, building, floor, etc.">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--spacing-md);">
+                    <div class="form-group">
+                        <label for="shippingCity" class="form-label">City *</label>
+                        <input type="text" id="shippingCity" class="form-input" required placeholder="City">
+                    </div>
+                    <div class="form-group">
+                        <label for="shippingState" class="form-label">State/Province *</label>
+                        <select id="shippingState" class="form-input" required>
+                            <option value="">Select State/Province</option>
+                            
+                        </select>
+                        <input type="text" id="shippingStateText" class="form-input" style="display: none; margin-top: 0.5rem;" placeholder="State/Province (for other countries)">
+                    </div>
+                    <div class="form-group">
+                        <label for="shippingZip" class="form-label">ZIP/Postal Code *</label>
+                        <input type="text" id="shippingZip" class="form-input" required placeholder="ZIP/Postal Code">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="shippingCountry" class="form-label">Country *</label>
+                    <select id="shippingCountry" class="form-input" required>
+                        <option value="">Select Country</option>
+                        
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2 class="section-title">Billing Information</h2>
+                
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: var(--spacing-sm); cursor: pointer;">
+                        <input type="checkbox" id="sameAsShipping" checked onchange="toggleBillingAddress()" style="width: 18px; height: 18px; cursor: pointer;">
+                        <span>Same as shipping address</span>
+                    </label>
+                </div>
+                
+                <div id="billingAddressFields" style="display: none;">
+                    <div class="form-group">
+                        <label for="billingName" class="form-label">Full Name *</label>
+                        <input type="text" id="billingName" class="form-input" placeholder="First and Last Name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="billingPhone" class="form-label">Phone Number</label>
+                        <input type="text" id="billingPhone" class="form-input" placeholder="Phone Number">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="billingAddress1" class="form-label">Street Address *</label>
+                        <input type="text" id="billingAddress1" class="form-input" placeholder="Street address, P.O. box, company name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="billingAddress2" class="form-label">Address Line 2 (Optional)</label>
+                        <input type="text" id="billingAddress2" class="form-input" placeholder="Apartment, suite, unit, building, floor, etc.">
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--spacing-md);">
+                        <div class="form-group">
+                            <label for="billingCity" class="form-label">City *</label>
+                            <input type="text" id="billingCity" class="form-input" placeholder="City">
+                        </div>
+                        <div class="form-group">
+                            <label for="billingState" class="form-label">State/Province *</label>
+                            <select id="billingState" class="form-input">
+                                <option value="">Select State/Province</option>
+                                
+                            </select>
+                            <input type="text" id="billingStateText" class="form-input" style="display: none; margin-top: 0.5rem;" placeholder="State/Province (for other countries)">
+                        </div>
+                        <div class="form-group">
+                            <label for="billingZip" class="form-label">ZIP/Postal Code *</label>
+                            <input type="text" id="billingZip" class="form-input" placeholder="ZIP/Postal Code">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="billingCountry" class="form-label">Country *</label>
+                        <select id="billingCountry" class="form-input">
+                            <option value="">Select Country</option>
+                            
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2 class="section-title">Payment & Additional Information</h2>
+                
+                <div class="form-group">
+                    <label for="paymentMethod" class="form-label">Preferred Payment Method *</label>
+                    <select id="paymentMethod" class="form-input" required>
+                        <option value="">Select Payment Method</option>
+                        <option value="bank_transfer">Bank Transfer / Wire Transfer</option>
+                        <option value="credit_card">Credit Card</option>
+                        <option value="paypal">PayPal</option>
+                        <option value="check">Check</option>
+                        <option value="other">Other (Please specify in notes)</option>
+                    </select>
+                    <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--background-secondary); border-radius: var(--radius-md); border-left: 3px solid var(--primary);">
+                        <p style="margin: 0 0 var(--spacing-xs) 0; font-size: 13px; font-weight: 600; color: var(--text-primary);">Payment Terms:</p>
+                        <ul style="margin: 0; padding-left: 1.5rem; font-size: 12px; color: var(--text-secondary); line-height: 1.8;">
+                            <li>30% deposit upon order placement;</li>
+                            <li>50% payment within one (1) calendar day after the goods depart the port of loading (ETD), against a copy of the "On Board" Bill of Lading or the carrier's departure notice;</li>
+                            <li>The remaining 20% to be paid within two (2) weeks after receipt of the goods.</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="orderNotes" class="form-label">Order Notes (Optional)</label>
+                    <textarea id="orderNotes" class="form-input" rows="3" placeholder="Any additional notes or requirements"></textarea>
+                </div>
+            </div>
+
+            <div class="order-summary">
+                <div class="summary-row">
+                    <span>Item Types:</span>
+                    <span id="itemTypes">0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Total Quantity:</span>
+                    <span id="totalQuantity">0</span>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-lg);">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Create Order</button>
+                <a href="/dashboard" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+
+        <div id="error" style="display: none; margin-top: var(--spacing-md);" class="alert alert-error"></div>
+        <div id="success" style="display: none; margin-top: var(--spacing-md);" class="alert alert-success"></div>
+    </div>
+
+    
+    <div id="inventoryModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: var(--radius-lg); padding: var(--spacing-xl); max-width: 800px; max-height: 80vh; overflow-y: auto; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg);">
+                <h2 style="font-size: 24px; font-weight: 600; margin: 0;">Select from Warehouse Inventory</h2>
+                <button type="button" onclick="closeInventoryModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary); padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-md);" onmouseover="this.style.background='var(--background-secondary)'" onmouseout="this.style.background='none'">x</button>
+            </div>
+            <div id="inventoryModalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin;
+        let products = [];
+        let colors = [];
+        let items = [];
+        let inventoryItems = [];
+        let allInventory = [];
+        let isFromCart = false;
+        let currentTab = 'inventory';
+        
+        // Tab button styles
+        const tabBtnStyle = `
+            .tab-btn {
+                padding: 10px 20px;
+                background: var(--background-secondary);
+                border: none;
+                border-bottom: 2px solid transparent;
+                cursor: pointer;
+                font-size: 15px;
+                font-weight: 500;
+                color: var(--text-secondary);
+                transition: all 0.2s;
+            }
+            .tab-btn:hover {
+                background: var(--background);
+                color: var(--text-primary);
+            }
+            .tab-btn.active {
+                background: var(--background);
+                color: var(--primary);
+                border-bottom-color: var(--primary);
+                font-weight: 600;
+            }
+        `;
+        const styleSheet = document.createElement("style");
+        styleSheet.textContent = tabBtnStyle;
+        document.head.appendChild(styleSheet);
+
+        function getToken() {
+            return localStorage.getItem('access_token');
+        }
+
+        function removeToken() {
+            localStorage.removeItem('access_token');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to sign out?')) {
+                removeToken();
+                window.location.href = '/login';
+            }
+        }
+
+        function checkAuth() {
+            if (!getToken()) {
+                window.location.href = '/login';
+                return false;
+            }
+            return true;
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount);
+        }
+        
+        // Helper function to format product name with Imperial units (consistent with products page)
+        function formatProductNameForDisplay(productName, config) {
+            if (!productName) return '';
+
+            const dimensionPattern = /(\d+)\*(\d+)mm/;
+            const match = productName.match(dimensionPattern);
+            if (match) {
+                const w = parseFloat(match[1]);
+                const h = parseFloat(match[2]);
+                if (!isNaN(w) && !isNaN(h)) {
+                    const wInch = (w / 25.4).toFixed(2);
+                    const hInch = (h / 25.4).toFixed(2);
+                    return productName.replace(dimensionPattern, `${wInch}"x${hInch}" (${w}x${h}mm)`);
+                }
+            }
+
+            const roundPattern = /(?:round|diameter|dia|脴|酶)\s*(\d+)(mm)?/i;
+            const roundMatch = productName.match(roundPattern);
+            if (roundMatch) {
+                const dia = parseFloat(roundMatch[1]);
+                if (!isNaN(dia)) {
+                    const diaInch = (dia / 25.4).toFixed(2);
+                    return productName.replace(roundPattern, `Round 脴 ${diaInch}" (${dia}mm)`);
+                }
+            }
+
+            return productName;
+        }
+        
+        // Helper function to format dimensions for display (Imperial first, Metric in parentheses)
+        function formatDimensionsForDisplay(dimensions) {
+            if (!dimensions) return '';
+
+            if (dimensions.includes('*')) {
+                const parts = dimensions.replace('mm', '').split('*');
+                if (parts.length === 2) {
+                    const w = parseFloat(parts[0]);
+                    const h = parseFloat(parts[1]);
+                    if (!isNaN(w) && !isNaN(h)) {
+                        const wInch = (w / 25.4).toFixed(2);
+                        const hInch = (h / 25.4).toFixed(2);
+                        return `${wInch}"x${hInch}" (${w}x${h}mm)`;
+                    }
+                }
+            }
+
+            const roundMatch = String(dimensions).match(/(?:round|diameter|dia|脴|酶)\s*(\d+)(mm)?/i);
+            if (roundMatch) {
+                const dia = parseFloat(roundMatch[1]);
+                if (!isNaN(dia)) {
+                    const diaInch = (dia / 25.4).toFixed(2);
+                    return `脴 ${diaInch}" (${dia}mm)`;
+                }
+            }
+
+            return dimensions;
+        }
+
+        // Helper function to get product image based on configuration
+        // This function matches the logic from cart.html to ensure consistency
+        function getProductImageForOrder(item) {
+            const productName = (item.product_name || '').toLowerCase();
+            const sku = (item.product_sku || '').toUpperCase();
+            
+            // Priority 1: Use database image_url if available and valid
+            // Support both legacy hosted URLs and local static paths
+            if (item.image_url) {
+                // Legacy hosted URL: use the matching local static product asset when possible.
+                if (item.image_url.includes('googleapis.com/')) {
+                    const filename = item.image_url.split('/').pop();
+                    return filename ? '/static/images/products/' + decodeURIComponent(filename) : '/static/images/placeholder.png';
+                }
+                // Local static path (/static/images/products/...)
+                if (item.image_url.includes('/static/images/products/') || item.image_url.startsWith('/static/')) {
+                    return item.image_url;
+                }
+                // Legacy gs:// format: use local static product asset instead of exposing bucket paths.
+                if (item.image_url.startsWith('gs://')) {
+                    const filename = item.image_url.split('/').pop();
+                    return filename ? '/static/images/products/' + decodeURIComponent(filename) : '/static/images/placeholder.png';
+                }
+            }
+            
+            // Priority 2: Check SKU patterns for specific products
+            // Multi-User Workstation (Face-to-Face)
+            if (sku.includes('CWSZ') || sku.includes('PRCWSZ')) {
+                return '/static/images/products/multi-user-face-to-face.png';
+            }
+            // Multi-User Workstation (Trio)
+            if (sku.includes('FDF') || sku.includes('PRFDF')) {
+                return '/static/images/products/multi-user-120-trio.png';
+            }
+
+
+            if (sku.includes('PNTZF')) {
+                return '/static/images/placeholder.png';
+            }
+
+            if (sku.includes('PNTZE')) {
+                return '/static/images/placeholder.png';
+            }
+
+            if (sku.includes('PNTD')) {
+                return '/static/images/placeholder.png';
+            }
+
+            if (sku.includes('PNTZ')) {
+                return '/static/images/placeholder.png';
+            }
+            // 5. Generic PNT pattern (fallback)
+            if (sku.includes('PNT')) {
+                return '/static/images/placeholder.png';
+            }
+            // Single Motor Desk Frame
+            if (sku.includes('PRSDF') || sku.includes('SDF')) {
+                // Check column type from configuration or name
+                if (item.configuration && item.configuration.column_type) {
+                    const colType = item.configuration.column_type.toLowerCase();
+                    if (colType === 'oval') {
+                        return '/static/images/placeholder.png';
+                    } else if (colType === 'round') {
+                        return '/static/images/placeholder.png';
+                    } else {
+                        return '/static/images/placeholder.png';
+                    }
+                }
+                // Default single motor image
+                return '/static/images/placeholder.png';
+            }
+            // Lifting Columns
+            if (sku.includes('PRLCZ') || sku.includes('PSLCZ') || sku.includes('LCZ')) {
+                // Use database image_url for columns, they have specific images
+                if (item.image_url) return item.image_url;
+                return '/static/images/placeholder.png';
+            }
+            // Triple Motor (L-shape)
+            if (sku.includes('PRTDFZ') || sku.includes('TDFZ')) {
+                return '/static/images/placeholder.png';
+            }
+            // Heavy-Duty
+            if (sku.includes('HRDDFZ') || sku.includes('HRDDF')) {
+                return '/static/images/placeholder.png';
+            }
+            // Dual Motor Short / Coffee Table
+            if (sku.includes('PSDDFZ') || sku.includes('SDDFZ')) {
+                return '/static/images/placeholder.png';
+            }
+            
+            // Priority 3: Check product name for keywords
+            // Multi-User Workstation
+            if (productName.includes('workstation frame') || productName.includes('combination workstation')) {
+                if (productName.includes('combination') || productName.includes('face-to-face') || productName.includes('face to face')) {
+                    return '/static/images/products/multi-user-face-to-face.png';
+                } else if (productName.includes('trio') || productName.includes('120')) {
+                    return '/static/images/products/multi-user-120-trio.png';
+                }
+            }
+            // Pneumatic Desk - Match order: Most specific patterns FIRST
+            if (productName.includes('pneumatic')) {
+                // 1. Most specific: Tilting-Top / Flippable
+                if (productName.includes('tilting-top') || productName.includes('tilting top') || productName.includes('flippable')) {
+                    return '/static/images/placeholder.png';
+                }
+                // 2. V-Leg variant
+                if (productName.includes('v-leg') || productName.includes('v leg')) {
+                    return '/static/images/placeholder.png';
+                }
+                // 3. Easylift variant
+                if (productName.includes('easylift') || productName.includes('easy lift')) {
+                    return '/static/images/placeholder.png';
+                }
+                // 4. Default/Standard pneumatic desk
+                return '/static/images/placeholder.png';
+            }
+            // Single Motor Desk Frame
+            if (productName.includes('single motor')) {
+                if (productName.includes('oval')) {
+                    return '/static/images/placeholder.png';
+                } else if (productName.includes('round')) {
+                    return '/static/images/placeholder.png';
+                } else {
+                    return '/static/images/placeholder.png';
+                }
+            }
+            // Lifting Columns
+            if (productName.includes('lifting column')) {
+                // Use database image_url for columns
+                if (item.image_url) return item.image_url;
+                return '/static/images/placeholder.png';
+            }
+            // Triple Motor / L-shape
+            if (productName.includes('triple motor') || productName.includes('l-shape') || productName.includes('lshape') || productName.includes('l shape')) {
+                return '/static/images/placeholder.png';
+            }
+            // Heavy-Duty
+            if (productName.includes('heavy') || productName.includes('heavy-duty')) {
+                return '/static/images/placeholder.png';
+            }
+            // Dual Motor Short / Coffee Table
+            if (productName.includes('short') || productName.includes('coffee') || productName.includes('entertainment')) {
+                return '/static/images/placeholder.png';
+            }
+            // Dual Motor Desk Frame (default)
+            if (productName.includes('dual motor') || productName.includes('desk frame')) {
+                return '/static/images/placeholder.png';
+            }
+            
+            // Priority 4: Check configuration base_type
+            if (item.configuration && item.configuration.base_type) {
+                const baseType = item.configuration.base_type;
+                if (baseType === 'Heavy-Duty') {
+                    return '/static/images/placeholder.png';
+                } else if (baseType === 'Dual Motor Short') {
+                    return '/static/images/placeholder.png';
+                } else if (baseType === 'L-shape') {
+                    return '/static/images/placeholder.png';
+                } else if (baseType === 'Dual Motor' || baseType === 'Standard') {
+                    return '/static/images/placeholder.png';
+                } else if (baseType === 'Single Motor') {
+                    // Check column type from configuration
+                    if (item.configuration.column_type) {
+                        const colType = item.configuration.column_type.toLowerCase();
+                        if (colType === 'oval') {
+                            return '/static/images/placeholder.png';
+                        } else if (colType === 'round') {
+                            return '/static/images/placeholder.png';
+                        }
+                    }
+                    return '/static/images/placeholder.png';
+                } else if (baseType === 'Face-to-Face' || baseType === 'Combination') {
+                    return '/static/images/products/multi-user-face-to-face.png';
+                } else if (baseType === 'Trio') {
+                    return '/static/images/products/multi-user-120-trio.png';
+                }
+            }
+            
+            // Final fallback: placeholder
+            return '/static/images/placeholder.png';
+        }
+
+        async function loadProducts() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/products`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                if (response.ok) {
+                    products = await response.json();
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+            }
+        }
+
+        async function loadColors() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/inventory/colors`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                if (response.ok) {
+                    colors = await response.json();
+                    // Filter out NO_COLOR option (only for Accessories)
+                    colors = colors.filter(c => c.color_code !== 'NO_COLOR');
+                    // Ensure basic colors are loaded first
+                    colors.sort((a, b) => {
+                        if (a.color_type === 'basic' && b.color_type !== 'basic') return -1;
+                        if (a.color_type !== 'basic' && b.color_type === 'basic') return 1;
+                        return 0;
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading colors:', error);
+            }
+        }
+        
+        // Load all inventory for modal
+        async function loadAllInventory() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/inventory/products`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                if (response.ok) {
+                    allInventory = await response.json();
+                }
+            } catch (error) {
+                console.error('Error loading inventory:', error);
+            }
+        }
+        
+        // Tab switching
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('inventoryTab').classList.toggle('active', tab === 'inventory');
+            document.getElementById('productsTab').classList.toggle('active', tab === 'products');
+        }
+        
+        function showInventoryModal() {
+            const modal = document.getElementById('inventoryModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                loadInventoryForModal();
+            }
+        }
+
+        function closeInventoryModal() {
+            const modal = document.getElementById('inventoryModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function loadInventoryForModal() {
+            const modalBody = document.getElementById('inventoryModalBody');
+            if (!modalBody) return;
+            
+            const availableInventory = allInventory.filter(item => item.available_quantity > 0);
+            
+            if (availableInventory.length === 0) {
+                modalBody.innerHTML = '<div class="empty-state">No items available in inventory</div>';
+                return;
+            }
+            
+            let html = '<div style="display: grid; gap: var(--spacing-sm); max-height: 500px; overflow-y: auto;">';
+            availableInventory.forEach(item => {
+                let productName = item.product_name || 'Unknown Product';
+                productName = formatProductNameForDisplay(productName, {});
+                
+                html += `
+                    <div style="display: flex; align-items: center; gap: var(--spacing-md); padding: var(--spacing-md); background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; margin-bottom: 4px;">${productName}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">SKU: ${item.product_sku} | Color: ${item.color_name}</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                            <div style="text-align: right; margin-right: var(--spacing-sm);">
+                                <div style="font-size: 14px; color: var(--text-secondary);">Available</div>
+                                <div style="font-size: 18px; font-weight: 600; color: #34c759;">${item.available_quantity}</div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <input type="number" id="modal-qty-${item.id}" min="1" max="${item.available_quantity}" value="1" 
+                                       style="width: 60px; padding: 6px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); text-align: center;">
+                                <button onclick="addInventoryToCartFromModal(${item.id}, ${item.available_quantity})" 
+                                        style="padding: 8px 16px; background: #007AFF; color: white; border: none; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; white-space: nowrap;">
+                                    Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            modalBody.innerHTML = html;
+        }
+        
+        async function addInventoryToCartFromModal(inventoryId, maxQuantity) {
+            const quantityInput = document.getElementById(`modal-qty-${inventoryId}`);
+            const quantity = parseInt(quantityInput.value) || 1;
+            
+            if (quantity < 1) {
+                alert('Quantity must be at least 1');
+                quantityInput.value = 1;
+                return;
+            }
+            
+            if (quantity > maxQuantity) {
+                alert(`Maximum available quantity is ${maxQuantity}`);
+                quantityInput.value = maxQuantity;
+                return;
+            }
+            
+            const item = allInventory.find(i => i.id === inventoryId);
+            if (!item) {
+                alert('Inventory item not found. Please refresh the page and try again.');
+                return;
+            }
+            
+            try {
+                const token = getToken();
+                if (!token) {
+                    alert('Please login to add items to cart');
+                    return;
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/api/site/cart/items`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        product_id: item.product_id,
+                        quantity: quantity,
+                        inventory_id: inventoryId,
+                        configuration: {
+                            from_inventory: true,
+                            inventory_id: inventoryId,
+                            color_code: item.color_code || null,
+                            color_name: item.color_name || null
+                        }
+                    })
+                });
+                
+                if (response.ok) {
+                    alert(`Successfully added ${quantity} item(s) to cart!`);
+                    closeInventoryModal();
+                    loadCartCount();
+                    // Reload page to show updated cart items
+                    if (window.location.pathname.includes('new-order')) {
+                        window.location.reload();
+                    }
+                } else {
+                    const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+                    const errorMessage = errorData.detail || errorData.message || 'Failed to add to cart';
+                    alert(`Error: ${errorMessage}`);
+                }
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                alert('Network error. Please check your connection and try again.');
+            }
+        }
+
+        function addItem() {
+            items.push({
+                product_id: null,
+                quantity: 1,
+                unit_price: 0,
+                color: null,
+                tube_type: 'standard',
+                control_panel: 'basic'
+            });
+            renderItems();
+        }
+
+        function removeItem(index) {
+            items.splice(index, 1);
+            renderItems();
+            updateSummary();
+        }
+
+        // Helper function to get product image for custom production items
+        function getProductImageForCustom(item) {
+            const product = products.find(p => p.id == item.product_id);
+            if (!product) return '/static/images/placeholder.png';
+            
+            const sku = (product.sku || '').toUpperCase();
+            const productName = (product.name || '').toLowerCase();
+            const config = item.configuration || {};
+            
+            // Map based on SKU patterns and product name
+            if (sku.includes('HS90603PRLCZ') || (productName.includes('rectangular') && productName.includes('3-stage') && (productName.includes('60') || productName.includes('90mm')))) {
+                return '/static/images/placeholder.png';
+            }
+            if (sku.includes('HS80503') || (productName.includes('rectangular') && productName.includes('3-stage') && (productName.includes('80') || productName.includes('50')))) {
+                return '/static/images/placeholder.png';
+            }
+            if (sku.includes('HS00703') || (productName.includes('round') && productName.includes('3-stage') && productName.includes('70'))) {
+                return '/static/images/placeholder.png';
+            }
+            if (sku.includes('HS90602') || (productName.includes('rectangular') && productName.includes('2-stage') && productName.includes('60'))) {
+                return '/static/images/placeholder.png';
+            }
+            if (sku.includes('HS80502') || (productName.includes('rectangular') && productName.includes('2-stage') && productName.includes('80'))) {
+                return '/static/images/placeholder.png';
+            }
+            if (sku.includes('HS00702') || (productName.includes('round') && productName.includes('2-stage'))) {
+                return '/static/images/placeholder.png';
+            }
+            if (sku.includes('2HRDDFZ') || productName.includes('heavy-duty') || productName.includes('desk frame')) {
+                return '/static/images/placeholder.png';
+            }
+            if (sku.includes('PSDDFZ') || productName.includes('short') || productName.includes('coffee')) {
+                return '/static/images/placeholder.png';
+            }
+            if (productName.includes('l-shape') || productName.includes('lshape') || productName.includes('corner')) {
+                return '/static/images/placeholder.png';
+            }
+            
+            // Fallback to product image_url
+            return product.image_url || '/static/images/placeholder.png';
+        }
+        
+        function renderItems() {
+            const container = document.getElementById('itemsList');
+            if (!container) return;
+            
+            if (items.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            items.forEach((item, index) => {
+                // All items should be from cart when on checkout page
+                const product = products.find(p => p.id == item.product_id);
+                if (!product) return;
+                
+                // unit_price is optional - default to 0 if not set
+                // Prices will be calculated by admin when creating invoice
+                if (!item.unit_price) {
+                    item.unit_price = 0;
+                }
+                
+                const productName = formatProductNameForDisplay(product.name, {});
+                // Use getProductImageForOrder when coming from cart (matches cart logic)
+                // Otherwise use getProductImageForCustom for manually added items
+                const imageUrl = isFromCart ? getProductImageForOrder({
+                    ...item,
+                    product_name: item.product_name || product.name,
+                    product_sku: item.product_sku || product.sku,
+                    image_url: item.image_url || product.image_url
+                }) : getProductImageForCustom(item);
+                const itemConfig = item.configuration || {};
+                
+                // Build customization text (small text, separated by |)
+                let customText = [];
+                if (itemConfig.stage) customText.push(itemConfig.stage);
+                if (itemConfig.column_type) customText.push(itemConfig.column_type);
+                if (itemConfig.dimensions) {
+                    const dimDisplay = formatDimensionsForDisplay(itemConfig.dimensions);
+                    customText.push(dimDisplay);
+                }
+                if (itemConfig.desktop_depth && itemConfig.desktop_width) {
+                    customText.push(`Desktop: ${itemConfig.desktop_width}" x ${itemConfig.desktop_depth}"`);
+                } else if (itemConfig.desktop_depth) {
+                    customText.push(`Desktop Depth: ${itemConfig.desktop_depth}"`);
+                }
+                if (itemConfig.side_rail) {
+                    customText.push(`Side Rail: ${itemConfig.side_rail}"`);
+                }
+                if (itemConfig.foot_plate) {
+                    customText.push(`Foot Plate: ${itemConfig.foot_plate}"`);
+                }
+                if (item.tube_type && item.tube_type !== 'standard') {
+                    customText.push(`Tube: ${item.tube_type.replace('_', ' ')}`);
+                }
+                if (item.control_panel && item.control_panel !== 'basic') {
+                    customText.push(`Control: ${item.control_panel}`);
+                }
+                // Add hand control panel info if configured
+                if (itemConfig.hand_control_panel_name) {
+                    customText.push(`Hand Control: ${itemConfig.hand_control_panel_name} (${itemConfig.hand_control_panel_sku || ''})`);
+                }
+                
+                // Check if product is Accessories (hand control panels don't have color)
+                // Use product_name or product_sku from item if product not found in products array
+                const isAccessory = product 
+                    ? (product.category === 'Accessories' || (product.sku && product.sku.startsWith('HS11')))
+                    : (item.product_sku && item.product_sku.startsWith('HS11')) || (item.product_name && item.product_name.toLowerCase().includes('hand control'));
+                
+                // Color display (boxed with color preview) - only for non-accessory products
+                const colorDisplay = isAccessory ? '' : (
+                    item.custom_ral_code 
+                        ? `Custom RAL ${item.custom_ral_code}`
+                        : (item.color_name && item.color_code ? `${item.color_name} (${item.color_code})` : '')
+                );
+                
+                // Get color hex from colorOptions if available - only for non-accessory products
+                let colorHex = null;
+                if (!isAccessory && item.color_code && item.color_code !== 'custom') {
+                    if (typeof colorOptions !== 'undefined' && colorOptions.length > 0) {
+                        const colorOption = colorOptions.find(c => c.color_code === item.color_code);
+                        if (colorOption && colorOption.hex_code) {
+                            colorHex = colorOption.hex_code;
+                        }
+                    }
+                    if (!colorHex && item.color_code.startsWith('#')) {
+                        colorHex = item.color_code;
+                    }
+                }
+                
+                html += `<div class="item-row" style="display: grid; grid-template-columns: 1fr 120px; gap: var(--spacing-md); padding: var(--spacing-md); background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); align-items: center; margin-bottom: var(--spacing-md);">`;
+                
+                // Left side: Image + Product Info
+                html += `<div style="display: flex; gap: var(--spacing-md); align-items: flex-start; min-width: 0;">`;
+                
+                // Check if this is a pneumatic product or hand control panel for special image styling
+                const isPneumatic = (item.product_name || productName || '').toLowerCase().includes('pneumatic') || 
+                                   (item.product_sku || product.sku || '').toUpperCase().includes('PNT');
+                const isHandControl = (item.product_name || productName || '').toLowerCase().includes('hand control') || 
+                                    (item.product_sku || product.sku || '').toUpperCase().startsWith('HS11');
+                const needsSpecialStyling = isPneumatic || isHandControl;
+                
+                // Special styling for pneumatic products and hand control panels: use contain instead of cover, add padding, ensure consistent size
+                let imageStyle = 'width: 80px; height: 80px; border-radius: var(--radius-sm); flex-shrink: 0;';
+                if (needsSpecialStyling) {
+                    // For pneumatic products and hand control panels: use contain to show full image, add padding, use white background
+                    imageStyle = 'width: 80px; height: 80px; object-fit: contain; border-radius: var(--radius-sm); flex-shrink: 0; padding: 8px; background: #f8f8f8; border: 1px solid #e0e0e0;';
+                } else {
+                    // For other products: use cover as before
+                    imageStyle = 'width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm); flex-shrink: 0;';
+                }
+                
+                html += `<img src="${imageUrl}" alt="${productName}" style="${imageStyle}" onerror="this.src='/static/images/placeholder.png'">`;
+                html += `<div style="flex: 1; min-width: 0;">`;
+                html += `<div style="font-weight: 600; margin-bottom: 4px; line-height: 1.4; word-wrap: break-word;">${productName}</div>`;
+                html += `<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">SKU: ${product.sku}</div>`;
+                
+                // Customization text (small, separated by |)
+                if (customText.length > 0) {
+                    html += `<div style="margin-top: 4px; font-size: 11px; color: var(--text-secondary); line-height: 1.4;">${customText.join(' | ')}</div>`;
+                }
+                
+                // Display hand control panel image if configured (for electric desk frames)
+                if (itemConfig.hand_control_panel_sku) {
+                    // Get hand control panel image URL
+                    const handControlImageMap = {
+                        'HS11A': '/static/images/products/HS11A-Photoroom.png',
+                        'HS11B': '/static/images/products/HS11B-Photoroom.png',
+                        'HS11C': '/static/images/products/HS11C-Photoroom.png',
+                        'HS11D': '/static/images/products/HS11D-Photoroom.png',
+                        'HS11E': '/static/images/products/HS11E-Photoroom.png'
+                    };
+                    const handControlImageUrl = itemConfig.hand_control_panel_image_url || 
+                                               handControlImageMap[itemConfig.hand_control_panel_sku] || 
+                                               '/static/images/products/accessories.png';
+                    
+                    html += `<div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; padding: 6px; background: var(--background-secondary); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">`;
+                    html += `<div style="font-size: 11px; color: var(--text-secondary);">Hand Control Panel:</div>`;
+                    html += `<img src="${handControlImageUrl}" alt="${itemConfig.hand_control_panel_name || 'Hand Control Panel'}" style="width: 40px; height: 40px; object-fit: contain; padding: 4px; background: white; border-radius: var(--radius-sm); border: 1px solid #e0e0e0;" onerror="this.style.display='none'">`;
+                    html += `<div style="font-size: 11px; color: var(--text-primary); font-weight: 500;">${itemConfig.hand_control_panel_name || itemConfig.hand_control_panel_sku}</div>`;
+                    html += `</div>`;
+                }
+                
+                // Color display (boxed with color preview box)
+                if (colorDisplay) {
+                    html += '<div style="margin-top: 4px; display: inline-flex; align-items: center; gap: 6px;">';
+                    // Color preview box - always show if we have a color code
+                    if (colorHex) {
+                        html += `<div style="width: 24px; height: 24px; border-radius: 4px; border: 1px solid #ddd; background: ${colorHex}; flex-shrink: 0;"></div>`;
+                    } else if (item.color_code && item.color_code.startsWith('#')) {
+                        html += `<div style="width: 24px; height: 24px; border-radius: 4px; border: 1px solid #ddd; background: ${item.color_code}; flex-shrink: 0;"></div>`;
+                    } else if (item.color_code && item.color_code !== 'custom') {
+                        // Try to find hex from colorOptions one more time
+                        if (typeof colorOptions !== 'undefined' && colorOptions.length > 0) {
+                            const colorOption = colorOptions.find(c => c.color_code === item.color_code);
+                            if (colorOption && colorOption.hex_code) {
+                                html += `<div style="width: 24px; height: 24px; border-radius: 4px; border: 1px solid #ddd; background: ${colorOption.hex_code}; flex-shrink: 0;"></div>`;
+                            } else {
+                                // Show a placeholder box with light gray background
+                                html += `<div style="width: 24px; height: 24px; border-radius: 4px; border: 1px solid #ddd; background: #f0f0f0; flex-shrink: 0;"></div>`;
+                            }
+                        } else {
+                            // Show a placeholder box with light gray background
+                            html += `<div style="width: 24px; height: 24px; border-radius: 4px; border: 1px solid #ddd; background: #f0f0f0; flex-shrink: 0;"></div>`;
+                        }
+                    }
+                    // Color text
+                    html += `<div style="display: inline-block; padding: 4px 8px; background: var(--background-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 12px; color: var(--text-primary);">${colorDisplay}</div>`;
+                    html += '</div>';
+                }
+                
+                html += `</div>`; // Close product info
+                html += `</div>`; // Close left side
+                
+                // Right side: Quantity
+                html += `<div style="display: flex; flex-direction: column; align-items: flex-end; gap: var(--spacing-xs);">`;
+                html += `<div style="text-align: right;">`;
+                html += `<div style="font-size: 14px; color: var(--text-secondary);">Quantity</div>`;
+                html += `<div style="font-size: 18px; font-weight: 600; padding-right: 8px;">${item.quantity || 1}</div>`;
+                html += `</div>`;
+                html += `<button type="button" onclick="removeItem(${index})" style="padding: 6px 12px; background: #FF3B30; color: white; border: none; border-radius: var(--radius-sm); cursor: pointer; font-size: 12px;">Remove</button>`;
+                html += `</div>`; // Close right side
+                
+                html += `</div>`; // Close item-row
+            });
+            
+            container.innerHTML = html;
+            updateSummary();
+        }
+
+        function selectColor(index, colorCode, colorName) {
+            items[index].color = colorCode;
+            items[index].color_code = colorCode;
+            items[index].color_name = colorName;
+            items[index].custom_ral_code = null; // Clear custom RAL when selecting basic color
+            renderItems(); // Re-render to update visual feedback
+            updateSummary();
+        }
+
+        function updateItem(index, field, value) {
+            items[index][field] = value;
+            if (field === 'product_id') {
+                const product = products.find(p => p.id == value);
+                if (product) {
+                    items[index].unit_price = product.price;
+                    // Reset upgrades when product changes
+                    items[index].tube_type = 'standard';
+                    items[index].control_panel = 'basic';
+                    items[index].color = null;
+                    items[index].color_code = null;
+                    items[index].color_name = null;
+                    items[index].custom_ral_code = null;
+                    renderItems();
+                }
+            } else if (field === 'custom_ral_code') {
+                // When custom RAL is entered, clear basic color selection
+                if (value && value.trim()) {
+                    items[index].color = 'custom';
+                    items[index].color_code = 'custom';
+                    items[index].color_name = null;
+                    items[index].custom_ral_code = value.trim().toUpperCase();
+                } else {
+                    items[index].custom_ral_code = null;
+                }
+                renderItems();
+                updateSummary();
+            } else if (field === 'tube_type' || field === 'control_panel') {
+                renderItems();
+                updateSummary();
+            } else {
+                updateSummary();
+            }
+        }
+        
+
+        function updateSummary() {
+            const inventoryCount = inventoryItems.reduce((sum, item) => sum + item.quantity, 0);
+            const customCount = items.reduce((sum, item) => sum + item.quantity, 0);
+            const totalQuantity = inventoryCount + customCount;
+            
+            const itemTypes = inventoryItems.length + items.length;
+            
+            document.getElementById('itemTypes').textContent = itemTypes;
+            document.getElementById('totalQuantity').textContent = totalQuantity;
+        }
+
+        // Set custom validation messages for required fields
+        function setupFormValidation() {
+            const requiredFields = [
+                { id: 'shippingName', message: 'Please enter your full name' },
+                { id: 'shippingAddress1', message: 'Please enter street address' },
+                { id: 'shippingCity', message: 'Please enter city' },
+                { id: 'shippingState', message: 'Please select state/province' },
+                { id: 'shippingZip', message: 'Please enter ZIP/postal code' },
+                { id: 'shippingCountry', message: 'Please select country' },
+                { id: 'paymentMethod', message: 'Please select payment method' }
+            ];
+            
+            requiredFields.forEach(field => {
+                const element = document.getElementById(field.id);
+                if (element) {
+                    element.addEventListener('invalid', function(e) {
+                        e.preventDefault();
+                        if (!this.value) {
+                            this.setCustomValidity(field.message);
+                        } else {
+                            this.setCustomValidity('');
+                        }
+                    });
+                    
+                    element.addEventListener('input', function() {
+                        this.setCustomValidity('');
+                    });
+                }
+            });
+        }
+        
+        // Setup validation when page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupFormValidation);
+        } else {
+            setupFormValidation();
+        }
+
+        document.getElementById('orderForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Check HTML5 validation first
+            const form = document.getElementById('orderForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            if (inventoryItems.length === 0 && items.length === 0) {
+                showError('Please add at least one item to the order');
+                return;
+            }
+
+            // Validate custom production items
+            // Note: unit_price is not required as prices are calculated separately after order submission
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                
+                // Basic validation - only check product_id and quantity
+                if (!item.product_id) {
+                    showError(`Please select a product for custom production item ${i + 1}`);
+                    return;
+                }
+                
+                if (!item.quantity || item.quantity <= 0) {
+                    showError(`Please enter a valid quantity for custom production item ${i + 1}`);
+                    return;
+                }
+                
+                // Check if product is Accessories (hand control panels don't need color)
+                const product = products.find(p => p.id == item.product_id);
+                const isAccessory = product 
+                    ? (product.category === 'Accessories' || (product.sku && product.sku.startsWith('HS11')))
+                    : (item.product_sku && item.product_sku.startsWith('HS11')) || (item.product_name && item.product_name.toLowerCase().includes('hand control'));
+                
+                // Validate color selection for non-accessory products
+                if (!isAccessory && !item.color_code && !item.custom_ral_code) {
+                    showError(`Please select a color for custom production item ${i + 1} (${item.product_name || 'Product'})`);
+                    return;
+                }
+                
+                // unit_price is optional - will be set by admin when creating invoice
+                // Default to 0 if not provided
+                if (!item.unit_price) {
+                    item.unit_price = 0;
+                }
+            }
+
+            // Build order items array
+            const orderItems = [];
+            
+            // Add inventory items
+            // Note: unit_price may be 0 as prices are calculated separately after order submission
+            inventoryItems.forEach(item => {
+                orderItems.push({
+                    product_id: parseInt(item.product_id),
+                    quantity: parseInt(item.quantity),
+                    unit_price: parseFloat(item.unit_price || 0), // Price will be set by admin when creating invoice
+                    inventory_id: item.inventory_id,
+                    color_code: item.color_code || null,
+                    color_name: item.color_name || null
+                });
+            });
+            
+            // Add custom production items
+            items.forEach(item => {
+                const itemConfig = item.configuration || {};
+                
+                // Check if product is Accessories (hand control panels don't need color or tube_type/control_panel)
+                // Use product_name or product_sku from item if product not found in products array
+                const product = products.find(p => p.id == item.product_id);
+                const isAccessory = product 
+                    ? (product.category === 'Accessories' || (product.sku && product.sku.startsWith('HS11')))
+                    : (item.product_sku && item.product_sku.startsWith('HS11')) || (item.product_name && item.product_name.toLowerCase().includes('hand control'));
+                
+                // Build configuration object with all relevant fields
+                const config = {};
+                
+                // For Accessories (hand control panels), don't include color or tube_type/control_panel
+                if (!isAccessory) {
+                    config.tube_type = item.tube_type || 'standard';
+                    config.control_panel = item.control_panel || 'basic';
+                    // Only include color if it's not an accessory
+                    if (item.color_code) config.color_code = item.color_code;
+                    if (item.color_name) config.color_name = item.color_name;
+                    if (item.custom_ral_code) config.custom_ral_code = item.custom_ral_code;
+                }
+                
+                // Include hand control panel info if present (for desk frames)
+                if (itemConfig.hand_control_panel_id) config.hand_control_panel_id = itemConfig.hand_control_panel_id;
+                if (itemConfig.hand_control_panel_sku) config.hand_control_panel_sku = itemConfig.hand_control_panel_sku;
+                if (itemConfig.hand_control_panel_name) config.hand_control_panel_name = itemConfig.hand_control_panel_name;
+                if (itemConfig.hand_control_panel_image_url) config.hand_control_panel_image_url = itemConfig.hand_control_panel_image_url;
+                
+                // Include desktop size and side rail/foot plate if present (for STANDALONE products)
+                if (itemConfig.desktop_depth) config.desktop_depth = itemConfig.desktop_depth;
+                if (itemConfig.desktop_width) config.desktop_width = itemConfig.desktop_width;
+                if (itemConfig.side_rail) config.side_rail = itemConfig.side_rail;
+                if (itemConfig.foot_plate) config.foot_plate = itemConfig.foot_plate;
+                
+                // Include other configuration fields (stage, column_type, dimensions, etc.)
+                if (itemConfig.stage) config.stage = itemConfig.stage;
+                if (itemConfig.column_type) config.column_type = itemConfig.column_type;
+                if (itemConfig.dimensions) config.dimensions = itemConfig.dimensions;
+                
+                // Build notes string
+                let notes = '';
+                if (!isAccessory) {
+                    notes = `Tube Type: ${item.tube_type || 'standard'}, Control Panel: ${item.control_panel || 'basic'}`;
+                }
+                if (config.side_rail) notes += (notes ? ', ' : '') + `Side Rail: ${config.side_rail}"`;
+                if (config.foot_plate) notes += (notes ? ', ' : '') + `Foot Plate: ${config.foot_plate}"`;
+                if (config.desktop_depth && config.desktop_width) {
+                    notes += (notes ? ', ' : '') + `Desktop Size: ${config.desktop_width}" x ${config.desktop_depth}"`;
+                }
+                if (config.hand_control_panel_name) {
+                    notes += (notes ? ', ' : '') + `Hand Control Panel: ${config.hand_control_panel_name}`;
+                }
+                
+                orderItems.push({
+                    product_id: parseInt(item.product_id),
+                    quantity: parseInt(item.quantity),
+                    unit_price: item.unit_price || 0,
+                    color_code: isAccessory ? null : (item.color_code || null),
+                    color_name: isAccessory ? null : (item.color_name || null),
+                    custom_ral_code: isAccessory ? null : (item.custom_ral_code || null),
+                    configuration: config,
+                    notes: notes || null
+                });
+            });
+
+            // Build shipping address in structured JSON format
+            const shippingName = document.getElementById('shippingName').value;
+            const shippingPhone = document.getElementById('shippingPhone')?.value || null;
+            const shippingAddress1 = document.getElementById('shippingAddress1').value;
+            const shippingAddress2 = document.getElementById('shippingAddress2').value;
+            const shippingCity = document.getElementById('shippingCity').value;
+            const shippingStateSelect = document.getElementById('shippingState');
+            const shippingStateText = document.getElementById('shippingStateText');
+            const shippingState = (shippingStateSelect && shippingStateSelect.style.display !== 'none') ? shippingStateSelect.value : (shippingStateText ? shippingStateText.value : '');
+            const shippingZip = document.getElementById('shippingZip').value;
+            const shippingCountrySelect = document.getElementById('shippingCountry');
+            const shippingCountry = shippingCountrySelect ? shippingCountrySelect.value : '';
+            
+            const shippingAddress = JSON.stringify({
+                name: shippingName,
+                phone: shippingPhone,
+                address1: shippingAddress1,
+                address2: shippingAddress2 || null,
+                city: shippingCity,
+                state: shippingState,
+                zip: shippingZip,
+                country: shippingCountry,
+                country_name: (typeof COUNTRIES !== 'undefined' && COUNTRIES.find(c => c.code === shippingCountry)?.name) || shippingCountry
+            });
+            
+            // Build billing address
+            const sameAsShipping = document.getElementById('sameAsShipping').checked;
+            let billingAddress = '';
+            let billingName = '';
+            
+            if (sameAsShipping) {
+                billingAddress = shippingAddress;
+                billingName = shippingName;
+            } else {
+                const billingNameInput = document.getElementById('billingName').value;
+                const billingPhone = document.getElementById('billingPhone')?.value || null;
+                const billingAddress1 = document.getElementById('billingAddress1').value;
+                const billingAddress2 = document.getElementById('billingAddress2').value;
+                const billingCity = document.getElementById('billingCity').value;
+                const billingStateSelect = document.getElementById('billingState');
+                const billingStateText = document.getElementById('billingStateText');
+                const billingState = (billingStateSelect && billingStateSelect.style.display !== 'none') ? billingStateSelect.value : (billingStateText ? billingStateText.value : '');
+                const billingZip = document.getElementById('billingZip').value;
+                const billingCountrySelect = document.getElementById('billingCountry');
+                const billingCountry = billingCountrySelect ? billingCountrySelect.value : '';
+                
+                if (!billingAddress1 || !billingCity || !billingState || !billingZip || !billingCountry) {
+                    showError('Please complete all required billing address fields');
+                    return;
+                }
+                
+                billingAddress = JSON.stringify({
+                    name: billingNameInput,
+                    phone: billingPhone,
+                    address1: billingAddress1,
+                    address2: billingAddress2 || null,
+                    city: billingCity,
+                    state: billingState,
+                    zip: billingZip,
+                    country: billingCountry,
+                    country_name: (typeof COUNTRIES !== 'undefined' && COUNTRIES.find(c => c.code === billingCountry)?.name) || billingCountry
+                });
+                billingName = billingNameInput;
+            }
+            
+            const orderData = {
+                items: orderItems,
+                delivery_method: items.length > 0 ? (document.getElementById('deliveryMethod')?.value || 'DDP') : null,
+                payment_method: document.getElementById('paymentMethod').value || null,
+                shipping_address: shippingAddress,
+                shipping_name: document.getElementById('shippingName').value || null,
+                billing_address: billingAddress,
+                billing_name: billingName || null,
+                notes: document.getElementById('orderNotes').value || null
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/customer/orders`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify(orderData)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showError(data.detail || 'Failed to create order');
+                    return;
+                }
+
+                showSuccess(`Order created successfully! Order Number: ${data.order_number}`);
+                
+                // Clear cart items that were used in this order
+                const cartItemIds = [
+                    ...inventoryItems.filter(item => item.cart_item_id).map(item => item.cart_item_id),
+                    ...items.filter(item => item.cart_item_id).map(item => item.cart_item_id)
+                ];
+                if (cartItemIds.length > 0) {
+                    // Remove cart items in parallel
+                    Promise.all(cartItemIds.map(itemId => 
+                        fetch(`${API_BASE_URL}/api/site/cart/items/${itemId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${getToken()}`
+                            }
+                        })
+                    )).catch(err => console.error('Error clearing cart:', err));
+                }
+                
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 2000);
+
+            } catch (error) {
+                console.error('Error creating order:', error);
+                showError('Network error. Please try again.');
+            }
+        });
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('success').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+        }
+
+        // Cart functions
+        async function loadCartCount() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/cart/count`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const badge = document.getElementById('cartBadge');
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.textContent = data.count;
+                            badge.style.display = 'flex';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading cart count:', error);
+            }
+        }
+
+        // Check if coming from cart
+        async function loadCartItems() {
+            // Check URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromCart = urlParams.get('from_cart') === 'true';
+            
+            if (!fromCart) {
+                // If not from cart, redirect to cart page
+                window.location.href = '/cart';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/cart`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const cart = await response.json();
+                    if (cart.items && cart.items.length > 0) {
+                        isFromCart = true;
+                        
+                        // Separate inventory items from custom production items
+                        const inventoryCartItems = [];
+                        const customCartItems = [];
+                        
+                        cart.items.forEach(item => {
+                            const config = item.configuration || {};
+                            const isFromInventory = config.from_inventory || item.inventory_id;
+                            
+                            if (isFromInventory) {
+                                // Find inventory record
+                                const inventoryRecord = allInventory.find(inv => inv.id === (item.inventory_id || config.inventory_id));
+                                inventoryCartItems.push({
+                                    ...item,
+                                    inventory_id: item.inventory_id || config.inventory_id,
+                                    inventory_record: inventoryRecord
+                                });
+                            } else {
+                                customCartItems.push(item);
+                            }
+                        });
+                        
+                        // Populate inventoryItems array
+                        inventoryItems = inventoryCartItems.map(item => {
+                            const invRecord = item.inventory_record;
+                            return {
+                                id: item.id,
+                                product_id: item.product_id,
+                                product_name: invRecord?.product_name || item.product_name,
+                                product_sku: invRecord?.product_sku || item.product_sku,
+                                quantity: item.quantity,
+                                unit_price: item.unit_price,
+                                color_name: invRecord?.color_name || item.configuration?.color_name,
+                                color_code: invRecord?.color_code || item.configuration?.color_code,
+                                available_quantity: invRecord?.available_quantity || 0,
+                                image_url: invRecord?.image_url || item.image_url,
+                                inventory_id: item.inventory_id,
+                                cart_item_id: item.id
+                            };
+                        });
+                        
+                        // Populate items array for custom production
+                        items = customCartItems.map(item => {
+                            const config = item.configuration || {};
+                            
+                            // Check if product is Accessories (hand control panels don't need color or tube_type/control_panel)
+                            // Use product_name or product_sku from cart item if product not found in products array
+                            const product = products.find(p => p.id == item.product_id);
+                            const isAccessory = product 
+                                ? (product.category === 'Accessories' || (product.sku && product.sku.startsWith('HS11')))
+                                : (item.product_sku && item.product_sku.startsWith('HS11')) || (item.product_name && item.product_name.toLowerCase().includes('hand control'));
+                            
+                            // unit_price is optional - default to 0 if not provided
+                            // Prices will be calculated by admin when creating invoice
+                            const unitPrice = item.unit_price || 0;
+                            
+                            return {
+                                product_id: item.product_id,
+                                product_name: item.product_name, // Preserve product_name for image lookup
+                                product_sku: item.product_sku, // Preserve product_sku for image lookup
+                                quantity: item.quantity,
+                                unit_price: unitPrice, // Use product price as fallback
+                                // Only include color for non-accessory products
+                                color: isAccessory ? null : (config.color_code || config.color || null),
+                                color_code: isAccessory ? null : (config.color_code || null),
+                                color_name: isAccessory ? null : (config.color_name || null),
+                                custom_ral_code: isAccessory ? null : (config.custom_ral_code || null),
+                                // Only include tube_type and control_panel for non-accessory products
+                                tube_type: isAccessory ? null : (extractTubeType(config.notes || item.configuration?.notes) || 'standard'),
+                                control_panel: isAccessory ? null : (extractControlPanel(config.notes || item.configuration?.notes) || 'basic'),
+                                configuration: config, // Preserve full configuration including side_rail, foot_plate, desktop_size, hand_control_panel
+                                image_url: item.image_url, // Preserve image_url for fallback
+                                cart_item_id: item.id
+                            };
+                        });
+                        
+                        // Show/hide sections based on content
+                        const fastDeliverySection = document.getElementById('fastDeliverySection');
+                        const customProductionSection = document.getElementById('customProductionSection');
+                        const deliveryMethodSection = document.getElementById('deliveryMethodSection');
+                        
+                        if (fastDeliverySection) {
+                            fastDeliverySection.style.display = inventoryItems.length > 0 ? 'block' : 'none';
+                        }
+                        if (customProductionSection) {
+                            customProductionSection.style.display = items.length > 0 ? 'block' : 'none';
+                        }
+                        if (deliveryMethodSection) {
+                            deliveryMethodSection.style.display = items.length > 0 ? 'block' : 'none';
+                        }
+                        
+                        // Show banner
+                        const banner = document.getElementById('cartInfoBanner');
+                        if (banner) {
+                            banner.style.display = 'block';
+                        }
+                        
+                        renderInventoryItems();
+                        renderItems();
+                        updateSummary();
+                    } else {
+                        console.warn('Cart is empty or has no items');
+                    }
+                } else {
+                    console.error('Failed to load cart:', response.status, response.statusText);
+                }
+            } catch (error) {
+                console.error('Error loading cart items:', error);
+                showError('Failed to load cart items. Please try again.');
+            }
+        }
+        
+        // Helper function to get product image based on SKU and configuration
+        function getProductImageForInventory(item) {
+            // Priority 1: Use database image_url if available
+            if (item.image_url && item.image_url.includes('/static/images/products/')) {
+                return item.image_url;
+            }
+            if (item.image_url && item.image_url.startsWith('/static/')) {
+                return item.image_url;
+            }
+            
+            const sku = (item.product_sku || '').toUpperCase();
+            const productName = (item.product_name || '').toLowerCase();
+            
+            // Use same logic as getProductImageForOrder for consistency
+            // Multi-User Workstation
+            if (sku.includes('CWSZ') || sku.includes('PRCWSZ')) {
+                return '/static/images/products/multi-user-face-to-face.png';
+            }
+            if (sku.includes('FDF') || sku.includes('PRFDF')) {
+                return '/static/images/products/multi-user-120-trio.png';
+            }
+            // Pneumatic Desk (PNT) - Match order: Most specific patterns FIRST
+
+            if (sku.includes('PNTZF')) {
+                return '/static/images/placeholder.png';
+            }
+
+            if (sku.includes('PNTZE')) {
+                return '/static/images/placeholder.png';
+            }
+
+            if (sku.includes('PNTD')) {
+                return '/static/images/placeholder.png';
+            }
+
+            if (sku.includes('PNTZ')) {
+                return '/static/images/placeholder.png';
+            }
+            // 5. Generic PNT pattern (fallback)
+            if (sku.includes('PNT')) {
+                return '/static/images/placeholder.png';
+            }
+            // Single Motor
+            if (sku.includes('PRSDF') || sku.includes('SDF')) {
+                if (productName.includes('oval')) {
+                    return '/static/images/placeholder.png';
+                } else if (productName.includes('round')) {
+                    return '/static/images/placeholder.png';
+                }
+                return '/static/images/placeholder.png';
+            }
+            // Lifting Columns - use database image_url or specific patterns
+            if (sku.includes('PRLCZ') || sku.includes('PSLCZ') || sku.includes('LCZ')) {
+                if (item.image_url) return item.image_url;
+                // Fallback to specific column images based on SKU
+                if (sku.includes('90603') || (productName.includes('rectangular') && productName.includes('3-stage') && productName.includes('60'))) {
+                    return '/static/images/placeholder.png';
+                }
+                if (sku.includes('80503') || (productName.includes('rectangular') && productName.includes('3-stage') && productName.includes('80'))) {
+                    return '/static/images/placeholder.png';
+                }
+                if (sku.includes('00703') || (productName.includes('round') && productName.includes('3-stage'))) {
+                    return '/static/images/placeholder.png';
+                }
+                if (sku.includes('90602') || (productName.includes('rectangular') && productName.includes('2-stage') && productName.includes('60'))) {
+                    return '/static/images/placeholder.png';
+                }
+                if (sku.includes('80502') || (productName.includes('rectangular') && productName.includes('2-stage') && productName.includes('80'))) {
+                    return '/static/images/placeholder.png';
+                }
+                if (sku.includes('00702') || (productName.includes('round') && productName.includes('2-stage'))) {
+                    return '/static/images/placeholder.png';
+                }
+                return '/static/images/placeholder.png';
+            }
+            // Triple Motor (L-shape)
+            if (sku.includes('PRTDFZ') || sku.includes('TDFZ')) {
+                return '/static/images/placeholder.png';
+            }
+            // Heavy-Duty
+            if (sku.includes('HRDDFZ') || sku.includes('HRDDF')) {
+                return '/static/images/placeholder.png';
+            }
+            // Dual Motor Short
+            if (sku.includes('PSDDFZ') || sku.includes('SDDFZ')) {
+                return '/static/images/placeholder.png';
+            }
+            // Dual Motor (default)
+            if (sku.includes('PRDDFZ') || sku.includes('DDFZ')) {
+                return '/static/images/placeholder.png';
+            }
+            
+            // Fallback to item's image_url or placeholder
+            return item.image_url || '/static/images/placeholder.png';
+        }
+        
+        function renderInventoryItems() {
+            const container = document.getElementById('inventoryItemsList');
+            if (!container) return;
+            
+            if (inventoryItems.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            let html = '<div style="display: grid; gap: var(--spacing-md);">';
+            inventoryItems.forEach((item, index) => {
+                const productName = formatProductNameForDisplay(item.product_name, {});
+                const imageUrl = getProductImageForInventory(item);
+                const colorDisplay = item.color_name 
+                    ? (item.color_code ? `${item.color_name} (${item.color_code})` : item.color_name)
+                    : '';
+                
+                // Get color hex from item
+                const colorHex = item.color_hex || (item.color_code && item.color_code.startsWith('#') ? item.color_code : null);
+                
+                html += `
+                    <div style="display: grid; grid-template-columns: 1fr 120px; gap: var(--spacing-md); padding: var(--spacing-md); background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); align-items: center;">
+                        <div style="display: flex; gap: var(--spacing-md); align-items: center;">
+                            <img src="${imageUrl}" alt="${productName}" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm);" onerror="this.src='/static/images/placeholder.png'">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; margin-bottom: 4px;">${productName}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">SKU: ${item.product_sku}</div>
+                                ${colorDisplay ? `<div style="margin-top: 4px; display: inline-flex; align-items: center; gap: 6px;">
+                                    ${colorHex ? `<div style="width: 24px; height: 24px; border-radius: 4px; border: 1px solid #ddd; background: ${colorHex}; flex-shrink: 0;"></div>` : ''}
+                                    <div style="display: inline-block; padding: 4px 8px; background: var(--background-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 12px; color: var(--text-primary);">${colorDisplay}</div>
+                                </div>` : ''}
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: var(--spacing-xs);">
+                            <div style="text-align: right;">
+                                <div style="font-size: 14px; color: var(--text-secondary);">Quantity</div>
+                                <div style="font-size: 18px; font-weight: 600; padding-right: 8px;">${item.quantity}</div>
+                            </div>
+                            <button onclick="removeInventoryItem(${index})" style="padding: 6px 12px; background: #FF3B30; color: white; border: none; border-radius: var(--radius-sm); cursor: pointer; font-size: 12px;">Remove</button>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        async function removeInventoryItem(index) {
+            const item = inventoryItems[index];
+            if (!item || !item.cart_item_id) return;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/cart/items/${item.cart_item_id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                
+                if (response.ok) {
+                    inventoryItems.splice(index, 1);
+                    renderInventoryItems();
+                    updateSummary();
+                    loadCartCount();
+                } else {
+                    alert('Failed to remove item from cart');
+                }
+            } catch (error) {
+                console.error('Error removing item:', error);
+                alert('Network error. Please try again.');
+            }
+        }
+        
+        function extractTubeType(notes) {
+            if (!notes) return 'standard';
+            if (notes.includes('Heavy Duty')) return 'heavy_duty';
+            if (notes.includes('Premium')) return 'premium';
+            return 'standard';
+        }
+        
+        function extractControlPanel(notes) {
+            if (!notes) return 'basic';
+            if (notes.includes('Memory')) return 'memory';
+            if (notes.includes('Smart')) return 'smart';
+            if (notes.includes('Premium')) return 'premium';
+            return 'basic';
+        }
+
+        function toggleBillingAddress() {
+            const checkbox = document.getElementById('sameAsShipping');
+            const billingFields = document.getElementById('billingAddressFields');
+            const billingInputs = billingFields.querySelectorAll('input, textarea');
+            
+            if (checkbox.checked) {
+                billingFields.style.display = 'none';
+                billingInputs.forEach(input => {
+                    input.removeAttribute('required');
+                });
+            } else {
+                billingFields.style.display = 'block';
+                billingInputs.forEach(input => {
+                    if (input.id !== 'billingAddress2') {
+                        input.setAttribute('required', 'required');
+                    }
+                });
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            } else {
+                alert(message);
+            }
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success');
+            if (successDiv) {
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+            }
+        }
+
+        // Initialize address dropdowns
+        function initializeAddressDropdowns() {
+            // Wait for address data to load
+            function initAfterAddressData() {
+                if (typeof COUNTRIES !== 'undefined' && typeof getStatesForCountry !== 'undefined') {
+                    // Populate shipping country dropdown
+                    const shippingCountrySelect = document.getElementById('shippingCountry');
+                    if (shippingCountrySelect) {
+                        COUNTRIES.forEach(country => {
+                            const option = document.createElement('option');
+                            option.value = country.code;
+                            option.textContent = country.name;
+                            shippingCountrySelect.appendChild(option);
+                        });
+                        
+                        // Set default to US
+                        shippingCountrySelect.value = 'US';
+                        updateStateDropdown('shipping', 'US');
+                        
+                        // Add change listener
+                        shippingCountrySelect.addEventListener('change', function() {
+                            updateStateDropdown('shipping', this.value);
+                        });
+                    }
+                    
+                    // Populate billing country dropdown
+                    const billingCountrySelect = document.getElementById('billingCountry');
+                    if (billingCountrySelect) {
+                        COUNTRIES.forEach(country => {
+                            const option = document.createElement('option');
+                            option.value = country.code;
+                            option.textContent = country.name;
+                            billingCountrySelect.appendChild(option);
+                        });
+                        
+                        // Set default to US
+                        billingCountrySelect.value = 'US';
+                        updateStateDropdown('billing', 'US');
+                        
+                        // Add change listener
+                        billingCountrySelect.addEventListener('change', function() {
+                            updateStateDropdown('billing', this.value);
+                        });
+                    }
+                } else {
+                    // Retry after a short delay
+                    setTimeout(initAfterAddressData, 100);
+                }
+            }
+            
+            initAfterAddressData();
+        }
+        
+        // Update state dropdown based on country
+        function updateStateDropdown(prefix, countryCode) {
+            const stateSelect = document.getElementById(`${prefix}State`);
+            const stateText = document.getElementById(`${prefix}StateText`);
+            
+            if (!stateSelect || !stateText) return;
+            
+            if (typeof getStatesForCountry === 'undefined') {
+                stateSelect.style.display = 'none';
+                stateText.style.display = 'block';
+                return;
+            }
+            
+            const states = getStatesForCountry(countryCode);
+            
+            if (states.length > 0) {
+                // Show dropdown, hide text input
+                stateSelect.style.display = 'block';
+                stateText.style.display = 'none';
+                stateText.required = false;
+                stateSelect.required = true;
+                
+                // Clear and populate dropdown
+                stateSelect.innerHTML = '<option value="">Select State/Province</option>';
+                states.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state.code;
+                    option.textContent = `${state.code} - ${state.name}`;
+                    stateSelect.appendChild(option);
+                });
+            } else {
+                // Hide dropdown, show text input
+                stateSelect.style.display = 'none';
+                stateText.style.display = 'block';
+                stateSelect.required = false;
+                stateText.required = true;
+            }
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            if (checkAuth()) {
+                // Initialize address dropdowns first
+                initializeAddressDropdowns();
+                
+                Promise.all([loadProducts(), loadColors(), loadAllInventory()]).then(() => {
+                    loadCartItems();
+                });
+                loadCartCount();
+            }
+        });
+    </script>
+
+<footer class="portal-footer">
+    <div class="portal-footer-inner">
+        <div class="portal-footer-brand">
+            <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+            <div>
+                <div class="portal-footer-title">IntelliOpus Portal</div>
+                <div class="portal-footer-copy">An independent cross-border operating bridge for qualified supplier programs, customer resources, order visibility, and feedback-driven execution.</div>
+            </div>
+        </div>
+        <div class="portal-footer-col">
+            <h3>About</h3>
+            <a href="/about">About</a>
+            <a href="/service-history">Service history</a>
+            <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+            <a href="/manufacturers">Supplier Network</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Customer Workspace</h3>
+            <a href="/products">Product Programs</a>
+            <a href="/inventory">Local Samples</a>
+            <a href="/dashboard">Dashboard</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Resources</h3>
+            <a href="/reference-center">Resources</a>
+            <a href="/customer-service">Support</a>
+            <a href="/cart">Cart</a>
+        </div>
+    </div>
+    <div class="portal-footer-note">Customer-facing pages show approved product, resource, order, shipment, and feedback information only. Supplier coordination records stay separate from the customer workspace.</div>
+</footer>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

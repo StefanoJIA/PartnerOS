@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Product Request - IntelliOpus Portal</title>
+    <link rel="stylesheet" href="/css/apple-style.css">
+    <!-- Flatpickr for English date picker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <style>
+        body {
+            background: var(--background);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--background);
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--spacing-md) var(--spacing-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: saturate(180%) blur(20px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .header-logo a {
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .header-logo a img {
+            height: 55px;
+            max-width: 220px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .header-logo img:last-child {
+            height: 110px;
+            max-width: 560px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+        }
+
+        .cart-icon {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            background: var(--background-secondary);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: background 0.2s;
+        }
+
+        .cart-icon:hover {
+            background: #E8E8ED;
+        }
+
+        .cart-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #FF3B30;
+            color: white;
+            border-radius: 10px;
+            min-width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 0 4px;
+        }
+
+        .main-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: var(--spacing-xl) var(--spacing-lg);
+        }
+
+        .page-header {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .page-title {
+            font-size: 36px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+        }
+
+        .page-subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 15px;
+            margin-bottom: var(--spacing-lg);
+            transition: all 0.2s;
+        }
+
+        .back-link::before {
+            content: "->;
+            color: #007AFF;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .back-link:hover {
+            color: #0051D5;
+            transform: translateX(-2px);
+        }
+
+        .back-link:hover::before {
+            color: #0051D5;
+        }
+
+        /* Date picker styling */
+        .date-picker {
+            cursor: pointer;
+        }
+
+        .date-picker:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        /* Flatpickr calendar icon color */
+        .flatpickr-calendar .flatpickr-months .flatpickr-month {
+            color: #333;
+        }
+
+        .flatpickr-calendar .flatpickr-weekdays .flatpickr-weekday {
+            color: #333;
+        }
+
+        .flatpickr-calendar .flatpickr-day {
+            color: #333;
+        }
+
+        .flatpickr-calendar .flatpickr-day:hover {
+            background: #007AFF;
+            color: white;
+        }
+
+        .flatpickr-calendar .flatpickr-day.selected {
+            background: #007AFF;
+            color: white;
+        }
+
+        /* Flatpickr input icon (calendar icon) */
+        .flatpickr-input[readonly] {
+            cursor: pointer;
+        }
+
+        /* Ensure Flatpickr calendar icon is visible */
+        .form-group {
+            position: relative;
+        }
+
+        .date-picker-wrapper {
+            position: relative;
+        }
+
+        .date-picker-wrapper::after {
+            content: "Date";
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            font-size: 18px;
+            color: #007AFF;
+            z-index: 1;
+        }
+
+        /* Flatpickr calendar navigation arrows */
+        .flatpickr-calendar .flatpickr-prev-month,
+        .flatpickr-calendar .flatpickr-next-month {
+            color: #007AFF !important;
+            fill: #007AFF !important;
+        }
+
+        .flatpickr-calendar .flatpickr-prev-month:hover,
+        .flatpickr-calendar .flatpickr-next-month:hover {
+            color: #0051D5 !important;
+            fill: #0051D5 !important;
+        }
+
+        .flatpickr-calendar .flatpickr-prev-month svg,
+        .flatpickr-calendar .flatpickr-next-month svg {
+            fill: #007AFF !important;
+        }
+
+        .flatpickr-calendar .flatpickr-prev-month:hover svg,
+        .flatpickr-calendar .flatpickr-next-month:hover svg {
+            fill: #0051D5 !important;
+        }
+
+        .request-form-card {
+            background: var(--background);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-xl);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .form-section {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .form-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+            color: var(--text-primary);
+            padding-bottom: var(--spacing-sm);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .form-label {
+            display: block;
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: var(--spacing-xs);
+            color: var(--text-primary);
+        }
+
+        .form-label .required {
+            color: #FF3B30;
+            margin-left: 4px;
+        }
+
+        .form-label .optional {
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 400;
+            margin-left: 4px;
+        }
+
+        .form-input,
+        .form-textarea,
+        .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            background: var(--background);
+            color: var(--text-primary);
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        .form-textarea.large {
+            min-height: 200px;
+        }
+
+        .form-hint {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: var(--spacing-xs);
+            line-height: 1.5;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-md);
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-item label {
+            font-size: 15px;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: var(--spacing-md);
+            justify-content: flex-end;
+            margin-top: var(--spacing-xl);
+            padding-top: var(--spacing-xl);
+            border-top: 1px solid var(--border-color);
+            background: #FAFAFA;
+            margin-left: calc(-1 * var(--spacing-xl));
+            margin-right: calc(-1 * var(--spacing-xl));
+            margin-bottom: calc(-1 * var(--spacing-xl));
+            padding: var(--spacing-lg) var(--spacing-xl);
+            border-bottom-left-radius: var(--radius-lg);
+            border-bottom-right-radius: var(--radius-lg);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #007AFF;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #0051D5;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(0, 122, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: #F5F5F7;
+            color: var(--text-primary);
+            border: 1px solid #D1D1D6;
+            font-weight: 500;
+        }
+
+        .btn-secondary:hover {
+            background: #E8E8ED;
+            border-color: #C7C7CC;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .info-box {
+            background: var(--background-secondary);
+            border-left: 4px solid var(--primary);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .info-box p {
+            margin: 0;
+            font-size: 14px;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .info-box p strong::before {
+            content: "Info";
+            margin-right: 6px;
+        }
+
+        .success-message {
+            background: #D1F2E8;
+            border: 1px solid #34C759;
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .success-message h3 {
+            color: #34C759;
+            margin: 0 0 var(--spacing-xs) 0;
+            font-size: 18px;
+        }
+
+        .success-message h3::before {
+            content: "OK";
+            color: #34C759;
+            margin-right: 8px;
+            font-weight: 600;
+        }
+
+        .success-message p {
+            color: #1E7E34;
+            margin: 0;
+            font-size: 15px;
+        }
+
+        .error-message {
+            background: #FFE5E5;
+            border: 1px solid #FF3B30;
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .error-message p {
+            color: #C41E3A;
+            margin: 0;
+            font-size: 15px;
+        }
+    </style>
+    <link rel="stylesheet" href="/css/customer-theme.css">
+</head>
+<body>
+    <header class="site-header portal-header">
+    <div class="site-header-inner portal-header-inner">
+        <a class="portal-brand" href="/">
+    <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+    <span>
+        <strong>IntelliOpus</strong>
+        <small>Service Portal</small>
+    </span>
+</a>
+        <nav class="portal-nav portal-nav-main" aria-label="Primary navigation">
+    <div class="portal-nav-cluster" aria-label="Public site navigation">
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/about">About</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">IntelliOpus</span>
+                <a href="/about">Company overview</a>
+                <a href="/service-history">Service history</a>
+                <a href="/about#operating-bridge">U.S.-China operating bridge</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/services">Services</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Service scope</span>
+                <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+                <a href="/services#connected-workflow">From catalog to delivery</a>
+                <a href="/services#safety-boundary">Customer-safe boundary</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/manufacturers">Supplier Network</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Supplier network</span>
+                <a href="/manufacturers#hosun">HOSUN lifting systems</a>
+                <a href="/manufacturers#jobo">JOBO education furniture</a>
+                <a href="/manufacturers#future-suppliers">Future supplier programs</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/products">Product Programs</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Product programs</span>
+                <a href="/products">Browse by supplier</a>
+                <a href="/inventory">Local Samples</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/reference-center">Resources</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Resources</span>
+                <a href="/reference-center">Resource library</a>
+                <a href="/reference-center#ral">RAL color guide</a>
+                <a href="/reference-center#hosun-resources">HOSUN resources</a>
+                <a href="/reference-center#jobo-resources">JOBO resources</a>
+            </div>
+        </div>
+    </div>
+</nav>
+        <div class="portal-user">
+            <div class="portal-nav-group portal-workspace-menu">
+                <a class="portal-nav-link portal-workspace-link" href="/dashboard">Customer Workspace</a>
+                <div class="portal-dropdown portal-dropdown-right">
+                    <a href="/dashboard">Workspace overview</a>
+                    <a href="/dashboard#ordersContainer">Orders and tracking</a>
+                    <a href="/inventory">Local samples</a>
+                    <a href="/customer-service">Support and feedback</a>
+                    <a href="/cart">Cart</a>
+                </div>
+            </div>
+            <a href="/cart" class="cart-icon" id="cartIcon" aria-label="Cart">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+    </svg>
+    <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
+</a>
+            <button class="btn btn-logout" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
+</div>
+
+        <section class="portal-context-band workspace-context-band">
+        <div>
+            <div class="portal-context-kicker">Custom product request</div>
+            <h1>Request a project-specific product.</h1>
+            <p>Capture non-standard product needs so IntelliOpus can review supplier fit, product family, configuration requirements, and next operating steps.</p>
+        </div>
+        <div class="portal-context-links">
+                <a href="/services">Service model <small>how requests flow</small></a>
+                <a href="/manufacturers">Supplier Network <small>supplier programs</small></a>
+                <a href="/products">Product Programs <small>approved programs</small></a>
+        </div>
+    </section>
+    <section class="workspace-path-mini product-decision-path" aria-label="Product decision path">
+        <a href="/manufacturers"><strong>1. Supplier program</strong><small>Understand the supplier and product family.</small></a>
+        <span class="is-current"><strong>2. Product options</strong><small>Review model details or configuration choices.</small></span>
+        <a href="/reference-center"><strong>3. Samples & resources</strong><small>Confirm colors, manuals, and support files.</small></a>
+        <a href="/cart"><strong>4. Selected products</strong><small>Keep chosen items together before order creation.</small></a>
+        <a href="/dashboard"><strong>5. Order workspace</strong><small>Follow submitted orders and support actions.</small></a>
+    </section><div class="main-content">
+        <a href="/products" class="back-link">
+            Back to Products
+        </a>
+
+        <div class="page-header">
+            <h1 class="page-title">Custom Product Request</h1>
+            <p class="page-subtitle">
+                Share project-specific requirements so IntelliOpus can review supplier fit, product family, configuration needs, and the next customer-safe step.
+            </p>
+        </div>
+
+        <div class="success-message" id="successMessage">
+            <h3>Request submitted successfully</h3>
+            <p>Thank you. IntelliOpus will review the request and follow up with the next customer-safe step.</p>
+        </div>
+
+        <div class="error-message" id="errorMessage">
+            <p id="errorText">An error occurred while submitting your request. Please try again.</p>
+        </div>
+
+        <div class="info-box">
+            <p>
+                <strong>What to Include:</strong> Please provide as much detail as possible about your requirements, including dimensions, colors, features, quantity, and any special considerations. This will help us provide you with an accurate quote and timeline.
+            </p>
+        </div>
+
+        <form id="customProductForm" class="request-form-card">
+            <!-- Contact Information -->
+            <div class="form-section">
+                <h2 class="section-title">Contact Information</h2>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="contactName">
+                            Full Name <span class="required">*</span>
+                        </label>
+                        <input type="text" id="contactName" name="contactName" class="form-input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="contactEmail">
+                            Email Address <span class="required">*</span>
+                        </label>
+                        <input type="email" id="contactEmail" name="contactEmail" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="contactPhone">
+                            Phone Number <span class="optional">(Optional)</span>
+                        </label>
+                        <input type="tel" id="contactPhone" name="contactPhone" class="form-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="companyName">
+                            Company Name <span class="optional">(Optional)</span>
+                        </label>
+                        <input type="text" id="companyName" name="companyName" class="form-input">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Requirements -->
+            <div class="form-section">
+                <h2 class="section-title">Product Requirements</h2>
+
+                <div class="form-group">
+                    <label class="form-label" for="productType">
+                        Product Type <span class="optional">(Optional)</span>
+                    </label>
+                    <select id="productType" name="productType" class="form-select">
+                        <option value="">Select a product type (or specify custom)</option>
+                        <option value="Standalone Frame">Standalone Frame</option>
+                        <option value="Multi-User Benching">Multi-User Benching</option>
+                        <option value="Pneumatic Desk">Pneumatic Desk</option>
+                        <option value="Electric Column">Electric Column</option>
+                        <option value="Custom/Other">Custom/Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="quantity">
+                        Estimated Quantity <span class="optional">(Optional)</span>
+                    </label>
+                    <input type="number" id="quantity" name="quantity" class="form-input" min="1" placeholder="e.g., 10, 50, 100">
+                    <div class="form-hint">Please provide an estimated quantity if known</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="dimensions">
+                        Dimensions <span class="optional">(Optional)</span>
+                    </label>
+                    <input type="text" id="dimensions" name="dimensions" class="form-input" placeholder="e.g., 120cm x 60cm x 70-120cm (height adjustable)">
+                    <div class="form-hint">Specify length, width, height, and any adjustable ranges</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="colorRequirements">
+                        Color Requirements <span class="optional">(Optional)</span>
+                    </label>
+                    <input type="text" id="colorRequirements" name="colorRequirements" class="form-input" placeholder="e.g., RAL 9016, Custom color matching">
+                    <div class="form-hint">Specify RAL color codes or describe custom color requirements</div>
+                </div>
+            </div>
+
+            <!-- Detailed Requirements -->
+            <div class="form-section">
+                <h2 class="section-title">Detailed Requirements</h2>
+
+                <div class="form-group">
+                    <label class="form-label" for="requirements">
+                        Detailed Requirements <span class="required">*</span>
+                    </label>
+                    <textarea id="requirements" name="requirements" class="form-textarea large" required placeholder="Please describe your custom product requirements in detail. Include any specific features, materials, functionality, or special considerations..."></textarea>
+                    <div class="form-hint">The more details you provide, the better we can assist you</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="useCase">
+                        Intended Use Case <span class="optional">(Optional)</span>
+                    </label>
+                    <textarea id="useCase" name="useCase" class="form-textarea" placeholder="Describe how you plan to use this product (e.g., office workspace, home office, collaborative space, etc.)"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="specialFeatures">
+                        Special Features or Considerations <span class="optional">(Optional)</span>
+                    </label>
+                    <textarea id="specialFeatures" name="specialFeatures" class="form-textarea" placeholder="Any special features, accessories, or considerations (e.g., cable management, monitor arms, storage, accessibility requirements, etc.)"></textarea>
+                </div>
+            </div>
+
+            <!-- Timeline & Budget -->
+            <div class="form-section">
+                <h2 class="section-title">Timeline & Budget</h2>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="targetDate">
+                            Target Delivery Date <span class="optional">(Optional)</span>
+                        </label>
+                        <div class="date-picker-wrapper">
+                            <input type="text" id="targetDate" name="targetDate" class="form-input date-picker" placeholder="MM/DD/YYYY" readonly>
+                        </div>
+                        <div class="form-hint">When do you need this product?</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="budgetRange">
+                            Budget Range <span class="optional">(Optional)</span>
+                        </label>
+                        <select id="budgetRange" name="budgetRange" class="form-select">
+                            <option value="">Select budget range</option>
+                            <option value="Under $1,000">Under $1,000</option>
+                            <option value="$1,000 - $5,000">$1,000 - $5,000</option>
+                            <option value="$5,000 - $10,000">$5,000 - $10,000</option>
+                            <option value="$10,000 - $50,000">$10,000 - $50,000</option>
+                            <option value="Over $50,000">Over $50,000</option>
+                            <option value="To be discussed">To be discussed</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="form-section">
+                <h2 class="section-title">Additional Information</h2>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        Preferred Contact Method <span class="optional">(Optional)</span>
+                    </label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="contactEmailPref" name="contactMethod" value="email" checked>
+                            <label for="contactEmailPref">Email</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="contactPhonePref" name="contactMethod" value="phone">
+                            <label for="contactPhonePref">Phone</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="contactWeChatPref" name="contactMethod" value="wechat">
+                            <label for="contactWeChatPref">WeChat</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="contactWhatsAppPref" name="contactMethod" value="whatsapp">
+                            <label for="contactWhatsAppPref">WhatsApp</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="additionalNotes">
+                        Additional Notes or Questions <span class="optional">(Optional)</span>
+                    </label>
+                    <textarea id="additionalNotes" name="additionalNotes" class="form-textarea" placeholder="Any additional information, questions, or comments..."></textarea>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='/products'">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="submitBtn">Submit Request</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin;
+
+        function getToken() {
+            return localStorage.getItem('access_token');
+        }
+
+        function removeToken() {
+            localStorage.removeItem('access_token');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to sign out?')) {
+                removeToken();
+                window.location.href = '/login';
+            }
+        }
+
+        // Check authentication
+        if (!getToken()) {
+            window.location.href = '/login';
+        }
+
+        // Cart functions
+        async function loadCartCount() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/cart/count`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const badge = document.getElementById('cartBadge');
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.textContent = data.count;
+                            badge.style.display = 'flex';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading cart count:', error);
+            }
+        }
+
+        // Initialize Flatpickr for date picker (force English)
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load cart count
+            if (getToken()) {
+                loadCartCount();
+            }
+            const targetDateInput = document.getElementById('targetDate');
+            if (targetDateInput) {
+                const fp = flatpickr(targetDateInput, {
+                    dateFormat: "Y-m-d",
+                    altFormat: "m/d/Y",
+                    altInput: false,
+                    locale: "en",
+                    allowInput: false,
+                    clickOpens: true,
+                    defaultDate: null,
+                    // Custom styling for calendar
+                    onReady: function(selectedDates, dateStr, instance) {
+                        // Style the calendar icon
+                        const calendarIcon = instance.calendarContainer?.querySelector('.flatpickr-current-month');
+                        if (calendarIcon) {
+                            calendarIcon.style.color = '#333';
+                        }
+                    }
+                });
+            }
+        });
+
+        // Form submission
+        document.getElementById('customProductForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+
+            // Hide previous messages
+            successMessage.classList.remove('show');
+            errorMessage.classList.remove('show');
+
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            try {
+                // Collect form data
+                const formData = {
+                    contact_name: document.getElementById('contactName').value,
+                    contact_email: document.getElementById('contactEmail').value,
+                    contact_phone: document.getElementById('contactPhone').value || null,
+                    company_name: document.getElementById('companyName').value || null,
+                    product_type: document.getElementById('productType').value || null,
+                    quantity: document.getElementById('quantity').value ? parseInt(document.getElementById('quantity').value) : null,
+                    dimensions: document.getElementById('dimensions').value || null,
+                    color_requirements: document.getElementById('colorRequirements').value || null,
+                    requirements: document.getElementById('requirements').value,
+                    use_case: document.getElementById('useCase').value || null,
+                    special_features: document.getElementById('specialFeatures').value || null,
+                    target_date: (() => {
+                        const dateInput = document.getElementById('targetDate');
+                        if (dateInput && dateInput._flatpickr) {
+                            return dateInput._flatpickr.input.value || null;
+                        }
+                        return dateInput ? dateInput.value || null : null;
+                    })(),
+                    budget_range: document.getElementById('budgetRange').value || null,
+                    contact_methods: Array.from(document.querySelectorAll('input[name="contactMethod"]:checked')).map(cb => cb.value),
+                    additional_notes: document.getElementById('additionalNotes').value || null
+                };
+
+                // Submit to API
+                const response = await fetch(`${API_BASE_URL}/api/site/custom-product-request`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Show success message
+                    successMessage.classList.add('show');
+                    
+                    // Reset form
+                    document.getElementById('customProductForm').reset();
+                    
+                    // Scroll to top
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    // Show error message
+                    errorText.textContent = data.detail || data.message || 'Failed to submit request. Please try again.';
+                    errorMessage.classList.add('show');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            } catch (error) {
+                console.error('Error submitting request:', error);
+                errorText.textContent = 'Network error. Please check your connection and try again.';
+                errorMessage.classList.add('show');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Request';
+            }
+        });
+    </script>
+
+<footer class="portal-footer">
+    <div class="portal-footer-inner">
+        <div class="portal-footer-brand">
+            <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+            <div>
+                <div class="portal-footer-title">IntelliOpus Portal</div>
+                <div class="portal-footer-copy">An independent cross-border operating bridge for qualified supplier programs, customer resources, order visibility, and feedback-driven execution.</div>
+            </div>
+        </div>
+        <div class="portal-footer-col">
+            <h3>About</h3>
+            <a href="/about">About</a>
+            <a href="/service-history">Service history</a>
+            <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+            <a href="/manufacturers">Supplier Network</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Customer Workspace</h3>
+            <a href="/products">Product Programs</a>
+            <a href="/inventory">Local Samples</a>
+            <a href="/dashboard">Dashboard</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Resources</h3>
+            <a href="/reference-center">Resources</a>
+            <a href="/customer-service">Support</a>
+            <a href="/cart">Cart</a>
+        </div>
+    </div>
+    <div class="portal-footer-note">Customer-facing pages show approved product, resource, order, shipment, and feedback information only. Supplier coordination records stay separate from the customer workspace.</div>
+</footer>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

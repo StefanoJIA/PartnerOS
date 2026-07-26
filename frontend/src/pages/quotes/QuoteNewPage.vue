@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
   fetchCatalogProducts,
@@ -9,6 +9,15 @@ import {
   type IntervalQuoteRow,
 } from '@/api/quoteCatalog'
 import { http } from '@/api/http'
+import {
+  exportQuotePdf,
+  fetchQuoteCustomerOptions,
+  fetchQuoteDraftSeed,
+  createQuoteFromContract,
+  type QuoteCustomerCompanyOption,
+  type QuoteCustomerContactOption,
+} from '@/api/quotes'
+import { fetchQuoteInputContract, type QuoteInputContract } from '@/api/quoteInputContract'
 
 type EditableIntervalRow = {
   min_qty: number
@@ -31,6 +40,7 @@ type QuoteProductBlock = {
   source: string
   warnings: string[]
   cost_model: Record<string, string>
+  interval_overridden: boolean
 }
 
 const DEFAULT_INTERVAL_ROWS: EditableIntervalRow[] = [
@@ -62,15 +72,25 @@ const DEFAULT_ADDITIONAL_NOTES = [
 ].join('\n')
 
 const router = useRouter()
+const route = useRoute()
+const leadId = computed(() => String(route.query.leadId || '').trim() || null)
+const leadContract = ref<QuoteInputContract | null>(null)
 const products = ref<CatalogProduct[]>([])
 const selectedProductId = ref('')
-const addQuantity = ref(50)
-const addIncoterm = ref<'FOB' | 'DDP'>('DDP')
-const addStrategy = ref('volume')
+const DEFAULT_MODEL_QUANTITY = 50
+const DEFAULT_MODEL_INCOTERM: 'FOB' | 'DDP' = 'DDP'
+const DEFAULT_MODEL_STRATEGY = 'volume'
 const blocks = ref<QuoteProductBlock[]>([])
 const loadingProducts = ref(false)
 const creating = ref(false)
 const error = ref('')
+const quoteNumber = ref('')
+const customerCompanies = ref<QuoteCustomerCompanyOption[]>([])
+const customerContacts = ref<QuoteCustomerContactOption[]>([])
+const selectedBillCompanyId = ref<string | null>(null)
+const selectedBillContactId = ref<string | null>(null)
+const selectedShipCompanyId = ref<string | null>(null)
+const selectedShipContactId = ref<string | null>(null)
 
 const quoteDate = ref(new Date().toISOString().slice(0, 10))
 const validDays = ref(21)
@@ -85,6 +105,10 @@ const additionalNotesText = ref(DEFAULT_ADDITIONAL_NOTES)
 
 const selectedProduct = computed(() => products.value.find((item) => item.id === selectedProductId.value) ?? null)
 const canCreate = computed(() => blocks.value.length > 0 && !creating.value)
+const addedProductIds = computed(() => new Set(blocks.value.map((item) => item.product_id)))
+const selectedProductAlreadyAdded = computed(() =>
+  Boolean(selectedProductId.value && addedProductIds.value.has(selectedProductId.value)),
+)
 const validTill = computed(() => {
   const date = new Date(`${quoteDate.value}T00:00:00`)
   date.setDate(date.getDate() + validDays.value)
@@ -93,6 +117,12 @@ const validTill = computed(() => {
 const paymentLines = computed(() => splitLines(paymentTermsText.value))
 const shippingLines = computed(() => splitLines(shippingInformationText.value))
 const additionalLines = computed(() => splitLines(additionalNotesText.value))
+const billContactOptions = computed(() =>
+  customerContacts.value.filter((item) => !selectedBillCompanyId.value || item.company_id === selectedBillCompanyId.value),
+)
+const shipContactOptions = computed(() =>
+  customerContacts.value.filter((item) => !selectedShipCompanyId.value || item.company_id === selectedShipCompanyId.value),
+)
 const customerQuoteTerms = computed(() =>
   [
     thankYouText.value,
@@ -138,6 +168,7 @@ function normalizeRows(rows: IntervalQuoteRow[]): EditableIntervalRow[] {
 }
 
 function quotePayloadRows(block: QuoteProductBlock) {
+  if (!block.interval_overridden && block.source !== 'manual_interval_blank') return null
   return block.rows.map((row) => ({
     min_qty: row.min_qty,
     max_qty: row.max_qty,
@@ -162,25 +193,57 @@ function productDisplayName(product: CatalogProduct) {
 }
 
 function productOptionLabel(product: CatalogProduct) {
-  return `${product.internal_sku} - ${productDisplayName(product)}`
+  const suffix = addedProductIds.value.has(product.id) ? '（已添加）' : ''
+  return `${product.internal_sku} - ${productDisplayName(product)}${suffix}`
 }
 
 function formatQuantityLabel(label: string) {
   return label.replace('>=', '≥').replace('-', ' ~ ')
 }
 
-function displayPrice(value: string | null | undefined) {
-  return value && value !== 'N/A' ? `$${Number(value).toFixed(2)}` : 'N/A'
+function companyAddress(company: QuoteCustomerCompanyOption) {
+  return company.address || [company.city, company.state, company.country].filter(Boolean).join(', ')
 }
 
-function selectedUnitPrice(block: QuoteProductBlock) {
-  const row =
-    block.rows.find((item) => {
-      const max = item.max_qty ?? Number.POSITIVE_INFINITY
-      return block.quantity >= item.min_qty && block.quantity <= max
-    }) || block.rows[0]
-  if (!row) return 'N/A'
-  return block.incoterm === 'DDP' ? displayPrice(row.ddp_unit_price) : displayPrice(row.fob_unit_price)
+function findCompany(id: string | null) {
+  return customerCompanies.value.find((item) => item.id === id) || null
+}
+
+function findContact(id: string | null) {
+  return customerContacts.value.find((item) => item.id === id) || null
+}
+
+function applyCompany(target: 'bill' | 'ship') {
+  const company = findCompany(target === 'bill' ? selectedBillCompanyId.value : selectedShipCompanyId.value)
+  if (!company) return
+  const address = target === 'bill' ? billTo.value : shipTo.value
+  address.company = company.company_name
+  address.address = companyAddress(company)
+  if (target === 'bill') selectedBillContactId.value = null
+  if (target === 'ship') selectedShipContactId.value = null
+}
+
+function applyContact(target: 'bill' | 'ship') {
+  const contact = findContact(target === 'bill' ? selectedBillContactId.value : selectedShipContactId.value)
+  if (!contact) return
+  const address = target === 'bill' ? billTo.value : shipTo.value
+  address.name = contact.full_name
+  address.company = contact.company_name
+  address.address = contact.company_address || address.address
+  if (target === 'bill') selectedBillCompanyId.value = contact.company_id
+  if (target === 'ship') selectedShipCompanyId.value = contact.company_id
+}
+
+async function loadQuoteSeed() {
+  const seed = await fetchQuoteDraftSeed()
+  quoteNumber.value = seed.quote_number
+  validDays.value = seed.valid_days || validDays.value
+}
+
+async function loadCustomerOptions() {
+  const data = await fetchQuoteCustomerOptions()
+  customerCompanies.value = data.companies
+  customerContacts.value = data.contacts
 }
 
 function warningText(block: QuoteProductBlock) {
@@ -209,29 +272,34 @@ async function addProductBlock() {
     error.value = '请先选择要加入报价单的产品。'
     return
   }
+  if (addedProductIds.value.has(product.id)) {
+    error.value = '该产品已经在当前报价单中，请直接编辑下方区间价格；如需重新选择，请先删除该产品。'
+    return
+  }
 
   error.value = ''
   const localId = `${product.id}-${Date.now()}`
   blocks.value.push({
     local_id: localId,
     product_id: product.id,
-    quantity: addQuantity.value,
-    incoterm: addIncoterm.value,
-    pricing_strategy: addStrategy.value,
+    quantity: DEFAULT_MODEL_QUANTITY,
+    incoterm: DEFAULT_MODEL_INCOTERM,
+    pricing_strategy: DEFAULT_MODEL_STRATEGY,
     product,
     rows: [],
     loading: true,
     source: '',
     warnings: [],
     cost_model: {},
+    interval_overridden: false,
   })
 
   try {
     const preview = await postPricingPreview({
       product_id: product.id,
-      quantity: addQuantity.value,
-      incoterm: addIncoterm.value,
-      pricing_strategy: addStrategy.value,
+      quantity: DEFAULT_MODEL_QUANTITY,
+      incoterm: DEFAULT_MODEL_INCOTERM,
+      pricing_strategy: DEFAULT_MODEL_STRATEGY,
     })
     const stage = preview.quote_model?.final_quote_stage as { interval_quote_table?: IntervalQuoteRow[] } | undefined
     const target = blocks.value.find((item) => item.local_id === localId)
@@ -266,6 +334,41 @@ function removeBlock(localId: string) {
 
 function duplicateShipTo() {
   shipTo.value = { ...billTo.value }
+  selectedShipCompanyId.value = selectedBillCompanyId.value
+  selectedShipContactId.value = selectedBillContactId.value
+}
+
+async function loadLeadContext() {
+  if (!leadId.value) {
+    leadContract.value = null
+    return
+  }
+  try {
+    leadContract.value = await fetchQuoteInputContract(leadId.value)
+    const customer = leadContract.value.quote_input_fields?.customer
+    if (customer?.company_name) {
+      billTo.value.company = customer.company_name
+      if (customer.contact_name) billTo.value.name = customer.contact_name
+      const matchedCompany = customerCompanies.value.find(
+        (item) => item.company_name.toLowerCase() === customer.company_name.toLowerCase(),
+      )
+      if (matchedCompany) {
+        selectedBillCompanyId.value = matchedCompany.id
+        billTo.value.address = companyAddress(matchedCompany)
+      }
+      if (customer.contact_name) {
+        const matchedContact = customerContacts.value.find(
+          (item) => item.full_name.toLowerCase() === customer.contact_name?.toLowerCase(),
+        )
+        if (matchedContact) {
+          selectedBillContactId.value = matchedContact.id
+          selectedBillCompanyId.value = matchedContact.company_id
+        }
+      }
+    }
+  } catch {
+    leadContract.value = null
+  }
 }
 
 async function createQuote() {
@@ -282,14 +385,15 @@ async function createQuote() {
   creating.value = true
   error.value = ''
   try {
-    const { data } = await http.post('/v1/quotes', {
-      line_items: blocks.value.map((block) => ({
-        product_id: block.product_id,
-        quantity: block.quantity,
-        incoterm: block.incoterm,
-        pricing_strategy: block.pricing_strategy,
-        manual_interval_quote_table: quotePayloadRows(block),
-      })),
+    const lineItems = blocks.value.map((block) => ({
+      product_id: block.product_id,
+      quantity: block.quantity,
+      incoterm: block.incoterm,
+      pricing_strategy: block.pricing_strategy,
+      manual_interval_quote_table: quotePayloadRows(block),
+    }))
+    const sharedPayload = {
+      line_items: lineItems,
       bill_to: billTo.value,
       ship_to: shipTo.value,
       payment_terms: paymentTermsText.value,
@@ -298,12 +402,33 @@ async function createQuote() {
         `DDP Delivery Time: ${ddpDeliveryTime.value}`,
         shippingInformationText.value,
       ].join('\n'),
-      customer_notes: customerQuoteTerms.value,
-      internal_notes: 'Created from editable quote sheet. Manual interval price overrides require internal review before sending.',
-    })
-    if (data.ok && data.data?.id) {
-      ElMessage.success('报价已保存为内部记录，未自动发送。')
-      router.push({ name: 'quote-detail', params: { id: data.data.id } })
+      internal_notes: leadId.value
+        ? `Created from lead ${leadId.value} via quote input contract handoff.`
+        : 'Created from editable quote sheet. Manual interval price overrides require internal review before sending.',
+    }
+    let quoteId: string | undefined
+    if (leadId.value) {
+      const created = await createQuoteFromContract({ lead_id: leadId.value, ...sharedPayload })
+      quoteId = created.id
+    } else {
+      const { data } = await http.post('/v1/quotes', {
+        quote_number: quoteNumber.value || null,
+        company_id: selectedBillCompanyId.value,
+        contact_id: selectedBillContactId.value,
+        create_customer_if_missing: !selectedBillCompanyId.value && Boolean(billTo.value.company.trim()),
+        ...sharedPayload,
+        customer_notes: customerQuoteTerms.value,
+      })
+      if (data.ok && data.data?.id) quoteId = data.data.id
+    }
+    if (quoteId) {
+      try {
+        await exportQuotePdf(quoteId)
+        ElMessage.success('报价已保存并生成客户 PDF；不会自动发送。')
+      } catch (pdfError) {
+        ElMessage.warning('报价已保存，但 PDF 生成失败；可在报价详情页手动导出。')
+      }
+      router.push({ name: 'quote-detail', params: { id: quoteId } })
     } else {
       error.value = '报价已提交但没有返回报价 ID，请刷新报价列表确认。'
     }
@@ -314,7 +439,14 @@ async function createQuote() {
   }
 }
 
-onMounted(loadProducts)
+onMounted(async () => {
+  try {
+    await Promise.all([loadProducts(), loadQuoteSeed(), loadCustomerOptions()])
+    await loadLeadContext()
+  } catch (e: unknown) {
+    error.value = e instanceof Error ? e.message : '报价初始化失败，请确认 backend 已启动。'
+  }
+})
 </script>
 
 <template>
@@ -339,31 +471,68 @@ onMounted(loadProducts)
       class="notice"
     />
     <el-alert v-if="error" type="error" :title="error" show-icon class="notice" />
+    <el-alert
+      v-if="leadContract"
+      type="success"
+      :closable="false"
+      show-icon
+      class="notice"
+      title="已关联线索报价输入合约"
+      :description="`来自 ${leadContract.company_name} · 推荐产品范围：${leadContract.recommended_product_scope.join('、') || '待确认'}。保存时将写入合约快照，不会自动发送。`"
+    />
 
     <section class="quote-shell">
       <div class="quote-paper">
         <header class="paper-header">
+          <div class="brand-lockup">
+            <img src="/intelliopus-logo.png" alt="IntelliOpus logo" />
+          </div>
           <div class="brand-block">
             <h2>IntelliOpus Engineering</h2>
             <p>529 Main Street, Suite 2000, Charlestown, MA, 02129</p>
             <a href="https://www.intelli-opus.com" target="_blank" rel="noreferrer">www.intelli-opus.com</a>
             <p>(928) 679-3822</p>
           </div>
-          <div class="brand-lockup">
-            <img src="/intelliopus-logo.png" alt="IntelliOpus logo" />
-            <strong>IntelliOpus</strong>
+          <div class="header-quote-card">
+            <span>QUOTE</span>
+            <strong># {{ quoteNumber || '...' }}</strong>
           </div>
         </header>
 
         <section class="customer-block">
-          <aside class="quote-rail">
-            <span>QUOTE</span>
-            <strong># AUTO</strong>
-          </aside>
-
           <div class="address-grid">
             <div class="address-panel">
               <h3>BILL TO</h3>
+              <el-select
+                v-model="selectedBillCompanyId"
+                clearable
+                filterable
+                placeholder="选择已有客户公司"
+                class="document-input"
+                @change="applyCompany('bill')"
+              >
+                <el-option
+                  v-for="company in customerCompanies"
+                  :key="company.id"
+                  :label="company.company_name"
+                  :value="company.id"
+                />
+              </el-select>
+              <el-select
+                v-model="selectedBillContactId"
+                clearable
+                filterable
+                placeholder="选择联系人"
+                class="document-input"
+                @change="applyContact('bill')"
+              >
+                <el-option
+                  v-for="contact in billContactOptions"
+                  :key="contact.id"
+                  :label="`${contact.full_name} - ${contact.company_name}`"
+                  :value="contact.id"
+                />
+              </el-select>
               <el-input v-model="billTo.name" placeholder="Contact name" class="document-input" />
               <el-input v-model="billTo.company" placeholder="Company" class="document-input" />
               <el-input v-model="billTo.address" type="textarea" :rows="2" placeholder="Billing address" class="document-input" />
@@ -374,6 +543,36 @@ onMounted(loadProducts)
                 <h3>SHIP TO</h3>
                 <el-button link size="small" @click="duplicateShipTo">复制 Bill To</el-button>
               </div>
+              <el-select
+                v-model="selectedShipCompanyId"
+                clearable
+                filterable
+                placeholder="选择已有收货公司"
+                class="document-input"
+                @change="applyCompany('ship')"
+              >
+                <el-option
+                  v-for="company in customerCompanies"
+                  :key="company.id"
+                  :label="company.company_name"
+                  :value="company.id"
+                />
+              </el-select>
+              <el-select
+                v-model="selectedShipContactId"
+                clearable
+                filterable
+                placeholder="选择收货联系人"
+                class="document-input"
+                @change="applyContact('ship')"
+              >
+                <el-option
+                  v-for="contact in shipContactOptions"
+                  :key="contact.id"
+                  :label="`${contact.full_name} - ${contact.company_name}`"
+                  :value="contact.id"
+                />
+              </el-select>
               <el-input v-model="shipTo.name" placeholder="Contact name" class="document-input" />
               <el-input v-model="shipTo.company" placeholder="Company" class="document-input" />
               <el-input v-model="shipTo.address" type="textarea" :rows="2" placeholder="Shipping address" class="document-input" />
@@ -385,7 +584,6 @@ onMounted(loadProducts)
               <label>Valid For</label>
               <el-input-number v-model="validDays" :min="1" :max="180" class="days-control" />
               <p><strong>Valid Till:</strong> {{ validTill }}</p>
-              <p class="auto-number">编号保存时自动生成；Quote #84 之后继续递增留档。</p>
             </div>
           </div>
         </section>
@@ -394,25 +592,23 @@ onMounted(loadProducts)
           <div class="composer-title">
             <div>
               <h3>添加报价产品</h3>
-              <p>只选择客户感兴趣的产品；每个产品会加入完整数量区间表，可在保存前直接编辑客户可见单价。</p>
+              <p>只选择客户感兴趣的产品；每个产品会加入完整数量区间报价表，不需要填写参考数量。</p>
             </div>
-            <el-tag effect="plain">Internal quote editor</el-tag>
+            <el-tag effect="plain">内部报价编辑</el-tag>
           </div>
           <div class="composer-controls">
             <el-select v-model="selectedProductId" filterable placeholder="选择产品" :loading="loadingProducts">
-              <el-option v-for="p in products" :key="p.id" :label="productOptionLabel(p)" :value="p.id" />
+              <el-option
+                v-for="p in products"
+                :key="p.id"
+                :label="productOptionLabel(p)"
+                :value="p.id"
+                :disabled="addedProductIds.has(p.id)"
+              />
             </el-select>
-            <el-input-number v-model="addQuantity" :min="1" />
-            <el-select v-model="addIncoterm">
-              <el-option label="FOB" value="FOB" />
-              <el-option label="DDP" value="DDP" />
-            </el-select>
-            <el-select v-model="addStrategy">
-              <el-option label="销量" value="volume" />
-              <el-option label="引流" value="traffic" />
-              <el-option label="利润" value="profit" />
-            </el-select>
-            <el-button type="primary" @click="addProductBlock">添加产品</el-button>
+            <el-button type="primary" :disabled="!selectedProductId || selectedProductAlreadyAdded" @click="addProductBlock">
+              添加产品
+            </el-button>
           </div>
         </section>
 
@@ -442,32 +638,18 @@ onMounted(loadProducts)
               <template v-for="row in block.rows" :key="`${block.local_id}-${row.quantity_label}`">
                 <div class="qty-cell">{{ formatQuantityLabel(row.quantity_label) }}</div>
                 <div class="price-cell">
-                  <el-input v-model="row.fob_unit_price" placeholder="N/A" />
+                  <el-input v-model="row.fob_unit_price" placeholder="N/A" @change="block.interval_overridden = true" />
                 </div>
                 <div class="price-cell">
-                  <el-input v-model="row.ddp_unit_price" placeholder="N/A" />
+                  <el-input v-model="row.ddp_unit_price" placeholder="N/A" @change="block.interval_overridden = true" />
                 </div>
                 <div class="review-cell">
                   <el-tag v-if="!hasPrice(row)" type="danger" effect="plain" size="small">缺价格</el-tag>
-                  <el-tag
-                    v-else-if="block.quantity >= row.min_qty && block.quantity <= (row.max_qty ?? 99999999)"
-                    type="warning"
-                    effect="plain"
-                    size="small"
-                  >
-                    参考数量
-                  </el-tag>
                 </div>
               </template>
             </div>
 
             <div class="line-tools">
-              <span>内部参考：{{ block.quantity }} {{ block.incoterm }} {{ selectedUnitPrice(block) }}；客户报价仍显示完整区间表。</span>
-              <el-input-number v-model="block.quantity" :min="1" />
-              <el-select v-model="block.incoterm">
-                <el-option label="FOB" value="FOB" />
-                <el-option label="DDP" value="DDP" />
-              </el-select>
               <el-button type="danger" plain @click="removeBlock(block.local_id)">删除产品</el-button>
             </div>
           </article>
@@ -583,9 +765,16 @@ onMounted(loadProducts)
 
 .paper-header {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 60px;
-  min-height: 172px;
+  gap: 28px;
+  min-height: 150px;
+}
+
+.brand-block {
+  flex: 1;
+  padding: 10px 0 0 28px;
+  border-left: 1px solid #d7e0ea;
 }
 
 .brand-block h2 {
@@ -608,53 +797,46 @@ onMounted(loadProducts)
 }
 
 .brand-lockup {
-  min-width: 230px;
+  width: 188px;
+  flex: 0 0 188px;
   align-self: flex-start;
-  padding-top: 18px;
+  padding-top: 0;
   text-align: center;
 }
 
 .brand-lockup img {
-  width: 104px;
-  height: 104px;
+  width: 128px;
+  height: 128px;
   object-fit: contain;
 }
 
-.brand-lockup strong {
+.header-quote-card {
+  min-width: 230px;
+  margin-top: 8px;
+  padding: 18px 22px;
+  text-align: right;
+  border-left: 1px solid #d7e0ea;
+}
+
+.header-quote-card span {
   display: block;
-  margin-top: 10px;
-  font-size: 34px;
-  letter-spacing: 0;
+  color: #6b7280;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 3px;
+}
+
+.header-quote-card strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--quote-accent);
+  font-size: 26px;
+  line-height: 1.15;
 }
 
 .customer-block {
-  display: grid;
-  grid-template-columns: 76px 1fr;
-  gap: 28px;
+  display: block;
   margin-top: 26px;
-}
-
-.quote-rail {
-  height: 230px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  color: #5d6470;
-  border-right: 1px solid #e0e3e8;
-}
-
-.quote-rail span {
-  font-size: 44px;
-  letter-spacing: 5px;
-}
-
-.quote-rail strong {
-  color: var(--quote-accent);
-  font-size: 28px;
-  letter-spacing: 2px;
 }
 
 .address-grid {
@@ -701,12 +883,6 @@ onMounted(loadProducts)
   font-size: 18px;
 }
 
-.auto-number {
-  color: #6b7280;
-  font-size: 13px !important;
-  line-height: 1.45;
-}
-
 .date-control,
 .days-control {
   width: 100%;
@@ -746,7 +922,7 @@ onMounted(loadProducts)
 
 .composer-controls {
   display: grid;
-  grid-template-columns: minmax(360px, 1fr) 130px 120px 120px 110px;
+  grid-template-columns: minmax(420px, 1fr) 120px;
   gap: 10px;
 }
 
@@ -879,7 +1055,7 @@ onMounted(loadProducts)
 
 .thank-you-input {
   display: block;
-  width: min(620px, 72%);
+  width: min(860px, 92%);
   margin: 28px auto 30px;
 }
 
@@ -968,20 +1144,10 @@ onMounted(loadProducts)
     padding: 42px;
   }
 
-  .customer-block,
   .composer-controls,
   .product-block,
   .tier-table {
     grid-template-columns: 1fr;
-  }
-
-  .quote-rail {
-    height: auto;
-    min-height: 58px;
-    writing-mode: horizontal-tb;
-    transform: none;
-    border-right: 0;
-    border-bottom: 1px solid #e0e3e8;
   }
 }
 </style>

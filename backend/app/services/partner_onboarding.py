@@ -182,7 +182,7 @@ def build_partner_onboarding(db: Session) -> PartnerOnboardingResponse:
 
     catalog_counts = dict(
         db.query(ProductCatalog.partner_id, func.count(ProductCatalog.id))
-        .filter(ProductCatalog.partner_id.in_(partner_ids))
+        .filter(ProductCatalog.partner_id.in_(partner_ids), ProductCatalog.status == "active")
         .group_by(ProductCatalog.partner_id)
         .all()
     ) if partner_ids else {}
@@ -195,7 +195,7 @@ def build_partner_onboarding(db: Session) -> PartnerOnboardingResponse:
     price_tier_counts = dict(
         db.query(ProductCatalog.partner_id, func.count(ProductPriceTier.id))
         .join(ProductPriceTier, ProductPriceTier.product_id == ProductCatalog.id)
-        .filter(ProductCatalog.partner_id.in_(partner_ids))
+        .filter(ProductCatalog.partner_id.in_(partner_ids), ProductCatalog.status == "active")
         .group_by(ProductCatalog.partner_id)
         .all()
     ) if partner_ids else {}

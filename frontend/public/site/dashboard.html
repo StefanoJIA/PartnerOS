@@ -1,0 +1,1838 @@
+﻿<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workspace - IntelliOpus Portal</title>
+    <link rel="stylesheet" href="/css/apple-style.css">
+    <!-- Flatpickr for English date picker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <style>
+        body {
+            background: var(--background);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--background);
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--spacing-md) var(--spacing-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: saturate(180%) blur(20px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .header-logo a {
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .header-logo a img,
+        .header-logo img:first-of-type {
+            height: 40px;
+            max-width: 160px;
+        }
+
+        .header-logo img:last-child {
+            height: 110px;
+            max-width: 560px;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .cart-icon {
+            position: relative;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            background: var(--background-secondary);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: background 0.2s;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        .cart-icon:hover {
+            background: #E8E8ED;
+        }
+
+        .cart-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #FF3B30;
+            color: white;
+            border-radius: 10px;
+            min-width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 0 4px;
+        }
+
+        .user-info {
+            font-size: 15px;
+            color: var(--text-secondary);
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-xl) var(--spacing-lg);
+        }
+
+        .welcome-section {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .welcome-title {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .welcome-subtitle {
+            color: var(--text-secondary);
+            font-size: 17px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .stat-card {
+            background: var(--background);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+            color: var(--primary);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        .section {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--background);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .orders-table thead {
+            background: var(--background-secondary);
+        }
+
+        .orders-table th {
+            padding: var(--spacing-md);
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .orders-table td {
+            padding: var(--spacing-md);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .orders-table tbody tr:hover {
+            background: var(--background-secondary);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            background: #FFF3CD;
+            color: #856404;
+        }
+
+        .status-confirmed {
+            background: #D1ECF1;
+            color: #0C5460;
+        }
+
+        .status-processing {
+            background: #D4EDDA;
+            color: #155724;
+        }
+
+        .status-shipped {
+            background: #CCE5FF;
+            color: #004085;
+        }
+
+        .status-delivered {
+            background: #D4EDDA;
+            color: #155724;
+        }
+
+        .inventory-section {
+            background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-xl);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .inventory-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .inventory-filter-container {
+            margin-bottom: var(--spacing-xl);
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border-color);
+        }
+
+        .inventory-filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: var(--spacing-md);
+            align-items: end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+        }
+
+        .filter-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .inventory-filter {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            flex-wrap: wrap;
+            padding-bottom: var(--spacing-md);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: var(--spacing-md);
+            align-items: stretch;
+        }
+
+        .inventory-item {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: var(--spacing-md);
+            background: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 180px;
+            height: 100%;
+        }
+
+        .inventory-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .inventory-item:hover {
+            border-color: #007AFF;
+            box-shadow: 0 8px 24px rgba(0, 122, 255, 0.2);
+            transform: translateY(-4px);
+        }
+
+        .inventory-item:hover::before {
+            transform: scaleY(1);
+        }
+
+        .inventory-item.low-stock {
+            border-left: 4px solid #FF9500;
+        }
+
+        .inventory-item.out-of-stock {
+            border-left: 4px solid #FF3B30;
+            opacity: 0.7;
+        }
+
+        .inventory-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-md);
+            padding-bottom: var(--spacing-sm);
+            border-bottom: 1px solid var(--border-color);
+            gap: var(--spacing-md);
+            min-height: 60px;
+        }
+
+        .inventory-product {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+            line-height: 1.4;
+            flex: 1;
+            min-width: 0;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .inventory-color {
+            font-size: 13px;
+            color: var(--text-primary);
+            margin-top: var(--spacing-xs);
+            margin-bottom: var(--spacing-sm);
+            padding: 8px 12px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 8px;
+            display: inline-block;
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+            min-height: 32px;
+            flex-shrink: 0;
+        }
+
+        .inventory-quantity {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            flex-shrink: 0;
+            margin-left: var(--spacing-sm);
+            white-space: nowrap;
+        }
+
+        .inventory-quantity.low {
+            background: linear-gradient(135deg, #FF9500 0%, #FF6B00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .inventory-quantity.out {
+            background: linear-gradient(135deg, #FF3B30 0%, #D70015 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .inventory-lead-time {
+            font-size: 12px;
+            color: var(--text-primary);
+            margin-top: auto;
+            padding: 8px 12px;
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(0, 81, 213, 0.1) 100%);
+            border-radius: 8px;
+            display: inline-block;
+            font-weight: 500;
+            border: 1px solid rgba(0, 122, 255, 0.2);
+            min-height: 32px;
+            flex-shrink: 0;
+            align-self: flex-start;
+        }
+
+        .inventory-lead-time.has-lead-time {
+            background: linear-gradient(135deg, rgba(255, 149, 0, 0.1) 0%, rgba(255, 107, 0, 0.1) 100%);
+            border-color: rgba(255, 149, 0, 0.3);
+            color: #FF9500;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--text-secondary);
+        }
+
+        .loading {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--text-secondary);
+        }
+
+        /* Feedback Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--background);
+            border-radius: var(--radius-lg);
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: var(--spacing-lg);
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: var(--spacing-md);
+            justify-content: flex-end;
+            margin-top: var(--spacing-lg);
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: var(--spacing-xs);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            background: var(--background);
+            color: var(--text-primary);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .rating-group {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+        }
+
+        .rating-label {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            color: var(--text-primary);
+            background: white;
+            min-width: 40px;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .rating-group input[type="radio"] {
+            display: none;
+        }
+
+        .rating-group input[type="radio"]:checked + .rating-label {
+            background: #007AFF;
+            color: white !important;
+            border-color: #007AFF;
+            font-weight: 600;
+        }
+
+        .rating-label:hover {
+            background: var(--background-secondary);
+        }
+        
+        .rating-group input[type="radio"]:checked + .rating-label:hover {
+            background: #0051D5;
+        }
+
+        .satisfaction-group {
+            display: flex;
+            gap: var(--spacing-md);
+        }
+
+        .satisfaction-group label {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* Order Filter Styles */
+        .filter-card {
+            background: var(--background);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+        }
+
+        .filter-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .date-range-group,
+        .amount-range-group,
+        .count-range-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .date-range-group input.date-picker {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            cursor: pointer;
+        }
+
+        .date-range-group input.date-picker:focus {
+            border-color: var(--primary);
+        }
+
+        .date-range-group input.date-picker,
+        .amount-range-group input,
+        .count-range-group input {
+            flex: 1;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+    </style>
+    <link rel="stylesheet" href="/css/customer-theme.css">
+</head>
+<body>
+    <header class="site-header portal-header">
+    <div class="site-header-inner portal-header-inner">
+        <a class="portal-brand" href="/">
+    <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+    <span>
+        <strong>IntelliOpus</strong>
+        <small>Service Portal</small>
+    </span>
+</a>
+        <nav class="portal-nav portal-nav-main" aria-label="Primary navigation">
+    <div class="portal-nav-cluster" aria-label="Public site navigation">
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/about">About</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">IntelliOpus</span>
+                <a href="/about">Company overview</a>
+                <a href="/service-history">Service history</a>
+                <a href="/about#operating-bridge">U.S.-China operating bridge</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/services">Services</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Service scope</span>
+                <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+                <a href="/services#connected-workflow">From catalog to delivery</a>
+                <a href="/services#safety-boundary">Customer-safe boundary</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/manufacturers">Supplier Network</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Supplier network</span>
+                <a href="/manufacturers#hosun">HOSUN lifting systems</a>
+                <a href="/manufacturers#jobo">JOBO education furniture</a>
+                <a href="/manufacturers#future-suppliers">Future supplier programs</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/products">Product Programs</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Product programs</span>
+                <a href="/products">Browse by supplier</a>
+                <a href="/inventory">Local Samples</a>
+            </div>
+        </div>
+        <div class="portal-nav-group">
+            <a class="portal-nav-link" href="/reference-center">Resources</a>
+            <div class="portal-dropdown">
+                <span class="portal-dropdown-label">Resources</span>
+                <a href="/reference-center">Resource library</a>
+                <a href="/reference-center#ral">RAL color guide</a>
+                <a href="/reference-center#hosun-resources">HOSUN resources</a>
+                <a href="/reference-center#jobo-resources">JOBO resources</a>
+            </div>
+        </div>
+    </div>
+</nav>
+        <div class="portal-user">
+            <div class="portal-nav-group portal-workspace-menu">
+                <a class="portal-nav-link portal-workspace-link" href="/dashboard">Customer Workspace</a>
+                <div class="portal-dropdown portal-dropdown-right">
+                    <a href="/dashboard">Workspace overview</a>
+                    <a href="/dashboard#ordersContainer">Orders and tracking</a>
+                    <a href="/inventory">Local samples</a>
+                    <a href="/customer-service">Support and feedback</a>
+                    <a href="/cart">Cart</a>
+                </div>
+            </div>
+            <a href="/cart" class="cart-icon" id="cartIcon" aria-label="Cart">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+    </svg>
+    <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
+</a>
+            <button class="btn btn-logout" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
+</header>
+
+    <div class="main-content">
+        <section class="portal-context-band workspace-context-band">
+            <div>
+                <div class="portal-context-kicker">Customer order workspace</div>
+                <h1>Customer workspace.</h1>
+                <p>Review orders, samples, resources, shipment updates, and support after sign-in.</p>
+            </div>
+            <div class="workspace-status-list" aria-label="Workspace status summary">
+                <span><b>Catalog</b> supplier-separated</span>
+                <span><b>Samples</b> local availability</span>
+                <span><b>Orders</b> tracking and feedback</span>
+            </div>
+        </section>
+
+        <section class="workspace-page-summary" aria-label="Workspace focus">
+            <div>
+                <strong>Product and sample path</strong>
+                <span>Start from the supplier catalog, compare approved local samples, and keep product decisions connected to the same order workspace.</span>
+            </div>
+            <div>
+                <strong>Order and delivery path</strong>
+                <span>Open each order from this dashboard to review order items, production progress, shipment updates, and customer-safe documents.</span>
+            </div>
+            <div>
+                <strong>Support and feedback path</strong>
+                <span>Use support actions for questions, delivery feedback, sample requests, or follow-up after an order has been placed.</span>
+            </div>
+        </section>
+                <div class="portal-flow-intro"><strong>Workspace path</strong><span>This is the signed-in customer area after supplier, product, sample, and resource review.</span></div>
+        <section class="workspace-path-mini portal-flow-path" aria-label="Customer portal flow">
+            <a href="/products"><strong>1. Supplier products</strong><small>Choose the supplier program and product family.</small></a>
+            <a href="/inventory"><strong>2. Local samples</strong><small>Check finish and sample availability.</small></a>
+            <a href="/reference-center"><strong>3. Approved resources</strong><small>Review color guides, catalogs, and support files.</small></a>
+            <span class="is-current"><strong>4. Customer workspace</strong><small>Follow orders, delivery updates, and feedback.</small></span>
+        </section>
+        <section class="page-transition-strip functional-focus-strip" aria-label="Customer workspace page use">
+            <div class="page-transition-copy">
+                <span>Workspace use</span>
+                <strong>Continue after product review with orders, shipment updates, and support.</strong>
+                <p>The workspace keeps customer-safe order progress, local sample context, resource access, and feedback together while supplier coordination remains internal.</p>
+            </div>
+            <div class="page-transition-actions">
+                <a href="/products">Catalog</a>
+                <a href="/inventory">Samples</a>
+                <a href="/customer-service">Support</a>
+            </div>
+        </section>
+
+        <section class="workspace-operations-strip" id="workspace-journey" aria-label="Customer workspace operating scope">
+            <div>
+                <div class="section-label">Workspace scope</div>
+                <h2>Orders, samples, resources, and support stay together.</h2>
+                <p>Use this workspace after product review. Supplier-side coordination, private notes, and internal execution remain outside the customer view.</p>
+            </div>
+            <div class="workspace-operations-links">
+                <a href="/products">Catalog</a>
+                <a href="/inventory">Samples</a>
+                <a href="/reference-center">Resources</a>
+                <a href="/customer-service">Support</a>
+            </div>
+        </section>
+
+<div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalOrders">-</div>
+                <div class="stat-label">Orders</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalAmount">-</div>
+                <div class="stat-label">Order Value</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="pendingOrders">-</div>
+                <div class="stat-label">Open Orders</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="completedOrders">-</div>
+                <div class="stat-label">Completed</div>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <a href="/new-order?from_cart=true" class="btn btn-primary">Start order</a>
+            <a href="/cart" class="btn btn-secondary">Cart</a>
+            <button class="btn btn-secondary" onclick="exportOrders(event)">Export orders</button>
+            <button class="btn btn-primary" onclick="openFeedbackModal()" style="background: var(--primary-color); color: white;">Submit feedback</button>
+            <a href="/change-password" class="btn btn-secondary">Password</a>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Orders</h2>
+            
+            <!-- Order Filter Section -->
+            <div class="filter-card">
+                <div class="filter-header">
+                    <h3 style="margin: 0; font-size: 18px; font-weight: 600;">Find orders</h3>
+                    <button class="btn btn-secondary btn-sm" onclick="resetFilters()" style="padding: 6px 12px; font-size: 13px;">Reset</button>
+                </div>
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label class="filter-label">Order Number</label>
+                        <input type="text" id="filterOrderNumber" class="form-input" placeholder="Search by order number...">
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Date Range</label>
+                        <div class="date-range-group">
+                            <input type="text" id="filterDateFrom" class="form-input date-picker" placeholder="MM/DD/YYYY" readonly>
+                            <span style="margin: 0 8px; color: var(--text-secondary);">to</span>
+                            <input type="text" id="filterDateTo" class="form-input date-picker" placeholder="MM/DD/YYYY" readonly>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Order Value</label>
+                        <div class="amount-range-group">
+                            <input type="number" id="filterAmountMin" class="form-input" placeholder="Min" step="0.01">
+                            <span style="margin: 0 8px; color: var(--text-secondary);">to</span>
+                            <input type="number" id="filterAmountMax" class="form-input" placeholder="Max" step="0.01">
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Item Count</label>
+                        <div class="count-range-group">
+                            <input type="number" id="filterItemCountMin" class="form-input" placeholder="Min" min="1">
+                            <span style="margin: 0 8px; color: var(--text-secondary);">to</span>
+                            <input type="number" id="filterItemCountMax" class="form-input" placeholder="Max" min="1">
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Status</label>
+                        <select id="filterStatus" class="form-input">
+                            <option value="">All statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="processing">Processing</option>
+                            <option value="shipped">Shipped</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Sort By</label>
+                        <select id="sortBy" class="form-input">
+                            <option value="date_desc">Newest first</option>
+                            <option value="date_asc">Oldest first</option>
+                            <option value="amount_desc">Amount high to low</option>
+                            <option value="amount_asc">Amount low to high</option>
+                            <option value="items_desc">Most items first</option>
+                            <option value="items_asc">Fewest items first</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="ordersContainer" class="loading">Loading orders...</div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Local samples</h2>
+            <div class="inventory-section">
+                <div class="inventory-filter-container">
+                    <div class="inventory-filter-row">
+                        <div class="filter-group">
+                            <label class="filter-label">Search</label>
+                            <input type="text" id="productSearch" class="form-input" placeholder="Product name or SKU...">
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Color Type</label>
+                            <select id="colorTypeFilter" class="form-input">
+                                <option value="">All Color Types</option>
+                                <option value="basic">Basic</option>
+                                <option value="other">Other Colors</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Color</label>
+                            <select id="colorFilter" class="form-input">
+                                <option value="">All Colors</option>
+                                <!-- Will be populated dynamically -->
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Sort By</label>
+                            <select id="inventorySort" class="form-input">
+                                <option value="quantity_desc">Quantity (High to Low)</option>
+                                <option value="quantity_asc">Quantity (Low to High)</option>
+                                <option value="product_asc">Name (A-Z)</option>
+                                <option value="product_desc">Name (Z-A)</option>
+                            </select>
+                        </div>
+                        <div class="filter-group" style="align-self: flex-end;">
+                            <button onclick="resetInventoryFilters()" class="btn btn-secondary btn-sm" style="padding: 8px 16px;">Reset</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="inventoryContainer" class="loading">Loading local samples...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="modal" style="display: none; z-index: 2000;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Submit feedback</h2>
+                <button class="modal-close" onclick="closeFeedbackModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: var(--spacing-lg); color: var(--text-secondary);">
+                    We value your feedback! Please share your experience with us. We will review your feedback 
+                    and follow up with the next practical step after internal review.
+                </p>
+                <form id="feedbackForm">
+                    <div class="form-group">
+                        <label for="feedbackCategory" class="form-label">Feedback category *</label>
+                        <select id="feedbackCategory" class="form-input" required>
+                            <option value="">Select category</option>
+                            <option value="order_placement">Order Placement</option>
+                            <option value="product_selection">Product selection</option>
+                            <option value="payment">Payment process</option>
+                            <option value="production">Production</option>
+                            <option value="shipping">Shipping</option>
+                            <option value="delivery">Delivery</option>
+                            <option value="customer_service">Support</option>
+                            <option value="website_experience">Portal experience</option>
+                            <option value="overall">Overall</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="feedbackStep" class="form-label">Specific step (optional)</label>
+                        <input type="text" id="feedbackStep" class="form-input" placeholder="e.g., Color selection, Order confirmation">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Rating (1-5 stars)</label>
+                        <div class="rating-group">
+                            <input type="radio" id="rating1" name="rating" value="1">
+                            <label for="rating1" class="rating-label">1</label>
+                            <input type="radio" id="rating2" name="rating" value="2">
+                            <label for="rating2" class="rating-label">2</label>
+                            <input type="radio" id="rating3" name="rating" value="3">
+                            <label for="rating3" class="rating-label">3</label>
+                            <input type="radio" id="rating4" name="rating" value="4">
+                            <label for="rating4" class="rating-label">4</label>
+                            <input type="radio" id="rating5" name="rating" value="5">
+                            <label for="rating5" class="rating-label">5</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="feedbackText" class="form-label">Your Feedback *</label>
+                        <textarea id="feedbackText" class="form-input" rows="5" required placeholder="Please share your thoughts and experience..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="feedbackSuggestions" class="form-label">Suggestions for Improvement (Optional)</label>
+                        <textarea id="feedbackSuggestions" class="form-input" rows="3" placeholder="Any suggestions on how we can improve?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Are you satisfied with this aspect?</label>
+                        <div class="satisfaction-group">
+                            <label><input type="radio" name="satisfied" value="true"> Yes</label>
+                            <label><input type="radio" name="satisfied" value="false"> No</label>
+                            <label><input type="radio" name="satisfied" value="" checked> Neutral</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="feedbackOrderId" class="form-label">Related Order (Optional)</label>
+                        <select id="feedbackOrderId" class="form-input">
+                            <option value="">Select an order (optional)</option>
+                        </select>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeFeedbackModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Submit feedback</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin;
+
+        function getToken() {
+            return localStorage.getItem('access_token');
+        }
+
+        function removeToken() {
+            localStorage.removeItem('access_token');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to sign out?')) {
+                removeToken();
+                window.location.href = '/login';
+            }
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount);
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        function getStatusClass(status) {
+            const statusMap = {
+                'pending': 'status-pending',
+                'confirmed': 'status-confirmed',
+                'processing': 'status-processing',
+                'shipped': 'status-shipped',
+                'delivered': 'status-delivered'
+            };
+            return statusMap[status] || 'status-pending';
+        }
+
+        function getStatusLabel(status) {
+            const labelMap = {
+                'pending': 'Pending',
+                'confirmed': 'Confirmed',
+                'processing': 'Processing',
+                'shipped': 'Shipped',
+                'delivered': 'Delivered',
+                'cancelled': 'Cancelled'
+            };
+            return labelMap[status] || status;
+        }
+
+        async function loadUserInfo() {
+            const token = getToken();
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    removeToken();
+                    window.location.href = '/login';
+                    return;
+                }
+
+                const data = await response.json();
+                // Display welcome message with company name
+                const welcomeTitle = document.getElementById('welcomeTitle');
+                if (welcomeTitle) {
+                    const companyName = data.company || data.name || data.username || 'User';
+                    welcomeTitle.textContent = `Welcome, ${companyName}!`;
+                }
+            } catch (error) {
+                console.error('Error loading user info:', error);
+            }
+        }
+
+        async function loadStatistics() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/customer/statistics`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+
+                if (response.ok) {
+                    const stats = await response.json();
+                    document.getElementById('totalOrders').textContent = stats.total_orders;
+                    document.getElementById('totalAmount').textContent = formatCurrency(stats.total_amount);
+                    document.getElementById('pendingOrders').textContent = stats.pending_orders;
+                    document.getElementById('completedOrders').textContent = stats.completed_orders;
+                }
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        let allOrders = [];
+
+        async function loadOrders() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/customer/orders`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    let errorMsg = 'Order dashboard is temporarily unavailable';
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        errorMsg = errorData.detail || errorData.message || errorMsg;
+                    } catch (e) {
+                        errorMsg = `HTTP ${response.status}: ${errorText.substring(0, 100)}`;
+                    }
+                    document.getElementById('ordersContainer').innerHTML = `<div class="empty-state">${errorMsg}. Please refresh the page or contact IntelliOpus support.</div>`;
+                    console.error('Unable to load orders:', response.status, errorMsg);
+                    return;
+                }
+
+                const data = await response.json();
+                allOrders = Array.isArray(data) ? data : [];
+                
+                // Only call filterAndDisplayOrders if it's defined and elements exist
+                if (typeof filterAndDisplayOrders === 'function') {
+                    try {
+                        filterAndDisplayOrders();
+                    } catch (filterError) {
+                        console.error('Error in filterAndDisplayOrders:', filterError);
+                        // Display orders even if filter fails
+                        if (typeof displayOrdersDirectly === 'function') {
+                            displayOrdersDirectly(allOrders);
+                        } else {
+                            document.getElementById('ordersContainer').innerHTML = `<div class="empty-state">Orders loaded, but filtering is temporarily unavailable.</div>`;
+                        }
+                    }
+                } else {
+                    if (typeof displayOrdersDirectly === 'function') {
+                        displayOrdersDirectly(allOrders);
+                    } else {
+                        document.getElementById('ordersContainer').innerHTML = `<div class="empty-state">Loaded ${allOrders.length} orders</div>`;
+                    }
+                }
+            } catch (error) {
+                console.error('Unable to load orders:', error);
+                const errorMsg = error.message || 'Unknown error';
+                document.getElementById('ordersContainer').innerHTML = '<div class="empty-state">Order dashboard is temporarily unavailable. Please refresh the page or contact IntelliOpus support.</div>';
+            }
+        }
+
+        function displayOrdersDirectly(orders) {
+            if (!orders || orders.length === 0) {
+                document.getElementById('ordersContainer').innerHTML = '<div class="empty-state">No orders have been published to this workspace yet.</div>';
+                return;
+            }
+
+            let html = '<table class="orders-table"><thead><tr>';
+            html += '<th>Order Number</th><th>Date</th><th>Status</th><th>Items</th><th>Amount</th><th>Action</th>';
+            html += '</tr></thead><tbody>';
+
+            orders.forEach(order => {
+                html += '<tr>';
+                html += `<td>${order.order_number || 'N/A'}</td>`;
+                html += `<td>${order.order_date ? new Date(order.order_date).toLocaleDateString() : 'N/A'}</td>`;
+                html += `<td><span class="status-badge status-${order.status?.toLowerCase() || 'pending'}">${order.status || 'Pending'}</span></td>`;
+                html += `<td>${order.item_count || 0}</td>`;
+                html += `<td>${formatCurrency(order.total_amount || 0)}</td>`;
+                html += `<td><a href="/order-detail?order=${encodeURIComponent(order.order_number)}" class="btn btn-sm">View</a></td>`;
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            html += `<div style="margin-top: var(--spacing-md); color: var(--text-secondary); font-size: 14px;">Showing ${orders.length} order(s)</div>`;
+            document.getElementById('ordersContainer').innerHTML = html;
+        }
+
+        function filterAndDisplayOrders() {
+            const orderNumber = document.getElementById('filterOrderNumber').value.toLowerCase().trim();
+            // Get date values from Flatpickr (safely handle if not initialized)
+            const dateFromInput = document.getElementById('filterDateFrom');
+            const dateToInput = document.getElementById('filterDateTo');
+            let dateFrom = '';
+            let dateTo = '';
+            
+            if (dateFromInput) {
+                if (dateFromInput._flatpickr && dateFromInput._flatpickr.input) {
+                    dateFrom = dateFromInput._flatpickr.input.value || '';
+                } else {
+                    dateFrom = dateFromInput.value || '';
+                }
+            }
+            
+            if (dateToInput) {
+                if (dateToInput._flatpickr && dateToInput._flatpickr.input) {
+                    dateTo = dateToInput._flatpickr.input.value || '';
+                } else {
+                    dateTo = dateToInput.value || '';
+                }
+            }
+            const amountMin = parseFloat(document.getElementById('filterAmountMin').value) || 0;
+            const amountMax = parseFloat(document.getElementById('filterAmountMax').value) || Infinity;
+            const itemCountMin = parseInt(document.getElementById('filterItemCountMin').value) || 0;
+            const itemCountMax = parseInt(document.getElementById('filterItemCountMax').value) || Infinity;
+            const status = document.getElementById('filterStatus').value;
+            const sortBy = document.getElementById('sortBy').value;
+
+            let filtered = allOrders.filter(order => {
+                // Order number filter
+                if (orderNumber && !order.order_number.toLowerCase().includes(orderNumber)) {
+                    return false;
+                }
+
+                // Date range filter
+                if (dateFrom || dateTo) {
+                    const orderDate = new Date(order.order_date);
+                    if (dateFrom && orderDate < new Date(dateFrom)) return false;
+                    if (dateTo && orderDate > new Date(dateTo + 'T23:59:59')) return false;
+                }
+
+                // Amount range filter
+                if (order.total_amount < amountMin || order.total_amount > amountMax) {
+                    return false;
+                }
+
+                // Item count filter
+                if (order.item_count < itemCountMin || order.item_count > itemCountMax) {
+                    return false;
+                }
+
+                // Status filter
+                if (status && order.status !== status) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            // Sort orders
+            filtered.sort((a, b) => {
+                switch (sortBy) {
+                    case 'date_desc':
+                        return new Date(b.order_date) - new Date(a.order_date);
+                    case 'date_asc':
+                        return new Date(a.order_date) - new Date(b.order_date);
+                    case 'amount_desc':
+                        return b.total_amount - a.total_amount;
+                    case 'amount_asc':
+                        return a.total_amount - b.total_amount;
+                    case 'items_desc':
+                        return b.item_count - a.item_count;
+                    case 'items_asc':
+                        return a.item_count - b.item_count;
+                    default:
+                        return 0;
+                }
+            });
+
+            // Display filtered orders
+            if (filtered.length === 0) {
+                document.getElementById('ordersContainer').innerHTML = '<div class="empty-state">No orders match your filters</div>';
+                return;
+            }
+
+            let html = '<table class="orders-table"><thead><tr>';
+            html += '<th>Order Number</th><th>Date</th><th>Status</th><th>Items</th><th>Amount</th><th>Action</th>';
+            html += '</tr></thead><tbody>';
+
+            filtered.forEach(order => {
+                html += '<tr>';
+                html += `<td><strong>${order.order_number}</strong></td>`;
+                html += `<td>${formatDate(order.order_date)}</td>`;
+                html += `<td><span class="status-badge ${getStatusClass(order.status)}">${getStatusLabel(order.status)}</span></td>`;
+                html += `<td>${order.item_count} item(s)</td>`;
+                html += `<td>${formatCurrency(order.total_amount)}</td>`;
+                html += `<td><a href="/order-detail?order=${encodeURIComponent(order.order_number)}" class="btn btn-sm">View</a></td>`;
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            html += `<div style="margin-top: var(--spacing-md); color: var(--text-secondary); font-size: 14px;">Showing ${filtered.length} of ${allOrders.length} orders</div>`;
+            document.getElementById('ordersContainer').innerHTML = html;
+        }
+
+        function resetFilters() {
+            document.getElementById('filterOrderNumber').value = '';
+            // Clear Flatpickr date pickers
+            const dateFromPicker = document.getElementById('filterDateFrom')._flatpickr;
+            const dateToPicker = document.getElementById('filterDateTo')._flatpickr;
+            if (dateFromPicker) dateFromPicker.clear();
+            if (dateToPicker) dateToPicker.clear();
+            document.getElementById('filterAmountMin').value = '';
+            document.getElementById('filterAmountMax').value = '';
+            document.getElementById('filterItemCountMin').value = '';
+            document.getElementById('filterItemCountMax').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('sortBy').value = 'date_desc';
+            filterAndDisplayOrders();
+        }
+
+        let allInventory = [];
+        let allColors = [];
+
+        async function loadColors() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/inventory/colors`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                if (response.ok) {
+                    allColors = await response.json();
+                    populateColorFilter();
+                }
+            } catch (error) {
+                console.error('Error loading colors:', error);
+            }
+        }
+
+        function populateColorFilter() {
+            const colorFilter = document.getElementById('colorFilter');
+            if (!colorFilter) return;
+            
+            // Group colors by type
+            const basicColors = allColors.filter(c => c.color_type === 'basic');
+            const ralColors = allColors.filter(c => c.color_type === 'ral');
+            
+            colorFilter.innerHTML = '<option value="">All Colors</option>';
+            
+            if (basicColors.length > 0) {
+                colorFilter.innerHTML += '<optgroup label="Basic Colors">';
+                basicColors.forEach(color => {
+                    colorFilter.innerHTML += `<option value="${color.id}" data-type="${color.color_type}">${color.color_name} (${color.color_code})</option>`;
+                });
+                colorFilter.innerHTML += '</optgroup>';
+            }
+            
+            if (ralColors.length > 0) {
+                colorFilter.innerHTML += '<optgroup label="RAL Colors">';
+                ralColors.forEach(color => {
+                    colorFilter.innerHTML += `<option value="${color.id}" data-type="${color.color_type}">${color.color_name} (${color.color_code})</option>`;
+                });
+                colorFilter.innerHTML += '</optgroup>';
+            }
+        }
+
+        async function loadInventory() {
+            try {
+                const colorTypeFilter = document.getElementById('colorTypeFilter').value;
+                let url = `${API_BASE_URL}/api/site/inventory/products`;
+                
+                // For "basic", filter by color_type=basic
+                // For "other" or empty, load all inventory and filter on frontend
+                if (colorTypeFilter === 'basic') {
+                    url += '?color_type=basic';
+                }
+                // For "other" or empty, load all products (will filter by color_type in filterAndDisplayInventory)
+
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+
+                if (!response.ok) {
+                    document.getElementById('inventoryContainer').innerHTML = '<div class="empty-state">Local local samples is temporarily unavailable</div>';
+                    return;
+                }
+
+                allInventory = await response.json();
+
+                filterAndDisplayInventory();
+            } catch (error) {
+                console.error('Local local samples is temporarily unavailable:', error);
+                document.getElementById('inventoryContainer').innerHTML = '<div class="empty-state">Local local samples is temporarily unavailable</div>';
+            }
+        }
+
+        function filterAndDisplayInventory() {
+            if (allInventory.length === 0) {
+                document.getElementById('inventoryContainer').innerHTML = '<div class="empty-state">No local local samples is available right now.</div>';
+                return;
+            }
+
+            // Apply filters
+            const productSearch = document.getElementById('productSearch').value.toLowerCase();
+            const colorTypeFilter = document.getElementById('colorTypeFilter').value;
+            const colorFilter = document.getElementById('colorFilter').value;
+            const sortBy = document.getElementById('inventorySort').value;
+
+            let filtered = allInventory.filter(item => {
+                // Product search filter
+                if (productSearch && 
+                    !item.product_name.toLowerCase().includes(productSearch) &&
+                    !item.product_sku.toLowerCase().includes(productSearch)) {
+                    return false;
+                }
+
+                // Color type filter (handle "other" as non-basic)
+                if (colorTypeFilter === 'basic' && item.color_type !== 'basic') {
+                    return false;
+                } else if (colorTypeFilter === 'other' && item.color_type === 'basic') {
+                    return false;
+                }
+
+                // Color filter
+                if (colorFilter && item.color_id != colorFilter) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            // Sort
+            filtered.sort((a, b) => {
+                switch (sortBy) {
+                    case 'quantity_desc':
+                        return (b.available_quantity || 0) - (a.available_quantity || 0);
+                    case 'quantity_asc':
+                        return (a.available_quantity || 0) - (b.available_quantity || 0);
+                    case 'product_asc':
+                        return (a.product_name || '').localeCompare(b.product_name || '');
+                    case 'product_desc':
+                        return (b.product_name || '').localeCompare(a.product_name || '');
+                    default:
+                        return 0;
+                }
+            });
+
+            if (filtered.length === 0) {
+                document.getElementById('inventoryContainer').innerHTML = '<div class="empty-state">No matching products</div>';
+                return;
+            }
+
+            let html = '<div class="inventory-grid">';
+            filtered.forEach(item => {
+                const quantity = item.available_quantity || 0;
+                const leadTime = item.lead_time_days || 0;
+                
+                let leadTimeText = leadTime > 0 
+                    ? `+${leadTime} days lead time`
+                    : 'In stock';
+                
+                let quantityClass = '';
+                let itemClass = '';
+                if (quantity === 0) {
+                    quantityClass = 'out';
+                    itemClass = 'out-of-stock';
+                } else if (quantity < 10) {
+                    quantityClass = 'low';
+                    itemClass = 'low-stock';
+                }
+
+                html += `<div class="inventory-item ${itemClass}">`;
+                html += `<div class="inventory-item-header">`;
+                html += `<div class="inventory-product">${item.product_name || 'Unknown Product'}</div>`;
+                html += `<div class="inventory-quantity ${quantityClass}">${quantity}</div>`;
+                html += `</div>`;
+                html += `<div class="inventory-color">${item.color_name || 'N/A'} (${item.color_code || 'N/A'})</div>`;
+                html += `<div class="inventory-lead-time ${leadTime > 0 ? 'has-lead-time' : ''}">${leadTimeText}</div>`;
+                html += `</div>`;
+            });
+            html += '</div>';
+
+            document.getElementById('inventoryContainer').innerHTML = html;
+        }
+
+        function resetInventoryFilters() {
+            document.getElementById('productSearch').value = '';
+            document.getElementById('colorTypeFilter').value = '';
+            document.getElementById('colorFilter').value = '';
+            document.getElementById('inventorySort').value = 'quantity_desc';
+            filterAndDisplayInventory();
+        }
+
+        function showNewOrder() {
+            window.location.href = '/new-order?from_cart=true';
+        }
+
+        async function exportOrders(event) {
+            event.preventDefault();
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/customer/orders/export?format=csv`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `orders_${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    alert('Order export failed. Please try again later.');
+                }
+            } catch (error) {
+                console.error('Error exporting orders:', error);
+                alert('Error exporting orders');
+            }
+        }
+
+        // Feedback Modal Functions
+        function openFeedbackModal() {
+            document.getElementById('feedbackModal').style.display = 'flex';
+            loadOrdersForFeedback();
+        }
+
+        function closeFeedbackModal() {
+            document.getElementById('feedbackModal').style.display = 'none';
+            document.getElementById('feedbackForm').reset();
+        }
+
+        async function loadOrdersForFeedback() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/customer/orders`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+
+                if (response.ok) {
+                    const orders = await response.json();
+                    const select = document.getElementById('feedbackOrderId');
+                    select.innerHTML = '<option value="">Select an order (optional)</option>';
+                    orders.forEach(order => {
+                        const option = document.createElement('option');
+                        option.value = order.id;
+                        option.textContent = `${order.order_number} - ${formatDate(order.order_date)}`;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Unable to load orders for feedback:', error);
+            }
+        }
+
+        // Feedback Form Handler
+        document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const category = document.getElementById('feedbackCategory').value;
+            const step = document.getElementById('feedbackStep').value.trim();
+            const rating = document.querySelector('input[name="rating"]:checked')?.value;
+            const feedbackText = document.getElementById('feedbackText').value.trim();
+            const suggestions = document.getElementById('feedbackSuggestions').value.trim();
+            const satisfied = document.querySelector('input[name="satisfied"]:checked')?.value;
+            const orderId = document.getElementById('feedbackOrderId').value;
+
+            if (!category || !feedbackText) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const submitBtn = document.querySelector('#feedbackForm button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/customer/feedback`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({
+                        order_id: orderId ? parseInt(orderId) : null,
+                        feedback_category: category,
+                        step_name: step || null,
+                        rating: rating ? parseInt(rating) : null,
+                        feedback_text: feedbackText,
+                        suggestions: suggestions || null,
+                        is_satisfied: satisfied === '' ? null : satisfied === 'true'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert(data.detail || data.message || 'Unable to submit feedback');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit feedback';
+                    return;
+                }
+
+                alert(data.message || 'Feedback received. IntelliOpus will review it internally and follow up when a response is available.');
+                closeFeedbackModal();
+
+            } catch (error) {
+                console.error('Error submitting feedback:', error);
+                alert('Network error. Please try again later.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit feedback';
+            }
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('feedbackModal').addEventListener('click', (e) => {
+            if (e.target.id === 'feedbackModal') {
+                closeFeedbackModal();
+            }
+        });
+
+        // Event listeners for inventory filters
+        document.getElementById('productSearch').addEventListener('input', filterAndDisplayInventory);
+        document.getElementById('colorTypeFilter').addEventListener('change', () => {
+            // When color type changes, reload inventory to get correct data, then filter
+            loadInventory();
+        });
+        document.getElementById('colorFilter').addEventListener('change', filterAndDisplayInventory);
+        document.getElementById('inventorySort').addEventListener('change', filterAndDisplayInventory);
+        
+        // Initialize Flatpickr for English date pickers (force English locale)
+        // Wait for DOM to be ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initDatePickers);
+        } else {
+            initDatePickers();
+        }
+
+        function initDatePickers() {
+            // Check if Flatpickr is loaded
+            if (typeof flatpickr === 'undefined') {
+                console.warn('Flatpickr not loaded. Date pickers will use native HTML5 date inputs.');
+                return;
+            }
+
+            try {
+                const datePickerConfig = {
+                    dateFormat: "Y-m-d",  // ISO format for backend (YYYY-MM-DD)
+                    altInput: true,
+                    altFormat: "m/d/Y",    // Display format: MM/DD/YYYY
+                    locale: "en",
+                    allowInput: false,
+                    clickOpens: true,
+                    onChange: function(selectedDates, dateStr, instance) {
+                        if (typeof filterAndDisplayOrders === 'function') {
+                            filterAndDisplayOrders();
+                        }
+                    }
+                };
+
+                // Initialize date pickers with English locale
+                const dateFromPicker = flatpickr("#filterDateFrom", datePickerConfig);
+                const dateToPicker = flatpickr("#filterDateTo", datePickerConfig);
+
+                // Update min/max dates when dates change
+                dateFromPicker.config.onChange.push(function(selectedDates) {
+                    if (selectedDates.length) {
+                        dateToPicker.set('minDate', selectedDates[0]);
+                    }
+                });
+
+                dateToPicker.config.onChange.push(function(selectedDates) {
+                    if (selectedDates.length) {
+                        dateFromPicker.set('maxDate', selectedDates[0]);
+                    }
+                });
+            } catch (error) {
+                console.error('Error initializing date pickers:', error);
+            }
+        }
+
+        // Order filter event listeners
+        document.getElementById('filterOrderNumber').addEventListener('input', filterAndDisplayOrders);
+        document.getElementById('filterAmountMin').addEventListener('input', filterAndDisplayOrders);
+        document.getElementById('filterAmountMax').addEventListener('input', filterAndDisplayOrders);
+        document.getElementById('filterItemCountMin').addEventListener('input', filterAndDisplayOrders);
+        document.getElementById('filterItemCountMax').addEventListener('input', filterAndDisplayOrders);
+        document.getElementById('filterStatus').addEventListener('change', filterAndDisplayOrders);
+        document.getElementById('sortBy').addEventListener('change', filterAndDisplayOrders);
+
+        // Initialize date pickers when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                initDatePickers();
+            });
+        } else {
+            // DOM already loaded
+            initDatePickers();
+        }
+
+        // Cart functions
+        async function loadCartCount() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/site/cart/count`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const badge = document.getElementById('cartBadge');
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.textContent = data.count;
+                            badge.style.display = 'flex';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading cart count:', error);
+            }
+        }
+
+        // Check if coming from cart - redirect to new-order page
+        async function checkCartCheckout() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('from_cart') === 'true') {
+                // Redirect to new-order page with cart items
+                window.location.href = '/new-order?from_cart=true';
+                return;
+            }
+        }
+
+        // Initialize
+        loadUserInfo();
+        loadStatistics();
+        loadOrders();
+        loadColors().then(() => {
+            loadInventory();
+        });
+        loadCartCount();
+        checkCartCheckout();
+    </script>
+
+<footer class="portal-footer">
+    <div class="portal-footer-inner">
+        <div class="portal-footer-brand">
+            <img src="/intelliopus-logo.png" alt="IntelliOpus" onerror="this.style.display='none'">
+            <div>
+                <div class="portal-footer-title">IntelliOpus Portal</div>
+                <div class="portal-footer-copy">An independent cross-border operating bridge for qualified supplier programs, customer resources, order visibility, and feedback-driven execution.</div>
+            </div>
+        </div>
+        <div class="portal-footer-col">
+            <h3>About</h3>
+            <a href="/about">About</a>
+            <a href="/service-history">Service history</a>
+            <a href="/services">Services</a>
+                <a href="/services#operating-loop">Operating loop</a>
+            <a href="/manufacturers">Supplier Network</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Customer Workspace</h3>
+            <a href="/products">Product Programs</a>
+            <a href="/inventory">Local Samples</a>
+            <a href="/dashboard">Dashboard</a>
+        </div>
+        <div class="portal-footer-col">
+            <h3>Resources</h3>
+            <a href="/reference-center">Resources</a>
+            <a href="/customer-service">Support</a>
+            <a href="/cart">Cart</a>
+        </div>
+    </div>
+    <div class="portal-footer-note">Customer-facing pages show approved product, resource, order, shipment, and feedback information only. Supplier coordination records stay separate from the customer workspace.</div>
+</footer>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
