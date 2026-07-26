@@ -34,8 +34,8 @@ def main() -> int:
     current, head, _ = get_migration_revisions(settings)
     checks: list[tuple[str, bool, str]] = []
 
-    mig_ok = current == head == "0026_customer_project_requests"
-    checks.append(("migration head 0026_customer_project_requests", mig_ok, f"{current}/{head}"))
+    mig_ok = current == head == "0031_platform_intelligence"
+    checks.append(("migration head 0031_platform_intelligence", mig_ok, f"{current}/{head}"))
 
     checks.append(
         (
